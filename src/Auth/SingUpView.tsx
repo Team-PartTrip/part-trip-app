@@ -10,17 +10,18 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { loginStyles as styles } from './LoginView.styles';
+import PhoneInput from '../component/PhoneInput';
 
-interface LoginViewProps {
-  onLogin?: () => void;
-  onSignup?: () => void;
-  onResetPassword?: () => void;
+interface SignUpViewProps {
+  onBack?: () => void;
+  onNext?: () => void;
 }
 
-const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSignup, onResetPassword }) => {
-  const [id, setId]             = useState('');
-  const [password, setPassword] = useState('');
-  const [resetPassword, setResetPassword] = useState('');
+const SignUpView: React.FC<SignUpViewProps> = ({ onBack, onNext }) => {
+  const [id, setId]                     = useState('');
+  const [password, setPassword]         = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [phone, setPhone]               = useState('');
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -39,7 +40,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSignup, onResetPasswor
               <Text style={styles.logoPart}>Part</Text>
               <Text style={styles.logoTrip}>Trip</Text>
             </Text>
-            <Text style={styles.title}>로그인</Text>
+            <Text style={styles.title}>회원가입</Text>
           </View>
 
           {/* 입력 폼 */}
@@ -61,30 +62,22 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSignup, onResetPasswor
               onChangeText={setPassword}
               secureTextEntry
             />
-            <TouchableOpacity style={styles.forgotBtn} onPress={onResetPassword}>
-              <Text style={styles.forgotText}>비밀번호를 잊으셨나요?</Text>
-            </TouchableOpacity>
+            <TextInput
+              style={styles.input}
+              placeholder="비밀번호를 다시 입력하세요."
+              placeholderTextColor="#aab4be"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+            />
+            {/* 전화번호 입력 */}
+            <PhoneInput onChange={(number) => setPhone(number)} />
           </View>
 
           {/* 버튼 영역 */}
           <View style={styles.actions}>
-            <TouchableOpacity style={styles.loginBtn} activeOpacity={0.85} onPress={onLogin}>
-              <Text style={styles.loginBtnText}>로그인 하기</Text>
-            </TouchableOpacity>
-
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>또는</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
-            <TouchableOpacity style={styles.googleBtn} activeOpacity={0.85}>
-              <Text style={styles.googleG}>G</Text>
-              <Text style={styles.googleText}>Google로 계속하기</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.signupBtn} onPress={onSignup}>
-            <Text style={styles.signupText}>회원가입 하기</Text>
+            <TouchableOpacity style={styles.loginBtn} activeOpacity={0.85} onPress={onNext}>
+              <Text style={styles.loginBtnText}>다음</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -93,4 +86,4 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSignup, onResetPasswor
   );
 };
 
-export default LoginView;
+export default SignUpView;
