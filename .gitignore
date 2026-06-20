@@ -2,6 +2,19 @@
 #
 .DS_Store
 
+# Editor
+#
+.vscode/
+.idea/
+*.swp
+
+# Local env / secrets
+#
+.env
+.env.*
+!.env.example
+*.local
+
 # Xcode
 #
 build/
