@@ -3,11 +3,12 @@ import { StatusBar, useColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import LaunchScreen from './src/screens/LaunchScreen';
 import LoginView from './src/Auth/LoginView';
-import SignUpView from './src/Auth/SingUpView';
+import SignUpView, { SignUpData } from './src/Auth/SingUpView';
 import ConfirmEmail from './src/Auth/ConfirmEmail';
 import ResetPassword from './src/Auth/ResetPassword';
+import MainView from './src/screens/MainView';
 
-type Screen = 'launch' | 'login' | 'signup' | 'confirmEmail' | 'resetPassword';
+type Screen = 'launch' | 'login' | 'signup' | 'confirmEmail' | 'resetPassword' | 'main';
 
 type ConfirmMode = 'signup' | 'resetPassword';
 
@@ -15,6 +16,7 @@ function App() {
   const isDarkMode = useColorScheme() === 'dark';
   const [screen, setScreen] = useState<Screen>('launch');
   const [confirmMode, setConfirmMode] = useState<ConfirmMode>('signup');
+  const [signupData, setSignupData] = useState<SignUpData | undefined>(undefined);
 
   return (
     <SafeAreaProvider>
@@ -24,6 +26,7 @@ function App() {
       )}
       {screen === 'login' && (
         <LoginView
+          onLogin={() => setScreen('main')}
           onSignup={() => setScreen('signup')}
           onResetPassword={() => {
             setConfirmMode('resetPassword');
@@ -34,7 +37,8 @@ function App() {
       {screen === 'signup' && (
         <SignUpView
           onBack={() => setScreen('login')}
-          onNext={() => {
+          onNext={(data) => {
+            setSignupData(data);
             setConfirmMode('signup');
             setScreen('confirmEmail');
           }}
@@ -43,6 +47,7 @@ function App() {
       {screen === 'confirmEmail' && (
         <ConfirmEmail
           mode={confirmMode}
+          signupData={confirmMode === 'signup' ? signupData : undefined}
           onConfirm={() => {
             if (confirmMode === 'signup') {
               setScreen('login');
@@ -55,6 +60,7 @@ function App() {
       {screen === 'resetPassword' && (
         <ResetPassword onConfirm={() => setScreen('login')} />
       )}
+      {screen === 'main' && <MainView />}
     </SafeAreaProvider>
   );
 }

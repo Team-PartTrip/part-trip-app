@@ -7,29 +7,86 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StyleSheet,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { loginStyles as shared } from './LoginView.styles';
-
-const BLUE = '#1a7fd4';
+import { confirmEmailStyles as styles } from './ConfirmEmail.styles';
+import { startSignUp, verifyEmailCode } from '../api/auth';
+import type { SignUpData } from './SingUpView';
+import colors from '../assets/constants/colors';
 
 type ConfirmEmailMode = 'signup' | 'resetPassword';
 
 interface ConfirmEmailProps {
   mode?: ConfirmEmailMode;
+  /** 회원가입 화면에서 입력한 아이디/비밀번호 (signup 모드에서 사용) */
+  signupData?: SignUpData;
   onConfirm?: () => void;
 }
 
-const ConfirmEmail: React.FC<ConfirmEmailProps> = ({ mode = 'signup', onConfirm }) => {
-  const [email, setEmail]   = useState('');
-  const [code, setCode]     = useState('');
-  const [sent, setSent]     = useState(false);
+const ConfirmEmail: React.FC<ConfirmEmailProps> = ({
+  mode = 'signup',
+  signupData,
+  onConfirm,
+}) => {
+  const [email, setEmail]     = useState('');
+  const [code, setCode]       = useState('');
+  const [sent, setSent]       = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSendCode = () => {
-    if (!email) return;
-    // TODO: 인증코드 발송 API 연결
-    setSent(true);
+  const handleSendCode = async () => {
+    if (!email.trim()) {
+      Alert.alert('알림', '이메일을 입력해주세요.');
+      return;
+    }
+    // 비밀번호 찾기는 백엔드 미구현 상태 → 보류 (UI만 동작)
+    if (mode !== 'signup') {
+      setSent(true);
+      return;
+    }
+    if (!signupData) {
+      Alert.alert('알림', '회원가입 정보를 먼저 입력해주세요.');
+      return;
+    }
+    try {
+      setLoading(true);
+      // 회원가입 임시 저장 + 인증코드 발송
+      await startSignUp({
+        userId: signupData.userId,
+        userPwd: signupData.userPwd,
+        userMail: email.trim(),
+      });
+      setSent(true);
+      Alert.alert('알림', '인증코드를 전송했습니다.');
+    } catch (e: any) {
+      Alert.alert('전송 실패', e?.message ?? '인증코드 전송에 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConfirm = async () => {
+    // 비밀번호 찾기는 백엔드 미구현 → 화면 전환만 (보류)
+    if (mode !== 'signup') {
+      onConfirm?.();
+      return;
+    }
+    if (!code.trim()) {
+      Alert.alert('알림', '인증코드를 입력해주세요.');
+      return;
+    }
+    try {
+      setLoading(true);
+      await verifyEmailCode(email.trim(), code.trim());
+      Alert.alert('회원가입 완료', '가입이 완료되었습니다. 로그인해주세요.');
+      onConfirm?.();
+    } catch (e: any) {
+      Alert.alert('인증 실패', e?.message ?? '인증에 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -62,7 +119,7 @@ const ConfirmEmail: React.FC<ConfirmEmailProps> = ({ mode = 'signup', onConfirm 
               <TextInput
                 style={[shared.input, styles.emailInput]}
                 placeholder="이메일을 입력하세요."
-                placeholderTextColor="#aab4be"
+                placeholderTextColor={colors.placeholder}
                 value={email}
                 onChangeText={setEmail}
                 autoCapitalize="none"
@@ -72,6 +129,7 @@ const ConfirmEmail: React.FC<ConfirmEmailProps> = ({ mode = 'signup', onConfirm 
                 style={[styles.sendBtn, sent && styles.sendBtnSent]}
                 activeOpacity={0.8}
                 onPress={handleSendCode}
+                disabled={loading}
               >
                 <Text style={styles.sendBtnText}>
                   {sent ? '재전송' : '인증코드 보내기'}
@@ -83,7 +141,7 @@ const ConfirmEmail: React.FC<ConfirmEmailProps> = ({ mode = 'signup', onConfirm 
             <TextInput
               style={shared.input}
               placeholder="인증코드를 입력하세요."
-              placeholderTextColor="#aab4be"
+              placeholderTextColor={colors.placeholder}
               value={code}
               onChangeText={setCode}
               keyboardType="number-pad"
@@ -95,11 +153,16 @@ const ConfirmEmail: React.FC<ConfirmEmailProps> = ({ mode = 'signup', onConfirm 
             <TouchableOpacity
               style={shared.loginBtn}
               activeOpacity={0.85}
-              onPress={onConfirm}
+              onPress={handleConfirm}
+              disabled={loading}
             >
-              <Text style={shared.loginBtnText}>
-                {mode === 'signup' ? '회원가입 하기' : '인증하기'}
-              </Text>
+              {loading ? (
+                <ActivityIndicator color="#ffffff" />
+              ) : (
+                <Text style={shared.loginBtnText}>
+                  {mode === 'signup' ? '회원가입 하기' : '인증하기'}
+                </Text>
+              )}
             </TouchableOpacity>
           </View>
 
@@ -108,33 +171,5 @@ const ConfirmEmail: React.FC<ConfirmEmailProps> = ({ mode = 'signup', onConfirm 
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  emailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  emailInput: {
-    flex: 1,
-  },
-  sendBtn: {
-    borderWidth: 1.5,
-    borderColor: BLUE,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sendBtnSent: {
-    borderColor: '#aab4be',
-  },
-  sendBtnText: {
-    color: BLUE,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-});
 
 export default ConfirmEmail;

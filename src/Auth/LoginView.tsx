@@ -7,9 +7,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { loginStyles as styles } from './LoginView.styles';
+import { login } from '../api/auth';
+import { saveTokens } from '../api/tokenStorage';
 
 interface LoginViewProps {
   onLogin?: () => void;
@@ -20,7 +24,31 @@ interface LoginViewProps {
 const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSignup, onResetPassword }) => {
   const [id, setId]             = useState('');
   const [password, setPassword] = useState('');
-  const [resetPassword, setResetPassword] = useState('');
+  const [loading, setLoading]   = useState(false);
+
+  const handleLogin = async () => {
+    // ⚠️ 임시: 서버 연결 전이라 인증 없이 바로 메인으로 이동
+    // TODO: 서버 연결되면 아래 블록 주석을 풀고 이 두 줄을 삭제하세요.
+    onLogin?.();
+    return;
+
+    /* eslint-disable no-unreachable */
+    // if (!id.trim() || !password) {
+    //   Alert.alert('알림', '아이디와 비밀번호를 모두 입력해주세요.');
+    //   return;
+    // }
+    // try {
+    //   setLoading(true);
+    //   const tokens = await login(id.trim(), password);
+    //   await saveTokens(tokens);
+    //   onLogin?.();
+    // } catch (e: any) {
+    //   Alert.alert('로그인 실패', e?.message ?? '로그인에 실패했습니다.');
+    // } finally {
+    //   setLoading(false);
+    // }
+    /* eslint-enable no-unreachable */
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -68,8 +96,17 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSignup, onResetPasswor
 
           {/* 버튼 영역 */}
           <View style={styles.actions}>
-            <TouchableOpacity style={styles.loginBtn} activeOpacity={0.85} onPress={onLogin}>
-              <Text style={styles.loginBtnText}>로그인 하기</Text>
+            <TouchableOpacity
+              style={styles.loginBtn}
+              activeOpacity={0.85}
+              onPress={handleLogin}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#ffffff" />
+              ) : (
+                <Text style={styles.loginBtnText}>로그인 하기</Text>
+              )}
             </TouchableOpacity>
 
             <View style={styles.divider}>

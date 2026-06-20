@@ -7,14 +7,21 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { loginStyles as styles } from './LoginView.styles';
 import PhoneInput from '../component/PhoneInput';
 
+export interface SignUpData {
+  userId: string;
+  userPwd: string;
+}
+
 interface SignUpViewProps {
   onBack?: () => void;
-  onNext?: () => void;
+  /** 아이디/비밀번호 입력 완료 시 다음(이메일 인증) 단계로 데이터 전달 */
+  onNext?: (data: SignUpData) => void;
 }
 
 const SignUpView: React.FC<SignUpViewProps> = ({ onBack, onNext }) => {
@@ -22,6 +29,19 @@ const SignUpView: React.FC<SignUpViewProps> = ({ onBack, onNext }) => {
   const [password, setPassword]         = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [phone, setPhone]               = useState('');
+
+  const handleNext = () => {
+    if (!id.trim() || !password) {
+      Alert.alert('알림', '아이디와 비밀번호를 입력해주세요.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      Alert.alert('알림', '비밀번호가 일치하지 않습니다.');
+      return;
+    }
+    // 실제 회원가입(/signup) 호출은 이메일 인증 단계에서 이메일과 함께 진행
+    onNext?.({ userId: id.trim(), userPwd: password });
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -52,7 +72,6 @@ const SignUpView: React.FC<SignUpViewProps> = ({ onBack, onNext }) => {
               value={id}
               onChangeText={setId}
               autoCapitalize="none"
-              keyboardType="email-address"
             />
             <TextInput
               style={styles.input}
@@ -76,7 +95,11 @@ const SignUpView: React.FC<SignUpViewProps> = ({ onBack, onNext }) => {
 
           {/* 버튼 영역 */}
           <View style={styles.actions}>
-            <TouchableOpacity style={styles.loginBtn} activeOpacity={0.85} onPress={onNext}>
+            <TouchableOpacity
+              style={styles.loginBtn}
+              activeOpacity={0.85}
+              onPress={handleNext}
+            >
               <Text style={styles.loginBtnText}>다음</Text>
             </TouchableOpacity>
           </View>
