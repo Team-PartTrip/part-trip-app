@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet } from 'react-native';
+import { View, Text, TextInput } from 'react-native';
+import colors from '../assets/constants/colors';
+import { phoneInputStyles as styles } from './PhoneInput.styles';
 
 const FLAG = '🇰🇷';
 const DIAL = '+82';
@@ -42,7 +44,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({ onChange }) => {
       <TextInput
         style={styles.input}
         placeholder="전화번호를 입력하세요."
-        placeholderTextColor="#aab4be"
+        placeholderTextColor={colors.placeholder}
         keyboardType="number-pad"
         value={formatPhone(digits)}
         onChangeText={handleChangeText}
@@ -50,44 +52,5 @@ const PhoneInput: React.FC<PhoneInputProps> = ({ onChange }) => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#dce6f0',
-    borderRadius: 12,
-    backgroundColor: '#f8fafd',
-    paddingHorizontal: 14,
-    height: 52,
-  },
-  dialArea: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingRight: 10,
-  },
-  flag: {
-    fontSize: 20,
-  },
-  code: {
-    fontSize: 14,
-    color: '#3a4a5a',
-    fontWeight: '600',
-  },
-  divider: {
-    width: 1,
-    height: 22,
-    backgroundColor: '#dce6f0',
-    marginRight: 12,
-  },
-  input: {
-    flex: 1,
-    fontSize: 15,
-    color: '#1a2a3a',
-    padding: 0,
-  },
-});
 
 export default PhoneInput;

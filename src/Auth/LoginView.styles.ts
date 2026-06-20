@@ -1,12 +1,10 @@
 import { StyleSheet } from 'react-native';
-
-const BLUE      = '#1a7fd4';
-const BLUE_DARK = '#155fa0';
+import colors from '../assets/constants/colors';
 
 export const loginStyles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.white,
   },
   flex: {
     flex: 1,
@@ -31,15 +29,15 @@ export const loginStyles = StyleSheet.create({
     letterSpacing: -1,
   },
   logoPart: {
-    color: BLUE,
+    color: colors.primary,
   },
   logoTrip: {
-    color: BLUE_DARK,
+    color: colors.primaryDark,
   },
   title: {
     fontSize: 26,
     fontWeight: '800',
-    color: '#1a2a3a',
+    color: colors.textPrimary,
     letterSpacing: -0.5,
   },
 
@@ -49,20 +47,20 @@ export const loginStyles = StyleSheet.create({
   },
   input: {
     borderWidth: 1.5,
-    borderColor: '#dce6f0',
+    borderColor: colors.border,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 15,
-    color: '#1a2a3a',
-    backgroundColor: '#f8fafd',
+    color: colors.textPrimary,
+    backgroundColor: colors.inputBg,
   },
   forgotBtn: {
     alignSelf: 'flex-end',
   },
   forgotText: {
     fontSize: 13,
-    color: '#7a9ab5',
+    color: colors.forgotText,
   },
 
   // 버튼
@@ -70,18 +68,18 @@ export const loginStyles = StyleSheet.create({
     gap: 12,
   },
   loginBtn: {
-    backgroundColor: BLUE,
+    backgroundColor: colors.primary,
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
-    shadowColor: BLUE,
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 5,
   },
   loginBtnText: {
-    color: '#ffffff',
+    color: colors.textOnPrimary,
     fontSize: 16,
     fontWeight: '700',
     letterSpacing: 0.3,
@@ -97,11 +95,11 @@ export const loginStyles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#dce6f0',
+    backgroundColor: colors.border,
   },
   dividerText: {
     fontSize: 13,
-    color: '#9ab0c4',
+    color: colors.textMuted,
     fontWeight: '500',
   },
 
@@ -111,37 +109,37 @@ export const loginStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: '#dce6f0',
+    borderColor: colors.border,
     borderRadius: 12,
     paddingVertical: 14,
     gap: 10,
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.white,
   },
   googleG: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#4285F4',
+    color: colors.google,
   },
   googleText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#1a2a3a',
+    color: colors.textPrimary,
   },
 
   // 회원가입 버튼
   signupBtn: {
-    backgroundColor: BLUE,
+    backgroundColor: colors.primary,
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
-    shadowColor: BLUE,
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 5,
   },
   signupText: {
-    color: '#ffffff',
+    color: colors.textOnPrimary,
     fontSize: 16,
     fontWeight: '700',
     letterSpacing: 0.3,
