@@ -1,359 +1,256 @@
-import React, { useRef } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Dimensions,
-  ImageBackground,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-const { width } = Dimensions.get('window');
-
-// ── 색상 상수 ───────────────────────────────────────
-const BLUE      = '#1a7fd4';
-const BLUE_DARK = '#155fa0';
-const BG        = '#f4f7fb';
-const CARD_BG   = '#ffffff';
-// ────────────────────────────────────────────────────
+import TabBar, { TabKey } from '../component/TabBar';
+import colors from '../assets/constants/colors';
+import { mainStyles as styles } from './MainView.styles';
 
 // ── 더미 데이터 ──────────────────────────────────────
-const COUNTRY = {
-  name: '대한민국',
+const TRIP = {
+  name: '싱가포르',
   dDay: 1488,
-  userName: '안녕하세요구르트',
-  info: [
-    {
-      title: '1. 지리',
-      lines: [
-        '위치: 동아시아, 한반도 남부',
-        '면적: 약 100,210 km²',
-        '수도: 서울',
-        '주요 도시: 부산, 인천, 대구, 대전, 광주, 수원',
-      ],
-    },
-    {
-      title: '2. 인구 & 사회',
-      lines: [
-        '인구: 약 5,170만 명',
-        '공용어: 한국어',
-        '종교: 개신교, 불교, 가톨릭 등 (무종교 인구도 다수)',
-        '민족: 한민족 (단일 민족 국가)',
-      ],
-    },
-    {
-      title: '3. 경제',
-      lines: [
-        'GDP: 세계 약 13~14위 (약 1조 7천억 달러)',
-        '주요 산업: 반도체, 자동차, 조선, 철강, IT, K-콘텐츠',
-        '주요 기업: 삼성, 현대, LG, SK, 카카오, 네이버',
-      ],
-    },
-    {
-      title: '4. 문화',
-      lines: [
-        '한류(K-Wave): K-pop, K-드라마, 영화(오징어 게임, 기생충 등)로 세계적 영향력',
-        '음식: 김치, 비빔밥, 불고기, 삼겹살 등',
-        '전통 명절: 설날, 추석',
-      ],
-    },
-    {
-      title: '5. 기타',
-      lines: [
-        '화폐: 대한민국 원 (KRW, ₩)',
-        '국가 코드: KR / +82 (전화)',
-        '시간대: UTC+9 (한국 표준시)',
-        '인터넷 속도: 세계 최고 수준',
-      ],
-    },
-  ],
+  localTime: 'PM 10:24',
+  exchange: '1 SGD = 1200 KRW',
+  greeting: { day: 1, hello: 'Hello', local: '안녕하세요' },
 };
 
-const TOOLS = [
-  { icon: '$',  label: '환율 계산기' },
-  { icon: '✓=', label: '여행 체크 리스트' },
-  { icon: '🏙', label: '캐릭터 랭킹' },
-  { icon: '🤝', label: '에티켓' },
-  { icon: '✱',  label: '의료 긴급 카드' },
-  { icon: '📞', label: '국가 긴급 번호' },
+const POPULATION = [
+  { flag: '🇨🇳', label: '중국계', pct: 75, color: colors.primary },
+  { flag: '🇲🇾', label: '말레이계', pct: 14, color: colors.red },
+  { flag: '🇮🇳', label: '인도계', pct: 9, color: colors.teal },
 ];
+
+const POPULATION_NOTE =
+  '중국계가 75%, 말레이계 14%, 인도계는 9%로\n중국계가 주로 구성되어 있으며\n여러 문화가 공존하는 다문화 국가입니다.';
+
+interface CalCell {
+  d: number;
+  muted?: boolean;
+  red?: boolean;
+  selected?: boolean;
+}
+
+const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+const WEEK1: CalCell[] = [
+  { d: 28, muted: true }, { d: 29, muted: true }, { d: 30, muted: true },
+  { d: 30, muted: true }, { d: 30, muted: true }, { d: 1 }, { d: 2 },
+];
+const WEEK2: CalCell[] = [
+  { d: 3 }, { d: 4 }, { d: 5, red: true }, { d: 6 }, { d: 7 },
+  { d: 8, selected: true }, { d: 9 },
+];
+
+const EVENT = {
+  tag: '음식',
+  title: '싱가포르 푸드 페스티벌',
+  desc: '전 세계 미식가들의 축제',
+  time: '19:45, 20:45',
+  place: '베이프론트 이벤트 스페이스',
+};
 // ────────────────────────────────────────────────────
 
-/** 상단 여행 배너 카드 */
+/** 상단 헤더 */
+const Header: React.FC = () => (
+  <View style={styles.header}>
+    <Text style={styles.headerLogo}>
+      <Text style={styles.headerLogoPart}>Part</Text>
+      <Text style={styles.headerLogoTrip}>Trip</Text>
+    </Text>
+    <TouchableOpacity style={styles.headerProfile}>
+      <Text style={styles.headerProfileIcon}>👤</Text>
+    </TouchableOpacity>
+  </View>
+);
+
+/** 여행지 배너 */
 const TripBanner: React.FC = () => (
   <View style={styles.bannerCard}>
-    {/* 배경 — 실제로는 ImageBackground에 source={{ uri: '...' }} 사용 */}
     <View style={styles.bannerBg}>
-      {/* 그라데이션 오버레이 */}
       <View style={styles.bannerOverlay} />
-
-      <View style={styles.bannerTopRow}>
-        <Text style={styles.bannerDDay}>D - {COUNTRY.dDay}</Text>
-        <Text style={styles.bannerCountry}>{COUNTRY.name}</Text>
+      <View style={styles.bannerDDayBadge}>
+        <Text style={styles.bannerDDayText}>D - {TRIP.dDay}</Text>
       </View>
-
-      <Text style={styles.bannerUser}>{COUNTRY.userName}</Text>
+      <View style={styles.bannerBottomRow}>
+        <Text style={styles.bannerCountry}>{TRIP.name}</Text>
+        <TouchableOpacity style={styles.changeBtn} activeOpacity={0.85}>
+          <Text style={styles.changeBtnText}>여행지 변경 ›</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   </View>
 );
 
-/** 국가 정보 카드 */
-const CountryInfoCard: React.FC = () => (
-  <View style={styles.card}>
-    <Text style={styles.cardTitle}>{COUNTRY.name}?</Text>
-    {COUNTRY.info.map((section) => (
-      <View key={section.title} style={styles.infoSection}>
-        <Text style={styles.infoSectionTitle}>{section.title}</Text>
-        {section.lines.map((line) => (
-          <Text key={line} style={styles.infoLine}>{line}</Text>
-        ))}
+/** 인사말(번역) 카드 */
+const GreetingCard: React.FC = () => (
+  <View style={styles.greetingCard}>
+    <View style={styles.speakerCircle}>
+      <Text style={styles.speakerIcon}>🔊</Text>
+    </View>
+    <View style={styles.greetingTextArea}>
+      <View style={styles.dayBadge}>
+        <Text style={styles.dayBadgeText}>Day {TRIP.greeting.day}</Text>
       </View>
-    ))}
+      <Text style={styles.greetingHello}>{TRIP.greeting.hello}</Text>
+      <Text style={styles.greetingLocal}>{TRIP.greeting.local}</Text>
+    </View>
+    <Text style={styles.translateIcon}>文ᴬ</Text>
   </View>
 );
 
-/** 메뉴판 번역 버튼 */
-const MenuTranslateButton: React.FC = () => (
-  <TouchableOpacity style={styles.translateBtn} activeOpacity={0.8}>
-    <Text style={styles.translateIcon}>🍽</Text>
-    <Text style={styles.translateText}>메뉴판 번역</Text>
-  </TouchableOpacity>
+/** 현지 시각 / 환율 카드 */
+const StatCards: React.FC = () => (
+  <View style={styles.statRow}>
+    <View style={styles.statCard}>
+      <Text style={styles.statLabel}>현지 시각</Text>
+      <Text style={styles.statValue}>{TRIP.localTime}</Text>
+    </View>
+    <View style={styles.statCard}>
+      <Text style={styles.statLabel}>오늘의 환율</Text>
+      <Text style={styles.statValue}>{TRIP.exchange}</Text>
+    </View>
+  </View>
 );
 
-/** 툴 그리드 */
-const ToolGrid: React.FC = () => (
-  <View style={styles.toolGrid}>
-    {TOOLS.map((tool) => (
-      <TouchableOpacity key={tool.label} style={styles.toolItem} activeOpacity={0.75}>
-        <View style={styles.toolCircle}>
-          <Text style={styles.toolIcon}>{tool.icon}</Text>
+/** 여행지 정보 (인구 구성) */
+const TripInfoSection: React.FC = () => (
+  <View>
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionIcon}>👥</Text>
+      <Text style={styles.sectionTitle}>여행지 정보</Text>
+    </View>
+
+    <View style={styles.carouselRow}>
+      <Text style={styles.chevron}>‹</Text>
+
+      <View style={[styles.card, styles.infoCard]}>
+        <Text style={styles.cardTitle}>인구 구성</Text>
+
+        {POPULATION.map((p) => (
+          <View key={p.label} style={styles.popItem}>
+            <View style={styles.popLabelRow}>
+              <Text style={styles.popLabel}>
+                {p.flag}  {p.label}
+              </Text>
+              <Text style={styles.popPct}>{p.pct}%</Text>
+            </View>
+            <View style={styles.popTrack}>
+              <View
+                style={[
+                  styles.popFill,
+                  { width: `${p.pct}%`, backgroundColor: p.color },
+                ]}
+              />
+            </View>
+          </View>
+        ))}
+
+        <View style={styles.noteBox}>
+          <Text style={styles.noteText}>{POPULATION_NOTE}</Text>
         </View>
-        <Text style={styles.toolLabel}>{tool.label}</Text>
+      </View>
+
+      <Text style={styles.chevron}>›</Text>
+    </View>
+  </View>
+);
+
+/** 이달의 축제 & 이벤트 */
+const FestivalSection: React.FC = () => (
+  <View>
+    <View style={styles.sectionHeaderBetween}>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionIcon}>📅</Text>
+        <Text style={styles.sectionTitle}>이달의 축제 & 이벤트</Text>
+      </View>
+      <TouchableOpacity>
+        <Text style={styles.seeAll}>전체보기 →</Text>
       </TouchableOpacity>
-    ))}
+    </View>
+
+    {/* 달력 */}
+    <View style={styles.card}>
+      <View style={styles.calHeader}>
+        <Text style={styles.calMonth}>2024년 5월</Text>
+        <Text style={styles.calNav}>‹  ›</Text>
+      </View>
+
+      <View style={styles.calRow}>
+        {WEEKDAYS.map((w) => (
+          <Text key={w} style={styles.calWeekday}>{w}</Text>
+        ))}
+      </View>
+
+      {[WEEK1, WEEK2].map((week, wi) => (
+        <View key={wi} style={styles.calRow}>
+          {week.map((cell, ci) => (
+            <View key={ci} style={styles.calCell}>
+              <View style={cell.selected ? styles.calSelected : undefined}>
+                <Text
+                  style={[
+                    styles.calDay,
+                    cell.muted && styles.calMuted,
+                    cell.red && styles.calRed,
+                    cell.selected && styles.calSelectedText,
+                  ]}
+                >
+                  {cell.d}
+                </Text>
+              </View>
+              {cell.selected && <View style={styles.calDot} />}
+            </View>
+          ))}
+        </View>
+      ))}
+    </View>
+
+    {/* 이벤트 카드 */}
+    <TouchableOpacity style={styles.eventCard} activeOpacity={0.85}>
+      <View style={styles.eventThumb}>
+        <Text style={styles.eventThumbIcon}>🎆</Text>
+      </View>
+      <View style={styles.eventBody}>
+        <View style={styles.eventTag}>
+          <Text style={styles.eventTagText}>{EVENT.tag}</Text>
+        </View>
+        <Text style={styles.eventTitle}>{EVENT.title}</Text>
+        <Text style={styles.eventDesc}>{EVENT.desc}</Text>
+        <View style={styles.eventMetaRow}>
+          <Text style={styles.eventMeta}>🕐 {EVENT.time}</Text>
+          <Text style={styles.eventMeta}>📍 {EVENT.place}</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
   </View>
 );
 
 /** 메인 뷰 */
 const MainView: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<TabKey>('home');
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      {/* 헤더 */}
-      <View style={styles.header}>
-        <Text style={styles.headerLogo}>
-          <Text style={styles.headerLogoPart}>Part</Text>
-          <Text style={styles.headerLogoTrip}>Trip</Text>
-        </Text>
-        <TouchableOpacity style={styles.headerProfile}>
-          <Text style={styles.headerProfileIcon}>👤</Text>
-        </TouchableOpacity>
-      </View>
+      <Header />
 
-      {/* 스크롤 콘텐츠 */}
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         <TripBanner />
-        <CountryInfoCard />
-        <MenuTranslateButton />
-        <ToolGrid />
-        <View style={{ height: 32 }} />
+        <GreetingCard />
+        <StatCards />
+        <TripInfoSection />
+        <FestivalSection />
       </ScrollView>
+
+      <TabBar active={activeTab} onChange={setActiveTab} />
     </SafeAreaView>
   );
 };
-
-// ── 스타일 ───────────────────────────────────────────
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: BG,
-  },
-
-  // 헤더
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e8eef5',
-  },
-  headerLogo: {
-    fontSize: 26,
-    fontWeight: '900',
-    fontStyle: 'italic',
-  },
-  headerLogoPart: {
-    color: BLUE,
-  },
-  headerLogoTrip: {
-    color: BLUE_DARK,
-  },
-  headerProfile: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#e8eef5',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerProfileIcon: {
-    fontSize: 18,
-  },
-
-  // 스크롤
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 16,
-    gap: 14,
-  },
-
-  // 배너 카드
-  bannerCard: {
-    borderRadius: 16,
-    overflow: 'hidden',
-    height: 180,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 6,
-  },
-  bannerBg: {
-    flex: 1,
-    backgroundColor: '#5b9fd6', // 실제 이미지 없을 때 폴백 색상
-    padding: 18,
-    justifyContent: 'space-between',
-  },
-  bannerOverlay: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(0,40,90,0.35)',
-  },
-  bannerTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  bannerDDay: {
-    color: '#ffffff',
-    fontSize: 22,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-  },
-  bannerCountry: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  bannerUser: {
-    color: 'rgba(255,255,255,0.9)',
-    fontSize: 18,
-    fontWeight: '700',
-  },
-
-  // 국가 정보 카드
-  card: {
-    backgroundColor: CARD_BG,
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  cardTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#1a2a3a',
-    marginBottom: 14,
-  },
-  infoSection: {
-    marginBottom: 14,
-  },
-  infoSectionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: BLUE_DARK,
-    marginBottom: 4,
-  },
-  infoLine: {
-    fontSize: 13,
-    color: '#3a4a5a',
-    lineHeight: 20,
-  },
-
-  // 메뉴판 번역 버튼
-  translateBtn: {
-    backgroundColor: CARD_BG,
-    borderRadius: 14,
-    paddingVertical: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    borderWidth: 1.5,
-    borderColor: '#dce6f0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  translateIcon: {
-    fontSize: 20,
-  },
-  translateText: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#1a2a3a',
-    letterSpacing: 0.3,
-  },
-
-  // 툴 그리드
-  toolGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: 16,
-  },
-  toolItem: {
-    width: (width - 32 - 32) / 3,
-    alignItems: 'center',
-    gap: 8,
-  },
-  toolCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: BLUE,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: BLUE,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  toolIcon: {
-    fontSize: 22,
-    color: '#ffffff',
-  },
-  toolLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#2a3a4a',
-    textAlign: 'center',
-  },
-});
 
 export default MainView;
