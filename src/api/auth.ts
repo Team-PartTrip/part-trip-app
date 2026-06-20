@@ -1,0 +1,62 @@
+import { request } from './client';
+
+export interface TokenResponse {
+  accessToken: string;
+  refreshToken: string;
+}
+
+export interface SignUpPayload {
+  userId: string;
+  userPwd: string;
+  userMail: string;
+  /** 가입 구분 (기본 'EMAIL') */
+  signUpDivision?: string;
+  /** 국가 코드 (기본 'KR') */
+  myCountry?: string;
+}
+
+/** 로그인 → accessToken / refreshToken 발급 */
+export function login(userId: string, userPwd: string): Promise<TokenResponse> {
+  return request<TokenResponse>('/api/auth/login', {
+    body: { userId, userPwd },
+  });
+}
+
+/** accessToken 재발급 */
+export function refresh(refreshToken: string): Promise<TokenResponse> {
+  return request<TokenResponse>('/api/auth/refresh', {
+    body: { refreshToken },
+  });
+}
+
+/** 로그아웃 (서버의 refreshToken 폐기) */
+export function logout(refreshToken: string): Promise<string> {
+  return request<string>('/api/auth/logout', {
+    body: { refreshToken },
+  });
+}
+
+/** 회원가입 시작: 임시 저장 + 이메일 인증번호 발송 */
+export function startSignUp(payload: SignUpPayload): Promise<string> {
+  return request<string>('/api/auth/signup', {
+    body: {
+      signUpDivision: 'EMAIL',
+      myCountry: 'KR',
+      ...payload,
+    },
+  });
+}
+
+/** 이메일 인증번호 재발송 */
+export function sendEmailCode(email: string): Promise<string> {
+  return request<string>('/api/auth/email/send', {
+    body: { email },
+  });
+}
+
+/** 이메일 인증번호 검증 + 회원가입 완료 (가입된 회원 정보 반환) */
+export function verifyEmailCode(email: string, code: string): Promise<unknown> {
+  return request('/api/auth/email/verify', {
+    body: { email, code },
+  });
+}
