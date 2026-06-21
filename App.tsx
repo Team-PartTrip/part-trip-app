@@ -1,66 +1,188 @@
 import React, { useState } from 'react';
-import { StatusBar, useColorScheme } from 'react-native';
+import { StatusBar, useColorScheme, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import LaunchScreen from './src/screens/LaunchScreen';
-import LoginView from './src/Auth/LoginView';
-import SignUpView, { SignUpData } from './src/Auth/SingUpView';
-import ConfirmEmail from './src/Auth/ConfirmEmail';
-import ResetPassword from './src/Auth/ResetPassword';
-import MainView from './src/screens/MainView';
+import {
+  NavigationContainer,
+  useNavigationContainerRef,
+} from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-type Screen = 'launch' | 'login' | 'signup' | 'confirmEmail' | 'resetPassword' | 'main';
+import colors from './src/assets/constants/colors';
+import AppHeader from './src/component/AppHeader';
+import TabBar, { TabKey } from './src/component/TabBar';
 
-type ConfirmMode = 'signup' | 'resetPassword';
+import LaunchScreen from './src/screens/LaunchScreen/LaunchScreen';
+import LoginView from './src/screens/Auth/LoginView';
+import SignUpView, { SignUpData } from './src/screens/Auth/SingUpView';
+import ConfirmEmail from './src/screens/Auth/ConfirmEmail';
+import ResetPassword from './src/screens/Auth/ResetPassword';
+import MainView from './src/screens/MainView/MainView';
+import FestivalScreen from './src/screens/FestivalScreen/FestivalScreen';
+import DestinationScreen from './src/screens/DestinationScreen/DestinationScreen';
+import CameraScreen from './src/screens/CameraScreen/CameraScreen';
+import NearbyPlacesScreen from './src/screens/NearbyPlacesScreen/NearbyPlacesScreen';
+import CommunityView from './src/screens/CommunityView/CommunityView';
+import RecordView from './src/screens/RecordView/RecordView';
+import MissionView from './src/screens/MissionView/MissionView';
+import ProfileView from './src/screens/ProfileView/ProfileView';
+
+export type RootStackParamList = {
+  Launch: undefined;
+  Login: undefined;
+  SignUp: undefined;
+  ConfirmEmail: { mode: 'signup' | 'resetPassword'; signupData?: SignUpData };
+  ResetPassword: undefined;
+  Main: undefined;
+  Festival: undefined;
+  Destination: undefined;
+  Camera: undefined;
+  NearbyPlaces: undefined;
+  Community: undefined;
+  Record: undefined;
+  Mission: undefined;
+  Profile: undefined;
+};
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
+
+// 상단 헤더 + 하단 탭바를 숨길 화면(인증/스플래시)
+const AUTH_ROUTES = ['Launch', 'Login', 'SignUp', 'ConfirmEmail', 'ResetPassword'];
+
+// 탭 ↔ 라우트 매핑
+const ROUTE_BY_TAB: Record<TabKey, keyof RootStackParamList> = {
+  home: 'Main',
+  community: 'Community',
+  record: 'Record',
+  mission: 'Mission',
+};
+const TAB_BY_ROUTE: Record<string, TabKey> = {
+  Main: 'home',
+  Community: 'community',
+  Record: 'record',
+  Mission: 'mission',
+};
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
-  const [screen, setScreen] = useState<Screen>('launch');
-  const [confirmMode, setConfirmMode] = useState<ConfirmMode>('signup');
-  const [signupData, setSignupData] = useState<SignUpData | undefined>(undefined);
+  const navRef = useNavigationContainerRef<RootStackParamList>();
+  const [routeName, setRouteName] = useState<string | undefined>(undefined);
+
+  const showChrome = !!routeName && !AUTH_ROUTES.includes(routeName);
+
+  const activeTab =
+    routeName && TAB_BY_ROUTE[routeName]
+      ? TAB_BY_ROUTE[routeName]
+      : routeName === 'Camera' || routeName === 'NearbyPlaces'
+      ? 'camera'
+      : '';
+
+  const handleRouteChange = () => setRouteName(navRef.getCurrentRoute()?.name);
 
   return (
     <SafeAreaProvider>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      {screen === 'launch' && (
-        <LaunchScreen onFinish={() => setScreen('login')} />
-      )}
-      {screen === 'login' && (
-        <LoginView
-          onLogin={() => setScreen('main')}
-          onSignup={() => setScreen('signup')}
-          onResetPassword={() => {
-            setConfirmMode('resetPassword');
-            setScreen('confirmEmail');
-          }}
-        />
-      )}
-      {screen === 'signup' && (
-        <SignUpView
-          onBack={() => setScreen('login')}
-          onNext={(data) => {
-            setSignupData(data);
-            setConfirmMode('signup');
-            setScreen('confirmEmail');
-          }}
-        />
-      )}
-      {screen === 'confirmEmail' && (
-        <ConfirmEmail
-          mode={confirmMode}
-          signupData={confirmMode === 'signup' ? signupData : undefined}
-          onConfirm={() => {
-            if (confirmMode === 'signup') {
-              setScreen('login');
-            } else {
-              setScreen('resetPassword');
-            }
-          }}
-        />
-      )}
-      {screen === 'resetPassword' && (
-        <ResetPassword onConfirm={() => setScreen('login')} />
-      )}
-      {screen === 'main' && <MainView />}
+      <NavigationContainer
+        ref={navRef}
+        onReady={handleRouteChange}
+        onStateChange={handleRouteChange}
+      >
+        <View style={{ flex: 1, backgroundColor: colors.background }}>
+          {/* 고정 상단 헤더 */}
+          {showChrome && <AppHeader onProfile={() => navRef.navigate('Profile')} />}
+
+          {/* 콘텐츠 (네비게이터로 교체되는 영역) */}
+          <View style={{ flex: 1 }}>
+            <Stack.Navigator
+              initialRouteName="Launch"
+              screenOptions={{ headerShown: false, animation: 'slide_from_right' }}
+            >
+              <Stack.Screen name="Launch">
+                {({ navigation }) => (
+                  <LaunchScreen onFinish={() => navigation.replace('Login')} />
+                )}
+              </Stack.Screen>
+
+              <Stack.Screen name="Login">
+                {({ navigation }) => (
+                  <LoginView
+                    onLogin={() => navigation.replace('Main')}
+                    onSignup={() => navigation.navigate('SignUp')}
+                    onResetPassword={() =>
+                      navigation.navigate('ConfirmEmail', { mode: 'resetPassword' })
+                    }
+                  />
+                )}
+              </Stack.Screen>
+
+              <Stack.Screen name="SignUp">
+                {({ navigation }) => (
+                  <SignUpView
+                    onBack={() => navigation.goBack()}
+                    onNext={(data) =>
+                      navigation.navigate('ConfirmEmail', { mode: 'signup', signupData: data })
+                    }
+                  />
+                )}
+              </Stack.Screen>
+
+              <Stack.Screen name="ConfirmEmail">
+                {({ navigation, route }) => {
+                  const mode = route.params?.mode ?? 'signup';
+                  return (
+                    <ConfirmEmail
+                      mode={mode}
+                      signupData={route.params?.signupData}
+                      onConfirm={() =>
+                        mode === 'signup'
+                          ? navigation.navigate('Login')
+                          : navigation.navigate('ResetPassword')
+                      }
+                    />
+                  );
+                }}
+              </Stack.Screen>
+
+              <Stack.Screen name="ResetPassword">
+                {({ navigation }) => (
+                  <ResetPassword onConfirm={() => navigation.navigate('Login')} />
+                )}
+              </Stack.Screen>
+
+              <Stack.Screen name="Main">
+                {({ navigation }) => (
+                  <MainView
+                    onOpenFestival={() => navigation.navigate('Festival')}
+                    onOpenDestination={() => navigation.navigate('Destination')}
+                  />
+                )}
+              </Stack.Screen>
+
+              <Stack.Screen name="Camera">
+                {({ navigation }) => (
+                  <CameraScreen onOpenNearby={() => navigation.navigate('NearbyPlaces')} />
+                )}
+              </Stack.Screen>
+
+              <Stack.Screen name="Festival" component={FestivalScreen} />
+              <Stack.Screen name="Destination" component={DestinationScreen} />
+              <Stack.Screen name="NearbyPlaces" component={NearbyPlacesScreen} />
+              <Stack.Screen name="Community" component={CommunityView} />
+              <Stack.Screen name="Record" component={RecordView} />
+              <Stack.Screen name="Mission" component={MissionView} />
+              <Stack.Screen name="Profile" component={ProfileView} />
+            </Stack.Navigator>
+          </View>
+
+          {/* 고정 하단 탭바 */}
+          {showChrome && (
+            <TabBar
+              active={activeTab}
+              onTabPress={(key) => navRef.navigate(ROUTE_BY_TAB[key] as never)}
+              onCamera={() => navRef.navigate('Camera')}
+            />
+          )}
+        </View>
+      </NavigationContainer>
     </SafeAreaProvider>
   );
 }
