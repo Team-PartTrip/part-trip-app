@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import colors from '../assets/constants/colors';
+import colors from '../../assets/constants/colors';
 
 export const mainStyles = StyleSheet.create({
   safeArea: {
@@ -60,7 +60,11 @@ export const mainStyles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   bannerOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: colors.bannerOverlay,
   },
   bannerDDayBadge: {
@@ -384,5 +388,124 @@ export const mainStyles = StyleSheet.create({
   eventMeta: {
     fontSize: 11,
     color: colors.eventMeta,
+  },
+
+  // ── 여행지 정보 캐러셀 ──
+  carouselWrap: {
+    position: 'relative',
+  },
+  chevBtn: {
+    position: 'absolute',
+    top: '50%',
+    marginTop: -16,
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+  },
+  chevLeft: { left: -6 },
+  chevRight: { right: -6 },
+  dotsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 10,
+  },
+  dot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: colors.border,
+  },
+  dotActive: {
+    backgroundColor: colors.primary,
+    width: 18,
+  },
+
+  // 현지 날씨 카드
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 14,
+  },
+  infoIconCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: colors.tint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  infoIcon: { fontSize: 18 },
+  infoTextWrap: { flex: 1 },
+  infoLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginBottom: 2,
+  },
+  infoDesc: {
+    fontSize: 13,
+    color: colors.textSub,
+    lineHeight: 18,
+  },
+
+  // 대표 음식 카드
+  foodRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  foodItem: {
+    flex: 1,
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: 12,
+    padding: 12,
+    alignItems: 'center',
+    gap: 6,
+  },
+  foodThumb: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    backgroundColor: colors.tint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  foodThumbIcon: { fontSize: 26 },
+  foodName: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: colors.textPrimary,
+  },
+  foodDesc: {
+    fontSize: 11,
+    color: colors.textSub,
+    textAlign: 'center',
+    lineHeight: 15,
+  },
+
+  // 현지 에티켓 카드
+  etiquetteItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    marginBottom: 8,
+  },
+  etiquetteText: {
+    flex: 1,
+    fontSize: 13,
+    color: colors.textPrimary,
+    fontWeight: '600',
+  },
+  etiquetteIcon: {
+    fontSize: 16,
+    marginLeft: 8,
   },
 });

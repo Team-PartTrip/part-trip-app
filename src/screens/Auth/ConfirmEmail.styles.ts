@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import colors from '../assets/constants/colors';
+import colors from '../../assets/constants/colors';
 
 export const confirmEmailStyles = StyleSheet.create({
   emailRow: {

@@ -12,8 +12,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { loginStyles as styles } from './LoginView.styles';
-import { login } from '../api/auth';
-import { saveTokens } from '../api/tokenStorage';
+import { login } from '../../api/auth';
+import { saveTokens } from '../../api/tokenStorage';
 
 interface LoginViewProps {
   onLogin?: () => void;

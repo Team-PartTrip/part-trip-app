@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { loginStyles as styles } from './LoginView.styles';
-import PhoneInput from '../component/PhoneInput';
+import PhoneInput from '../../component/PhoneInput';
 
 export interface SignUpData {
   userId: string;
@@ -37,6 +37,14 @@ const SignUpView: React.FC<SignUpViewProps> = ({ onBack, onNext }) => {
     }
     if (password !== confirmPassword) {
       Alert.alert('알림', '비밀번호가 일치하지 않습니다.');
+      return;
+    }
+    if (!phone.trim()) {
+      Alert.alert('알림', '전화번호를 입력해주세요.');
+      return;
+    }
+    if (phone.length < 10) {
+      Alert.alert('알림', '전화번호를 정확히 입력해주세요.');
       return;
     }
     // 실제 회원가입(/signup) 호출은 이메일 인증 단계에서 이메일과 함께 진행

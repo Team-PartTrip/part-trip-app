@@ -13,9 +13,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { loginStyles as shared } from './LoginView.styles';
 import { confirmEmailStyles as styles } from './ConfirmEmail.styles';
-import { startSignUp, verifyEmailCode } from '../api/auth';
+import { startSignUp, verifyEmailCode } from '../../api/auth';
 import type { SignUpData } from './SingUpView';
-import colors from '../assets/constants/colors';
+import colors from '../../assets/constants/colors';
 
 type ConfirmEmailMode = 'signup' | 'resetPassword';
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import colors from '../assets/constants/colors';
+import colors from '../../assets/constants/colors';
 import { launchStyles as styles } from './LaunchScreen.styles';
 
 import {
