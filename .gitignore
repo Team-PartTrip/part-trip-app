@@ -54,6 +54,11 @@ node_modules/
 npm-debug.log
 yarn-error.log
 
+# iCloud 동기화 제외용 폴더 (.nosync) 및 로컬 심볼릭 링크
+*.nosync
+/ios/Pods
+/ios/build
+
 # fastlane
 #
 # It is recommended to not store the screenshots in the git repo. Instead, use fastlane to re-generate the
