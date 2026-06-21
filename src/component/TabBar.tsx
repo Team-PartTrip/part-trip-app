@@ -22,12 +22,13 @@ const RIGHT_TABS: TabItem[] = [
 ];
 
 interface TabBarProps {
-  active?: TabKey;
-  onChange?: (key: TabKey) => void;
+  /** 현재 활성 탭 강조용 */
+  active?: string;
+  onTabPress?: (key: TabKey) => void;
   onCamera?: () => void;
 }
 
-const TabBar: React.FC<TabBarProps> = ({ active = 'home', onChange, onCamera }) => {
+const TabBar: React.FC<TabBarProps> = ({ active = 'home', onTabPress, onCamera }) => {
   const insets = useSafeAreaInsets();
 
   const renderItem = (tab: TabItem) => {
@@ -37,7 +38,7 @@ const TabBar: React.FC<TabBarProps> = ({ active = 'home', onChange, onCamera }) 
         key={tab.key}
         style={styles.item}
         activeOpacity={0.7}
-        onPress={() => onChange?.(tab.key)}
+        onPress={() => onTabPress?.(tab.key)}
       >
         <Text style={[styles.icon, { opacity: isActive ? 1 : 0.5 }]}>{tab.icon}</Text>
         <Text style={[styles.label, isActive && styles.labelActive]}>{tab.label}</Text>
@@ -51,11 +52,7 @@ const TabBar: React.FC<TabBarProps> = ({ active = 'home', onChange, onCamera }) 
 
       {/* 가운데 카메라 버튼 */}
       <View style={styles.centerWrap}>
-        <TouchableOpacity
-          style={styles.cameraBtn}
-          activeOpacity={0.85}
-          onPress={onCamera}
-        >
+        <TouchableOpacity style={styles.cameraBtn} activeOpacity={0.85} onPress={onCamera}>
           <Text style={styles.cameraIcon}>📷</Text>
         </TouchableOpacity>
       </View>
