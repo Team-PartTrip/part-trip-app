@@ -42,10 +42,9 @@ export async function request<T = unknown>(
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    // 무료 ngrok 도메인이 띄우는 브라우저 경고 페이지(HTML) 우회용 헤더
+    'ngrok-skip-browser-warning': 'true',
   };
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
 
   let res: Response;
   try {
