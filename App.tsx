@@ -23,8 +23,15 @@ import DestinationScreen from './src/screens/DestinationScreen/DestinationScreen
 import CameraScreen from './src/screens/CameraScreen/CameraScreen';
 import NearbyPlacesScreen from './src/screens/NearbyPlacesScreen/NearbyPlacesScreen';
 import CommunityView from './src/screens/CommunityView/CommunityView';
+import PostDetailView from './src/screens/CommunityView/PostDetailView';
+import PostCreateView from './src/screens/CommunityView/PostCreateView';
+import DestinationPickerView from './src/screens/CommunityView/DestinationPickerView';
 import RecordView from './src/screens/RecordView/RecordView';
 import MissionView from './src/screens/MissionView/MissionView';
+import AttendanceView from './src/screens/MissionView/AttendanceView';
+import MissionListView from './src/screens/MissionView/MissionListView';
+import MissionDetailView from './src/screens/MissionView/MissionDetailView';
+import MissionVerifyView from './src/screens/MissionView/MissionVerifyView';
 import ProfileView from './src/screens/ProfileView/ProfileView';
 
 export type RootStackParamList = {
@@ -40,14 +47,21 @@ export type RootStackParamList = {
   Camera: undefined;
   NearbyPlaces: undefined;
   Community: undefined;
+  PostDetail: { id: string };
+  PostCreate: { tab?: 'free' | 'review' | 'route'; destination?: string };
+  DestinationPicker: undefined;
   Record: undefined;
   Mission: undefined;
+  Attendance: undefined;
+  MissionList: undefined;
+  MissionDetail: { id: string };
+  MissionVerify: undefined;
   Profile: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-// 상단 헤더 + 하단 탭바를 숨길 화면(인증/스플래시)
+// 상단 헤더 + 하단 탭바를 숨길 화면(인증/스플래시 + 자체 헤더를 가진 하위 화면)
 const AUTH_ROUTES = [
   'Launch',
   'Login',
@@ -55,6 +69,13 @@ const AUTH_ROUTES = [
   'ConfirmEmail',
   'Survey',
   'ResetPassword',
+  'Attendance',
+  'MissionList',
+  'MissionDetail',
+  'MissionVerify',
+  'PostDetail',
+  'PostCreate',
+  'DestinationPicker',
 ];
 
 // 탭 ↔ 라우트 매핑
@@ -201,9 +222,92 @@ function App() {
                 name="NearbyPlaces"
                 component={NearbyPlacesScreen}
               />
-              <Stack.Screen name="Community" component={CommunityView} />
+
+              {/* 커뮤니티 */}
+              <Stack.Screen name="Community">
+                {({ navigation }) => (
+                  <CommunityView
+                    onWrite={tab => navigation.navigate('PostCreate', { tab })}
+                    onOpenPost={id => navigation.navigate('PostDetail', { id })}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="PostDetail">
+                {({ navigation }) => (
+                  <PostDetailView onBack={() => navigation.goBack()} />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="PostCreate">
+                {({ navigation, route }) => (
+                  <PostCreateView
+                    initialTab={route.params?.tab}
+                    destination={route.params?.destination}
+                    onBack={() => navigation.goBack()}
+                    onPickDestination={() =>
+                      navigation.navigate('DestinationPicker')
+                    }
+                    onSubmit={() => navigation.goBack()}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="DestinationPicker">
+                {({ navigation }) => (
+                  <DestinationPickerView
+                    onBack={() => navigation.goBack()}
+                    onSelect={name =>
+                      navigation.navigate('PostCreate', { destination: name })
+                    }
+                  />
+                )}
+              </Stack.Screen>
+
               <Stack.Screen name="Record" component={RecordView} />
-              <Stack.Screen name="Mission" component={MissionView} />
+
+              {/* 미션 */}
+              <Stack.Screen name="Mission">
+                {({ navigation }) => (
+                  <MissionView
+                    onOpenAttendance={() => navigation.navigate('Attendance')}
+                    onOpenCompleted={() => navigation.navigate('MissionList')}
+                    onOpenDetail={id =>
+                      navigation.navigate('MissionDetail', { id })
+                    }
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="Attendance">
+                {({ navigation }) => (
+                  <AttendanceView onBack={() => navigation.goBack()} />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="MissionList">
+                {({ navigation }) => (
+                  <MissionListView
+                    onBack={() => navigation.goBack()}
+                    onOpenDetail={id =>
+                      navigation.navigate('MissionDetail', { id })
+                    }
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="MissionDetail">
+                {({ navigation }) => (
+                  <MissionDetailView
+                    onBack={() => navigation.goBack()}
+                    onVerify={() => navigation.navigate('MissionVerify')}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="MissionVerify">
+                {({ navigation }) => (
+                  <MissionVerifyView
+                    onBack={() => navigation.goBack()}
+                    onDone={() => navigation.navigate('MissionList')}
+                    onHome={() => navigation.navigate('Main')}
+                  />
+                )}
+              </Stack.Screen>
+
               <Stack.Screen name="Profile" component={ProfileView} />
             </Stack.Navigator>
           </View>
