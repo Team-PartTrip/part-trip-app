@@ -27,27 +27,20 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSignup, onResetPasswor
   const [loading, setLoading]   = useState(false);
 
   const handleLogin = async () => {
-    // ⚠️ 임시: 서버 연결 전이라 인증 없이 바로 메인으로 이동
-    // TODO: 서버 연결되면 아래 블록 주석을 풀고 이 두 줄을 삭제하세요.
-    onLogin?.();
-    return;
-
-    /* eslint-disable no-unreachable */
-    // if (!id.trim() || !password) {
-    //   Alert.alert('알림', '아이디와 비밀번호를 모두 입력해주세요.');
-    //   return;
-    // }
-    // try {
-    //   setLoading(true);
-    //   const tokens = await login(id.trim(), password);
-    //   await saveTokens(tokens);
-    //   onLogin?.();
-    // } catch (e: any) {
-    //   Alert.alert('로그인 실패', e?.message ?? '로그인에 실패했습니다.');
-    // } finally {
-    //   setLoading(false);
-    // }
-    /* eslint-enable no-unreachable */
+    if (!id.trim() || !password) {
+      Alert.alert('알림', '아이디와 비밀번호를 모두 입력해주세요.');
+      return;
+    }
+    try {
+      setLoading(true);
+      const tokens = await login(id.trim(), password);
+      await saveTokens(tokens);
+      onLogin?.();
+    } catch (e: any) {
+      Alert.alert('로그인 실패', e?.message ?? '로그인에 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

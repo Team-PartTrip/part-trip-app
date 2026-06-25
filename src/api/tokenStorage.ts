@@ -6,10 +6,10 @@ const REFRESH_KEY = 'parttrip.refreshToken';
 
 /** 로그인 성공 시 토큰 저장 */
 export async function saveTokens(tokens: TokenResponse): Promise<void> {
-  await AsyncStorage.multiSet([
-    [ACCESS_KEY, tokens.accessToken],
-    [REFRESH_KEY, tokens.refreshToken],
-  ]);
+  await AsyncStorage.setMany({
+    [ACCESS_KEY]: tokens.accessToken,
+    [REFRESH_KEY]: tokens.refreshToken,
+  });
 }
 
 export async function getAccessToken(): Promise<string | null> {
@@ -22,5 +22,5 @@ export async function getRefreshToken(): Promise<string | null> {
 
 /** 로그아웃 시 토큰 제거 */
 export async function clearTokens(): Promise<void> {
-  await AsyncStorage.multiRemove([ACCESS_KEY, REFRESH_KEY]);
+  await AsyncStorage.removeMany([ACCESS_KEY, REFRESH_KEY]);
 }
