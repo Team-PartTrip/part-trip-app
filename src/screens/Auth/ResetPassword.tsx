@@ -7,17 +7,44 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { loginStyles as styles } from './LoginView.styles';
+import { resetPassword as resetPasswordApi } from '../../api/auth';
 
 interface ResetPasswordProps {
+  /** 비밀번호를 변경할 (인증 완료된) 이메일 */
+  email: string;
   onConfirm?: () => void;
 }
 
-const ResetPassword: React.FC<ResetPasswordProps> = ({ onConfirm }) => {
+const ResetPassword: React.FC<ResetPasswordProps> = ({ email, onConfirm }) => {
   const [password, setPassword]               = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading]                 = useState(false);
+
+  const handleReset = async () => {
+    if (!password.trim() || !confirmPassword.trim()) {
+      Alert.alert('알림', '비밀번호를 입력해주세요.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      Alert.alert('알림', '비밀번호가 일치하지 않습니다.');
+      return;
+    }
+    try {
+      setLoading(true);
+      await resetPasswordApi(email, password, confirmPassword);
+      Alert.alert('완료', '비밀번호가 변경되었습니다. 다시 로그인해주세요.');
+      onConfirm?.();
+    } catch (e: any) {
+      Alert.alert('변경 실패', e?.message ?? '비밀번호 변경에 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -64,9 +91,14 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ onConfirm }) => {
             <TouchableOpacity
               style={styles.loginBtn}
               activeOpacity={0.85}
-              onPress={onConfirm}
+              onPress={handleReset}
+              disabled={loading}
             >
-              <Text style={styles.loginBtnText}>비밀번호 변경하기</Text>
+              {loading ? (
+                <ActivityIndicator color="#ffffff" />
+              ) : (
+                <Text style={styles.loginBtnText}>비밀번호 변경하기</Text>
+              )}
             </TouchableOpacity>
           </View>
 

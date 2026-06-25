@@ -60,3 +60,31 @@ export function verifyEmailCode(email: string, code: string): Promise<unknown> {
     body: { email, code },
   });
 }
+
+/** [비밀번호 찾기] 가입된 이메일 확인 후 인증번호 발송 */
+export function sendPasswordResetCode(email: string): Promise<string> {
+  return request<string>('/api/auth/password/send-code', {
+    body: { email },
+  });
+}
+
+/** [비밀번호 찾기] 이메일 인증번호 확인 */
+export function verifyPasswordResetCode(
+  email: string,
+  code: string,
+): Promise<string> {
+  return request<string>('/api/auth/password/verify-code', {
+    body: { email, code },
+  });
+}
+
+/** [비밀번호 찾기] 새 비밀번호로 변경 */
+export function resetPassword(
+  email: string,
+  newPassword: string,
+  confirmPassword: string,
+): Promise<string> {
+  return request<string>('/api/auth/password/reset', {
+    body: { email, newPassword, confirmPassword },
+  });
+}

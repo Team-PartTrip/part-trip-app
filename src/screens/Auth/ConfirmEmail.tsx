@@ -13,7 +13,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { loginStyles as shared } from './LoginView.styles';
 import { confirmEmailStyles as styles } from './ConfirmEmail.styles';
-import { startSignUp, verifyEmailCode } from '../../api/auth';
+import {
+  startSignUp,
+  verifyEmailCode,
+  sendPasswordResetCode,
+  verifyPasswordResetCode,
+} from '../../api/auth';
 import type { SignUpData } from './SingUpView';
 import colors from '../../assets/constants/colors';
 
@@ -23,7 +28,8 @@ interface ConfirmEmailProps {
   mode?: ConfirmEmailMode;
   /** 회원가입 화면에서 입력한 아이디/비밀번호 (signup 모드에서 사용) */
   signupData?: SignUpData;
-  onConfirm?: () => void;
+  /** 인증 완료 시 호출. resetPassword 모드에서는 인증된 이메일을 넘겨줌 */
+  onConfirm?: (email?: string) => void;
 }
 
 const ConfirmEmail: React.FC<ConfirmEmailProps> = ({
@@ -41,9 +47,18 @@ const ConfirmEmail: React.FC<ConfirmEmailProps> = ({
       Alert.alert('알림', '이메일을 입력해주세요.');
       return;
     }
-    // 비밀번호 찾기는 백엔드 미구현 상태 → 보류 (UI만 동작)
+    // 비밀번호 찾기: 가입된 이메일 확인 후 인증번호 발송
     if (mode !== 'signup') {
-      setSent(true);
+      try {
+        setLoading(true);
+        await sendPasswordResetCode(email.trim());
+        setSent(true);
+        Alert.alert('알림', '인증코드를 전송했습니다.');
+      } catch (e: any) {
+        Alert.alert('전송 실패', e?.message ?? '인증코드 전송에 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
       return;
     }
     if (!signupData) {
@@ -68,13 +83,21 @@ const ConfirmEmail: React.FC<ConfirmEmailProps> = ({
   };
 
   const handleConfirm = async () => {
-    // 비밀번호 찾기는 백엔드 미구현 → 화면 전환만 (보류)
-    if (mode !== 'signup') {
-      onConfirm?.();
-      return;
-    }
     if (!code.trim()) {
       Alert.alert('알림', '인증코드를 입력해주세요.');
+      return;
+    }
+    // 비밀번호 찾기: 인증번호 확인 후 새 비밀번호 입력 화면으로 이동
+    if (mode !== 'signup') {
+      try {
+        setLoading(true);
+        await verifyPasswordResetCode(email.trim(), code.trim());
+        onConfirm?.(email.trim());
+      } catch (e: any) {
+        Alert.alert('인증 실패', e?.message ?? '인증에 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
       return;
     }
     try {
