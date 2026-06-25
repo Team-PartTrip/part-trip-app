@@ -15,6 +15,7 @@ import LaunchScreen from './src/screens/LaunchScreen/LaunchScreen';
 import LoginView from './src/screens/Auth/LoginView';
 import SignUpView, { SignUpData } from './src/screens/Auth/SingUpView';
 import ConfirmEmail from './src/screens/Auth/ConfirmEmail';
+import SurveyView from './src/screens/Survey/SurveyView';
 import ResetPassword from './src/screens/Auth/ResetPassword';
 import MainView from './src/screens/MainView/MainView';
 import FestivalScreen from './src/screens/FestivalScreen/FestivalScreen';
@@ -31,7 +32,8 @@ export type RootStackParamList = {
   Login: undefined;
   SignUp: undefined;
   ConfirmEmail: { mode: 'signup' | 'resetPassword'; signupData?: SignUpData };
-  ResetPassword: undefined;
+  Survey: undefined;
+  ResetPassword: { email: string };
   Main: undefined;
   Festival: undefined;
   Destination: undefined;
@@ -46,7 +48,14 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 // 상단 헤더 + 하단 탭바를 숨길 화면(인증/스플래시)
-const AUTH_ROUTES = ['Launch', 'Login', 'SignUp', 'ConfirmEmail', 'ResetPassword'];
+const AUTH_ROUTES = [
+  'Launch',
+  'Login',
+  'SignUp',
+  'ConfirmEmail',
+  'Survey',
+  'ResetPassword',
+];
 
 // 탭 ↔ 라우트 매핑
 const ROUTE_BY_TAB: Record<TabKey, keyof RootStackParamList> = {
@@ -88,13 +97,18 @@ function App() {
       >
         <View style={{ flex: 1, backgroundColor: colors.background }}>
           {/* 고정 상단 헤더 */}
-          {showChrome && <AppHeader onProfile={() => navRef.navigate('Profile')} />}
+          {showChrome && (
+            <AppHeader onProfile={() => navRef.navigate('Profile')} />
+          )}
 
           {/* 콘텐츠 (네비게이터로 교체되는 영역) */}
           <View style={{ flex: 1 }}>
             <Stack.Navigator
               initialRouteName="Launch"
-              screenOptions={{ headerShown: false, animation: 'slide_from_right' }}
+              screenOptions={{
+                headerShown: false,
+                animation: 'slide_from_right',
+              }}
             >
               <Stack.Screen name="Launch">
                 {({ navigation }) => (
@@ -108,7 +122,9 @@ function App() {
                     onLogin={() => navigation.replace('Main')}
                     onSignup={() => navigation.navigate('SignUp')}
                     onResetPassword={() =>
-                      navigation.navigate('ConfirmEmail', { mode: 'resetPassword' })
+                      navigation.navigate('ConfirmEmail', {
+                        mode: 'resetPassword',
+                      })
                     }
                   />
                 )}
@@ -118,8 +134,11 @@ function App() {
                 {({ navigation }) => (
                   <SignUpView
                     onBack={() => navigation.goBack()}
-                    onNext={(data) =>
-                      navigation.navigate('ConfirmEmail', { mode: 'signup', signupData: data })
+                    onNext={data =>
+                      navigation.navigate('ConfirmEmail', {
+                        mode: 'signup',
+                        signupData: data,
+                      })
                     }
                   />
                 )}
@@ -132,19 +151,30 @@ function App() {
                     <ConfirmEmail
                       mode={mode}
                       signupData={route.params?.signupData}
-                      onConfirm={() =>
+                      onConfirm={email =>
                         mode === 'signup'
-                          ? navigation.navigate('Login')
-                          : navigation.navigate('ResetPassword')
+                          ? navigation.navigate('Survey')
+                          : navigation.navigate('ResetPassword', {
+                              email: email ?? '',
+                            })
                       }
                     />
                   );
                 }}
               </Stack.Screen>
 
-              <Stack.Screen name="ResetPassword">
+              <Stack.Screen name="Survey">
                 {({ navigation }) => (
-                  <ResetPassword onConfirm={() => navigation.navigate('Login')} />
+                  <SurveyView onComplete={() => navigation.replace('Login')} />
+                )}
+              </Stack.Screen>
+
+              <Stack.Screen name="ResetPassword">
+                {({ navigation, route }) => (
+                  <ResetPassword
+                    email={route.params?.email ?? ''}
+                    onConfirm={() => navigation.navigate('Login')}
+                  />
                 )}
               </Stack.Screen>
 
@@ -159,13 +189,18 @@ function App() {
 
               <Stack.Screen name="Camera">
                 {({ navigation }) => (
-                  <CameraScreen onOpenNearby={() => navigation.navigate('NearbyPlaces')} />
+                  <CameraScreen
+                    onOpenNearby={() => navigation.navigate('NearbyPlaces')}
+                  />
                 )}
               </Stack.Screen>
 
               <Stack.Screen name="Festival" component={FestivalScreen} />
               <Stack.Screen name="Destination" component={DestinationScreen} />
-              <Stack.Screen name="NearbyPlaces" component={NearbyPlacesScreen} />
+              <Stack.Screen
+                name="NearbyPlaces"
+                component={NearbyPlacesScreen}
+              />
               <Stack.Screen name="Community" component={CommunityView} />
               <Stack.Screen name="Record" component={RecordView} />
               <Stack.Screen name="Mission" component={MissionView} />
@@ -177,7 +212,7 @@ function App() {
           {showChrome && (
             <TabBar
               active={activeTab}
-              onTabPress={(key) => navRef.navigate(ROUTE_BY_TAB[key] as never)}
+              onTabPress={key => navRef.navigate(ROUTE_BY_TAB[key] as never)}
               onCamera={() => navRef.navigate('Camera')}
             />
           )}
