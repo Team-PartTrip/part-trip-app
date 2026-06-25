@@ -22,6 +22,13 @@ export function login(userId: string, userPwd: string): Promise<TokenResponse> {
   });
 }
 
+/** 구글 로그인: idToken을 백엔드에 보내 우리 JWT 발급 */
+export function googleLogin(idToken: string): Promise<TokenResponse> {
+  return request<TokenResponse>('/api/auth/google', {
+    body: { idToken },
+  });
+}
+
 /** accessToken 재발급 */
 export function refresh(refreshToken: string): Promise<TokenResponse> {
   return request<TokenResponse>('/api/auth/refresh', {

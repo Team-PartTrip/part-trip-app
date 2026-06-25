@@ -17,6 +17,11 @@ end
 target 'PartTrip' do
   config = use_native_modules!
 
+  # GoogleSignIn이 끌고 오는 Swift 팟(AppCheckCore)이 static library 환경에서
+    # 빌드되도록, 모듈 맵이 없는 의존성에 modular headers 활성화
+    pod 'GoogleUtilities', :modular_headers => true
+    pod 'RecaptchaInterop', :modular_headers => true
+
   use_react_native!(
     :path => config[:reactNativePath],
     # An absolute path to your application root.

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+
 import {
   View,
   Text,
@@ -12,8 +13,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { loginStyles as styles } from './LoginView.styles';
-import { login } from '../../api/auth';
+import { login, googleLogin } from '../../api/auth';
 import { saveTokens } from '../../api/tokenStorage';
+import {
+  configureGoogleSignin,
+  signInWithGoogle,
+} from '../../auth/googleSignin';
 
 interface LoginViewProps {
   onLogin?: () => void;
@@ -21,10 +26,14 @@ interface LoginViewProps {
   onResetPassword?: () => void;
 }
 
-const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSignup, onResetPassword }) => {
-  const [id, setId]             = useState('');
+const LoginView: React.FC<LoginViewProps> = ({
+  onLogin,
+  onSignup,
+  onResetPassword,
+}) => {
+  const [id, setId] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading]   = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
     if (!id.trim() || !password) {
@@ -38,6 +47,24 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSignup, onResetPasswor
       onLogin?.();
     } catch (e: any) {
       Alert.alert('로그인 실패', e?.message ?? '로그인에 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    configureGoogleSignin();
+  }, []);
+
+  const handleGoogleLogin = async () => {
+    try {
+      setLoading(true);
+      const idToken = await signInWithGoogle();
+      const tokens = await googleLogin(idToken);
+      await saveTokens(tokens);
+      onLogin?.();
+    } catch (e: any) {
+      Alert.alert('Google 로그인 실패', e?.message ?? '다시 시도해주세요.');
     } finally {
       setLoading(false);
     }
@@ -82,7 +109,10 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSignup, onResetPasswor
               onChangeText={setPassword}
               secureTextEntry
             />
-            <TouchableOpacity style={styles.forgotBtn} onPress={onResetPassword}>
+            <TouchableOpacity
+              style={styles.forgotBtn}
+              onPress={onResetPassword}
+            >
               <Text style={styles.forgotText}>비밀번호를 잊으셨나요?</Text>
             </TouchableOpacity>
           </View>
@@ -108,13 +138,18 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSignup, onResetPasswor
               <View style={styles.dividerLine} />
             </View>
 
-            <TouchableOpacity style={styles.googleBtn} activeOpacity={0.85}>
+            <TouchableOpacity
+              style={styles.googleBtn}
+              activeOpacity={0.85}
+              onPress={handleGoogleLogin}
+              disabled={loading}
+            >
               <Text style={styles.googleG}>G</Text>
               <Text style={styles.googleText}>Google로 계속하기</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.signupBtn} onPress={onSignup}>
-            <Text style={styles.signupText}>회원가입 하기</Text>
+              <Text style={styles.signupText}>회원가입 하기</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
