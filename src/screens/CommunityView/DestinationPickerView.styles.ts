@@ -1,0 +1,68 @@
+import { StyleSheet } from 'react-native';
+import colors from '../../assets/constants/colors';
+
+export const destinationPickerStyles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.white },
+  content: { padding: 16 },
+  search: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    height: 46,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    backgroundColor: colors.inputBg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 20,
+  },
+  searchIcon: { fontSize: 15 },
+  searchInput: { flex: 1, fontSize: 15, color: colors.textPrimary, padding: 0 },
+  sectionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.textPrimary,
+    marginBottom: 10,
+  },
+  clearAll: { fontSize: 12, color: colors.textMuted },
+  recentRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 24,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 18,
+    backgroundColor: colors.surface,
+  },
+  chipText: { fontSize: 13, color: colors.textPrimary, fontWeight: '600' },
+  chipX: { fontSize: 12, color: colors.textMuted },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  card: { width: '48%', marginBottom: 16 },
+  cardImg: {
+    height: 110,
+    borderRadius: 14,
+    backgroundColor: colors.bannerBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  cardFlag: { fontSize: 40 },
+  cardName: { fontSize: 15, fontWeight: '800', color: colors.textPrimary },
+  cardCountry: { fontSize: 12, color: colors.textMuted },
+});
