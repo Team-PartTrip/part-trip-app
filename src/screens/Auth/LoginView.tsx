@@ -14,11 +14,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { loginStyles as styles } from './LoginView.styles';
 import { login, googleLogin } from '../../api/auth';
-import { saveTokens } from '../../api/tokenStorage';
 import {
   configureGoogleSignin,
   signInWithGoogle,
 } from '../../auth/googleSignin';
+import { saveTokens, saveProvider } from '../../api/tokenStorage';
 
 interface LoginViewProps {
   onLogin?: () => void;
@@ -35,6 +35,7 @@ const LoginView: React.FC<LoginViewProps> = ({
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
+
   const handleLogin = async () => {
     if (!id.trim() || !password) {
       Alert.alert('알림', '아이디와 비밀번호를 모두 입력해주세요.');
@@ -44,6 +45,7 @@ const LoginView: React.FC<LoginViewProps> = ({
       setLoading(true);
       const tokens = await login(id.trim(), password);
       await saveTokens(tokens);
+      await saveProvider('EMAIL');
       onLogin?.();
     } catch (e: any) {
       Alert.alert('로그인 실패', e?.message ?? '로그인에 실패했습니다.');
@@ -62,6 +64,7 @@ const LoginView: React.FC<LoginViewProps> = ({
       const idToken = await signInWithGoogle();
       const tokens = await googleLogin(idToken);
       await saveTokens(tokens);
+      await saveProvider('GOOGLE');
       onLogin?.();
     } catch (e: any) {
       Alert.alert('Google 로그인 실패', e?.message ?? '다시 시도해주세요.');
