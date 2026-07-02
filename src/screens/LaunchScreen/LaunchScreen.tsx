@@ -8,6 +8,7 @@ import {
   Animated,
   Easing,
   StatusBar,
+  useColorScheme,
 } from 'react-native';
 
 // ─── 타이밍 상수 (ms) ────────────────────────────────────────────
@@ -53,6 +54,7 @@ const PartTripLogo: React.FC<{ animValue: Animated.Value }> = ({ animValue }) =>
 };
 
 const LaunchScreen: React.FC<LaunchScreenProps> = ({ onFinish }) => {
+  const isDarkMode  = useColorScheme() === 'dark';
   const fadeAnim    = useRef(new Animated.Value(0)).current;
   const scaleAnim   = useRef(new Animated.Value(0.85)).current;
   const shimmerAnim = useRef(new Animated.Value(0)).current;
@@ -157,7 +159,10 @@ const LaunchScreen: React.FC<LaunchScreenProps> = ({ onFinish }) => {
 
   return (
     <Animated.View style={[styles.container, { opacity: screenFade }]}>
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+      <StatusBar
+        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+        backgroundColor={colors.white}
+      />
 
       <View style={styles.bgCircle1} />
       <View style={styles.bgCircle2} />

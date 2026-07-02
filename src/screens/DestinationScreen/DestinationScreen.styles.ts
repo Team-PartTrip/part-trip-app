@@ -148,11 +148,11 @@ export const destinationStyles = StyleSheet.create({
   destName: {
     fontSize: 18,
     fontWeight: '800',
-    color: colors.white,
+    color: colors.textOnPrimary,
   },
   destCountry: {
     fontSize: 12,
-    color: colors.white,
+    color: colors.textOnPrimary,
     opacity: 0.9,
   },
 });

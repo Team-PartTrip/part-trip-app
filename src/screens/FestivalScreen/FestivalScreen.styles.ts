@@ -106,7 +106,7 @@ export const festivalStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   calSelectedText: {
-    color: colors.white,
+    color: colors.textOnPrimary,
     fontWeight: '800',
   },
 

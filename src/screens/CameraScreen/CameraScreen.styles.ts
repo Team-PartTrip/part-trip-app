@@ -58,13 +58,13 @@ export const cameraStyles = StyleSheet.create({
     backgroundColor: 'rgba(40,20,70,0.35)',
   },
   bannerTitle: {
-    color: colors.white,
+    color: colors.textOnPrimary,
     fontSize: 20,
     fontWeight: '800',
     marginBottom: 4,
   },
   bannerSub: {
-    color: colors.white,
+    color: colors.textOnPrimary,
     fontSize: 13,
     opacity: 0.9,
   },
