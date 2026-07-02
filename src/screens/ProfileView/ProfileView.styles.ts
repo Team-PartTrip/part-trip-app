@@ -1,55 +1,136 @@
 import { StyleSheet } from 'react-native';
 import colors from '../../assets/constants/colors';
 
+const cardShadow = {
+  shadowColor: '#1a2a3a',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.06,
+  shadowRadius: 8,
+  elevation: 2,
+};
+
 export const profileStyles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  header: {
+  safeArea: { flex: 1, backgroundColor: colors.background },
+  content: { padding: 16, paddingBottom: 24 },
+
+  // 프로필 카드
+  profileCard: {
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  backBtn: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backIcon: {
-    fontSize: 26,
-    color: colors.textPrimary,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: colors.textPrimary,
-  },
-  body: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
+    backgroundColor: colors.cardBg,
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 22,
+    ...cardShadow,
   },
   avatar: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: colors.tint,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  avatarEmoji: { fontSize: 40 },
+  profileInfo: { flex: 1, justifyContent: 'center' },
+  nickname: { fontSize: 18, fontWeight: '800', color: colors.textPrimary },
+  type: { fontSize: 13, color: colors.textSub, marginTop: 2, marginBottom: 10 },
+  editBtn: {
+    alignSelf: 'flex-end',
+    backgroundColor: colors.primary,
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  editBtnText: { color: '#fff', fontSize: 13, fontWeight: '700' },
+
+  // 섹션 헤더
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+  },
+  sectionTitle: { fontSize: 18, fontWeight: '800', color: colors.textPrimary },
+  seeAll: { fontSize: 13, color: colors.primary, fontWeight: '600' },
+
+  // 뱃지 그리드
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  badgeCard: {
+    width: '48%',
+    backgroundColor: colors.cardBg,
+    borderRadius: 16,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginBottom: 14,
+    ...cardShadow,
+  },
+  badgeEmblem: {
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: colors.profileBg,
+    backgroundColor: colors.tint,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 4,
+    marginBottom: 10,
   },
-  avatarIcon: { fontSize: 40 },
-  title: {
-    fontSize: 18,
+  badgeLocked: { backgroundColor: colors.surface, opacity: 0.6 },
+  badgeEmoji: { fontSize: 42 },
+  ribbon: {
+    backgroundColor: '#f6c445',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    marginBottom: 6,
+  },
+  ribbonLocked: { backgroundColor: colors.border },
+  ribbonText: { fontSize: 13, fontWeight: '800', color: '#5a4300' },
+  badgeSub: { fontSize: 12, color: colors.textMuted },
+
+  // 뱃지 상세 모달
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 28,
+  },
+  modalBox: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: colors.white,
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
+  },
+  modalClose: { position: 'absolute', top: 12, left: 12, padding: 6 },
+  modalCloseText: { fontSize: 18, color: colors.textMuted },
+  modalEmblem: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: colors.tint,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  modalEmoji: { fontSize: 60 },
+  modalTitle: {
+    fontSize: 20,
     fontWeight: '800',
     color: colors.textPrimary,
+    marginBottom: 2,
   },
-  desc: {
-    fontSize: 13,
-    color: colors.textSub,
+  modalSub: { fontSize: 13, color: colors.textSub, marginBottom: 16 },
+  modalDescBox: {
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: 14,
+    padding: 16,
+    alignSelf: 'stretch',
   },
+  modalDesc: { fontSize: 14, lineHeight: 21, color: colors.noteText },
 });
