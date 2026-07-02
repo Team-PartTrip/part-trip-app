@@ -1,60 +1,23 @@
 import { StyleSheet } from 'react-native';
-import colors from '../../assets/constants/colors';
+import colors, { lightColors } from '../../assets/constants/colors';
+
+const cardShadow = {
+  shadowColor: '#1a2a3a',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.06,
+  shadowRadius: 8,
+  elevation: 2,
+};
 
 export const mainStyles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-
-  // 헤더
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    backgroundColor: colors.background,
-  },
-  headerLogo: {
-    fontSize: 26,
-    fontWeight: '900',
-    fontStyle: 'italic',
-  },
-  headerLogoPart: { color: colors.primary },
-  headerLogoTrip: { color: colors.primaryDark },
-  headerProfile: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.profileBg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerProfileIcon: { fontSize: 20 },
-
-  // 스크롤
+  safeArea: { flex: 1, backgroundColor: colors.background },
   scroll: { flex: 1 },
-  scrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 4,
-    paddingBottom: 24,
-    gap: 16,
-  },
+  scrollContent: { padding: 16, paddingBottom: 24, gap: 16 },
 
   // 배너
-  bannerCard: {
-    borderRadius: 18,
-    overflow: 'hidden',
-    height: 200,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 6,
-  },
+  bannerCard: { borderRadius: 18, overflow: 'hidden', ...cardShadow },
   bannerBg: {
-    flex: 1,
+    height: 190,
     backgroundColor: colors.bannerBg,
     padding: 16,
     justifyContent: 'space-between',
@@ -69,48 +32,36 @@ export const mainStyles = StyleSheet.create({
   },
   bannerDDayBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    paddingHorizontal: 12,
-    paddingVertical: 5,
+    backgroundColor: 'rgba(0,0,0,0.4)',
     borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
-  bannerDDayText: {
-    color: colors.white,
-    fontSize: 14,
-    fontWeight: '800',
-  },
+  bannerDDayText: { color: '#fff', fontSize: 12, fontWeight: '800' },
   bannerBottomRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
   },
-  bannerCountry: {
-    color: colors.white,
-    fontSize: 28,
-    fontWeight: '800',
-  },
+  bannerCountry: { color: '#fff', fontSize: 28, fontWeight: '900' },
   changeBtn: {
-    backgroundColor: colors.white,
-    paddingHorizontal: 16,
-    paddingVertical: 9,
-    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
   },
-  changeBtnText: {
-    color: colors.textPrimary,
-    fontSize: 13,
-    fontWeight: '700',
-  },
+  // 배너 위 흰색 고정 배경이므로 모드와 무관하게 어두운 글자색 사용
+  changeBtnText: { color: lightColors.textPrimary, fontSize: 12, fontWeight: '700' },
 
-  // 인사말 카드
+  // 인사말
   greetingCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.cardBg,
     borderRadius: 16,
-    padding: 16,
-    gap: 14,
-    borderWidth: 1.5,
-    borderColor: colors.borderLight,
+    padding: 14,
+    gap: 12,
+    ...cardShadow,
   },
   speakerCircle: {
     width: 44,
@@ -121,210 +72,182 @@ export const mainStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   speakerIcon: { fontSize: 20 },
-  greetingTextArea: { flex: 1, gap: 2 },
+  greetingTextArea: { flex: 1 },
   dayBadge: {
     alignSelf: 'flex-start',
     backgroundColor: colors.tint,
+    borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 6,
     marginBottom: 2,
   },
-  dayBadgeText: {
-    color: colors.primary,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  greetingHello: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: colors.textPrimary,
-  },
-  greetingLocal: {
-    fontSize: 14,
-    color: colors.textSub,
-  },
-  translateIcon: {
-    fontSize: 22,
-    color: colors.textSub,
-  },
+  dayBadgeText: { color: colors.primary, fontSize: 11, fontWeight: '800' },
+  greetingHello: { fontSize: 16, fontWeight: '800', color: colors.textPrimary },
+  greetingLocal: { fontSize: 13, color: colors.textSub },
+  translateIcon: { fontSize: 18, color: colors.textMuted, fontWeight: '700' },
 
-  // 통계 카드
-  statRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
+  // 스탯 (날씨 / 환율)
+  statRow: { flexDirection: 'row', gap: 12 },
   statCard: {
     flex: 1,
     backgroundColor: colors.cardBg,
     borderRadius: 16,
-    paddingVertical: 16,
-    paddingHorizontal: 14,
-    alignItems: 'center',
-    gap: 6,
-    borderWidth: 1.5,
-    borderColor: colors.borderLight,
+    padding: 14,
+    ...cardShadow,
   },
-  statLabel: {
-    fontSize: 13,
-    color: colors.textSub,
-    fontWeight: '600',
-  },
-  statValue: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: colors.textPrimary,
-  },
+  statLabel: { fontSize: 12, color: colors.textSub, marginBottom: 6 },
+  statValue: { fontSize: 18, fontWeight: '800', color: colors.textPrimary },
+  statSub: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
 
   // 섹션 헤더
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    marginBottom: 4,
   },
   sectionHeaderBetween: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginBottom: 4,
   },
-  sectionIcon: { fontSize: 20 },
-  sectionTitle: {
-    fontSize: 19,
-    fontWeight: '800',
-    color: colors.textPrimary,
-  },
-  seeAll: {
-    fontSize: 13,
-    color: colors.primary,
-    fontWeight: '700',
-  },
+  sectionIcon: { fontSize: 16 },
+  sectionTitle: { fontSize: 18, fontWeight: '800', color: colors.textPrimary },
+  seeAll: { fontSize: 13, color: colors.primary, fontWeight: '600' },
 
-  // 카드 공통
+  // 여행지 정보 탭
+  tabRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 8,
+    marginBottom: 12,
+  },
+  tab: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
+  },
+  tabActive: { backgroundColor: colors.primary },
+  tabText: { fontSize: 12, fontWeight: '700', color: colors.textSub },
+  tabTextActive: { color: '#fff' },
+
   card: {
     backgroundColor: colors.cardBg,
     borderRadius: 16,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: colors.textPrimary,
-    marginBottom: 16,
+    padding: 16,
+    ...cardShadow,
   },
 
-  // 인구 구성 carousel
-  carouselRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  infoCard: { flex: 1 },
-  chevron: {
-    fontSize: 26,
-    color: colors.chevron,
-    fontWeight: '700',
-    paddingHorizontal: 4,
-  },
-  popItem: { marginBottom: 14 },
+  // 인구 구성
+  popItem: { marginBottom: 12 },
   popLabelRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: 6,
   },
-  popLabel: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  popPct: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: colors.textPrimary,
-  },
+  popLabel: { fontSize: 13, color: colors.textPrimary, fontWeight: '600' },
+  popPct: { fontSize: 13, color: colors.textPrimary, fontWeight: '800' },
   popTrack: {
-    height: 10,
-    borderRadius: 5,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: colors.track,
     overflow: 'hidden',
   },
-  popFill: {
-    height: '100%',
-    borderRadius: 5,
-  },
+  popFill: { height: '100%', borderRadius: 4 },
   noteBox: {
-    flexDirection: 'row',
     backgroundColor: colors.surfaceAlt,
-    borderRadius: 10,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.primary,
+    borderRadius: 12,
     padding: 14,
-    marginTop: 4,
+    marginTop: 6,
   },
-  noteText: {
-    fontSize: 13,
-    color: colors.noteText,
-    lineHeight: 20,
-  },
+  noteText: { fontSize: 13, lineHeight: 20, color: colors.noteText },
 
-  // 달력
-  calHeader: {
+  // 관광 장소
+  placeRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 14,
+    paddingVertical: 8,
+    gap: 12,
   },
-  calMonth: {
-    fontSize: 16,
+  placeThumb: {
+    width: 68,
+    height: 68,
+    borderRadius: 12,
+    backgroundColor: colors.tintStrong,
+  },
+  placeName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginBottom: 4,
+  },
+  placeMeta: { fontSize: 12, color: colors.textSub },
+
+  // 대표 음식
+  foodRow: { flexDirection: 'row', gap: 12 },
+  foodItem: { flex: 1, alignItems: 'center' },
+  foodThumb: {
+    width: '100%',
+    height: 90,
+    borderRadius: 12,
+    backgroundColor: colors.tintStrong,
+    marginBottom: 8,
+  },
+  foodName: {
+    fontSize: 14,
     fontWeight: '800',
     color: colors.textPrimary,
+    marginBottom: 2,
   },
-  calNav: {
-    fontSize: 16,
+  foodDesc: {
+    fontSize: 12,
+    lineHeight: 17,
     color: colors.textSub,
-    fontWeight: '700',
+    textAlign: 'center',
   },
-  calRow: {
+
+  // 현지 에티켓
+  etiquetteItem: {
     flexDirection: 'row',
-    marginBottom: 10,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
   },
+  etiquetteText: { flex: 1, fontSize: 14, color: colors.textPrimary },
+  etiquetteIcon: { fontSize: 16, marginLeft: 8 },
+
+  // 축제 달력
+  calHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  calMonth: { fontSize: 14, fontWeight: '800', color: colors.textPrimary },
+  calNav: { fontSize: 14, color: colors.textMuted },
+  calRow: { flexDirection: 'row' },
   calWeekday: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 13,
-    color: colors.textSub,
-    fontWeight: '600',
+    fontSize: 12,
+    color: colors.textMuted,
+    paddingVertical: 6,
   },
-  calCell: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 30,
-  },
-  calDay: {
-    fontSize: 14,
-    color: colors.textPrimary,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
+  calCell: { flex: 1, alignItems: 'center', paddingVertical: 6 },
+  calDay: { fontSize: 13, color: colors.textPrimary },
   calMuted: { color: colors.calMuted },
-  calRed: { color: colors.redAccent },
+  calRed: { color: colors.red },
   calSelected: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
     backgroundColor: colors.tintStrong,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: 12,
+    paddingHorizontal: 6,
   },
-  calSelectedText: {
-    color: colors.primaryDark,
-    fontWeight: '800',
-  },
+  calSelectedText: { color: colors.primary, fontWeight: '800' },
   calDot: {
     width: 4,
     height: 4,
@@ -338,174 +261,31 @@ export const mainStyles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: colors.cardBg,
     borderRadius: 16,
-    padding: 14,
-    gap: 14,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
+    padding: 12,
+    marginTop: 12,
+    gap: 12,
+    ...cardShadow,
   },
   eventThumb: {
-    width: 76,
-    height: 76,
+    width: 72,
+    height: 72,
     borderRadius: 12,
     backgroundColor: colors.eventThumbBg,
     alignItems: 'center',
     justifyContent: 'center',
   },
   eventThumbIcon: { fontSize: 30 },
-  eventBody: { flex: 1, gap: 3 },
+  eventBody: { flex: 1 },
   eventTag: {
     alignSelf: 'flex-start',
     backgroundColor: colors.tagRedBg,
+    borderRadius: 8,
     paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    marginBottom: 2,
+    paddingVertical: 2,
+    marginBottom: 4,
   },
-  eventTagText: {
-    color: colors.redAccent,
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  eventTitle: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: colors.textPrimary,
-  },
-  eventDesc: {
-    fontSize: 12,
-    color: colors.textSub,
-  },
-  eventMetaRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginTop: 4,
-  },
-  eventMeta: {
-    fontSize: 11,
-    color: colors.eventMeta,
-  },
-
-  // ── 여행지 정보 캐러셀 ──
-  carouselWrap: {
-    position: 'relative',
-  },
-  chevBtn: {
-    position: 'absolute',
-    top: '50%',
-    marginTop: -16,
-    width: 28,
-    height: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 2,
-  },
-  chevLeft: { left: -6 },
-  chevRight: { right: -6 },
-  dotsRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 10,
-  },
-  dot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: colors.border,
-  },
-  dotActive: {
-    backgroundColor: colors.primary,
-    width: 18,
-  },
-
-  // 현지 날씨 카드
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 14,
-  },
-  infoIconCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: colors.tint,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  infoIcon: { fontSize: 18 },
-  infoTextWrap: { flex: 1 },
-  infoLabel: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginBottom: 2,
-  },
-  infoDesc: {
-    fontSize: 13,
-    color: colors.textSub,
-    lineHeight: 18,
-  },
-
-  // 대표 음식 카드
-  foodRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  foodItem: {
-    flex: 1,
-    backgroundColor: colors.surfaceAlt,
-    borderRadius: 12,
-    padding: 12,
-    alignItems: 'center',
-    gap: 6,
-  },
-  foodThumb: {
-    width: 56,
-    height: 56,
-    borderRadius: 12,
-    backgroundColor: colors.tint,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  foodThumbIcon: { fontSize: 26 },
-  foodName: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: colors.textPrimary,
-  },
-  foodDesc: {
-    fontSize: 11,
-    color: colors.textSub,
-    textAlign: 'center',
-    lineHeight: 15,
-  },
-
-  // 현지 에티켓 카드
-  etiquetteItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.surfaceAlt,
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    marginBottom: 8,
-  },
-  etiquetteText: {
-    flex: 1,
-    fontSize: 13,
-    color: colors.textPrimary,
-    fontWeight: '600',
-  },
-  etiquetteIcon: {
-    fontSize: 16,
-    marginLeft: 8,
-  },
+  eventTagText: { fontSize: 11, color: colors.redAccent, fontWeight: '700' },
+  eventTitle: { fontSize: 14, fontWeight: '800', color: colors.textPrimary },
+  eventDesc: { fontSize: 12, color: colors.textSub, marginBottom: 4 },
+  eventMeta: { fontSize: 11, color: colors.eventMeta },
 });
