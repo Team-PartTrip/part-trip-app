@@ -26,20 +26,24 @@ import CommunityView from './src/screens/CommunityView/CommunityView';
 import PostDetailView from './src/screens/CommunityView/PostDetailView';
 import PostCreateView from './src/screens/CommunityView/PostCreateView';
 import DestinationPickerView from './src/screens/CommunityView/DestinationPickerView';
-import RecordView from './src/screens/RecordView/RecordView';
 import MissionView from './src/screens/MissionView/MissionView';
 import AttendanceView from './src/screens/MissionView/AttendanceView';
 import MissionListView from './src/screens/MissionView/MissionListView';
 import MissionDetailView from './src/screens/MissionView/MissionDetailView';
 import MissionVerifyView from './src/screens/MissionView/MissionVerifyView';
 import ProfileView from './src/screens/ProfileView/ProfileView';
+import RecordView from './src/screens/RecordView/RecordView';
+import RecordMapView from './src/screens/RecordView/RecordMapView';
+import RecordEditView from './src/screens/RecordView/RecordEditView';
+import RecordCompleteView from './src/screens/RecordView/RecordCompleteView';
+import ProfileEditView from './src/screens/ProfileView/ProfileEditView';
 
 export type RootStackParamList = {
   Launch: undefined;
   Login: undefined;
   SignUp: undefined;
   ConfirmEmail: { mode: 'signup' | 'resetPassword'; signupData?: SignUpData };
-  Survey: undefined;
+  Survey: { from?: 'signup' | 'profile' } | undefined;
   ResetPassword: { email: string };
   Main: undefined;
   Festival: undefined;
@@ -51,12 +55,16 @@ export type RootStackParamList = {
   PostCreate: { tab?: 'free' | 'review' | 'route'; destination?: string };
   DestinationPicker: undefined;
   Record: undefined;
+  RecordMap: undefined;
+  RecordEdit: { id?: string };
+  RecordComplete: undefined;
   Mission: undefined;
   Attendance: undefined;
   MissionList: undefined;
   MissionDetail: { id: string };
   MissionVerify: undefined;
   Profile: undefined;
+  ProfileEdit: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -76,6 +84,12 @@ const AUTH_ROUTES = [
   'PostDetail',
   'PostCreate',
   'DestinationPicker',
+  'PostDetail',
+  'PostCreate',
+  'DestinationPicker',
+  'RecordMap',
+  'RecordEdit',
+  'RecordComplete',
 ];
 
 // 탭 ↔ 라우트 매핑
@@ -185,8 +199,14 @@ function App() {
               </Stack.Screen>
 
               <Stack.Screen name="Survey">
-                {({ navigation }) => (
-                  <SurveyView onComplete={() => navigation.replace('Login')} />
+                {({ navigation, route }) => (
+                  <SurveyView
+                    onComplete={() =>
+                      route.params?.from === 'profile'
+                        ? navigation.goBack()
+                        : navigation.replace('Login')
+                    }
+                  />
                 )}
               </Stack.Screen>
 
@@ -261,7 +281,44 @@ function App() {
                 )}
               </Stack.Screen>
 
-              <Stack.Screen name="Record" component={RecordView} />
+              <Stack.Screen name="Record">
+                {({ navigation }) => (
+                  <RecordView
+                    onOpenMap={() => navigation.navigate('RecordMap')}
+                    onOpenRecord={id =>
+                      navigation.navigate('RecordEdit', { id })
+                    }
+                    onWrite={() => navigation.navigate('RecordEdit', {})}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="RecordMap">
+                {({ navigation }) => (
+                  <RecordMapView
+                    onBack={() => navigation.goBack()}
+                    onToggleList={() => navigation.goBack()}
+                    onOpenRecord={id =>
+                      navigation.navigate('RecordEdit', { id })
+                    }
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="RecordEdit">
+                {({ navigation }) => (
+                  <RecordEditView
+                    onBack={() => navigation.goBack()}
+                    onDone={() => navigation.navigate('RecordComplete')}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="RecordComplete">
+                {({ navigation }) => (
+                  <RecordCompleteView
+                    onConfirm={() => navigation.navigate('Record')}
+                    onHome={() => navigation.navigate('Main')}
+                  />
+                )}
+              </Stack.Screen>
 
               {/* 미션 */}
               <Stack.Screen name="Mission">
@@ -308,7 +365,23 @@ function App() {
                 )}
               </Stack.Screen>
 
-              <Stack.Screen name="Profile" component={ProfileView} />
+              <Stack.Screen name="Profile">
+                {({ navigation }) => (
+                  <ProfileView
+                    onEdit={() => navigation.navigate('ProfileEdit')}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="ProfileEdit">
+                {({ navigation }) => (
+                  <ProfileEditView
+                    onConfirm={() => navigation.goBack()}
+                    onResetSurvey={() =>
+                      navigation.navigate('Survey', { from: 'profile' })
+                    }
+                  />
+                )}
+              </Stack.Screen>
             </Stack.Navigator>
           </View>
 
