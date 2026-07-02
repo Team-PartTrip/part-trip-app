@@ -2,17 +2,19 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <key>CADisableMinimumFrameDurationOnPhone</key>
-  <true/>
-  <key>CFBundleURLTypes</key>
-  <array>
-    <dict>
-      <key>CFBundleURLSchemes</key>
-      <array>
-        <string>com.googleusercontent.apps.435960620705-3b0jrp59qdl7ek72q8m9sektthfuuths</string>
-      </array>
-    </dict>
-  </array>
+    <key>CADisableMinimumFrameDurationOnPhone</key>
+    <true/>
+    <key>CFBundleURLTypes</key>
+    <array>
+      <dict>
+        <key>CFBundleURLSchemes</key>
+        <array>
+          <string>com.googleusercontent.apps.435960620705-3b0jrp59qdl7ek72q8m9sektthfuuths</string>
+        </array>
+      </dict>
+    </array>
+    <key>NSCameraUsageDescription</key>
+    <string>미션 인증과 해설 카메라 촬영을 위해 카메라를 사용합니다.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>

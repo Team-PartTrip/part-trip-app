@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import colors from '../../assets/constants/colors';
 import { missionVerifyStyles as s } from './MissionVerifyView.styles';
+import CameraCapture from '../../component/CameraCapture';
 
 type Phase = 'camera' | 'verifying' | 'done';
 interface Props {
@@ -22,37 +23,11 @@ const MissionVerifyView: React.FC<Props> = ({ onBack, onDone, onHome }) => {
 
   if (phase === 'camera') {
     return (
-      <View style={s.cam}>
-        <SafeAreaView edges={['top']}>
-          <View style={s.camHeader}>
-            <TouchableOpacity
-              onPress={onBack}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <Text style={s.camBack}>‹</Text>
-            </TouchableOpacity>
-            <Text style={s.camTitle}>미션 인증</Text>
-            <View style={{ width: 24 }} />
-          </View>
-        </SafeAreaView>
-        <View style={s.grid}>
-          <View style={[s.v, { left: '33.33%' }]} />
-          <View style={[s.v, { left: '66.66%' }]} />
-          <View style={[s.h, { top: '33.33%' }]} />
-          <View style={[s.h, { top: '66.66%' }]} />
-        </View>
-        <SafeAreaView edges={['bottom']} style={s.camBottom}>
-          <View style={s.thumb} />
-          <TouchableOpacity
-            style={s.shutter}
-            activeOpacity={0.8}
-            onPress={() => setPhase('verifying')}
-          >
-            <View style={s.shutterIn} />
-          </TouchableOpacity>
-          <Text style={s.flip}>↻</Text>
-        </SafeAreaView>
-      </View>
+      <CameraCapture
+        title="미션 인증"
+        onClose={onBack}
+        onCapture={() => setPhase('verifying')}
+      />
     );
   }
 
