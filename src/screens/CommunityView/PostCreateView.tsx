@@ -5,10 +5,16 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ScreenHeader from '../../component/ScreenHeader';
 import { postCreateStyles as s } from './PostCreateView.styles';
+import { createReview, shareTrip, createBoard } from '../../api/community';
+import { createTrip, TripPlacePayload } from '../../api/trip';
+import type { SelectedDestination } from './DestinationPickerView';
+import { setDestinationCallback } from './destinationSelectBridge';
 
 type Cat = 'free' | 'review' | 'route';
 const CATS: { key: Cat; label: string }[] = [
@@ -28,7 +34,7 @@ interface DayPlan {
 
 interface Props {
   initialTab?: Cat;
-  destination?: string;
+  destination?: SelectedDestination;
   onBack?: () => void;
   onPickDestination?: () => void;
   onSubmit?: () => void;
@@ -46,13 +52,16 @@ const PostCreateView: React.FC<Props> = ({
   const [body, setBody] = useState('');
   const [photos, setPhotos] = useState<number[]>([]);
   const [rating, setRating] = useState(0);
-  const [location, setLocation] = useState(destination ?? '');
+  const [selectedDestination, setSelectedDestination] = useState<
+    SelectedDestination | undefined
+  >(destination);
   const [days, setDays] = useState<DayPlan[]>([{ day: 1, items: [] }]);
   const [activeDay, setActiveDay] = useState(1);
   const [itemText, setItemText] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (destination) setLocation(destination);
+    if (destination) setSelectedDestination(destination);
   }, [destination]);
 
   const addItem = () => {
@@ -67,7 +76,7 @@ const PostCreateView: React.FC<Props> = ({
                 {
                   id: `${Date.now()}`,
                   name: itemText.trim(),
-                  sub: location || '장소',
+                  sub: selectedDestination?.name || '장소',
                 },
               ],
             }
@@ -82,6 +91,93 @@ const PostCreateView: React.FC<Props> = ({
     setActiveDay(n);
   };
   const current = days.find(d => d.day === activeDay)!;
+
+  const handleSubmit = async () => {
+    if (cat === 'free') {
+      if (!title.trim() || !body.trim()) {
+        Alert.alert('알림', '제목과 내용을 입력해주세요.');
+        return;
+      }
+      try {
+        setSubmitting(true);
+        await createBoard({ title: title.trim(), content: body.trim() });
+        onSubmit?.();
+      } catch (e: any) {
+        Alert.alert('등록 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
+    if (cat === 'review') {
+      if (!selectedDestination) {
+        Alert.alert('알림', '여행지를 선택해주세요.');
+        return;
+      }
+      if (rating === 0) {
+        Alert.alert('알림', '별점을 선택해주세요.');
+        return;
+      }
+      if (!title.trim() || !body.trim()) {
+        Alert.alert('알림', '제목과 내용을 입력해주세요.');
+        return;
+      }
+      try {
+        setSubmitting(true);
+        await createReview({
+          countryInfoId: selectedDestination.countryInfoId,
+          title: title.trim(),
+          rating,
+          content: body.trim(),
+        });
+        onSubmit?.();
+      } catch (e: any) {
+        Alert.alert('등록 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
+    if (cat === 'route') {
+      if (!selectedDestination) {
+        Alert.alert('알림', '여행지를 선택해주세요.');
+        return;
+      }
+      if (!title.trim()) {
+        Alert.alert('알림', '제목을 입력해주세요.');
+        return;
+      }
+      const places: TripPlacePayload[] = days.flatMap(d =>
+        d.items.map(it => ({
+          dayNumber: d.day,
+          placeName: it.name,
+          placeSub: it.sub,
+        })),
+      );
+      if (places.length === 0) {
+        Alert.alert('알림', '여행 경로를 최소 1개 이상 추가해주세요.');
+        return;
+      }
+      try {
+        setSubmitting(true);
+        const trip = await createTrip({
+          title: title.trim(),
+          countryInfoId: selectedDestination.countryInfoId,
+          content: body.trim() || undefined,
+          places,
+        });
+        await shareTrip(trip.tripId);
+        onSubmit?.();
+      } catch (e: any) {
+        Alert.alert('등록 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+  };
 
   return (
     <SafeAreaView style={s.safe} edges={['top', 'bottom']}>
@@ -127,20 +223,26 @@ const PostCreateView: React.FC<Props> = ({
           textAlignVertical="top"
         />
 
+        {(cat === 'review' || cat === 'route') && (
+          <View style={s.locRow}>
+            <Text style={s.locText}>
+              📍 {selectedDestination?.name || '여행지를 선택하세요'}
+            </Text>
+            <TouchableOpacity
+              style={s.changeBtn}
+              onPress={() => {
+                setDestinationCallback(setSelectedDestination);
+                onPickDestination?.();
+              }}
+              activeOpacity={0.85}
+            >
+              <Text style={s.changeText}>변경</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {cat === 'review' && (
           <>
-            <View style={s.locRow}>
-              <Text style={s.locText}>
-                📍 {location || '여행지를 선택하세요'}
-              </Text>
-              <TouchableOpacity
-                style={s.changeBtn}
-                onPress={onPickDestination}
-                activeOpacity={0.85}
-              >
-                <Text style={s.changeText}>변경</Text>
-              </TouchableOpacity>
-            </View>
             <Text style={s.label}>여행지 별점</Text>
             <View style={s.starRow}>
               {[1, 2, 3, 4, 5].map(n => (
@@ -230,14 +332,20 @@ const PostCreateView: React.FC<Props> = ({
         <TouchableOpacity
           style={[s.fBtn, s.primary]}
           activeOpacity={0.85}
-          onPress={onSubmit}
+          onPress={handleSubmit}
+          disabled={submitting}
         >
-          <Text style={s.primaryText}>완료</Text>
+          {submitting ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={s.primaryText}>완료</Text>
+          )}
         </TouchableOpacity>
         <TouchableOpacity
           style={[s.fBtn, s.ghost]}
           activeOpacity={0.85}
           onPress={onBack}
+          disabled={submitting}
         >
           <Text style={s.ghostText}>취소</Text>
         </TouchableOpacity>

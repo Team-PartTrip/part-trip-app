@@ -27,3 +27,16 @@ export function getCharacterRanking<T = unknown>(): Promise<T> {
 export function getFestivals<T = unknown>(): Promise<T> {
   return authRequest<T>('/api/main/festivals', { method: 'GET' });
 }
+
+export interface CountryInfo {
+  countryInfoId: number;
+  countryName: string;
+  cityName: string;
+  imageUrl: string;
+  summary: string;
+}
+
+/** 여행지(국가/도시) 전체 목록 조회 (여행지 선택 화면에서 사용) */
+export function getCountries(): Promise<CountryInfo[]> {
+  return authRequest<CountryInfo[]>('/api/main/countries', { method: 'GET' });
+}

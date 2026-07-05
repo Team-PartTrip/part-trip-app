@@ -46,6 +46,10 @@ export async function request<T = unknown>(
     'ngrok-skip-browser-warning': 'true',
   };
 
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
   let res: Response;
   try {
     res = await fetch(`${BASE_URL}${path}`, {

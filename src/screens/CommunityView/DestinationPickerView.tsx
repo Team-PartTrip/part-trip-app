@@ -1,37 +1,66 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TextInput,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ScreenHeader from '../../component/ScreenHeader';
 import { destinationPickerStyles as s } from './DestinationPickerView.styles';
+import { getCountries, CountryInfo } from '../../api/main';
 
-const POPULAR = [
-  { name: '도쿄', country: '일본', flag: '🇯🇵' },
-  { name: '방콕', country: '태국', flag: '🇹🇭' },
-  { name: '파리', country: '프랑스', flag: '🇫🇷' },
-  { name: '다낭', country: '베트남', flag: '🇻🇳' },
-];
+export interface SelectedDestination {
+  countryInfoId: number;
+  name: string;
+}
 
 interface Props {
   onBack?: () => void;
-  onSelect?: (name: string) => void;
+  onSelect?: (destination: SelectedDestination) => void;
 }
 
 const DestinationPickerView: React.FC<Props> = ({ onBack, onSelect }) => {
   const [query, setQuery] = useState('');
-  const [recent, setRecent] = useState<string[]>(['싱가포르']);
-  const filtered = POPULAR.filter(
-    p => !query.trim() || p.name.includes(query) || p.country.includes(query),
+  const [countries, setCountries] = useState<CountryInfo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [recent, setRecent] = useState<CountryInfo[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const list = await getCountries();
+        setCountries(list);
+      } catch {
+        setCountries([]);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const filtered = countries.filter(
+    c =>
+      !query.trim() ||
+      c.cityName.includes(query) ||
+      c.countryName.includes(query),
   );
-  const pick = (name: string) => {
-    setRecent(prev => [name, ...prev.filter(r => r !== name)].slice(0, 6));
-    onSelect?.(name);
+
+  const pick = (country: CountryInfo) => {
+    setRecent(prev =>
+      [
+        country,
+        ...prev.filter(r => r.countryInfoId !== country.countryInfoId),
+      ].slice(0, 6),
+    );
+    onSelect?.({
+      countryInfoId: country.countryInfoId,
+      name: country.cityName,
+    });
   };
+
   return (
     <SafeAreaView style={s.safe} edges={['top', 'bottom']}>
       <ScreenHeader title="여행지 선택" onBack={onBack} />
@@ -48,9 +77,9 @@ const DestinationPickerView: React.FC<Props> = ({ onBack, onSelect }) => {
             value={query}
             onChangeText={setQuery}
             returnKeyType="search"
-            onSubmitEditing={() => query.trim() && pick(query.trim())}
           />
         </View>
+
         {recent.length > 0 && (
           <>
             <View style={s.sectionRow}>
@@ -61,12 +90,16 @@ const DestinationPickerView: React.FC<Props> = ({ onBack, onSelect }) => {
             </View>
             <View style={s.recentRow}>
               {recent.map(r => (
-                <View key={r} style={s.chip}>
+                <View key={r.countryInfoId} style={s.chip}>
                   <TouchableOpacity onPress={() => pick(r)}>
-                    <Text style={s.chipText}>{r}</Text>
+                    <Text style={s.chipText}>{r.cityName}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    onPress={() => setRecent(prev => prev.filter(x => x !== r))}
+                    onPress={() =>
+                      setRecent(prev =>
+                        prev.filter(x => x.countryInfoId !== r.countryInfoId),
+                      )
+                    }
                   >
                     <Text style={s.chipX}>✕</Text>
                   </TouchableOpacity>
@@ -75,23 +108,32 @@ const DestinationPickerView: React.FC<Props> = ({ onBack, onSelect }) => {
             </View>
           </>
         )}
-        <Text style={s.sectionTitle}>인기 여행지</Text>
-        <View style={s.grid}>
-          {filtered.map(p => (
-            <TouchableOpacity
-              key={p.name}
-              style={s.card}
-              activeOpacity={0.85}
-              onPress={() => pick(p.name)}
-            >
-              <View style={s.cardImg}>
-                <Text style={s.cardFlag}>{p.flag}</Text>
-              </View>
-              <Text style={s.cardName}>{p.name}</Text>
-              <Text style={s.cardCountry}>{p.country}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+
+        <Text style={s.sectionTitle}>여행지 목록</Text>
+        {loading ? (
+          <ActivityIndicator style={{ marginTop: 24 }} />
+        ) : filtered.length === 0 ? (
+          <Text style={{ color: '#8a93a3', marginBottom: 20 }}>
+            등록된 여행지가 없습니다.
+          </Text>
+        ) : (
+          <View style={s.grid}>
+            {filtered.map(c => (
+              <TouchableOpacity
+                key={c.countryInfoId}
+                style={s.card}
+                activeOpacity={0.85}
+                onPress={() => pick(c)}
+              >
+                <View style={s.cardImg}>
+                  <Text style={s.cardFlag}>📍</Text>
+                </View>
+                <Text style={s.cardName}>{c.cityName}</Text>
+                <Text style={s.cardCountry}>{c.countryName}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

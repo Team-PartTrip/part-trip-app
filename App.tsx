@@ -37,6 +37,7 @@ import RecordMapView from './src/screens/RecordView/RecordMapView';
 import RecordEditView from './src/screens/RecordView/RecordEditView';
 import RecordCompleteView from './src/screens/RecordView/RecordCompleteView';
 import ProfileEditView from './src/screens/ProfileView/ProfileEditView';
+import { consumeDestinationCallback } from './src/screens/CommunityView/destinationSelectBridge';
 
 export type RootStackParamList = {
   Launch: undefined;
@@ -51,8 +52,11 @@ export type RootStackParamList = {
   Camera: undefined;
   NearbyPlaces: undefined;
   Community: undefined;
-  PostDetail: { id: string };
-  PostCreate: { tab?: 'free' | 'review' | 'route'; destination?: string };
+  PostDetail: { id: string; type?: 'free' | 'review' | 'route' };
+  PostCreate: {
+    tab?: 'free' | 'review' | 'route';
+    destination?: { countryInfoId: number; name: string };
+  };
   DestinationPicker: undefined;
   Record: undefined;
   RecordMap: undefined;
@@ -248,13 +252,19 @@ function App() {
                 {({ navigation }) => (
                   <CommunityView
                     onWrite={tab => navigation.navigate('PostCreate', { tab })}
-                    onOpenPost={id => navigation.navigate('PostDetail', { id })}
+                    onOpenPost={(id, type) =>
+                      navigation.navigate('PostDetail', { id, type })
+                    }
                   />
                 )}
               </Stack.Screen>
               <Stack.Screen name="PostDetail">
-                {({ navigation }) => (
-                  <PostDetailView onBack={() => navigation.goBack()} />
+                {({ navigation, route }) => (
+                  <PostDetailView
+                    id={route.params?.id}
+                    type={route.params?.type}
+                    onBack={() => navigation.goBack()}
+                  />
                 )}
               </Stack.Screen>
               <Stack.Screen name="PostCreate">
@@ -274,9 +284,10 @@ function App() {
                 {({ navigation }) => (
                   <DestinationPickerView
                     onBack={() => navigation.goBack()}
-                    onSelect={name =>
-                      navigation.navigate('PostCreate', { destination: name })
-                    }
+                    onSelect={destination => {
+                      consumeDestinationCallback(destination);
+                      navigation.goBack();
+                    }}
                   />
                 )}
               </Stack.Screen>

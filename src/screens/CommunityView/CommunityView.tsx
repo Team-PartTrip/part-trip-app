@@ -1,12 +1,22 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { communityStyles as styles } from './CommunityView.styles';
+import {
+  getReviews,
+  getSharedTrips,
+  getBoards,
+  ReviewDto,
+  BoardDto,
+} from '../../api/community';
+import { TripDto } from '../../api/trip';
 
 type TabKey = 'free' | 'review' | 'route';
 
@@ -16,15 +26,12 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: 'route', label: '경로/일정 공유' },
 ];
 
-// ── 더미 데이터 (추후 GET /api/community 연동) ──
 interface FreePost {
   id: string;
   author: string;
-  verified?: boolean;
   time: string;
   title: string;
   body: string;
-  thumbs: number;
   likes: number;
   comments: number;
 }
@@ -41,73 +48,55 @@ interface Route {
   author: string;
   time: string;
   title: string;
-  schedule: { time: string; text: string }[];
+  schedule: { day: number; text: string }[];
 }
 
-const FREE_POSTS: FreePost[] = [
-  {
-    id: 'f1',
-    author: '계획적인 탐험가',
-    time: '15분 전',
-    title: '일본 교토 숙소 추천 부탁드려요! 🏮',
-    body: '다음 달에 부모님 모시고 교토 3박 4일 여행 갑니다. 가와라마치 쪽이랑 교토역 근처 중에 어디가 더 이동하기 편할까요?',
-    thumbs: 0,
-    likes: 8,
-    comments: 12,
-  },
-  {
-    id: 'f2',
-    author: 'TRAVLR 에디터',
-    verified: true,
-    time: '어제 · 여행꿀팁',
-    title: '초보 여행자를 위한 짐 싸기 꿀팁 TOP 5 🧳',
-    body: '셀러는 첫 해외여행, 무엇을 챙겨야 할지 막막하시죠? 베테랑 여행 에디터가 알려주는 부피 1/2로 줄이는...',
-    thumbs: 3,
-    likes: 452,
-    comments: 89,
-  },
-];
-
-const REVIEWS: Review[] = [
-  {
-    id: 'r1',
-    place: '제주도 앞의 해변',
-    rating: 5,
-    title: '투명한 바다와 완벽한 휴식',
-    body: '한 여 해수욕장의 에메랄드빛 바다는 정말 환상적입니다. 일정 시간에 맞춰 방문하는 것을 추천합니다.',
-    time: '2시간 전',
-  },
-  {
-    id: 'r2',
-    place: '프랑스 파리 에펠탑',
-    rating: 4,
-    title: '낭만적인 야경의 정석',
-    body: '정시에 1번씩 빛나는 에펠탑은 정말 잊지 못할 추억이 될 거예요. 마르스 광장에서 보는 야경이 최고!',
-    time: '6시간 전',
-  },
-];
-
-const ROUTES: Route[] = [
-  {
-    id: 'rt1',
-    author: '무작정 탐험가',
-    time: '어제',
-    title: '교토 숨은 감성 골목 2박 3일',
-    schedule: [
-      { time: '오전 10:00', text: '기요미즈데라 관람 · 여유로운 산책' },
-      { time: '오후 1:30', text: '니시키 시장 먹거리 투어 · 로컬 푸드 체험' },
-    ],
-  },
-];
-// ────────────────────────────────────────────
-
 const stars = (n: number) => '★★★★★☆☆☆☆☆'.slice(5 - n, 10 - n);
+
+/** ISO 날짜 문자열을 "M/D HH:mm" 형태로 축약 */
+const formatTime = (iso: string) => {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(
+    2,
+    '0',
+  )}:${String(d.getMinutes()).padStart(2, '0')}`;
+};
+
+const toReview = (r: ReviewDto): Review => ({
+  id: String(r.reviewId),
+  place: r.cityName || r.countryName || '',
+  rating: r.rating,
+  title: r.title,
+  body: r.content,
+  time: formatTime(r.createDate),
+});
+
+const toRoute = (t: TripDto): Route => ({
+  id: String(t.tripId),
+  author: t.nickName,
+  time: formatTime(t.createDate),
+  title: t.title,
+  schedule: t.places
+    .slice(0, 3)
+    .map(p => ({ day: p.dayNumber, text: p.placeName })),
+});
+
+const toFreePost = (b: BoardDto): FreePost => ({
+  id: String(b.boardId),
+  author: b.nickName,
+  time: formatTime(b.createDate),
+  title: b.title,
+  body: b.content,
+  likes: b.likeCount,
+  comments: b.commentCount,
+});
 
 interface CommunityViewProps {
   /** 게시글 작성 화면 열기 */
   onWrite?: (tab: TabKey) => void;
   /** 게시글 상세 열기 */
-  onOpenPost?: (id: string) => void;
+  onOpenPost?: (id: string, type: TabKey) => void;
 }
 
 const CommunityView: React.FC<CommunityViewProps> = ({
@@ -116,28 +105,82 @@ const CommunityView: React.FC<CommunityViewProps> = ({
 }) => {
   const [tab, setTab] = useState<TabKey>('free');
   const [query, setQuery] = useState('');
+  const [freePosts, setFreePosts] = useState<FreePost[]>([]);
+  const [freeLoading, setFreeLoading] = useState(true);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [routes, setRoutes] = useState<Route[]>([]);
+  const [routesLoading, setRoutesLoading] = useState(true);
+
+  const loadFreePosts = useCallback(async () => {
+    try {
+      setFreeLoading(true);
+      const data = await getBoards();
+      setFreePosts(data.map(toFreePost));
+    } catch {
+      setFreePosts([]);
+    } finally {
+      setFreeLoading(false);
+    }
+  }, []);
+
+  const loadReviews = useCallback(async () => {
+    try {
+      setReviewsLoading(true);
+      const data = await getReviews();
+      setReviews(data.map(toReview));
+    } catch {
+      setReviews([]);
+    } finally {
+      setReviewsLoading(false);
+    }
+  }, []);
+
+  const loadRoutes = useCallback(async () => {
+    try {
+      setRoutesLoading(true);
+      const data = await getSharedTrips();
+      setRoutes(data.map(toRoute));
+    } catch {
+      setRoutes([]);
+    } finally {
+      setRoutesLoading(false);
+    }
+  }, []);
+
+  // 화면에 다시 진입할 때마다(글 작성 후 돌아왔을 때 포함) 최신 데이터 갱신
+  useFocusEffect(
+    useCallback(() => {
+      loadFreePosts();
+      loadReviews();
+      loadRoutes();
+    }, [loadFreePosts, loadReviews, loadRoutes]),
+  );
 
   const q = query.trim().toLowerCase();
-  const match = (...fields: string[]) =>
-    !q || fields.some(f => f.toLowerCase().includes(q));
+  const match = useCallback(
+    (...fields: string[]) =>
+      !q || fields.some(f => f.toLowerCase().includes(q)),
+    [q],
+  );
 
   const freeList = useMemo(
-    () => FREE_POSTS.filter(p => match(p.title, p.body, p.author)),
-    [q],
+    () => freePosts.filter(p => match(p.title, p.body, p.author)),
+    [match, freePosts],
   );
   const reviewList = useMemo(
-    () => REVIEWS.filter(r => match(r.title, r.body, r.place)),
-    [q],
+    () => reviews.filter(r => match(r.title, r.body, r.place)),
+    [match, reviews],
   );
   const routeList = useMemo(
-    () => ROUTES.filter(r => match(r.title, r.author)),
-    [q],
+    () => routes.filter(r => match(r.title, r.author)),
+    [match, routes],
   );
 
   const isEmpty =
-    (tab === 'free' && freeList.length === 0) ||
-    (tab === 'review' && reviewList.length === 0) ||
-    (tab === 'route' && routeList.length === 0);
+    (tab === 'free' && !freeLoading && freeList.length === 0) ||
+    (tab === 'review' && !reviewsLoading && reviewList.length === 0) ||
+    (tab === 'route' && !routesLoading && routeList.length === 0);
 
   return (
     <View style={styles.safeArea}>
@@ -184,6 +227,16 @@ const CommunityView: React.FC<CommunityViewProps> = ({
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
+        {tab === 'free' && freeLoading && (
+          <ActivityIndicator style={{ marginTop: 40 }} />
+        )}
+        {tab === 'review' && reviewsLoading && (
+          <ActivityIndicator style={{ marginTop: 40 }} />
+        )}
+        {tab === 'route' && routesLoading && (
+          <ActivityIndicator style={{ marginTop: 40 }} />
+        )}
+
         {isEmpty && (
           <View style={styles.empty}>
             <Text style={styles.emptyText}>검색 결과가 없습니다.</Text>
@@ -197,14 +250,13 @@ const CommunityView: React.FC<CommunityViewProps> = ({
               key={p.id}
               style={styles.card}
               activeOpacity={0.9}
-              onPress={() => onOpenPost?.(p.id)}
+              onPress={() => onOpenPost?.(p.id, 'free')}
             >
               <View style={styles.postHeader}>
                 <View style={styles.avatar}>
                   <Text style={styles.avatarIcon}>🧑</Text>
                 </View>
                 <Text style={styles.authorName}>{p.author}</Text>
-                {p.verified && <Text style={styles.verified}>✔</Text>}
                 <Text style={styles.dot}>·</Text>
                 <Text style={styles.time}>{p.time}</Text>
               </View>
@@ -212,19 +264,6 @@ const CommunityView: React.FC<CommunityViewProps> = ({
               <Text style={styles.postBody} numberOfLines={3}>
                 {p.body}
               </Text>
-
-              {p.thumbs > 0 && (
-                <View style={styles.thumbRow}>
-                  {Array.from({ length: Math.min(p.thumbs, 2) }).map((_, i) => (
-                    <View key={i} style={styles.thumb} />
-                  ))}
-                  {p.thumbs > 2 && (
-                    <View style={[styles.thumb, styles.thumbMore]}>
-                      <Text style={styles.thumbMoreText}>+{p.thumbs - 2}</Text>
-                    </View>
-                  )}
-                </View>
-              )}
 
               <View style={styles.metaRow}>
                 <Text style={styles.meta}>👍 {p.likes}</Text>
@@ -240,7 +279,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({
               key={r.id}
               style={styles.reviewCard}
               activeOpacity={0.9}
-              onPress={() => onOpenPost?.(r.id)}
+              onPress={() => onOpenPost?.(r.id, 'review')}
             >
               <View style={styles.reviewImage}>
                 <View style={styles.placePill}>
@@ -265,7 +304,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({
               key={r.id}
               style={styles.card}
               activeOpacity={0.9}
-              onPress={() => onOpenPost?.(r.id)}
+              onPress={() => onOpenPost?.(r.id, 'route')}
             >
               <View style={styles.postHeader}>
                 <View style={styles.avatar}>
@@ -279,7 +318,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({
               {r.schedule.map((s, i) => (
                 <View key={i} style={styles.scheduleItem}>
                   <View style={styles.scheduleDot} />
-                  <Text style={styles.scheduleTime}>{s.time}</Text>
+                  <Text style={styles.scheduleTime}>Day {s.day}</Text>
                   <Text style={styles.scheduleText}>{s.text}</Text>
                 </View>
               ))}
