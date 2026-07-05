@@ -1,517 +1,313 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
-  ActivityIndicator,
-  Image,
-} from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
-import { communityStyles as styles } from './CommunityView.styles';
-import {
-  getReviews,
-  getSharedTrips,
-  getBoards,
-  toggleLike,
-  ReviewDto,
-  BoardDto,
-} from '../../api/community';
-import { TripDto } from '../../api/trip';
-import { toImageUrl } from '../../api/image';
+import { authRequest } from './http';
+import type { TripDto } from './trip';
 
-type TabKey = 'free' | 'review' | 'route';
-
-const TABS: { key: TabKey; label: string }[] = [
-  { key: 'free', label: '자유게시판' },
-  { key: 'review', label: '여행 후기' },
-  { key: 'route', label: '경로/일정 공유' },
-];
-
-const PAGE_SIZE = 20;
-
-interface FreePost {
-  id: string;
-  author: string;
-  time: string;
-  title: string;
-  body: string;
-  likeCount: number;
-  liked: boolean;
-  comments: number;
+export interface PageResponse<T> {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  hasNext: boolean;
 }
-interface Review {
-  id: string;
-  place: string;
+
+export interface ReviewDto {
+  reviewId: number;
+  countryInfoId: number;
+  countryName: string | null;
+  cityName: string | null;
+  userId: string;
+  nickName: string;
+  title: string;
   rating: number;
-  title: string;
-  body: string;
-  time: string;
+  content: string;
+  images: string[];
   likeCount: number;
   liked: boolean;
-  thumbnail: string | null;
+  commentCount: number;
+  createDate: string;
 }
-interface Route {
-  id: string;
-  author: string;
-  time: string;
+
+export interface ReviewPayload {
+  countryInfoId: number;
   title: string;
+  rating: number;
+  content: string;
+  images?: string[];
+}
+
+/** 여행지 별점 리뷰 작성 */
+export function createReview(payload: ReviewPayload): Promise<ReviewDto> {
+  return authRequest<ReviewDto>('/api/community/reviews', {
+    method: 'POST',
+    body: payload,
+  });
+}
+
+/** 리뷰 목록 조회 (countryInfoId 생략 시 전체 조회, 페이지네이션) */
+export function getReviews(
+  countryInfoId?: number,
+  page = 0,
+  size = 20,
+): Promise<PageResponse<ReviewDto>> {
+  const params = new URLSearchParams();
+  if (countryInfoId) params.set('countryInfoId', String(countryInfoId));
+  params.set('page', String(page));
+  params.set('size', String(size));
+  return authRequest<PageResponse<ReviewDto>>(
+    `/api/community/reviews?${params.toString()}`,
+    { method: 'GET' },
+  );
+}
+
+/** 내가 쓴 리뷰 목록 */
+export function getMyReviews(
+  page = 0,
+  size = 20,
+): Promise<PageResponse<ReviewDto>> {
+  return authRequest<PageResponse<ReviewDto>>(
+    `/api/community/reviews/mine?page=${page}&size=${size}`,
+    { method: 'GET' },
+  );
+}
+
+/** 리뷰 수정 (본인 리뷰만 가능) */
+export function updateReview(
+  reviewId: number,
+  payload: ReviewPayload,
+): Promise<ReviewDto> {
+  return authRequest<ReviewDto>(`/api/community/reviews/${reviewId}`, {
+    method: 'PUT',
+    body: payload,
+  });
+}
+
+/** 리뷰 삭제 (본인 리뷰만 가능) */
+export function deleteReview(reviewId: number): Promise<string> {
+  return authRequest<string>(`/api/community/reviews/${reviewId}`, {
+    method: 'DELETE',
+  });
+}
+
+/** 리뷰 단건 조회 */
+export function getReview(reviewId: number): Promise<ReviewDto> {
+  return authRequest<ReviewDto>(`/api/community/reviews/${reviewId}`, {
+    method: 'GET',
+  });
+}
+
+/** 여행 경로/일정 공유 (내가 만든 일정을 커뮤니티에 공개) */
+export function shareTrip(tripId: number): Promise<TripDto> {
+  return authRequest<TripDto>('/api/community/shared-trips', {
+    method: 'POST',
+    body: { tripId },
+  });
+}
+
+/** 공유된 일정 목록 (커뮤니티 피드, 페이지네이션) */
+export function getSharedTrips(
+  page = 0,
+  size = 20,
+): Promise<PageResponse<TripDto>> {
+  return authRequest<PageResponse<TripDto>>(
+    `/api/community/shared-trips?page=${page}&size=${size}`,
+    { method: 'GET' },
+  );
+}
+
+/** 공유된 일정 상세 */
+export function getSharedTripDetail(tripId: number): Promise<TripDto> {
+  return authRequest<TripDto>(`/api/community/shared-trips/${tripId}`, {
+    method: 'GET',
+  });
+}
+
+/** 다른 사람의 공유 일정을 내 일정으로 가져오기 */
+export function importTrip(tripId: number): Promise<TripDto> {
+  return authRequest<TripDto>(`/api/community/shared-trips/${tripId}/import`, {
+    method: 'POST',
+  });
+}
+
+export interface BoardDto {
+  boardId: number;
+  userId: string;
+  nickName: string;
+  title: string;
+  content: string;
+  images: string[];
   likeCount: number;
   liked: boolean;
-  schedule: { day: number; text: string }[];
+  commentCount: number;
+  createDate: string;
+  updateDate: string | null;
 }
 
-const stars = (n: number) => '★★★★★☆☆☆☆☆'.slice(5 - n, 10 - n);
-
-/** ISO 날짜 문자열을 "M/D HH:mm" 형태로 축약 */
-const formatTime = (iso: string) => {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '';
-  return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(
-    2,
-    '0',
-  )}:${String(d.getMinutes()).padStart(2, '0')}`;
-};
-
-const toReview = (r: ReviewDto): Review => ({
-  id: String(r.reviewId),
-  place: r.cityName || r.countryName || '',
-  rating: r.rating,
-  title: r.title,
-  body: r.content,
-  time: formatTime(r.createDate),
-  likeCount: r.likeCount,
-  liked: r.liked,
-  thumbnail: r.images.length > 0 ? toImageUrl(r.images[0]) : null,
-});
-
-const toRoute = (t: TripDto): Route => ({
-  id: String(t.tripId),
-  author: t.nickName,
-  time: formatTime(t.createDate),
-  title: t.title,
-  likeCount: t.likeCount,
-  liked: t.liked,
-  schedule: t.places
-    .slice(0, 3)
-    .map(p => ({ day: p.dayNumber, text: p.placeName })),
-});
-
-const toFreePost = (b: BoardDto): FreePost => ({
-  id: String(b.boardId),
-  author: b.nickName,
-  time: formatTime(b.createDate),
-  title: b.title,
-  body: b.content,
-  likeCount: b.likeCount,
-  liked: b.liked,
-  comments: b.commentCount,
-});
-
-interface CommunityViewProps {
-  /** 게시글 작성 화면 열기 */
-  onWrite?: (tab: TabKey) => void;
-  /** 게시글 상세 열기 */
-  onOpenPost?: (id: string, type: TabKey) => void;
+export interface BoardPayload {
+  title: string;
+  content: string;
+  images?: string[];
 }
 
-const CommunityView: React.FC<CommunityViewProps> = ({
-                                                       onWrite,
-                                                       onOpenPost,
-                                                     }) => {
-  const [tab, setTab] = useState<TabKey>('free');
-  const [query, setQuery] = useState('');
+export interface CommentDto {
+  commentId: number;
+  targetType: 'BOARD' | 'REVIEW' | 'TRIP';
+  targetId: number;
+  parentCommentId: number | null;
+  userId: string;
+  nickName: string;
+  content: string;
+  createDate: string;
+}
 
-  const [freePosts, setFreePosts] = useState<FreePost[]>([]);
-  const [freeLoading, setFreeLoading] = useState(true);
-  const [freePage, setFreePage] = useState(0);
-  const [freeHasNext, setFreeHasNext] = useState(false);
+export interface CommentPayload {
+  content: string;
+  parentCommentId?: number;
+}
 
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [reviewsLoading, setReviewsLoading] = useState(true);
-  const [reviewPage, setReviewPage] = useState(0);
-  const [reviewHasNext, setReviewHasNext] = useState(false);
+/** 자유게시판 글 작성 */
+export function createBoard(payload: BoardPayload): Promise<BoardDto> {
+  return authRequest<BoardDto>('/api/community/boards', {
+    method: 'POST',
+    body: payload,
+  });
+}
 
-  const [routes, setRoutes] = useState<Route[]>([]);
-  const [routesLoading, setRoutesLoading] = useState(true);
-  const [routePage, setRoutePage] = useState(0);
-  const [routeHasNext, setRouteHasNext] = useState(false);
-
-  const loadFreePosts = useCallback(async () => {
-    try {
-      setFreeLoading(true);
-      const data = await getBoards(0, PAGE_SIZE);
-      setFreePosts(data.content.map(toFreePost));
-      setFreePage(0);
-      setFreeHasNext(data.hasNext);
-    } catch {
-      setFreePosts([]);
-      setFreeHasNext(false);
-    } finally {
-      setFreeLoading(false);
-    }
-  }, []);
-
-  const loadMoreFreePosts = useCallback(async () => {
-    const next = freePage + 1;
-    const data = await getBoards(next, PAGE_SIZE);
-    setFreePosts(prev => [...prev, ...data.content.map(toFreePost)]);
-    setFreePage(next);
-    setFreeHasNext(data.hasNext);
-  }, [freePage]);
-
-  const loadReviews = useCallback(async () => {
-    try {
-      setReviewsLoading(true);
-      const data = await getReviews(undefined, 0, PAGE_SIZE);
-      setReviews(data.content.map(toReview));
-      setReviewPage(0);
-      setReviewHasNext(data.hasNext);
-    } catch {
-      setReviews([]);
-      setReviewHasNext(false);
-    } finally {
-      setReviewsLoading(false);
-    }
-  }, []);
-
-  const loadMoreReviews = useCallback(async () => {
-    const next = reviewPage + 1;
-    const data = await getReviews(undefined, next, PAGE_SIZE);
-    setReviews(prev => [...prev, ...data.content.map(toReview)]);
-    setReviewPage(next);
-    setReviewHasNext(data.hasNext);
-  }, [reviewPage]);
-
-  const loadRoutes = useCallback(async () => {
-    try {
-      setRoutesLoading(true);
-      const data = await getSharedTrips(0, PAGE_SIZE);
-      setRoutes(data.content.map(toRoute));
-      setRoutePage(0);
-      setRouteHasNext(data.hasNext);
-    } catch {
-      setRoutes([]);
-      setRouteHasNext(false);
-    } finally {
-      setRoutesLoading(false);
-    }
-  }, []);
-
-  const loadMoreRoutes = useCallback(async () => {
-    const next = routePage + 1;
-    const data = await getSharedTrips(next, PAGE_SIZE);
-    setRoutes(prev => [...prev, ...data.content.map(toRoute)]);
-    setRoutePage(next);
-    setRouteHasNext(data.hasNext);
-  }, [routePage]);
-
-  // 화면에 다시 진입할 때마다(글 작성 후 돌아왔을 때 포함) 최신 데이터로 새로고침
-  useFocusEffect(
-    useCallback(() => {
-      loadFreePosts();
-      loadReviews();
-      loadRoutes();
-    }, [loadFreePosts, loadReviews, loadRoutes]),
+/** 자유게시판 글 목록 조회 (페이지네이션) */
+export function getBoards(
+  page = 0,
+  size = 20,
+): Promise<PageResponse<BoardDto>> {
+  return authRequest<PageResponse<BoardDto>>(
+    `/api/community/boards?page=${page}&size=${size}`,
+    { method: 'GET' },
   );
+}
 
-  const q = query.trim().toLowerCase();
-  const match = useCallback(
-    (...fields: string[]) =>
-      !q || fields.some(f => f.toLowerCase().includes(q)),
-    [q],
+/** 내가 쓴 글 목록 */
+export function getMyBoards(
+  page = 0,
+  size = 20,
+): Promise<PageResponse<BoardDto>> {
+  return authRequest<PageResponse<BoardDto>>(
+    `/api/community/boards/mine?page=${page}&size=${size}`,
+    { method: 'GET' },
   );
+}
 
-  const freeList = useMemo(
-    () => freePosts.filter(p => match(p.title, p.body, p.author)),
-    [match, freePosts],
+/** 자유게시판 글 단건 조회 */
+export function getBoard(boardId: number): Promise<BoardDto> {
+  return authRequest<BoardDto>(`/api/community/boards/${boardId}`, {
+    method: 'GET',
+  });
+}
+
+/** 자유게시판 글 수정 (본인 글만 가능) */
+export function updateBoard(
+  boardId: number,
+  payload: BoardPayload,
+): Promise<BoardDto> {
+  return authRequest<BoardDto>(`/api/community/boards/${boardId}`, {
+    method: 'PUT',
+    body: payload,
+  });
+}
+
+/** 자유게시판 글 삭제 (본인 글만 가능) */
+export function deleteBoard(boardId: number): Promise<string> {
+  return authRequest<string>(`/api/community/boards/${boardId}`, {
+    method: 'DELETE',
+  });
+}
+
+/** 자유게시판 댓글(또는 대댓글) 작성 */
+export function createBoardComment(
+  boardId: number,
+  payload: CommentPayload,
+): Promise<CommentDto> {
+  return authRequest<CommentDto>(`/api/community/boards/${boardId}/comments`, {
+    method: 'POST',
+    body: payload,
+  });
+}
+
+/** 자유게시판 댓글 목록 조회 */
+export function getBoardComments(boardId: number): Promise<CommentDto[]> {
+  return authRequest<CommentDto[]>(
+    `/api/community/boards/${boardId}/comments`,
+    { method: 'GET' },
   );
-  const reviewList = useMemo(
-    () => reviews.filter(r => match(r.title, r.body, r.place)),
-    [match, reviews],
+}
+
+/** 여행 후기 댓글(또는 대댓글) 작성 */
+export function createReviewComment(
+  reviewId: number,
+  payload: CommentPayload,
+): Promise<CommentDto> {
+  return authRequest<CommentDto>(
+    `/api/community/reviews/${reviewId}/comments`,
+    { method: 'POST', body: payload },
   );
-  const routeList = useMemo(
-    () => routes.filter(r => match(r.title, r.author)),
-    [match, routes],
+}
+
+/** 여행 후기 댓글 목록 조회 */
+export function getReviewComments(reviewId: number): Promise<CommentDto[]> {
+  return authRequest<CommentDto[]>(
+    `/api/community/reviews/${reviewId}/comments`,
+    { method: 'GET' },
   );
+}
 
-  const isEmpty =
-    (tab === 'free' && !freeLoading && freeList.length === 0) ||
-    (tab === 'review' && !reviewsLoading && reviewList.length === 0) ||
-    (tab === 'route' && !routesLoading && routeList.length === 0);
+/** 일정 댓글(또는 대댓글) 작성 */
+export function createTripComment(
+  tripId: number,
+  payload: CommentPayload,
+): Promise<CommentDto> {
+  return authRequest<CommentDto>(
+    `/api/community/shared-trips/${tripId}/comments`,
+    { method: 'POST', body: payload },
+  );
+}
 
-  const handleLikeFree = async (id: string) => {
-    setFreePosts(prev =>
-      prev.map(p =>
-        p.id === id
-          ? {
-            ...p,
-            liked: !p.liked,
-            likeCount: p.likeCount + (p.liked ? -1 : 1),
-          }
-          : p,
-      ),
-    );
-    try {
-      const result = await toggleLike('BOARD', Number(id));
-      setFreePosts(prev =>
-        prev.map(p =>
-          p.id === id
-            ? { ...p, liked: result.liked, likeCount: result.likeCount }
-            : p,
-        ),
-      );
-    } catch {
-      loadFreePosts();
-    }
-  };
+/** 일정 댓글 목록 조회 */
+export function getTripComments(tripId: number): Promise<CommentDto[]> {
+  return authRequest<CommentDto[]>(
+    `/api/community/shared-trips/${tripId}/comments`,
+    { method: 'GET' },
+  );
+}
 
-  const handleLikeReview = async (id: string) => {
-    setReviews(prev =>
-      prev.map(r =>
-        r.id === id
-          ? {
-            ...r,
-            liked: !r.liked,
-            likeCount: r.likeCount + (r.liked ? -1 : 1),
-          }
-          : r,
-      ),
-    );
-    try {
-      const result = await toggleLike('REVIEW', Number(id));
-      setReviews(prev =>
-        prev.map(r =>
-          r.id === id
-            ? { ...r, liked: result.liked, likeCount: result.likeCount }
-            : r,
-        ),
-      );
-    } catch {
-      loadReviews();
-    }
-  };
+/** 댓글 수정 (본인 댓글만 가능) */
+export function updateComment(
+  commentId: number,
+  payload: CommentPayload,
+): Promise<CommentDto> {
+  return authRequest<CommentDto>(`/api/community/comments/${commentId}`, {
+    method: 'PUT',
+    body: payload,
+  });
+}
 
-  const handleLikeRoute = async (id: string) => {
-    setRoutes(prev =>
-      prev.map(r =>
-        r.id === id
-          ? {
-            ...r,
-            liked: !r.liked,
-            likeCount: r.likeCount + (r.liked ? -1 : 1),
-          }
-          : r,
-      ),
-    );
-    try {
-      const result = await toggleLike('TRIP', Number(id));
-      setRoutes(prev =>
-        prev.map(r =>
-          r.id === id
-            ? { ...r, liked: result.liked, likeCount: result.likeCount }
-            : r,
-        ),
-      );
-    } catch {
-      loadRoutes();
-    }
-  };
+/** 댓글 삭제 (본인 댓글만 가능) */
+export function deleteComment(commentId: number): Promise<string> {
+  return authRequest<string>(`/api/community/comments/${commentId}`, {
+    method: 'DELETE',
+  });
+}
 
-  return (
-    <View style={styles.safeArea}>
-      {/* 카테고리 탭 */}
-      <View style={styles.tabRow}>
-    {TABS.map(t => {
-        const active = tab === t.key;
-        return (
-          <TouchableOpacity
-            key={t.key}
-        style={[styles.tab, active && styles.tabActive]}
-        activeOpacity={0.85}
-        onPress={() => setTab(t.key)}
-      >
-        <Text style={[styles.tabText, active && styles.tabTextActive]}>
-        {t.label}
-        </Text>
-        </TouchableOpacity>
-      );
-      })}
-    </View>
+export type LikeTargetType = 'BOARD' | 'REVIEW' | 'TRIP';
 
-  {/* 검색 */}
-  <View style={styles.searchBar}>
-  <Text style={styles.searchIcon}>🔍</Text>
-  <TextInput
-  style={styles.searchInput}
-  placeholder="제목, 내용, 작성자 검색"
-  placeholderTextColor="#aab4be"
-  value={query}
-  onChangeText={setQuery}
-  returnKeyType="search"
-    />
-    {query.length > 0 && (
-        <TouchableOpacity onPress={() => setQuery('')}>
-  <Text style={styles.searchClear}>✕</Text>
-  </TouchableOpacity>
-)}
-  </View>
+export interface LikeResult {
+  liked: boolean;
+  likeCount: number;
+}
 
-  <ScrollView
-  style={styles.scroll}
-  contentContainerStyle={styles.scrollContent}
-  showsVerticalScrollIndicator={false}
-  keyboardShouldPersistTaps="handled"
-    >
-    {tab === 'free' && freeLoading && (
-      <ActivityIndicator style={{ marginTop: 40 }} />
-)}
-  {tab === 'review' && reviewsLoading && (
-    <ActivityIndicator style={{ marginTop: 40 }} />
-  )}
-  {tab === 'route' && routesLoading && (
-    <ActivityIndicator style={{ marginTop: 40 }} />
-  )}
-
-  {isEmpty && (
-    <View style={styles.empty}>
-    <Text style={styles.emptyText}>검색 결과가 없습니다.</Text>
-  </View>
-  )}
-
-  {/* 자유게시판 */}
-  {tab === 'free' &&
-  freeList.map(p => (
-    <TouchableOpacity
-      key={p.id}
-    style={styles.card}
-    activeOpacity={0.9}
-    onPress={() => onOpenPost?.(p.id, 'free')}
-  >
-    <View style={styles.postHeader}>
-    <View style={styles.avatar}>
-    <Text style={styles.avatarIcon}>🧑</Text>
-  </View>
-  <Text style={styles.authorName}>{p.author}</Text>
-    <Text style={styles.dot}>·</Text>
-  <Text style={styles.time}>{p.time}</Text>
-    </View>
-    <Text style={styles.postTitle}>{p.title}</Text>
-    <Text style={styles.postBody} numberOfLines={3}>
-    {p.body}
-    </Text>
-
-    <View style={styles.metaRow}>
-  <TouchableOpacity onPress={() => handleLikeFree(p.id)}>
-    <Text style={styles.meta}>
-      {p.liked ? '❤️' : '🤍'} {p.likeCount}
-    </Text>
-    </TouchableOpacity>
-    <Text style={styles.meta}>💬 {p.comments}</Text>
-  </View>
-  </TouchableOpacity>
-  ))}
-  {tab === 'free' && !freeLoading && freeHasNext && (
-    <TouchableOpacity style={styles.empty} onPress={loadMoreFreePosts}>
-  <Text style={styles.emptyText}>더보기</Text>
-    </TouchableOpacity>
-  )}
-
-  {/* 여행 후기 */}
-  {tab === 'review' &&
-  reviewList.map(r => (
-    <TouchableOpacity
-      key={r.id}
-    style={styles.reviewCard}
-    activeOpacity={0.9}
-    onPress={() => onOpenPost?.(r.id, 'review')}
-  >
-    <View style={styles.reviewImage}>
-      {r.thumbnail && (
-          <Image
-            source={{ uri: r.thumbnail }}
-    style={styles.reviewImagePhoto}
-    />
-  )}
-    <View style={styles.placePill}>
-    <Text style={styles.placePillText}>📍 {r.place}</Text>
-  </View>
-  </View>
-  <View style={styles.reviewBodyWrap}>
-  <Text style={styles.reviewStars}>{stars(r.rating)}</Text>
-  <Text style={styles.reviewTitle}>{r.title}</Text>
-    <Text style={styles.reviewBody} numberOfLines={2}>
-    {r.body}
-    </Text>
-    <View style={styles.metaRow}>
-  <Text style={styles.time}>{r.time}</Text>
-    <TouchableOpacity onPress={() => handleLikeReview(r.id)}>
-    <Text style={styles.meta}>
-      {r.liked ? '❤️' : '🤍'} {r.likeCount}
-    </Text>
-    </TouchableOpacity>
-    </View>
-    </View>
-    </TouchableOpacity>
-  ))}
-  {tab === 'review' && !reviewsLoading && reviewHasNext && (
-    <TouchableOpacity style={styles.empty} onPress={loadMoreReviews}>
-  <Text style={styles.emptyText}>더보기</Text>
-    </TouchableOpacity>
-  )}
-
-  {/* 경로/일정 공유 */}
-  {tab === 'route' &&
-  routeList.map(r => (
-    <TouchableOpacity
-      key={r.id}
-    style={styles.card}
-    activeOpacity={0.9}
-    onPress={() => onOpenPost?.(r.id, 'route')}
-  >
-    <View style={styles.postHeader}>
-    <View style={styles.avatar}>
-    <Text style={styles.avatarIcon}>🧑</Text>
-  </View>
-  <Text style={styles.authorName}>{r.author}</Text>
-    <Text style={styles.dot}>·</Text>
-  <Text style={styles.time}>{r.time}</Text>
-    </View>
-    <Text style={styles.postTitle}>{r.title}</Text>
-    {r.schedule.map((s, i) => (
-      <View key={i} style={styles.scheduleItem}>
-    <View style={styles.scheduleDot} />
-    <Text style={styles.scheduleTime}>Day {s.day}</Text>
-    <Text style={styles.scheduleText}>{s.text}</Text>
-      </View>
-    ))}
-    <View style={styles.metaRow}>
-    <TouchableOpacity onPress={() => handleLikeRoute(r.id)}>
-    <Text style={styles.meta}>
-      {r.liked ? '❤️' : '🤍'} {r.likeCount}
-    </Text>
-    </TouchableOpacity>
-    </View>
-    </TouchableOpacity>
-  ))}
-  {tab === 'route' && !routesLoading && routeHasNext && (
-    <TouchableOpacity style={styles.empty} onPress={loadMoreRoutes}>
-  <Text style={styles.emptyText}>더보기</Text>
-    </TouchableOpacity>
-  )}
-  </ScrollView>
-
-  {/* 플로팅 글쓰기 버튼 */}
-  <TouchableOpacity
-    style={styles.fab}
-  activeOpacity={0.85}
-  onPress={() => onWrite?.(tab)}
->
-  <Text style={styles.fabText}>＋</Text>
-  </TouchableOpacity>
-  </View>
-);
-};
-
-export default CommunityView;
+/** 좋아요 토글 (게시글/리뷰/일정 공통) */
+export function toggleLike(
+  targetType: LikeTargetType,
+  targetId: number,
+): Promise<LikeResult> {
+  return authRequest<LikeResult>('/api/community/likes', {
+    method: 'POST',
+    body: { targetType, targetId },
+  });
+}

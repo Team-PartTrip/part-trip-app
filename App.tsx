@@ -56,6 +56,8 @@ export type RootStackParamList = {
   PostCreate: {
     tab?: 'free' | 'review' | 'route';
     destination?: { countryInfoId: number; name: string };
+    editType?: 'free' | 'review' | 'route';
+    editId?: string;
   };
   DestinationPicker: undefined;
   Record: undefined;
@@ -257,29 +259,34 @@ function App() {
                     }
                   />
                 )}
-              </Stack.Screen>
-              <Stack.Screen name="PostDetail">
-                {({ navigation, route }) => (
-                  <PostDetailView
-                    id={route.params?.id}
-                    type={route.params?.type}
-                    onBack={() => navigation.goBack()}
-                  />
-                )}
-              </Stack.Screen>
-              <Stack.Screen name="PostCreate">
-                {({ navigation, route }) => (
-                  <PostCreateView
-                    initialTab={route.params?.tab}
-                    destination={route.params?.destination}
-                    onBack={() => navigation.goBack()}
-                    onPickDestination={() =>
-                      navigation.navigate('DestinationPicker')
-                    }
-                    onSubmit={() => navigation.goBack()}
-                  />
-                )}
-              </Stack.Screen>
+                </Stack.Screen>
+                <Stack.Screen name="PostDetail">
+                  {({ navigation, route }) => (
+                    <PostDetailView
+                      id={route.params?.id}
+                      type={route.params?.type}
+                      onBack={() => navigation.goBack()}
+                      onEdit={(editType, editId) =>
+                        navigation.navigate('PostCreate', { editType, editId })
+                      }
+                    />
+                  )}
+                </Stack.Screen>
+                <Stack.Screen name="PostCreate">
+                  {({ navigation, route }) => (
+                    <PostCreateView
+                      initialTab={route.params?.tab}
+                      destination={route.params?.destination}
+                      editType={route.params?.editType}
+                      editId={route.params?.editId}
+                      onBack={() => navigation.goBack()}
+                      onPickDestination={() =>
+                        navigation.navigate('DestinationPicker')
+                      }
+                      onSubmit={() => navigation.goBack()}
+                    />
+                  )}
+                </Stack.Screen>
               <Stack.Screen name="DestinationPicker">
                 {({ navigation }) => (
                   <DestinationPickerView
@@ -380,6 +387,9 @@ function App() {
                 {({ navigation }) => (
                   <ProfileView
                     onEdit={() => navigation.navigate('ProfileEdit')}
+                    onOpenPost={(id, type) =>
+                      navigation.navigate('PostDetail', { id, type })
+                    }
                   />
                 )}
               </Stack.Screen>

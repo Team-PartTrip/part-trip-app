@@ -1,6 +1,21 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Modal } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Modal,
+  ActivityIndicator,
+} from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { profileStyles as s } from './ProfileView.styles';
+import {
+  getMyReviews,
+  getMyBoards,
+  ReviewDto,
+  BoardDto,
+} from '../../api/community';
+import { getMyTrips, TripDto } from '../../api/trip';
 
 interface Badge {
   id: string;
@@ -68,13 +83,87 @@ const BADGES: Badge[] = [
   },
 ];
 
+type MyTab = 'review' | 'free' | 'route';
+const MY_TABS: { key: MyTab; label: string }[] = [
+  { key: 'review', label: '여행 후기' },
+  { key: 'free', label: '자유게시판' },
+  { key: 'route', label: '경로/일정' },
+];
+const PAGE_SIZE = 10;
+
 interface Props {
   onEdit?: () => void;
   onSeeAllBadges?: () => void;
+  onOpenPost?: (id: string, type: 'free' | 'review' | 'route') => void;
 }
 
-const ProfileView: React.FC<Props> = ({ onEdit, onSeeAllBadges }) => {
+const ProfileView: React.FC<Props> = ({
+  onEdit,
+  onSeeAllBadges,
+  onOpenPost,
+}) => {
   const [selected, setSelected] = useState<Badge | null>(null);
+  const [myTab, setMyTab] = useState<MyTab>('review');
+
+  const [reviews, setReviews] = useState<ReviewDto[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [reviewPage, setReviewPage] = useState(0);
+  const [reviewHasNext, setReviewHasNext] = useState(false);
+
+  const [boards, setBoards] = useState<BoardDto[]>([]);
+  const [boardsLoading, setBoardsLoading] = useState(true);
+  const [boardPage, setBoardPage] = useState(0);
+  const [boardHasNext, setBoardHasNext] = useState(false);
+
+  const [trips, setTrips] = useState<TripDto[]>([]);
+  const [tripsLoading, setTripsLoading] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      setReviewsLoading(true);
+      getMyReviews(0, PAGE_SIZE)
+        .then(data => {
+          setReviews(data.content);
+          setReviewPage(0);
+          setReviewHasNext(data.hasNext);
+        })
+        .catch(() => setReviews([]))
+        .finally(() => setReviewsLoading(false));
+
+      setBoardsLoading(true);
+      getMyBoards(0, PAGE_SIZE)
+        .then(data => {
+          setBoards(data.content);
+          setBoardPage(0);
+          setBoardHasNext(data.hasNext);
+        })
+        .catch(() => setBoards([]))
+        .finally(() => setBoardsLoading(false));
+
+      setTripsLoading(true);
+      getMyTrips()
+        .then(setTrips)
+        .catch(() => setTrips([]))
+        .finally(() => setTripsLoading(false));
+    }, []),
+  );
+
+  const loadMoreReviews = async () => {
+    const next = reviewPage + 1;
+    const data = await getMyReviews(next, PAGE_SIZE);
+    setReviews(prev => [...prev, ...data.content]);
+    setReviewPage(next);
+    setReviewHasNext(data.hasNext);
+  };
+
+  const loadMoreBoards = async () => {
+    const next = boardPage + 1;
+    const data = await getMyBoards(next, PAGE_SIZE);
+    setBoards(prev => [...prev, ...data.content]);
+    setBoardPage(next);
+    setBoardHasNext(data.hasNext);
+  };
+
   return (
     <View style={s.safeArea}>
       <ScrollView
@@ -124,6 +213,130 @@ const ProfileView: React.FC<Props> = ({ onEdit, onSeeAllBadges }) => {
             </TouchableOpacity>
           ))}
         </View>
+
+        {/* 내가 쓴 글 */}
+        <View style={s.sectionHeader}>
+          <Text style={s.sectionTitle}>내가 쓴 글</Text>
+        </View>
+        <View style={s.myTabRow}>
+          {MY_TABS.map(t => {
+            const active = myTab === t.key;
+            return (
+              <TouchableOpacity
+                key={t.key}
+                style={[s.myTab, active && s.myTabActive]}
+                activeOpacity={0.85}
+                onPress={() => setMyTab(t.key)}
+              >
+                <Text style={[s.myTabText, active && s.myTabTextActive]}>
+                  {t.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {myTab === 'review' && (
+          <>
+            {reviewsLoading && <ActivityIndicator style={{ marginTop: 12 }} />}
+            {!reviewsLoading && reviews.length === 0 && (
+              <View style={s.emptyMy}>
+                <Text style={s.emptyMyText}>작성한 리뷰가 없습니다.</Text>
+              </View>
+            )}
+            {reviews.map(r => (
+              <TouchableOpacity
+                key={r.reviewId}
+                style={s.postCard}
+                activeOpacity={0.9}
+                onPress={() => onOpenPost?.(String(r.reviewId), 'review')}
+              >
+                <Text style={s.postCardTitle}>{r.title}</Text>
+                <Text style={s.postCardBody} numberOfLines={2}>
+                  {r.content}
+                </Text>
+                <View style={s.postCardMetaRow}>
+                  <Text style={s.postCardMeta}>
+                    📍 {r.cityName || r.countryName}
+                  </Text>
+                  <Text style={s.postCardMeta}>❤️ {r.likeCount}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+            {!reviewsLoading && reviewHasNext && (
+              <TouchableOpacity style={s.moreBtn} onPress={loadMoreReviews}>
+                <Text style={s.moreBtnText}>더보기</Text>
+              </TouchableOpacity>
+            )}
+          </>
+        )}
+
+        {myTab === 'free' && (
+          <>
+            {boardsLoading && <ActivityIndicator style={{ marginTop: 12 }} />}
+            {!boardsLoading && boards.length === 0 && (
+              <View style={s.emptyMy}>
+                <Text style={s.emptyMyText}>작성한 글이 없습니다.</Text>
+              </View>
+            )}
+            {boards.map(b => (
+              <TouchableOpacity
+                key={b.boardId}
+                style={s.postCard}
+                activeOpacity={0.9}
+                onPress={() => onOpenPost?.(String(b.boardId), 'free')}
+              >
+                <Text style={s.postCardTitle}>{b.title}</Text>
+                <Text style={s.postCardBody} numberOfLines={2}>
+                  {b.content}
+                </Text>
+                <View style={s.postCardMetaRow}>
+                  <Text style={s.postCardMeta}>❤️ {b.likeCount}</Text>
+                  <Text style={s.postCardMeta}>💬 {b.commentCount}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+            {!boardsLoading && boardHasNext && (
+              <TouchableOpacity style={s.moreBtn} onPress={loadMoreBoards}>
+                <Text style={s.moreBtnText}>더보기</Text>
+              </TouchableOpacity>
+            )}
+          </>
+        )}
+
+        {myTab === 'route' && (
+          <>
+            {tripsLoading && <ActivityIndicator style={{ marginTop: 12 }} />}
+            {!tripsLoading && trips.length === 0 && (
+              <View style={s.emptyMy}>
+                <Text style={s.emptyMyText}>만든 일정이 없습니다.</Text>
+              </View>
+            )}
+            {trips.map(t => (
+              <TouchableOpacity
+                key={t.tripId}
+                style={s.postCard}
+                activeOpacity={0.9}
+                onPress={() =>
+                  t.isPublic && onOpenPost?.(String(t.tripId), 'route')
+                }
+              >
+                <Text style={s.postCardTitle}>{t.title}</Text>
+                <View style={s.postCardMetaRow}>
+                  <Text style={s.postCardMeta}>
+                    📍 {t.cityName || t.countryName}
+                  </Text>
+                  <Text style={s.postCardMeta}>
+                    {t.isPublic ? '공개' : '비공개'}
+                  </Text>
+                  {t.isPublic && (
+                    <Text style={s.postCardMeta}>❤️ {t.likeCount}</Text>
+                  )}
+                </View>
+              </TouchableOpacity>
+            ))}
+          </>
+        )}
       </ScrollView>
 
       {/* 뱃지 상세 */}

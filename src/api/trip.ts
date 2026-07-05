@@ -18,6 +18,10 @@ export interface TripDto {
   startDate: string | null;
   endDate: string | null;
   content: string | null;
+  images: string[];
+  likeCount: number;
+  liked: boolean;
+  commentCount: number;
   isPublic: boolean;
   createDate: string;
   places: TripPlaceDto[];
@@ -35,6 +39,7 @@ export interface TripPayload {
   startDate?: string;
   endDate?: string;
   content?: string;
+  images?: string[];
   places: TripPlacePayload[];
 }
 
@@ -54,4 +59,22 @@ export function getMyTrips(): Promise<TripDto[]> {
 /** 일정 상세 (본인 소유이거나 공개된 일정) */
 export function getTrip(tripId: number): Promise<TripDto> {
   return authRequest<TripDto>(`/api/trips/${tripId}`, { method: 'GET' });
+}
+
+/** 일정 수정 (본인 일정만 가능) */
+export function updateTrip(
+  tripId: number,
+  payload: TripPayload,
+): Promise<TripDto> {
+  return authRequest<TripDto>(`/api/trips/${tripId}`, {
+    method: 'PUT',
+    body: payload,
+  });
+}
+
+/** 일정 삭제 (본인 일정만 가능) */
+export function deleteTrip(tripId: number): Promise<string> {
+  return authRequest<string>(`/api/trips/${tripId}`, {
+    method: 'DELETE',
+  });
 }

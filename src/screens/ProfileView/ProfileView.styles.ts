@@ -133,4 +133,40 @@ export const profileStyles = StyleSheet.create({
     alignSelf: 'stretch',
   },
   modalDesc: { fontSize: 14, lineHeight: 21, color: colors.noteText },
+
+  // 내가 쓴 글
+  myTabRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 14,
+  },
+  myTab: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: colors.surface,
+  },
+  myTabActive: { backgroundColor: colors.primary },
+  myTabText: { fontSize: 13, fontWeight: '600', color: colors.textSub },
+  myTabTextActive: { color: '#fff' },
+  postCard: {
+    backgroundColor: colors.cardBg,
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 12,
+    ...cardShadow,
+  },
+  postCardTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginBottom: 4,
+  },
+  postCardBody: { fontSize: 13, color: colors.textSub, marginBottom: 8 },
+  postCardMetaRow: { flexDirection: 'row', gap: 12 },
+  postCardMeta: { fontSize: 12, color: colors.textMuted },
+  moreBtn: { alignItems: 'center', paddingVertical: 14 },
+  moreBtnText: { fontSize: 13, color: colors.primary, fontWeight: '600' },
+  emptyMy: { paddingVertical: 24, alignItems: 'center' },
+  emptyMyText: { fontSize: 13, color: colors.textMuted },
 });

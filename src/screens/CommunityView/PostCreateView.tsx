@@ -7,12 +7,28 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Image,
 } from 'react-native';
+import { launchImageLibrary } from 'react-native-image-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ScreenHeader from '../../component/ScreenHeader';
 import { postCreateStyles as s } from './PostCreateView.styles';
-import { createReview, shareTrip, createBoard } from '../../api/community';
-import { createTrip, TripPlacePayload } from '../../api/trip';
+import {
+  createReview,
+  updateReview,
+  shareTrip,
+  createBoard,
+  updateBoard,
+  getBoard,
+  getReview,
+} from '../../api/community';
+import {
+  createTrip,
+  updateTrip,
+  getTrip,
+  TripPlacePayload,
+} from '../../api/trip';
+import { uploadImage, toImageUrl } from '../../api/image';
 import type { SelectedDestination } from './DestinationPickerView';
 import { setDestinationCallback } from './destinationSelectBridge';
 
@@ -31,10 +47,18 @@ interface DayPlan {
   day: number;
   items: RouteItem[];
 }
+interface PhotoItem {
+  id: string;
+  uri: string;
+  url?: string;
+  uploading: boolean;
+}
 
 interface Props {
   initialTab?: Cat;
   destination?: SelectedDestination;
+  editType?: Cat;
+  editId?: string;
   onBack?: () => void;
   onPickDestination?: () => void;
   onSubmit?: () => void;
@@ -43,14 +67,17 @@ interface Props {
 const PostCreateView: React.FC<Props> = ({
   initialTab = 'free',
   destination,
+  editType,
+  editId,
   onBack,
   onPickDestination,
   onSubmit,
 }) => {
-  const [cat, setCat] = useState<Cat>(initialTab);
+  const isEditing = !!editType && !!editId;
+  const [cat, setCat] = useState<Cat>(editType ?? initialTab);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
-  const [photos, setPhotos] = useState<number[]>([]);
+  const [photos, setPhotos] = useState<PhotoItem[]>([]);
   const [rating, setRating] = useState(0);
   const [selectedDestination, setSelectedDestination] = useState<
     SelectedDestination | undefined
@@ -59,10 +86,91 @@ const PostCreateView: React.FC<Props> = ({
   const [activeDay, setActiveDay] = useState(1);
   const [itemText, setItemText] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [loadingExisting, setLoadingExisting] = useState(isEditing);
 
   useEffect(() => {
     if (destination) setSelectedDestination(destination);
   }, [destination]);
+
+  useEffect(() => {
+    if (!isEditing || !editId || !editType) return;
+
+    (async () => {
+      try {
+        if (editType === 'free') {
+          const b = await getBoard(Number(editId));
+          setTitle(b.title);
+          setBody(b.content);
+          setPhotos(
+            b.images.map((url, i) => ({
+              id: `existing-${i}`,
+              uri: toImageUrl(url),
+              url,
+              uploading: false,
+            })),
+          );
+        } else if (editType === 'review') {
+          const r = await getReview(Number(editId));
+          setTitle(r.title);
+          setBody(r.content);
+          setRating(r.rating);
+          setSelectedDestination({
+            countryInfoId: r.countryInfoId,
+            name: r.cityName || r.countryName || '',
+          });
+          setPhotos(
+            r.images.map((url, i) => ({
+              id: `existing-${i}`,
+              uri: toImageUrl(url),
+              url,
+              uploading: false,
+            })),
+          );
+        } else if (editType === 'route') {
+          const t = await getTrip(Number(editId));
+          setTitle(t.title);
+          setBody(t.content ?? '');
+          setSelectedDestination({
+            countryInfoId: t.countryInfoId,
+            name: t.cityName || t.countryName || '',
+          });
+          setPhotos(
+            t.images.map((url, i) => ({
+              id: `existing-${i}`,
+              uri: toImageUrl(url),
+              url,
+              uploading: false,
+            })),
+          );
+          const dayNumbers = Array.from(
+            new Set(t.places.map(p => p.dayNumber)),
+          ).sort((a, b) => a - b);
+          setDays(
+            dayNumbers.length > 0
+              ? dayNumbers.map(day => ({
+                  day,
+                  items: t.places
+                    .filter(p => p.dayNumber === day)
+                    .map(p => ({
+                      id: `${p.tripPlaceId}`,
+                      name: p.placeName,
+                      sub: p.placeSub ?? '',
+                    })),
+                }))
+              : [{ day: 1, items: [] }],
+          );
+          setActiveDay(dayNumbers[0] ?? 1);
+        }
+      } catch (e: any) {
+        Alert.alert(
+          '불러오기 실패',
+          e?.message ?? '잠시 후 다시 시도해주세요.',
+        );
+      } finally {
+        setLoadingExisting(false);
+      }
+    })();
+  }, [isEditing, editId, editType]);
 
   const addItem = () => {
     if (!itemText.trim()) return;
@@ -92,7 +200,44 @@ const PostCreateView: React.FC<Props> = ({
   };
   const current = days.find(d => d.day === activeDay)!;
 
+  const pickPhotos = async () => {
+    const result = await launchImageLibrary({
+      mediaType: 'photo',
+      selectionLimit: 5,
+    });
+    if (result.didCancel || !result.assets) return;
+
+    for (const asset of result.assets) {
+      if (!asset.uri) continue;
+      const id = `${Date.now()}-${Math.random()}`;
+      const localUri = asset.uri;
+      setPhotos(prev => [...prev, { id, uri: localUri, uploading: true }]);
+      try {
+        const url = await uploadImage(
+          localUri,
+          asset.fileName ?? `${id}.jpg`,
+          asset.type ?? 'image/jpeg',
+        );
+        setPhotos(prev =>
+          prev.map(p => (p.id === id ? { ...p, url, uploading: false } : p)),
+        );
+      } catch (e: any) {
+        Alert.alert('업로드 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
+        setPhotos(prev => prev.filter(p => p.id !== id));
+      }
+    }
+  };
+  const removePhoto = (id: string) => {
+    setPhotos(prev => prev.filter(p => p.id !== id));
+  };
+
   const handleSubmit = async () => {
+    if (photos.some(p => p.uploading)) {
+      Alert.alert('알림', '사진 업로드가 끝날 때까지 잠시만 기다려주세요.');
+      return;
+    }
+    const images = photos.map(p => p.url).filter((u): u is string => !!u);
+
     if (cat === 'free') {
       if (!title.trim() || !body.trim()) {
         Alert.alert('알림', '제목과 내용을 입력해주세요.');
@@ -100,7 +245,19 @@ const PostCreateView: React.FC<Props> = ({
       }
       try {
         setSubmitting(true);
-        await createBoard({ title: title.trim(), content: body.trim() });
+        if (isEditing && editId) {
+          await updateBoard(Number(editId), {
+            title: title.trim(),
+            content: body.trim(),
+            images,
+          });
+        } else {
+          await createBoard({
+            title: title.trim(),
+            content: body.trim(),
+            images,
+          });
+        }
         onSubmit?.();
       } catch (e: any) {
         Alert.alert('등록 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
@@ -125,12 +282,18 @@ const PostCreateView: React.FC<Props> = ({
       }
       try {
         setSubmitting(true);
-        await createReview({
+        const payload = {
           countryInfoId: selectedDestination.countryInfoId,
           title: title.trim(),
           rating,
           content: body.trim(),
-        });
+          images,
+        };
+        if (isEditing && editId) {
+          await updateReview(Number(editId), payload);
+        } else {
+          await createReview(payload);
+        }
         onSubmit?.();
       } catch (e: any) {
         Alert.alert('등록 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
@@ -162,13 +325,19 @@ const PostCreateView: React.FC<Props> = ({
       }
       try {
         setSubmitting(true);
-        const trip = await createTrip({
+        const payload = {
           title: title.trim(),
           countryInfoId: selectedDestination.countryInfoId,
           content: body.trim() || undefined,
+          images,
           places,
-        });
-        await shareTrip(trip.tripId);
+        };
+        if (isEditing && editId) {
+          await updateTrip(Number(editId), payload);
+        } else {
+          const trip = await createTrip(payload);
+          await shareTrip(trip.tripId);
+        }
         onSubmit?.();
       } catch (e: any) {
         Alert.alert('등록 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
@@ -179,32 +348,48 @@ const PostCreateView: React.FC<Props> = ({
     }
   };
 
+  if (loadingExisting) {
+    return (
+      <SafeAreaView style={s.safe} edges={['top', 'bottom']}>
+        <ScreenHeader title="게시글 수정" onBack={onBack} />
+        <ActivityIndicator style={{ marginTop: 40 }} />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={s.safe} edges={['top', 'bottom']}>
-      <ScreenHeader title="게시글 작성" onBack={onBack} />
+      <ScreenHeader
+        title={isEditing ? '게시글 수정' : '게시글 작성'}
+        onBack={onBack}
+      />
       <ScrollView
         contentContainerStyle={s.content}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <Text style={s.label}>카테고리 선택</Text>
-        <View style={s.catRow}>
-          {CATS.map(c => {
-            const active = cat === c.key;
-            return (
-              <TouchableOpacity
-                key={c.key}
-                style={[s.cat, active && s.catActive]}
-                onPress={() => setCat(c.key)}
-                activeOpacity={0.85}
-              >
-                <Text style={[s.catText, active && s.catTextActive]}>
-                  {c.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+        {!isEditing && (
+          <>
+            <Text style={s.label}>카테고리 선택</Text>
+            <View style={s.catRow}>
+              {CATS.map(c => {
+                const active = cat === c.key;
+                return (
+                  <TouchableOpacity
+                    key={c.key}
+                    style={[s.cat, active && s.catActive]}
+                    onPress={() => setCat(c.key)}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={[s.catText, active && s.catTextActive]}>
+                      {c.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </>
+        )}
 
         <TextInput
           style={s.titleInput}
@@ -308,18 +493,29 @@ const PostCreateView: React.FC<Props> = ({
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <TouchableOpacity
             style={s.addPhoto}
-            onPress={() => setPhotos(p => [...p, Date.now()])}
+            onPress={pickPhotos}
             activeOpacity={0.85}
           >
             <Text style={s.addPhotoIcon}>📷</Text>
             <Text style={s.addPhotoText}>사진 추가</Text>
           </TouchableOpacity>
-          {photos.map(id => (
-            <View key={id} style={s.thumbWrap}>
-              <View style={s.thumb} />
+          {photos.map(p => (
+            <View key={p.id} style={s.thumbWrap}>
+              <Image source={{ uri: p.uri }} style={s.thumb} />
+              {p.uploading && (
+                <ActivityIndicator
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                  }}
+                />
+              )}
               <TouchableOpacity
                 style={s.thumbX}
-                onPress={() => setPhotos(p => p.filter(x => x !== id))}
+                onPress={() => removePhoto(p.id)}
               >
                 <Text style={s.thumbXText}>✕</Text>
               </TouchableOpacity>

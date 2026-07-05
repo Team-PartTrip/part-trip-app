@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { communityStyles as styles } from './CommunityView.styles';
@@ -13,10 +14,12 @@ import {
   getReviews,
   getSharedTrips,
   getBoards,
+  toggleLike,
   ReviewDto,
   BoardDto,
 } from '../../api/community';
 import { TripDto } from '../../api/trip';
+import { toImageUrl } from '../../api/image';
 
 type TabKey = 'free' | 'review' | 'route';
 
@@ -26,13 +29,16 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: 'route', label: '경로/일정 공유' },
 ];
 
+const PAGE_SIZE = 20;
+
 interface FreePost {
   id: string;
   author: string;
   time: string;
   title: string;
   body: string;
-  likes: number;
+  likeCount: number;
+  liked: boolean;
   comments: number;
 }
 interface Review {
@@ -42,12 +48,17 @@ interface Review {
   title: string;
   body: string;
   time: string;
+  likeCount: number;
+  liked: boolean;
+  thumbnail: string | null;
 }
 interface Route {
   id: string;
   author: string;
   time: string;
   title: string;
+  likeCount: number;
+  liked: boolean;
   schedule: { day: number; text: string }[];
 }
 
@@ -70,6 +81,9 @@ const toReview = (r: ReviewDto): Review => ({
   title: r.title,
   body: r.content,
   time: formatTime(r.createDate),
+  likeCount: r.likeCount,
+  liked: r.liked,
+  thumbnail: r.images.length > 0 ? toImageUrl(r.images[0]) : null,
 });
 
 const toRoute = (t: TripDto): Route => ({
@@ -77,6 +91,8 @@ const toRoute = (t: TripDto): Route => ({
   author: t.nickName,
   time: formatTime(t.createDate),
   title: t.title,
+  likeCount: t.likeCount,
+  liked: t.liked,
   schedule: t.places
     .slice(0, 3)
     .map(p => ({ day: p.dayNumber, text: p.placeName })),
@@ -88,7 +104,8 @@ const toFreePost = (b: BoardDto): FreePost => ({
   time: formatTime(b.createDate),
   title: b.title,
   body: b.content,
-  likes: b.likeCount,
+  likeCount: b.likeCount,
+  liked: b.liked,
   comments: b.commentCount,
 });
 
@@ -100,55 +117,97 @@ interface CommunityViewProps {
 }
 
 const CommunityView: React.FC<CommunityViewProps> = ({
-  onWrite,
-  onOpenPost,
-}) => {
+                                                       onWrite,
+                                                       onOpenPost,
+                                                     }) => {
   const [tab, setTab] = useState<TabKey>('free');
   const [query, setQuery] = useState('');
+
   const [freePosts, setFreePosts] = useState<FreePost[]>([]);
   const [freeLoading, setFreeLoading] = useState(true);
+  const [freePage, setFreePage] = useState(0);
+  const [freeHasNext, setFreeHasNext] = useState(false);
+
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [reviewPage, setReviewPage] = useState(0);
+  const [reviewHasNext, setReviewHasNext] = useState(false);
+
   const [routes, setRoutes] = useState<Route[]>([]);
   const [routesLoading, setRoutesLoading] = useState(true);
+  const [routePage, setRoutePage] = useState(0);
+  const [routeHasNext, setRouteHasNext] = useState(false);
 
   const loadFreePosts = useCallback(async () => {
     try {
       setFreeLoading(true);
-      const data = await getBoards();
-      setFreePosts(data.map(toFreePost));
+      const data = await getBoards(0, PAGE_SIZE);
+      setFreePosts(data.content.map(toFreePost));
+      setFreePage(0);
+      setFreeHasNext(data.hasNext);
     } catch {
       setFreePosts([]);
+      setFreeHasNext(false);
     } finally {
       setFreeLoading(false);
     }
   }, []);
 
+  const loadMoreFreePosts = useCallback(async () => {
+    const next = freePage + 1;
+    const data = await getBoards(next, PAGE_SIZE);
+    setFreePosts(prev => [...prev, ...data.content.map(toFreePost)]);
+    setFreePage(next);
+    setFreeHasNext(data.hasNext);
+  }, [freePage]);
+
   const loadReviews = useCallback(async () => {
     try {
       setReviewsLoading(true);
-      const data = await getReviews();
-      setReviews(data.map(toReview));
+      const data = await getReviews(undefined, 0, PAGE_SIZE);
+      setReviews(data.content.map(toReview));
+      setReviewPage(0);
+      setReviewHasNext(data.hasNext);
     } catch {
       setReviews([]);
+      setReviewHasNext(false);
     } finally {
       setReviewsLoading(false);
     }
   }, []);
 
+  const loadMoreReviews = useCallback(async () => {
+    const next = reviewPage + 1;
+    const data = await getReviews(undefined, next, PAGE_SIZE);
+    setReviews(prev => [...prev, ...data.content.map(toReview)]);
+    setReviewPage(next);
+    setReviewHasNext(data.hasNext);
+  }, [reviewPage]);
+
   const loadRoutes = useCallback(async () => {
     try {
       setRoutesLoading(true);
-      const data = await getSharedTrips();
-      setRoutes(data.map(toRoute));
+      const data = await getSharedTrips(0, PAGE_SIZE);
+      setRoutes(data.content.map(toRoute));
+      setRoutePage(0);
+      setRouteHasNext(data.hasNext);
     } catch {
       setRoutes([]);
+      setRouteHasNext(false);
     } finally {
       setRoutesLoading(false);
     }
   }, []);
 
-  // 화면에 다시 진입할 때마다(글 작성 후 돌아왔을 때 포함) 최신 데이터 갱신
+  const loadMoreRoutes = useCallback(async () => {
+    const next = routePage + 1;
+    const data = await getSharedTrips(next, PAGE_SIZE);
+    setRoutes(prev => [...prev, ...data.content.map(toRoute)]);
+    setRoutePage(next);
+    setRouteHasNext(data.hasNext);
+  }, [routePage]);
+
+  // 화면에 다시 진입할 때마다(글 작성 후 돌아왔을 때 포함) 최신 데이터로 새로고침
   useFocusEffect(
     useCallback(() => {
       loadFreePosts();
@@ -181,6 +240,84 @@ const CommunityView: React.FC<CommunityViewProps> = ({
     (tab === 'free' && !freeLoading && freeList.length === 0) ||
     (tab === 'review' && !reviewsLoading && reviewList.length === 0) ||
     (tab === 'route' && !routesLoading && routeList.length === 0);
+
+  const handleLikeFree = async (id: string) => {
+    setFreePosts(prev =>
+      prev.map(p =>
+        p.id === id
+          ? {
+            ...p,
+            liked: !p.liked,
+            likeCount: p.likeCount + (p.liked ? -1 : 1),
+          }
+          : p,
+      ),
+    );
+    try {
+      const result = await toggleLike('BOARD', Number(id));
+      setFreePosts(prev =>
+        prev.map(p =>
+          p.id === id
+            ? { ...p, liked: result.liked, likeCount: result.likeCount }
+            : p,
+        ),
+      );
+    } catch {
+      loadFreePosts();
+    }
+  };
+
+  const handleLikeReview = async (id: string) => {
+    setReviews(prev =>
+      prev.map(r =>
+        r.id === id
+          ? {
+            ...r,
+            liked: !r.liked,
+            likeCount: r.likeCount + (r.liked ? -1 : 1),
+          }
+          : r,
+      ),
+    );
+    try {
+      const result = await toggleLike('REVIEW', Number(id));
+      setReviews(prev =>
+        prev.map(r =>
+          r.id === id
+            ? { ...r, liked: result.liked, likeCount: result.likeCount }
+            : r,
+        ),
+      );
+    } catch {
+      loadReviews();
+    }
+  };
+
+  const handleLikeRoute = async (id: string) => {
+    setRoutes(prev =>
+      prev.map(r =>
+        r.id === id
+          ? {
+            ...r,
+            liked: !r.liked,
+            likeCount: r.likeCount + (r.liked ? -1 : 1),
+          }
+          : r,
+      ),
+    );
+    try {
+      const result = await toggleLike('TRIP', Number(id));
+      setRoutes(prev =>
+        prev.map(r =>
+          r.id === id
+            ? { ...r, liked: result.liked, likeCount: result.likeCount }
+            : r,
+        ),
+      );
+    } catch {
+      loadRoutes();
+    }
+  };
 
   return (
     <View style={styles.safeArea}>
@@ -266,11 +403,20 @@ const CommunityView: React.FC<CommunityViewProps> = ({
               </Text>
 
               <View style={styles.metaRow}>
-                <Text style={styles.meta}>👍 {p.likes}</Text>
+                <TouchableOpacity onPress={() => handleLikeFree(p.id)}>
+                  <Text style={styles.meta}>
+                    {p.liked ? '❤️' : '🤍'} {p.likeCount}
+                  </Text>
+                </TouchableOpacity>
                 <Text style={styles.meta}>💬 {p.comments}</Text>
               </View>
             </TouchableOpacity>
           ))}
+        {tab === 'free' && !freeLoading && freeHasNext && (
+          <TouchableOpacity style={styles.empty} onPress={loadMoreFreePosts}>
+            <Text style={styles.emptyText}>더보기</Text>
+          </TouchableOpacity>
+        )}
 
         {/* 여행 후기 */}
         {tab === 'review' &&
@@ -282,6 +428,12 @@ const CommunityView: React.FC<CommunityViewProps> = ({
               onPress={() => onOpenPost?.(r.id, 'review')}
             >
               <View style={styles.reviewImage}>
+                {r.thumbnail && (
+                  <Image
+                    source={{ uri: r.thumbnail }}
+                    style={styles.reviewImagePhoto}
+                  />
+                )}
                 <View style={styles.placePill}>
                   <Text style={styles.placePillText}>📍 {r.place}</Text>
                 </View>
@@ -292,10 +444,22 @@ const CommunityView: React.FC<CommunityViewProps> = ({
                 <Text style={styles.reviewBody} numberOfLines={2}>
                   {r.body}
                 </Text>
-                <Text style={styles.time}>{r.time}</Text>
+                <View style={styles.metaRow}>
+                  <Text style={styles.time}>{r.time}</Text>
+                  <TouchableOpacity onPress={() => handleLikeReview(r.id)}>
+                    <Text style={styles.meta}>
+                      {r.liked ? '❤️' : '🤍'} {r.likeCount}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </TouchableOpacity>
           ))}
+        {tab === 'review' && !reviewsLoading && reviewHasNext && (
+          <TouchableOpacity style={styles.empty} onPress={loadMoreReviews}>
+            <Text style={styles.emptyText}>더보기</Text>
+          </TouchableOpacity>
+        )}
 
         {/* 경로/일정 공유 */}
         {tab === 'route' &&
@@ -322,8 +486,20 @@ const CommunityView: React.FC<CommunityViewProps> = ({
                   <Text style={styles.scheduleText}>{s.text}</Text>
                 </View>
               ))}
+              <View style={styles.metaRow}>
+                <TouchableOpacity onPress={() => handleLikeRoute(r.id)}>
+                  <Text style={styles.meta}>
+                    {r.liked ? '❤️' : '🤍'} {r.likeCount}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </TouchableOpacity>
           ))}
+        {tab === 'route' && !routesLoading && routeHasNext && (
+          <TouchableOpacity style={styles.empty} onPress={loadMoreRoutes}>
+            <Text style={styles.emptyText}>더보기</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
 
       {/* 플로팅 글쓰기 버튼 */}

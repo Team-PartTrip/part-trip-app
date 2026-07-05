@@ -123,6 +123,13 @@ export const communityStyles = StyleSheet.create({
     justifyContent: 'flex-start',
     padding: 10,
   },
+  reviewImagePhoto: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
   placePill: {
     alignSelf: 'flex-start',
     backgroundColor: 'rgba(0,0,0,0.45)',
