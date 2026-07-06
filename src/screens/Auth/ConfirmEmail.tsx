@@ -9,6 +9,7 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { loginStyles as shared } from './LoginView.styles';
@@ -131,10 +132,11 @@ const ConfirmEmail: React.FC<ConfirmEmailProps> = ({
         >
           {/* 로고 + 타이틀 */}
           <View style={shared.logoArea}>
-            <Text style={shared.logo}>
-              <Text style={shared.logoPart}>Part</Text>
-              <Text style={shared.logoTrip}>Trip</Text>
-            </Text>
+            <Image
+              source={require('../../assets/images/logo.png')}
+              style={{ width: 170, height: 40 }}
+              resizeMode="contain"
+            />
             <Text style={shared.title}>
               {mode === 'signup'
                 ? '회원가입'

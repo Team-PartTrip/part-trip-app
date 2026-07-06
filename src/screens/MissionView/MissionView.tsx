@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, Image, ScrollView, TouchableOpacity } from 'react-native';
 import { missionStyles as styles } from './MissionView.styles';
 
 interface MissionItem {
@@ -69,9 +69,12 @@ const MissionView: React.FC<MissionViewProps> = ({
             <Text style={styles.playPillText}>나랑 놀자</Text>
           </View>
 
-          {/* TODO: 실제 캐릭터 이미지 에셋으로 교체 (<Image source={...} />) */}
           <View style={styles.charImageWrap}>
-            <Text style={styles.charEmoji}>🥚</Text>
+            <Image
+              source={require('../../assets/images/mission-character.png')}
+              style={{ width: '100%', height: '100%' }}
+              resizeMode="contain"
+            />
           </View>
 
           <View style={styles.charNameRow}>

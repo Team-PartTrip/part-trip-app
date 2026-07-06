@@ -19,6 +19,10 @@ export const tabBarStyles = StyleSheet.create({
   icon: {
     fontSize: 22,
   },
+  iconImage: {
+    width: 24,
+    height: 24,
+  },
   label: {
     fontSize: 11,
     color: colors.tabInactive,

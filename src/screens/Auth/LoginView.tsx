@@ -10,6 +10,7 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { loginStyles as styles } from './LoginView.styles';
@@ -86,10 +87,11 @@ const LoginView: React.FC<LoginViewProps> = ({
         >
           {/* 로고 + 타이틀 */}
           <View style={styles.logoArea}>
-            <Text style={styles.logo}>
-              <Text style={styles.logoPart}>Part</Text>
-              <Text style={styles.logoTrip}>Trip</Text>
-            </Text>
+            <Image
+              source={require('../../assets/images/logo.png')}
+              style={{ width: 170, height: 40 }}
+              resizeMode="contain"
+            />
             <Text style={styles.title}>로그인</Text>
           </View>
 

@@ -1,24 +1,37 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, Image, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { tabBarStyles as styles } from './TabBar.styles';
+import colors from '../assets/constants/colors';
 
 export type TabKey = 'home' | 'community' | 'record' | 'mission';
 
 interface TabItem {
   key: TabKey;
   label: string;
-  icon: string;
+  icon: number;
 }
 
 const LEFT_TABS: TabItem[] = [
-  { key: 'home', label: '홈', icon: '🏠' },
-  { key: 'community', label: '커뮤니티', icon: '👥' },
+  { key: 'home', label: '홈', icon: require('../assets/images/tab-home.png') },
+  {
+    key: 'community',
+    label: '커뮤니티',
+    icon: require('../assets/images/tab-community.png'),
+  },
 ];
 
 const RIGHT_TABS: TabItem[] = [
-  { key: 'record', label: '기록', icon: '🗂' },
-  { key: 'mission', label: '미션', icon: '🎯' },
+  {
+    key: 'record',
+    label: '기록',
+    icon: require('../assets/images/tab-record.png'),
+  },
+  {
+    key: 'mission',
+    label: '미션',
+    icon: require('../assets/images/tab-mission.png'),
+  },
 ];
 
 interface TabBarProps {
@@ -40,7 +53,14 @@ const TabBar: React.FC<TabBarProps> = ({ active = 'home', onTabPress, onCamera }
         activeOpacity={0.7}
         onPress={() => onTabPress?.(tab.key)}
       >
-        <Text style={[styles.icon, { opacity: isActive ? 1 : 0.5 }]}>{tab.icon}</Text>
+        <Image
+          source={tab.icon}
+          resizeMode="contain"
+          style={[
+            styles.iconImage,
+            { tintColor: isActive ? colors.primary : colors.tabInactive },
+          ]}
+        />
         <Text style={[styles.label, isActive && styles.labelActive]}>{tab.label}</Text>
       </TouchableOpacity>
     );
