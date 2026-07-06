@@ -145,7 +145,10 @@ function App() {
         <View style={{ flex: 1, backgroundColor: colors.background }}>
           {/* 고정 상단 헤더 */}
           {showChrome && (
-            <AppHeader onProfile={() => navRef.navigate('Profile')} />
+            <AppHeader
+              onProfile={() => navRef.navigate('Profile')}
+              refreshKey={routeName}
+            />
           )}
 
           {/* 콘텐츠 (네비게이터로 교체되는 영역) */}

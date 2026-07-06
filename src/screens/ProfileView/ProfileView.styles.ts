@@ -30,6 +30,7 @@ export const profileStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
+    overflow: 'hidden',
   },
   avatarEmoji: { fontSize: 40 },
   profileInfo: { flex: 1, justifyContent: 'center' },
@@ -77,6 +78,7 @@ export const profileStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 10,
+    overflow: 'hidden',
   },
   badgeLocked: { backgroundColor: colors.surface, opacity: 0.6 },
   badgeEmoji: { fontSize: 42 },
@@ -117,6 +119,7 @@ export const profileStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
+    overflow: 'hidden',
   },
   modalEmoji: { fontSize: 60 },
   modalTitle: {

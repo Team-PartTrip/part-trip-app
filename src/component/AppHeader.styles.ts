@@ -21,12 +21,9 @@ export const appHeaderStyles = StyleSheet.create({
     color: colors.textPrimary,
   },
   logo: {
-    fontSize: 26,
-    fontWeight: '900',
-    fontStyle: 'italic',
+    width: 100,
+    height: 24,
   },
-  logoPart: { color: colors.primary },
-  logoTrip: { color: colors.primaryDark },
   title: {
     fontSize: 18,
     fontWeight: '800',
@@ -40,6 +37,10 @@ export const appHeaderStyles = StyleSheet.create({
     backgroundColor: colors.profileBg,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
-  profileIcon: { fontSize: 20 },
+  profileImage: {
+    width: '100%',
+    height: '100%',
+  },
 });

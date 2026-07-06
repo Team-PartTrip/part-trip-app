@@ -20,6 +20,7 @@ export const profileEditStyles = StyleSheet.create({
     backgroundColor: colors.cardBg,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   avatarEmoji: { fontSize: 78 },
   changePhoto: { marginTop: 10 },

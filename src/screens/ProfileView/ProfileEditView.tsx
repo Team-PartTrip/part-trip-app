@@ -2,14 +2,22 @@ import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
+  Image,
   ScrollView,
   TextInput,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
+import { launchImageLibrary } from 'react-native-image-picker';
 import { profileEditStyles as s } from './ProfileEditView.styles';
 import { getProvider, getCurrentUserEmail } from '../../api/tokenStorage';
+import { getMyProfile, updateProfile } from '../../api/profile';
+import { uploadImage, toImageUrl } from '../../api/image';
+
+const DEFAULT_AVATAR = require('../../assets/images/profile-character.jpg');
 
 interface Props {
   onConfirm?: () => void;
@@ -22,14 +30,69 @@ const ProfileEditView: React.FC<Props> = ({
   onResetSurvey,
   onChangePassword,
 }) => {
-  const [nickname, setNickname] = useState('계략적인 모험가');
+  const [nickname, setNickname] = useState('');
+  const [imgUrl, setImgUrl] = useState<string | null>(null);
   const [isGoogle, setIsGoogle] = useState(false);
   const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     getProvider().then(p => setIsGoogle(p === 'GOOGLE'));
     getCurrentUserEmail().then(e => setEmail(e ?? ''));
+    getMyProfile()
+      .then(p => {
+        setNickname(p.nickName);
+        setImgUrl(p.imgUrl);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
+
+  const handleChangePhoto = async () => {
+    const result = await launchImageLibrary({ mediaType: 'photo' });
+    if (result.didCancel || !result.assets?.[0]?.uri) return;
+
+    const asset = result.assets[0];
+    try {
+      setUploading(true);
+      const url = await uploadImage(
+        asset.uri!,
+        asset.fileName ?? `profile-${Date.now()}.jpg`,
+        asset.type ?? 'image/jpeg',
+      );
+      setImgUrl(url);
+    } catch (e: any) {
+      Alert.alert('업로드 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleConfirm = async () => {
+    if (!nickname.trim()) {
+      Alert.alert('알림', '닉네임을 입력해주세요.');
+      return;
+    }
+    try {
+      setSaving(true);
+      await updateProfile({ nickName: nickname.trim(), imgUrl });
+      onConfirm?.();
+    } catch (e: any) {
+      Alert.alert('저장 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={s.safeArea}>
+        <ActivityIndicator style={{ marginTop: 60 }} />
+      </View>
+    );
+  }
 
   return (
     <View style={s.safeArea}>
@@ -44,9 +107,29 @@ const ProfileEditView: React.FC<Props> = ({
           {/* 프로필 이미지 */}
           <View style={s.banner}>
             <View style={s.avatarWrap}>
-              <Text style={s.avatarEmoji}>🐨</Text>
+              <Image
+                source={imgUrl ? { uri: toImageUrl(imgUrl) } : DEFAULT_AVATAR}
+                style={{ width: '100%', height: '100%', borderRadius: 65 }}
+                resizeMode="cover"
+              />
+              {uploading && (
+                <ActivityIndicator
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                  }}
+                />
+              )}
             </View>
-            <TouchableOpacity style={s.changePhoto} activeOpacity={0.8}>
+            <TouchableOpacity
+              style={s.changePhoto}
+              activeOpacity={0.8}
+              onPress={handleChangePhoto}
+              disabled={uploading}
+            >
               <Text style={s.changePhotoText}>프로필 이미지 변경</Text>
             </TouchableOpacity>
           </View>
@@ -91,9 +174,14 @@ const ProfileEditView: React.FC<Props> = ({
           <TouchableOpacity
             style={s.confirmBtn}
             activeOpacity={0.85}
-            onPress={onConfirm}
+            onPress={handleConfirm}
+            disabled={saving || uploading}
           >
-            <Text style={s.confirmText}>Confirm</Text>
+            {saving ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={s.confirmText}>Confirm</Text>
+            )}
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>

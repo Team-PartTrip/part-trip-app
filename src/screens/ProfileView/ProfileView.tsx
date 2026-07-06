@@ -2,6 +2,7 @@ import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
+  Image,
   ScrollView,
   TouchableOpacity,
   Modal,
@@ -19,26 +20,24 @@ import {
 import { getMyTrips, TripDto } from '../../api/trip';
 import { logout } from '../../api/auth';
 import { getRefreshToken, clearTokens } from '../../api/tokenStorage';
+import { getMyProfile, getMyCharacter, UserProfile, CharacterInfo } from '../../api/profile';
+import { toImageUrl } from '../../api/image';
 
 interface Badge {
   id: string;
-  emoji: string;
+  icon: number;
   label: string;
   sub: string;
   earned: boolean;
   desc: string;
 }
 
-const USER = {
-  nickname: '계략세운 모험가',
-  type: '즉흥 경험형 코알라',
-  avatar: '🐨',
-};
+const DEFAULT_AVATAR = require('../../assets/images/profile-character.jpg');
 
 const BADGES: Badge[] = [
   {
     id: 'b1',
-    emoji: '🧭',
+    icon: require('../../assets/images/profile-badge-1.png'),
     label: '첫 발걸음',
     sub: '첫 여행지 등록',
     earned: true,
@@ -46,7 +45,7 @@ const BADGES: Badge[] = [
   },
   {
     id: 'b2',
-    emoji: '🌍',
+    icon: require('../../assets/images/profile-badge-2.png'),
     label: '세계 탐험가',
     sub: '5개국 방문',
     earned: true,
@@ -54,7 +53,7 @@ const BADGES: Badge[] = [
   },
   {
     id: 'b3',
-    emoji: '🚩',
+    icon: require('../../assets/images/profile-badge-3.png'),
     label: '초보 모험가',
     sub: 'LV.5 달성',
     earned: true,
@@ -62,7 +61,7 @@ const BADGES: Badge[] = [
   },
   {
     id: 'b4',
-    emoji: '📷',
+    icon: require('../../assets/images/profile-badge-4.png'),
     label: '탐험의 시작',
     sub: '첫 사진 분석',
     earned: true,
@@ -70,7 +69,7 @@ const BADGES: Badge[] = [
   },
   {
     id: 'b5',
-    emoji: '✈️',
+    icon: require('../../assets/images/profile-badge-5.png'),
     label: '지구 한 바퀴',
     sub: '20개국 방문',
     earned: false,
@@ -78,7 +77,7 @@ const BADGES: Badge[] = [
   },
   {
     id: 'b6',
-    emoji: '🏳️',
+    icon: require('../../assets/images/profile-badge-6.png'),
     label: '속련 탐험가',
     sub: 'LV.20 달성',
     earned: false,
@@ -110,6 +109,9 @@ const ProfileView: React.FC<Props> = ({
   const [selected, setSelected] = useState<Badge | null>(null);
   const [myTab, setMyTab] = useState<MyTab>('review');
 
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [character, setCharacter] = useState<CharacterInfo | null>(null);
+
   const [reviews, setReviews] = useState<ReviewDto[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
   const [reviewPage, setReviewPage] = useState(0);
@@ -125,6 +127,13 @@ const ProfileView: React.FC<Props> = ({
 
   useFocusEffect(
     useCallback(() => {
+      getMyProfile()
+        .then(setProfile)
+        .catch(() => setProfile(null));
+      getMyCharacter()
+        .then(setCharacter)
+        .catch(() => setCharacter(null));
+
       setReviewsLoading(true);
       getMyReviews(0, PAGE_SIZE)
         .then(data => {
@@ -199,11 +208,21 @@ const ProfileView: React.FC<Props> = ({
         {/* 프로필 카드 */}
         <View style={s.profileCard}>
           <View style={s.avatar}>
-            <Text style={s.avatarEmoji}>{USER.avatar}</Text>
+            <Image
+              source={
+                profile?.imgUrl
+                  ? { uri: toImageUrl(profile.imgUrl) }
+                  : DEFAULT_AVATAR
+              }
+              style={{ width: '100%', height: '100%', borderRadius: 38 }}
+              resizeMode="cover"
+            />
           </View>
           <View style={s.profileInfo}>
-            <Text style={s.nickname}>{USER.nickname}</Text>
-            <Text style={s.type}>{USER.type}</Text>
+            <Text style={s.nickname}>{profile?.nickName ?? '...'}</Text>
+            <Text style={s.type}>
+              {character?.characterType ?? '아직 여행 캐릭터가 없어요'}
+            </Text>
             <TouchableOpacity
               style={s.editBtn}
               activeOpacity={0.85}
@@ -230,7 +249,11 @@ const ProfileView: React.FC<Props> = ({
               onPress={() => setSelected(b)}
             >
               <View style={[s.badgeEmblem, !b.earned && s.badgeLocked]}>
-                <Text style={s.badgeEmoji}>{b.emoji}</Text>
+                <Image
+                  source={b.icon}
+                  style={{ width: '100%', height: '100%', borderRadius: 44 }}
+                  resizeMode="cover"
+                />
               </View>
               <View style={[s.ribbon, !b.earned && s.ribbonLocked]}>
                 <Text style={s.ribbonText}>{b.label}</Text>
@@ -389,7 +412,13 @@ const ProfileView: React.FC<Props> = ({
               <Text style={s.modalCloseText}>✕</Text>
             </TouchableOpacity>
             <View style={s.modalEmblem}>
-              <Text style={s.modalEmoji}>{selected?.emoji}</Text>
+              {selected && (
+                <Image
+                  source={selected.icon}
+                  style={{ width: '100%', height: '100%', borderRadius: 60 }}
+                  resizeMode="cover"
+                />
+              )}
             </View>
             <Text style={s.modalTitle}>{selected?.label}</Text>
             <Text style={s.modalSub}>{selected?.sub}</Text>
