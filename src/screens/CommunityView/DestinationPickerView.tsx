@@ -6,11 +6,13 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ScreenHeader from '../../component/ScreenHeader';
 import { destinationPickerStyles as s } from './DestinationPickerView.styles';
 import { getCountries, CountryInfo } from '../../api/main';
+import { toImageUrl } from '../../api/image';
 
 export interface SelectedDestination {
   countryInfoId: number;
@@ -126,7 +128,15 @@ const DestinationPickerView: React.FC<Props> = ({ onBack, onSelect }) => {
                 onPress={() => pick(c)}
               >
                 <View style={s.cardImg}>
-                  <Text style={s.cardFlag}>📍</Text>
+                  {c.imageUrl ? (
+                    <Image
+                      source={{ uri: toImageUrl(c.imageUrl) }}
+                      style={s.cardImgPhoto}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <Text style={s.cardFlag}>📍</Text>
+                  )}
                 </View>
                 <Text style={s.cardName}>{c.cityName}</Text>
                 <Text style={s.cardCountry}>{c.countryName}</Text>

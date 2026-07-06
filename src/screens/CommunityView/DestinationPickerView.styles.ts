@@ -61,6 +61,11 @@ export const destinationPickerStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
+    overflow: 'hidden',
+  },
+  cardImgPhoto: {
+    width: '100%',
+    height: '100%',
   },
   cardFlag: { fontSize: 40 },
   cardName: { fontSize: 15, fontWeight: '800', color: colors.textPrimary },
