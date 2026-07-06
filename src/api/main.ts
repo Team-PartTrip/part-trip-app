@@ -95,6 +95,20 @@ export function getFoodInfo(countryName: string): Promise<FoodInfo[]> {
   );
 }
 
+export interface ExchangeRate {
+  currencyCode: string;
+  krwRate: number;
+  date: string | null;
+}
+
+/** 국가별 환율 조회 (1 현지통화 = ? 원) */
+export function getExchangeRate(countryName: string): Promise<ExchangeRate> {
+  return authRequest<ExchangeRate>(
+    `/api/main/exchange-rate?countryName=${encodeURIComponent(countryName)}`,
+    { method: 'GET' },
+  );
+}
+
 export interface Festival {
   title: string;
   category: string;

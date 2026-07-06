@@ -17,12 +17,14 @@ import {
   getTourPlaces,
   getFoodInfo,
   getFestivals,
+  getExchangeRate,
   DdayInfo,
   CountryInfo,
   PopulationInfo,
   TourPlace,
   FoodInfo,
   Festival,
+  ExchangeRate,
 } from '../../api/main';
 import { toImageUrl } from '../../api/image';
 
@@ -53,6 +55,7 @@ const MainView: React.FC<MainViewProps> = ({
   const [places, setPlaces] = useState<TourPlace[]>([]);
   const [foods, setFoods] = useState<FoodInfo[]>([]);
   const [festivals, setFestivals] = useState<Festival[]>([]);
+  const [exchangeRate, setExchangeRate] = useState<ExchangeRate | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -64,12 +67,13 @@ const MainView: React.FC<MainViewProps> = ({
           if (!alive) return;
           setDday(d);
 
-          const [info, pop, tour, food, fest] = await Promise.all([
+          const [info, pop, tour, food, fest, rate] = await Promise.all([
             getCountryInfo(d.countryName).catch(() => null),
             getPopulationInfo(d.countryName).catch(() => []),
             getTourPlaces(d.countryName).catch(() => []),
             getFoodInfo(d.countryName).catch(() => []),
             getFestivals(d.countryName).catch(() => []),
+            getExchangeRate(d.countryName).catch(() => null),
           ]);
           if (!alive) return;
           setCountryInfo(info);
@@ -77,6 +81,7 @@ const MainView: React.FC<MainViewProps> = ({
           setPlaces(tour);
           setFoods(food);
           setFestivals(fest);
+          setExchangeRate(rate);
         } catch {
           if (!alive) return;
           setDday(null);
@@ -172,6 +177,26 @@ const MainView: React.FC<MainViewProps> = ({
               </TouchableOpacity>
             </View>
           </ImageBackground>
+        </View>
+
+        {/* 환율 */}
+        <View style={s.statRow}>
+          <View style={s.statCard}>
+            <Text style={s.statLabel}>오늘의 환율</Text>
+            {exchangeRate ? (
+              <>
+                <Text style={s.statValue}>
+                  1 {exchangeRate.currencyCode} ={' '}
+                  {Math.round(exchangeRate.krwRate).toLocaleString()}원
+                </Text>
+                {exchangeRate.date && (
+                  <Text style={s.statSub}>{exchangeRate.date} 기준</Text>
+                )}
+              </>
+            ) : (
+              <Text style={s.statSub}>환율 정보가 없습니다.</Text>
+            )}
+          </View>
         </View>
 
         {/* 여행지 정보 (탭) */}
