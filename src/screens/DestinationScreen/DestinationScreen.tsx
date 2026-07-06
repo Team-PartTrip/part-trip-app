@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -12,8 +12,9 @@ import {
 } from 'react-native';
 import colors from '../../assets/constants/colors';
 import { destinationStyles as styles } from './DestinationScreen.styles';
-import { getCountries, saveTravelPlan, CountryInfo } from '../../api/main';
+import { saveTravelPlan, CountryInfo } from '../../api/main';
 import { toImageUrl } from '../../api/image';
+import { useCountrySearch } from '../../hooks/useCountrySearch';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -22,33 +23,11 @@ interface DestinationScreenProps {
 }
 
 const DestinationScreen: React.FC<DestinationScreenProps> = ({ onSaved }) => {
-  const [query, setQuery] = useState('');
-  const [countries, setCountries] = useState<CountryInfo[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { query, setQuery, loading, filtered } = useCountrySearch();
   const [selected, setSelected] = useState<CountryInfo | null>(null);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const list = await getCountries();
-        setCountries(list);
-      } catch {
-        setCountries([]);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
-
-  const filtered = countries.filter(
-    c =>
-      !query.trim() ||
-      c.cityName.includes(query) ||
-      c.countryName.includes(query),
-  );
 
   const closeForm = () => {
     setSelected(null);
@@ -85,13 +64,8 @@ const DestinationScreen: React.FC<DestinationScreenProps> = ({ onSaved }) => {
 
   return (
     <View style={styles.safeArea}>
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        {/* 검색 */}
+      {/* 검색 - 스크롤해도 상단에 고정 */}
+      <View style={styles.searchBarWrap}>
         <View style={styles.searchBar}>
           <Text style={styles.searchIcon}>🔍</Text>
           <TextInput
@@ -102,7 +76,14 @@ const DestinationScreen: React.FC<DestinationScreenProps> = ({ onSaved }) => {
             onChangeText={setQuery}
           />
         </View>
+      </View>
 
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         {/* 여행지 목록 */}
         <View>
           <View style={styles.sectionRow}>

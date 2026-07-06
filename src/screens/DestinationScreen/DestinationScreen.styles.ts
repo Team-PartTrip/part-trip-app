@@ -43,11 +43,18 @@ export const destinationStyles = StyleSheet.create({
   scroll: { flex: 1 },
   scrollContent: {
     paddingHorizontal: 16,
+    paddingTop: 20,
     paddingBottom: 24,
     gap: 20,
   },
 
-  // 검색
+  // 검색 (스크롤 영역 밖, 상단 고정)
+  searchBarWrap: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 12,
+    backgroundColor: colors.background,
+  },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',

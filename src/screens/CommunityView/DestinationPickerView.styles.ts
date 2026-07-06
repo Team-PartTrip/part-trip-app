@@ -3,7 +3,13 @@ import colors from '../../assets/constants/colors';
 
 export const destinationPickerStyles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.white },
-  content: { padding: 16 },
+  content: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 16 },
+  searchWrap: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
+    backgroundColor: colors.white,
+  },
   search: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -14,7 +20,6 @@ export const destinationPickerStyles = StyleSheet.create({
     backgroundColor: colors.inputBg,
     borderWidth: 1,
     borderColor: colors.border,
-    marginBottom: 20,
   },
   searchIcon: { fontSize: 15 },
   searchInput: { flex: 1, fontSize: 15, color: colors.textPrimary, padding: 0 },

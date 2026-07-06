@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -11,8 +11,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ScreenHeader from '../../component/ScreenHeader';
 import { destinationPickerStyles as s } from './DestinationPickerView.styles';
-import { getCountries, CountryInfo } from '../../api/main';
+import { CountryInfo } from '../../api/main';
 import { toImageUrl } from '../../api/image';
+import { useCountrySearch } from '../../hooks/useCountrySearch';
 
 export interface SelectedDestination {
   countryInfoId: number;
@@ -25,30 +26,8 @@ interface Props {
 }
 
 const DestinationPickerView: React.FC<Props> = ({ onBack, onSelect }) => {
-  const [query, setQuery] = useState('');
-  const [countries, setCountries] = useState<CountryInfo[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { query, setQuery, loading, filtered } = useCountrySearch();
   const [recent, setRecent] = useState<CountryInfo[]>([]);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const list = await getCountries();
-        setCountries(list);
-      } catch {
-        setCountries([]);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
-
-  const filtered = countries.filter(
-    c =>
-      !query.trim() ||
-      c.cityName.includes(query) ||
-      c.countryName.includes(query),
-  );
 
   const pick = (country: CountryInfo) => {
     setRecent(prev =>
@@ -66,10 +45,7 @@ const DestinationPickerView: React.FC<Props> = ({ onBack, onSelect }) => {
   return (
     <SafeAreaView style={s.safe} edges={['top', 'bottom']}>
       <ScreenHeader title="여행지 선택" onBack={onBack} />
-      <ScrollView
-        contentContainerStyle={s.content}
-        keyboardShouldPersistTaps="handled"
-      >
+      <View style={s.searchWrap}>
         <View style={s.search}>
           <Text style={s.searchIcon}>🔍</Text>
           <TextInput
@@ -81,7 +57,11 @@ const DestinationPickerView: React.FC<Props> = ({ onBack, onSelect }) => {
             returnKeyType="search"
           />
         </View>
-
+      </View>
+      <ScrollView
+        contentContainerStyle={s.content}
+        keyboardShouldPersistTaps="handled"
+      >
         {recent.length > 0 && (
           <>
             <View style={s.sectionRow}>
