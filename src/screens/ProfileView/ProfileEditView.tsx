@@ -9,20 +9,26 @@ import {
   Platform,
 } from 'react-native';
 import { profileEditStyles as s } from './ProfileEditView.styles';
-import { getProvider } from '../../api/tokenStorage';
+import { getProvider, getCurrentUserEmail } from '../../api/tokenStorage';
 
 interface Props {
   onConfirm?: () => void;
   onResetSurvey?: () => void;
+  onChangePassword?: (email: string) => void;
 }
 
-const ProfileEditView: React.FC<Props> = ({ onConfirm, onResetSurvey }) => {
+const ProfileEditView: React.FC<Props> = ({
+  onConfirm,
+  onResetSurvey,
+  onChangePassword,
+}) => {
   const [nickname, setNickname] = useState('계략적인 모험가');
-  const [password, setPassword] = useState('');
   const [isGoogle, setIsGoogle] = useState(false);
+  const [email, setEmail] = useState('');
 
   useEffect(() => {
     getProvider().then(p => setIsGoogle(p === 'GOOGLE'));
+    getCurrentUserEmail().then(e => setEmail(e ?? ''));
   }, []);
 
   return (
@@ -58,19 +64,17 @@ const ProfileEditView: React.FC<Props> = ({ onConfirm, onResetSurvey }) => {
               placeholderTextColor="#aab4be"
             />
 
-            {/* 비밀번호 변경 — 이메일 가입자만 표시 */}
+            {/* 비밀번호 변경 — 이메일 가입자만 표시, 회원가입과 동일하게
+                이메일 인증 후 새 비밀번호 2번 입력하는 플로우로 진행 */}
             {!isGoogle && (
-              <>
-                <Text style={s.label}>비밀번호 변경</Text>
-                <TextInput
-                  style={s.input}
-                  value={password}
-                  onChangeText={setPassword}
-                  placeholder="새 비밀번호 (변경 시에만 입력)"
-                  placeholderTextColor="#aab4be"
-                  secureTextEntry
-                />
-              </>
+              <TouchableOpacity
+                style={s.linkRow}
+                activeOpacity={0.85}
+                onPress={() => onChangePassword?.(email)}
+              >
+                <Text style={s.linkText}>비밀번호 변경</Text>
+                <Text style={s.linkArrow}>›</Text>
+              </TouchableOpacity>
             )}
 
             {/* 여행 취향 재설정 */}

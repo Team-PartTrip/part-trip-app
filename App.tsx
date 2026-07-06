@@ -38,14 +38,20 @@ import RecordEditView from './src/screens/RecordView/RecordEditView';
 import RecordCompleteView from './src/screens/RecordView/RecordCompleteView';
 import ProfileEditView from './src/screens/ProfileView/ProfileEditView';
 import { consumeDestinationCallback } from './src/screens/CommunityView/destinationSelectBridge';
+import { clearTokens } from './src/api/tokenStorage';
 
 export type RootStackParamList = {
   Launch: undefined;
   Login: undefined;
   SignUp: undefined;
-  ConfirmEmail: { mode: 'signup' | 'resetPassword'; signupData?: SignUpData };
+  ConfirmEmail: {
+    mode: 'signup' | 'resetPassword';
+    signupData?: SignUpData;
+    from?: 'login' | 'profile';
+    initialEmail?: string;
+  };
   Survey: { from?: 'signup' | 'profile' } | undefined;
-  ResetPassword: { email: string };
+  ResetPassword: { email: string; from?: 'login' | 'profile' };
   Main: undefined;
   Festival: undefined;
   Destination: undefined;
@@ -160,7 +166,9 @@ function App() {
               <Stack.Screen name="Login">
                 {({ navigation }) => (
                   <LoginView
-                    onLogin={() => navigation.replace('Main')}
+                    onLogin={surveyCompleted =>
+                      navigation.replace(surveyCompleted ? 'Main' : 'Survey')
+                    }
                     onSignup={() => navigation.navigate('SignUp')}
                     onResetPassword={() =>
                       navigation.navigate('ConfirmEmail', {
@@ -188,15 +196,19 @@ function App() {
               <Stack.Screen name="ConfirmEmail">
                 {({ navigation, route }) => {
                   const mode = route.params?.mode ?? 'signup';
+                  const from = route.params?.from;
                   return (
                     <ConfirmEmail
                       mode={mode}
                       signupData={route.params?.signupData}
+                      initialEmail={route.params?.initialEmail}
+                      from={from}
                       onConfirm={email =>
                         mode === 'signup'
-                          ? navigation.navigate('Survey')
+                          ? navigation.navigate('Login')
                           : navigation.navigate('ResetPassword', {
                               email: email ?? '',
+                              from,
                             })
                       }
                     />
@@ -210,7 +222,7 @@ function App() {
                     onComplete={() =>
                       route.params?.from === 'profile'
                         ? navigation.goBack()
-                        : navigation.replace('Login')
+                        : navigation.replace('Main')
                     }
                   />
                 )}
@@ -220,7 +232,14 @@ function App() {
                 {({ navigation, route }) => (
                   <ResetPassword
                     email={route.params?.email ?? ''}
-                    onConfirm={() => navigation.navigate('Login')}
+                    from={route.params?.from}
+                    onConfirm={async () => {
+                      await clearTokens();
+                      navigation.reset({
+                        index: 0,
+                        routes: [{ name: 'Login' }],
+                      });
+                    }}
                   />
                 )}
               </Stack.Screen>
@@ -392,6 +411,12 @@ function App() {
                     onOpenPost={(id, type) =>
                       navigation.navigate('PostDetail', { id, type })
                     }
+                    onLogout={() =>
+                      navigation.reset({
+                        index: 0,
+                        routes: [{ name: 'Login' }],
+                      })
+                    }
                   />
                 )}
               </Stack.Screen>
@@ -401,6 +426,13 @@ function App() {
                     onConfirm={() => navigation.goBack()}
                     onResetSurvey={() =>
                       navigation.navigate('Survey', { from: 'profile' })
+                    }
+                    onChangePassword={email =>
+                      navigation.navigate('ConfirmEmail', {
+                        mode: 'resetPassword',
+                        from: 'profile',
+                        initialEmail: email,
+                      })
                     }
                   />
                 )}

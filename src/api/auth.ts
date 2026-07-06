@@ -1,8 +1,11 @@
 import { request } from './client';
+import { authRequest } from './http';
 
 export interface TokenResponse {
   accessToken: string;
   refreshToken: string;
+  /** 여행 취향 설문을 완료했는지 여부 (false면 로그인 직후 설문 화면으로 안내) */
+  surveyCompleted: boolean;
 }
 
 export interface SignUpPayload {
@@ -94,4 +97,9 @@ export function resetPassword(
   return request<string>('/api/auth/password/reset', {
     body: { email, newPassword, confirmPassword },
   });
+}
+
+/** 여행 취향 설문 완료 처리 */
+export function completeSurvey(): Promise<string> {
+  return authRequest<string>('/api/users/survey-complete', { method: 'POST' });
 }

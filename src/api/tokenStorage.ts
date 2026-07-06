@@ -74,3 +74,12 @@ export async function getCurrentUserId(): Promise<string | null> {
   const userId = payload?.userId;
   return typeof userId === 'string' ? userId : null;
 }
+
+/** 액세스 토큰에서 현재 로그인한 사용자의 이메일을 꺼냄 (서버가 JWT의 subject로 저장) */
+export async function getCurrentUserEmail(): Promise<string | null> {
+  const token = await getAccessToken();
+  if (!token) return null;
+  const payload = decodeJwtPayload(token);
+  const email = payload?.sub;
+  return typeof email === 'string' ? email : null;
+}

@@ -17,13 +17,19 @@ import { resetPassword as resetPasswordApi } from '../../api/auth';
 interface ResetPasswordProps {
   /** 비밀번호를 변경할 (인증 완료된) 이메일 */
   email: string;
+  /** 진입 경로. 'profile'이면 문구를 "비밀번호 변경"으로 표시 */
+  from?: 'login' | 'profile';
   onConfirm?: () => void;
 }
 
-const ResetPassword: React.FC<ResetPasswordProps> = ({ email, onConfirm }) => {
-  const [password, setPassword]               = useState('');
+const ResetPassword: React.FC<ResetPasswordProps> = ({
+  email,
+  from,
+  onConfirm,
+}) => {
+  const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading]                 = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleReset = async () => {
     if (!password.trim() || !confirmPassword.trim()) {
@@ -63,7 +69,9 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ email, onConfirm }) => {
               <Text style={styles.logoPart}>Part</Text>
               <Text style={styles.logoTrip}>Trip</Text>
             </Text>
-            <Text style={styles.title}>비밀번호 찾기</Text>
+            <Text style={styles.title}>
+              {from === 'profile' ? '비밀번호 변경' : '비밀번호 찾기'}
+            </Text>
           </View>
 
           {/* 입력 폼 */}
@@ -101,7 +109,6 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ email, onConfirm }) => {
               )}
             </TouchableOpacity>
           </View>
-
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

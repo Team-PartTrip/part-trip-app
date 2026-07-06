@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Modal,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { profileStyles as s } from './ProfileView.styles';
@@ -16,6 +17,8 @@ import {
   BoardDto,
 } from '../../api/community';
 import { getMyTrips, TripDto } from '../../api/trip';
+import { logout } from '../../api/auth';
+import { getRefreshToken, clearTokens } from '../../api/tokenStorage';
 
 interface Badge {
   id: string;
@@ -95,12 +98,14 @@ interface Props {
   onEdit?: () => void;
   onSeeAllBadges?: () => void;
   onOpenPost?: (id: string, type: 'free' | 'review' | 'route') => void;
+  onLogout?: () => void;
 }
 
 const ProfileView: React.FC<Props> = ({
   onEdit,
   onSeeAllBadges,
   onOpenPost,
+  onLogout,
 }) => {
   const [selected, setSelected] = useState<Badge | null>(null);
   const [myTab, setMyTab] = useState<MyTab>('review');
@@ -162,6 +167,27 @@ const ProfileView: React.FC<Props> = ({
     setBoards(prev => [...prev, ...data.content]);
     setBoardPage(next);
     setBoardHasNext(data.hasNext);
+  };
+
+  const handleLogout = () => {
+    Alert.alert('로그아웃', '로그아웃 하시겠어요?', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '로그아웃',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const refreshToken = await getRefreshToken();
+            if (refreshToken) {
+              await logout(refreshToken).catch(() => {});
+            }
+          } finally {
+            await clearTokens();
+            onLogout?.();
+          }
+        },
+      },
+    ]);
   };
 
   return (
@@ -337,6 +363,14 @@ const ProfileView: React.FC<Props> = ({
             ))}
           </>
         )}
+
+        <TouchableOpacity
+          style={s.logoutBtn}
+          activeOpacity={0.85}
+          onPress={handleLogout}
+        >
+          <Text style={s.logoutBtnText}>로그아웃</Text>
+        </TouchableOpacity>
       </ScrollView>
 
       {/* 뱃지 상세 */}

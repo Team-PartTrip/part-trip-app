@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { surveyStyles as styles } from './SurveyView.styles';
+import { completeSurvey } from '../../api/auth';
 
 export interface SurveyQuestion {
   q: string;
@@ -98,12 +99,16 @@ const SurveyView: React.FC<SurveyViewProps> = ({ onComplete }) => {
     });
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (selected === -1) {
       return;
     }
     if (isLast) {
-      // TODO: 서버에 취향 결과 전송 (예: POST /api/users/survey)
+      try {
+        await completeSurvey();
+      } catch {
+        // 완료 처리 저장에 실패해도 설문 자체는 끝난 것으로 진행 (앱 사용을 막지 않음)
+      }
       onComplete?.(answers);
       return;
     }

@@ -169,4 +169,12 @@ export const profileStyles = StyleSheet.create({
   moreBtnText: { fontSize: 13, color: colors.primary, fontWeight: '600' },
   emptyMy: { paddingVertical: 24, alignItems: 'center' },
   emptyMyText: { fontSize: 13, color: colors.textMuted },
+
+  // 로그아웃
+  logoutBtn: {
+    alignItems: 'center',
+    paddingVertical: 16,
+    marginTop: 12,
+  },
+  logoutBtnText: { fontSize: 14, fontWeight: '700', color: colors.textMuted },
 });
