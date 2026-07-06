@@ -243,11 +243,13 @@ function App() {
               </Stack.Screen>
 
               <Stack.Screen name="Festival" component={FestivalScreen} />
-              <Stack.Screen name="Destination" component={DestinationScreen} />
-              <Stack.Screen
-                name="NearbyPlaces"
-                component={NearbyPlacesScreen}
-              />
+              <Stack.Screen name="Destination">
+                {({ navigation }) => (
+                  <DestinationScreen
+                    onSaved={() => navigation.navigate('Main')}
+                  />
+                )}
+              </Stack.Screen>
 
               {/* 커뮤니티 */}
               <Stack.Screen name="Community">
@@ -259,34 +261,34 @@ function App() {
                     }
                   />
                 )}
-                </Stack.Screen>
-                <Stack.Screen name="PostDetail">
-                  {({ navigation, route }) => (
-                    <PostDetailView
-                      id={route.params?.id}
-                      type={route.params?.type}
-                      onBack={() => navigation.goBack()}
-                      onEdit={(editType, editId) =>
-                        navigation.navigate('PostCreate', { editType, editId })
-                      }
-                    />
-                  )}
-                </Stack.Screen>
-                <Stack.Screen name="PostCreate">
-                  {({ navigation, route }) => (
-                    <PostCreateView
-                      initialTab={route.params?.tab}
-                      destination={route.params?.destination}
-                      editType={route.params?.editType}
-                      editId={route.params?.editId}
-                      onBack={() => navigation.goBack()}
-                      onPickDestination={() =>
-                        navigation.navigate('DestinationPicker')
-                      }
-                      onSubmit={() => navigation.goBack()}
-                    />
-                  )}
-                </Stack.Screen>
+              </Stack.Screen>
+              <Stack.Screen name="PostDetail">
+                {({ navigation, route }) => (
+                  <PostDetailView
+                    id={route.params?.id}
+                    type={route.params?.type}
+                    onBack={() => navigation.goBack()}
+                    onEdit={(editType, editId) =>
+                      navigation.navigate('PostCreate', { editType, editId })
+                    }
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="PostCreate">
+                {({ navigation, route }) => (
+                  <PostCreateView
+                    initialTab={route.params?.tab}
+                    destination={route.params?.destination}
+                    editType={route.params?.editType}
+                    editId={route.params?.editId}
+                    onBack={() => navigation.goBack()}
+                    onPickDestination={() =>
+                      navigation.navigate('DestinationPicker')
+                    }
+                    onSubmit={() => navigation.goBack()}
+                  />
+                )}
+              </Stack.Screen>
               <Stack.Screen name="DestinationPicker">
                 {({ navigation }) => (
                   <DestinationPickerView
