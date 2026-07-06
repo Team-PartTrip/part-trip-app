@@ -87,8 +87,8 @@ const BADGES: Badge[] = [
 
 type MyTab = 'review' | 'free' | 'route';
 const MY_TABS: { key: MyTab; label: string }[] = [
-  { key: 'review', label: '여행 후기' },
   { key: 'free', label: '자유게시판' },
+  { key: 'review', label: '여행 후기' },
   { key: 'route', label: '경로/일정' },
 ];
 const PAGE_SIZE = 10;
@@ -107,7 +107,7 @@ const ProfileView: React.FC<Props> = ({
   onLogout,
 }) => {
   const [selected, setSelected] = useState<Badge | null>(null);
-  const [myTab, setMyTab] = useState<MyTab>('review');
+  const [myTab, setMyTab] = useState<MyTab>('free');
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [character, setCharacter] = useState<CharacterInfo | null>(null);
