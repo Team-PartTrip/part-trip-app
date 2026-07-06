@@ -81,6 +81,7 @@ interface CommentItemProps {
   c: CommentDto;
   reply?: boolean;
   isMine: boolean;
+  isPostOwner: boolean;
   isEditing: boolean;
   editingText: string;
   onEditingTextChange: (text: string) => void;
@@ -95,6 +96,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
                                                    c,
                                                    reply,
                                                    isMine,
+                                                   isPostOwner,
                                                    isEditing,
                                                    editingText,
                                                    onEditingTextChange,
@@ -139,14 +141,14 @@ const CommentItem: React.FC<CommentItemProps> = ({
             </TouchableOpacity>
           )}
           {isMine && (
-            <>
-              <TouchableOpacity onPress={onStartEdit}>
-                <Text style={s.cTime}>수정</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={onDelete}>
-                <Text style={s.cTime}>삭제</Text>
-              </TouchableOpacity>
-            </>
+            <TouchableOpacity onPress={onStartEdit}>
+              <Text style={s.cTime}>수정</Text>
+            </TouchableOpacity>
+          )}
+          {(isMine || isPostOwner) && (
+            <TouchableOpacity onPress={onDelete}>
+              <Text style={s.cTime}>삭제</Text>
+            </TouchableOpacity>
           )}
         </View>
       </>
@@ -157,6 +159,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
 interface CommentSectionProps {
   comments: CommentDto[];
   currentUserId: string | null;
+  isPostOwner: boolean;
   commentText: string;
   onCommentTextChange: (text: string) => void;
   replyTarget: number | null;
@@ -175,6 +178,7 @@ interface CommentSectionProps {
 const CommentSection: React.FC<CommentSectionProps> = ({
                                                          comments,
                                                          currentUserId,
+                                                         isPostOwner,
                                                          commentText,
                                                          onCommentTextChange,
                                                          replyTarget,
@@ -203,6 +207,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
             <CommentItem
               c={top}
               isMine={currentUserId === top.userId}
+              isPostOwner={isPostOwner}
               isEditing={editingCommentId === top.commentId}
               editingText={editingText}
               onEditingTextChange={onEditingTextChange}
@@ -218,6 +223,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
                 c={r}
                 reply
                 isMine={currentUserId === r.userId}
+                isPostOwner={isPostOwner}
                 isEditing={editingCommentId === r.commentId}
                 editingText={editingText}
                 onEditingTextChange={onEditingTextChange}
@@ -652,6 +658,7 @@ const PostDetailView: React.FC<Props> = ({
               <CommentSection
                 comments={reviewComments}
                 currentUserId={currentUserId}
+                isPostOwner={isMine}
                 commentText={commentText}
                 onCommentTextChange={setCommentText}
                 replyTarget={replyTarget}
@@ -755,6 +762,7 @@ const PostDetailView: React.FC<Props> = ({
                 <CommentSection
                   comments={tripComments}
                   currentUserId={currentUserId}
+                  isPostOwner={isMine}
                   commentText={commentText}
                   onCommentTextChange={setCommentText}
                   replyTarget={replyTarget}
@@ -853,6 +861,7 @@ const PostDetailView: React.FC<Props> = ({
             <CommentSection
               comments={boardComments}
               currentUserId={currentUserId}
+              isPostOwner={isMineBoard}
               commentText={commentText}
               onCommentTextChange={setCommentText}
               replyTarget={replyTarget}
