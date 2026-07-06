@@ -18,6 +18,7 @@ import {
   getFoodInfo,
   getFestivals,
   getExchangeRate,
+  getWeather,
   DdayInfo,
   CountryInfo,
   PopulationInfo,
@@ -25,6 +26,7 @@ import {
   FoodInfo,
   Festival,
   ExchangeRate,
+  Weather,
 } from '../../api/main';
 import { toImageUrl } from '../../api/image';
 
@@ -56,6 +58,7 @@ const MainView: React.FC<MainViewProps> = ({
   const [foods, setFoods] = useState<FoodInfo[]>([]);
   const [festivals, setFestivals] = useState<Festival[]>([]);
   const [exchangeRate, setExchangeRate] = useState<ExchangeRate | null>(null);
+  const [weather, setWeather] = useState<Weather | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -67,14 +70,16 @@ const MainView: React.FC<MainViewProps> = ({
           if (!alive) return;
           setDday(d);
 
-          const [info, pop, tour, food, fest, rate] = await Promise.all([
-            getCountryInfo(d.countryName).catch(() => null),
-            getPopulationInfo(d.countryName).catch(() => []),
-            getTourPlaces(d.countryName).catch(() => []),
-            getFoodInfo(d.countryName).catch(() => []),
-            getFestivals(d.countryName).catch(() => []),
-            getExchangeRate(d.countryName).catch(() => null),
-          ]);
+          const [info, pop, tour, food, fest, rate, currentWeather] =
+            await Promise.all([
+              getCountryInfo(d.countryName).catch(() => null),
+              getPopulationInfo(d.countryName).catch(() => []),
+              getTourPlaces(d.countryName).catch(() => []),
+              getFoodInfo(d.countryName).catch(() => []),
+              getFestivals(d.countryName).catch(() => []),
+              getExchangeRate(d.countryName).catch(() => null),
+              getWeather(d.countryName).catch(() => null),
+            ]);
           if (!alive) return;
           setCountryInfo(info);
           setPopulation(pop);
@@ -82,6 +87,7 @@ const MainView: React.FC<MainViewProps> = ({
           setFoods(food);
           setFestivals(fest);
           setExchangeRate(rate);
+          setWeather(currentWeather);
         } catch {
           if (!alive) return;
           setDday(null);
@@ -179,15 +185,35 @@ const MainView: React.FC<MainViewProps> = ({
           </ImageBackground>
         </View>
 
-        {/* 환율 */}
+        {/* 날씨 / 환율 */}
         <View style={s.statRow}>
+          <View style={s.statCard}>
+            <Text style={s.statLabel}>현지 날씨</Text>
+            {weather ? (
+              <>
+                <Text style={s.statValue}>
+                  {Math.round(weather.temperature)}°C
+                </Text>
+                <Text style={s.statSub}>
+                  {weather.description} · 체감 {Math.round(weather.feelsLike)}
+                  °C
+                </Text>
+              </>
+            ) : (
+              <Text style={s.statSub}>날씨 정보가 없습니다.</Text>
+            )}
+          </View>
           <View style={s.statCard}>
             <Text style={s.statLabel}>오늘의 환율</Text>
             {exchangeRate ? (
               <>
                 <Text style={s.statValue}>
                   1 {exchangeRate.currencyCode} ={' '}
-                  {Math.round(exchangeRate.krwRate).toLocaleString()}원
+                  {exchangeRate.krwRate.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                  원
                 </Text>
                 {exchangeRate.date && (
                   <Text style={s.statSub}>{exchangeRate.date} 기준</Text>

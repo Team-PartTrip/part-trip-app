@@ -109,6 +109,20 @@ export function getExchangeRate(countryName: string): Promise<ExchangeRate> {
   );
 }
 
+export interface Weather {
+  temperature: number;
+  feelsLike: number;
+  description: string;
+}
+
+/** 국가별 실시간 날씨 조회 */
+export function getWeather(countryName: string): Promise<Weather> {
+  return authRequest<Weather>(
+    `/api/main/weather?countryName=${encodeURIComponent(countryName)}`,
+    { method: 'GET' },
+  );
+}
+
 export interface Festival {
   title: string;
   category: string;
