@@ -21,6 +21,7 @@ import MainView from './src/screens/MainView/MainView';
 import FestivalScreen from './src/screens/FestivalScreen/FestivalScreen';
 import DestinationScreen from './src/screens/DestinationScreen/DestinationScreen';
 import CameraScreen from './src/screens/CameraScreen/CameraScreen';
+import GuideResultView from './src/screens/CameraScreen/GuideResultView';
 import NearbyPlacesScreen from './src/screens/NearbyPlacesScreen/NearbyPlacesScreen';
 import CommunityView from './src/screens/CommunityView/CommunityView';
 import PostDetailView from './src/screens/CommunityView/PostDetailView';
@@ -57,6 +58,7 @@ export type RootStackParamList = {
   Destination: undefined;
   Camera: undefined;
   NearbyPlaces: undefined;
+  GuideResult: { imageId: number; photoUri: string };
   Community: undefined;
   PostDetail: { id: string; type?: 'free' | 'review' | 'route' };
   PostCreate: {
@@ -99,6 +101,7 @@ const AUTH_ROUTES = [
   'PostDetail',
   'PostCreate',
   'DestinationPicker',
+  'GuideResult',
   'RecordMap',
   'RecordEdit',
   'RecordComplete',
@@ -260,9 +263,23 @@ function App() {
                 {({ navigation }) => (
                   <CameraScreen
                     onOpenNearby={() => navigation.navigate('NearbyPlaces')}
+                    onCaptured={(imageId, photoUri) =>
+                      navigation.navigate('GuideResult', { imageId, photoUri })
+                    }
                   />
                 )}
               </Stack.Screen>
+              <Stack.Screen name="GuideResult">
+                {({ navigation, route }) => (
+                  <GuideResultView
+                    imageId={route.params.imageId}
+                    photoUri={route.params.photoUri}
+                    onBack={() => navigation.goBack()}
+                    onSaved={() => navigation.navigate('Camera')}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="NearbyPlaces" component={NearbyPlacesScreen} />
 
               <Stack.Screen name="Festival" component={FestivalScreen} />
               <Stack.Screen name="Destination">

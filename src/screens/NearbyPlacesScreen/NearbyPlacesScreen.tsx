@@ -1,18 +1,62 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, ScrollView, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
 import colors from '../../assets/constants/colors';
 import { nearbyStyles as styles } from './NearbyPlacesScreen.styles';
-
-const PLACES = [
-  { name: 'cowLikeSome', rating: 4.8, category: '한식 · 소고기구이', hours: '12:00 ~ 23:00', distance: '250m', icon: '🥩' },
-  { name: 'Goodi', rating: 4.2, category: '중식 · 짜장면/짬뽕', hours: '12:00 ~ 23:00', distance: '600m', icon: '🍜' },
-  { name: '유가매운탕', rating: 4.5, category: '탕/찌개 · 매운탕', hours: '12:00 ~ 23:00', distance: '1.2km', icon: '🍲' },
-  { name: '전비빔', rating: 4.5, category: '비빔밥 · 야채', hours: '12:00 ~ 23:00', distance: '1.2km', icon: '🍚' },
-];
+import {
+  getNearbyRecommendations,
+  createGuideCameraMission,
+  NearbyPlaceRecommendation,
+} from '../../api/guideCamera';
+import { getCurrentLocation } from '../../location/getCurrentLocation';
 
 const NearbyPlacesScreen: React.FC = () => {
   const [query, setQuery] = useState('');
+  const [places, setPlaces] = useState<NearbyPlaceRecommendation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [addingMission, setAddingMission] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { latitude, longitude } = await getCurrentLocation();
+        const list = await getNearbyRecommendations(latitude, longitude);
+        setPlaces(list);
+      } catch (e: any) {
+        setError(e?.message ?? '주변 명소를 불러오지 못했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const filtered = places.filter(
+    p => !query.trim() || p.name.includes(query),
+  );
+
+  const handleAddMission = async (place: NearbyPlaceRecommendation) => {
+    try {
+      setAddingMission(place.name);
+      await createGuideCameraMission({
+        targetPlaceName: place.name,
+        latitude: place.latitude,
+        longitude: place.longitude,
+      });
+      Alert.alert('완료', '미션이 추가되었습니다.');
+    } catch (e: any) {
+      Alert.alert('추가 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
+    } finally {
+      setAddingMission(null);
+    }
+  };
 
   return (
     <View style={styles.safeArea}>
@@ -37,25 +81,54 @@ const NearbyPlacesScreen: React.FC = () => {
         {/* 가까운 장소 */}
         <View style={styles.sectionRow}>
           <Text style={styles.sectionTitle}>가까운 장소</Text>
-          <Text style={styles.sectionCount}>{PLACES.length}곳</Text>
+          <Text style={styles.sectionCount}>{filtered.length}곳</Text>
         </View>
 
-        {PLACES.map((p) => (
-          <View key={p.name} style={styles.placeCard}>
+        {loading && <ActivityIndicator style={{ marginTop: 24 }} />}
+
+        {!loading && error && (
+          <Text
+            style={{ color: colors.textSub, textAlign: 'center', marginTop: 12 }}
+          >
+            {error}
+          </Text>
+        )}
+
+        {!loading && !error && filtered.length === 0 && (
+          <Text
+            style={{ color: colors.textSub, textAlign: 'center', marginTop: 12 }}
+          >
+            추천할 만한 주변 명소가 없습니다.
+          </Text>
+        )}
+
+        {filtered.map((p, i) => (
+          <View key={`${p.name}-${i}`} style={styles.placeCard}>
             <View style={styles.placeThumb}>
-              <Text style={styles.placeThumbIcon}>{p.icon}</Text>
+              <Text style={styles.placeThumbIcon}>📍</Text>
             </View>
             <View style={styles.placeBody}>
               <View style={styles.placeNameRow}>
                 <Text style={styles.placeName}>{p.name}</Text>
-                <Text style={styles.placeRating}>★ {p.rating}</Text>
               </View>
-              <Text style={styles.placeCategory}>{p.category}</Text>
-              <Text style={styles.placeHours}>{p.hours}</Text>
+              <Text style={styles.placeCategory} numberOfLines={2}>
+                {p.description}
+              </Text>
               <View style={styles.placeBottomRow}>
-                <Text style={styles.placeDistance}>📍 {p.distance}</Text>
-                <TouchableOpacity style={styles.directionsBtn} activeOpacity={0.8}>
-                  <Text style={styles.directionsBtnText}>길찾기</Text>
+                <Text style={styles.placeDistance}>
+                  📍 {p.distanceMeters}m
+                </Text>
+                <TouchableOpacity
+                  style={styles.directionsBtn}
+                  activeOpacity={0.8}
+                  onPress={() => handleAddMission(p)}
+                  disabled={addingMission === p.name}
+                >
+                  {addingMission === p.name ? (
+                    <ActivityIndicator size="small" color={colors.primary} />
+                  ) : (
+                    <Text style={styles.directionsBtnText}>미션 추가</Text>
+                  )}
                 </TouchableOpacity>
               </View>
             </View>

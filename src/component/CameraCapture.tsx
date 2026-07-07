@@ -31,7 +31,9 @@ const CameraCapture: React.FC<Props> = ({
 }) => {
   const device = useCameraDevice('back');
   const { hasPermission, requestPermission } = useCameraPermission();
-  const photoOutput = usePhotoOutput();
+  // iOS 기본값(native)은 HEIC로 저장되어 서버 업로드(jpg/png/webp만 허용)에 실패하므로
+  // 플랫폼과 무관하게 항상 JPEG로 저장되도록 강제
+  const photoOutput = usePhotoOutput({ containerFormat: 'jpeg' });
   const cameraRef = useRef<CameraRef>(null);
 
   useEffect(() => {

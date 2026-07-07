@@ -1,19 +1,55 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Modal } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Modal,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
 import { cameraStyles as styles } from './CameraScreen.styles';
 import CameraCapture from '../../component/CameraCapture';
+import { uploadGuideCameraPhoto } from '../../api/guideCamera';
+import { getCurrentLocation } from '../../location/getCurrentLocation';
 
 interface CameraScreenProps {
   onOpenNearby?: () => void;
+  onOpenMissions?: () => void;
+  onCaptured?: (imageId: number, photoUri: string) => void;
 }
 
-const CameraScreen: React.FC<CameraScreenProps> = ({ onOpenNearby }) => {
+const CameraScreen: React.FC<CameraScreenProps> = ({
+  onOpenNearby,
+  onOpenMissions,
+  onCaptured,
+}) => {
   const [capturing, setCapturing] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
 
-  const handleCapture = (uri: string) => {
+  const handleCapture = async (uri: string) => {
     setCapturing(false);
-    // TODO: 촬영한 사진(uri)을 해설 카메라 분석 API로 전송
-    console.log('촬영 완료:', uri);
+    if (!uri) return;
+
+    try {
+      setAnalyzing(true);
+      const { latitude, longitude } = await getCurrentLocation();
+      const result = await uploadGuideCameraPhoto(
+        uri,
+        `guide-${Date.now()}.jpg`,
+        'image/jpeg',
+        latitude,
+        longitude,
+      );
+      onCaptured?.(result.imageId, uri);
+    } catch (e: any) {
+      Alert.alert(
+        '분석 실패',
+        e?.message ?? '사진 분석 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.',
+      );
+    } finally {
+      setAnalyzing(false);
+    }
   };
 
   return (
@@ -50,7 +86,11 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ onOpenNearby }) => {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.missionRow} activeOpacity={0.85}>
+        <TouchableOpacity
+          style={styles.missionRow}
+          activeOpacity={0.85}
+          onPress={onOpenMissions}
+        >
           <View style={styles.missionTextWrap}>
             <Text style={styles.missionTitle}>미션 추가 목록</Text>
             <Text style={styles.missionDesc}>
@@ -71,6 +111,22 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ onOpenNearby }) => {
           onClose={() => setCapturing(false)}
           onCapture={handleCapture}
         />
+      </Modal>
+
+      <Modal visible={analyzing} transparent animationType="fade">
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <ActivityIndicator size="large" color="#fff" />
+          <Text style={{ color: '#fff', marginTop: 16, fontSize: 15 }}>
+            AI가 사진을 분석하고 있어요...
+          </Text>
+        </View>
       </Modal>
     </View>
   );
