@@ -76,9 +76,9 @@ export async function getCurrentLocation(): Promise<Coordinates> {
       return await requestPosition();
     } catch (e: any) {
       lastError = e;
+      if (attempt >= RETRY_DELAYS_MS.length) break;
       const delay = RETRY_DELAYS_MS[attempt];
-      if (delay == null) break;
-      await new Promise(r => setTimeout(r, delay));
+      await new Promise<void>(resolve => setTimeout(resolve, delay));
     }
   }
   throw lastError ?? new Error('위치 정보를 가져오지 못했습니다.');
