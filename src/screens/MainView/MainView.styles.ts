@@ -95,6 +95,14 @@ export const mainStyles = StyleSheet.create({
     padding: 14,
     ...cardShadow,
   },
+  // 환율 카드는 텍스트가 더 길어서(예: "1 SGD = 1,186.51원") 날씨보다 넓게
+  statCardWide: {
+    flex: 1.4,
+    backgroundColor: colors.cardBg,
+    borderRadius: 16,
+    padding: 14,
+    ...cardShadow,
+  },
   statLabel: { fontSize: 12, color: colors.textSub, marginBottom: 6 },
   statValue: { fontSize: 18, fontWeight: '800', color: colors.textPrimary },
   statSub: { fontSize: 11, color: colors.textMuted, marginTop: 2 },

@@ -203,7 +203,7 @@ const MainView: React.FC<MainViewProps> = ({
               <Text style={s.statSub}>날씨 정보가 없습니다.</Text>
             )}
           </View>
-          <View style={s.statCard}>
+          <View style={s.statCardWide}>
             <Text style={s.statLabel}>오늘의 환율</Text>
             {exchangeRate ? (
               <>
