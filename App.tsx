@@ -7,39 +7,40 @@ import {
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-import colors from './src/assets/constants/colors';
-import AppHeader from './src/component/AppHeader';
-import TabBar, { TabKey } from './src/component/TabBar';
+import colors from './src/shared/tokens/colors';
+import AppHeader from './src/shared/ui/AppHeader';
+import TabBar, { TabKey } from './src/widgets/bottom-tab-bar/TabBar';
 
-import LaunchScreen from './src/screens/LaunchScreen/LaunchScreen';
-import LoginView from './src/screens/Auth/LoginView';
-import SignUpView, { SignUpData } from './src/screens/Auth/SingUpView';
-import ConfirmEmail from './src/screens/Auth/ConfirmEmail';
-import SurveyView from './src/screens/Survey/SurveyView';
-import ResetPassword from './src/screens/Auth/ResetPassword';
-import MainView from './src/screens/MainView/MainView';
-import FestivalScreen from './src/screens/FestivalScreen/FestivalScreen';
-import DestinationScreen from './src/screens/DestinationScreen/DestinationScreen';
-import CameraScreen from './src/screens/CameraScreen/CameraScreen';
-import GuideResultView from './src/screens/CameraScreen/GuideResultView';
-import NearbyPlacesScreen from './src/screens/NearbyPlacesScreen/NearbyPlacesScreen';
-import CommunityView from './src/screens/CommunityView/CommunityView';
-import PostDetailView from './src/screens/CommunityView/PostDetailView';
-import PostCreateView from './src/screens/CommunityView/PostCreateView';
-import DestinationPickerView from './src/screens/CommunityView/DestinationPickerView';
-import MissionView from './src/screens/MissionView/MissionView';
-import AttendanceView from './src/screens/MissionView/AttendanceView';
-import MissionListView from './src/screens/MissionView/MissionListView';
-import MissionDetailView from './src/screens/MissionView/MissionDetailView';
-import MissionVerifyView from './src/screens/MissionView/MissionVerifyView';
-import ProfileView from './src/screens/ProfileView/ProfileView';
-import RecordView from './src/screens/RecordView/RecordView';
-import RecordMapView from './src/screens/RecordView/RecordMapView';
-import RecordEditView from './src/screens/RecordView/RecordEditView';
-import RecordCompleteView from './src/screens/RecordView/RecordCompleteView';
-import ProfileEditView from './src/screens/ProfileView/ProfileEditView';
-import { consumeDestinationCallback } from './src/screens/CommunityView/destinationSelectBridge';
-import { clearTokens } from './src/api/tokenStorage';
+import LaunchScreen from './src/pages/LaunchScreen/LaunchScreen';
+import LoginView from './src/pages/Auth/LoginView';
+import SignUpView, { SignUpData } from './src/pages/Auth/SingUpView';
+import ConfirmEmail from './src/pages/Auth/ConfirmEmail';
+import SurveyView from './src/pages/Survey/SurveyView';
+import ResetPassword from './src/pages/Auth/ResetPassword';
+import MainView from './src/pages/MainView/MainView';
+import FestivalScreen from './src/pages/FestivalScreen/FestivalScreen';
+import DestinationScreen from './src/pages/DestinationScreen/DestinationScreen';
+import CameraScreen from './src/pages/CameraScreen/CameraScreen';
+import GuideResultView from './src/pages/CameraScreen/GuideResultView';
+import NearbyPlacesScreen from './src/pages/NearbyPlacesScreen/NearbyPlacesScreen';
+import CommunityView from './src/pages/CommunityView/CommunityView';
+import PostDetailView from './src/pages/CommunityView/PostDetailView';
+import PostCreateView from './src/pages/CommunityView/PostCreateView';
+import DestinationPickerView from './src/pages/CommunityView/DestinationPickerView';
+import MissionView from './src/pages/MissionView/MissionView';
+import type { Mission } from './src/entities/mission/api';
+import AttendanceView from './src/pages/MissionView/AttendanceView';
+import MissionListView from './src/pages/MissionView/MissionListView';
+import MissionDetailView from './src/pages/MissionView/MissionDetailView';
+import MissionVerifyView from './src/pages/MissionView/MissionVerifyView';
+import ProfileView from './src/pages/ProfileView/ProfileView';
+import RecordView from './src/pages/RecordView/RecordView';
+import RecordMapView from './src/pages/RecordView/RecordMapView';
+import RecordEditView from './src/pages/RecordView/RecordEditView';
+import RecordCompleteView from './src/pages/RecordView/RecordCompleteView';
+import ProfileEditView from './src/pages/ProfileView/ProfileEditView';
+import { consumeDestinationCallback } from './src/pages/CommunityView/destinationSelectBridge';
+import { clearTokens } from './src/shared/api/tokenStorage';
 
 export type RootStackParamList = {
   Launch: undefined;
@@ -75,8 +76,8 @@ export type RootStackParamList = {
   Mission: undefined;
   Attendance: undefined;
   MissionList: undefined;
-  MissionDetail: { id: string };
-  MissionVerify: undefined;
+  MissionDetail: { mission: Mission };
+  MissionVerify: { missionId: number };
   Profile: undefined;
   ProfileEdit: undefined;
 };
@@ -385,8 +386,8 @@ function App() {
                   <MissionView
                     onOpenAttendance={() => navigation.navigate('Attendance')}
                     onOpenCompleted={() => navigation.navigate('MissionList')}
-                    onOpenDetail={id =>
-                      navigation.navigate('MissionDetail', { id })
+                    onOpenDetail={mission =>
+                      navigation.navigate('MissionDetail', { mission })
                     }
                   />
                 )}
@@ -400,23 +401,29 @@ function App() {
                 {({ navigation }) => (
                   <MissionListView
                     onBack={() => navigation.goBack()}
-                    onOpenDetail={id =>
-                      navigation.navigate('MissionDetail', { id })
+                    onOpenDetail={mission =>
+                      navigation.navigate('MissionDetail', { mission })
                     }
                   />
                 )}
               </Stack.Screen>
               <Stack.Screen name="MissionDetail">
-                {({ navigation }) => (
+                {({ navigation, route }) => (
                   <MissionDetailView
+                    mission={route.params.mission}
                     onBack={() => navigation.goBack()}
-                    onVerify={() => navigation.navigate('MissionVerify')}
+                    onVerify={() =>
+                      navigation.navigate('MissionVerify', {
+                        missionId: route.params.mission.missionId,
+                      })
+                    }
                   />
                 )}
               </Stack.Screen>
               <Stack.Screen name="MissionVerify">
-                {({ navigation }) => (
+                {({ navigation, route }) => (
                   <MissionVerifyView
+                    missionId={route.params.missionId}
                     onBack={() => navigation.goBack()}
                     onDone={() => navigation.navigate('MissionList')}
                     onHome={() => navigation.navigate('Main')}

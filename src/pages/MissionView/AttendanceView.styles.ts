@@ -1,0 +1,68 @@
+import { StyleSheet } from 'react-native';
+import colors from '../../shared/tokens/colors';
+
+export const attendanceStyles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.background },
+  content: { padding: 16 },
+  month: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: colors.textPrimary,
+    marginBottom: 12,
+  },
+  legendRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  streak: { fontSize: 13, fontWeight: '700', color: colors.primary },
+  legend: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  dot: { width: 10, height: 10, borderRadius: 5 },
+  legendText: { fontSize: 12, color: colors.textSub, marginRight: 6 },
+  calCard: {
+    backgroundColor: colors.cardBg,
+    borderRadius: 16,
+    padding: 12,
+    shadowColor: '#1a2a3a',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  weekRow: { flexDirection: 'row' },
+  weekday: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 12,
+    color: colors.textMuted,
+    paddingVertical: 8,
+  },
+  sun: { color: colors.red },
+  cell: {
+    flex: 1,
+    aspectRatio: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inner: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  on: { backgroundColor: colors.primary },
+  today: { backgroundColor: colors.tintStrong },
+  day: { fontSize: 14, color: colors.textPrimary },
+  dayOn: { color: '#fff', fontWeight: '700' },
+  footer: { padding: 16 },
+  btn: {
+    backgroundColor: colors.primary,
+    borderRadius: 14,
+    paddingVertical: 17,
+    alignItems: 'center',
+  },
+  btnDone: { backgroundColor: colors.teal },
+  btnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+});
