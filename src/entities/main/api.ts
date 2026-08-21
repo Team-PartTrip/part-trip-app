@@ -66,19 +66,48 @@ export function getPopulationInfo(
 }
 
 export interface TourPlace {
+  tourPlaceId: number;
   placeName: string;
-  description: string;
-  imageUrl: string;
+  /** 맛집 / 명소 / 숙소 / 카페 / 액티비티 / 쇼핑. 미분류면 null */
+  category: string | null;
+  description: string | null;
+  address: string | null;
+  /** 데이터 소스에 평점이 없으면 null */
+  rating: number | null;
+  imageUrl: string | null;
   latitude: number;
   longitude: number;
 }
 
-/** 국가별 관광 장소 조회 */
-export function getTourPlaces(countryName: string): Promise<TourPlace[]> {
-  return authRequest<TourPlace[]>(
-    `/api/main/tour-place?countryName=${encodeURIComponent(countryName)}`,
-    { method: 'GET' },
-  );
+/** 관광 장소 카테고리. 서버는 한글·영문키를 모두 받는다 */
+export type TourPlaceCategory =
+  | '맛집'
+  | '명소'
+  | '숙소'
+  | '카페'
+  | '액티비티'
+  | '쇼핑';
+
+/**
+ * 관광 장소 조회
+ * cityName, category 는 선택. 생략하면 해당 국가 전체를 반환한다.
+ */
+export function getTourPlaces(
+  countryName: string,
+  options?: { cityName?: string; category?: TourPlaceCategory },
+): Promise<TourPlace[]> {
+  const params = new URLSearchParams({ countryName });
+
+  if (options?.cityName) {
+    params.append('cityName', options.cityName);
+  }
+  if (options?.category) {
+    params.append('category', options.category);
+  }
+
+  return authRequest<TourPlace[]>(`/api/main/tour-place?${params.toString()}`, {
+    method: 'GET',
+  });
 }
 
 export interface FoodInfo {
@@ -133,10 +162,26 @@ export interface Festival {
   imageUrl: string;
 }
 
-/** 국가별 축제/이벤트 조회 */
-export function getFestivals(countryName: string): Promise<Festival[]> {
-  return authRequest<Festival[]>(
-    `/api/main/festivals?countryName=${encodeURIComponent(countryName)}`,
-    { method: 'GET' },
-  );
+/**
+ * 축제/이벤트 조회
+ *
+ * 서버는 year, month 를 생략하면 '조회 시점의 월' 만 돌려준다.
+ * 다른 달을 보려면 반드시 year, month 를 함께 넘겨야 한다.
+ */
+export function getFestivals(
+  countryName: string,
+  options?: { year?: number; month?: number },
+): Promise<Festival[]> {
+  const params = new URLSearchParams({ countryName });
+
+  if (options?.year != null) {
+    params.append('year', String(options.year));
+  }
+  if (options?.month != null) {
+    params.append('month', String(options.month));
+  }
+
+  return authRequest<Festival[]>(`/api/main/festivals?${params.toString()}`, {
+    method: 'GET',
+  });
 }
