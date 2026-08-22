@@ -49,21 +49,7 @@ export function saveTravelPlan(payload: TravelPlanPayload): Promise<DdayInfo> {
   });
 }
 
-export interface PopulationInfo {
-  nationCode: string;
-  nationName: string;
-  percent: number;
-}
 
-/** 국가별 인구 구성 조회 */
-export function getPopulationInfo(
-  countryName: string,
-): Promise<PopulationInfo[]> {
-  return authRequest<PopulationInfo[]>(
-    `/api/main/population-info?countryName=${encodeURIComponent(countryName)}`,
-    { method: 'GET' },
-  );
-}
 
 export interface TourPlace {
   tourPlaceId: number;
@@ -110,47 +96,11 @@ export function getTourPlaces(
   });
 }
 
-export interface FoodInfo {
-  foodName: string;
-  description: string;
-  imageUrl: string;
-}
 
-/** 국가별 대표 음식 조회 */
-export function getFoodInfo(countryName: string): Promise<FoodInfo[]> {
-  return authRequest<FoodInfo[]>(
-    `/api/main/food-info?countryName=${encodeURIComponent(countryName)}`,
-    { method: 'GET' },
-  );
-}
 
-export interface ExchangeRate {
-  currencyCode: string;
-  krwRate: number;
-  date: string | null;
-}
 
-/** 국가별 환율 조회 (1 현지통화 = ? 원) */
-export function getExchangeRate(countryName: string): Promise<ExchangeRate> {
-  return authRequest<ExchangeRate>(
-    `/api/main/exchange-rate?countryName=${encodeURIComponent(countryName)}`,
-    { method: 'GET' },
-  );
-}
 
-export interface Weather {
-  temperature: number;
-  feelsLike: number;
-  description: string;
-}
 
-/** 국가별 실시간 날씨 조회 */
-export function getWeather(countryName: string): Promise<Weather> {
-  return authRequest<Weather>(
-    `/api/main/weather?countryName=${encodeURIComponent(countryName)}`,
-    { method: 'GET' },
-  );
-}
 
 export interface Festival {
   title: string;

@@ -15,31 +15,20 @@ import LaunchScreen from './src/pages/LaunchScreen/LaunchScreen';
 import LoginView from './src/pages/Auth/LoginView';
 import SignUpView, { SignUpData } from './src/pages/Auth/SingUpView';
 import ConfirmEmail from './src/pages/Auth/ConfirmEmail';
-import SurveyView from './src/pages/Survey/SurveyView';
 import ResetPassword from './src/pages/Auth/ResetPassword';
 import MainView from './src/pages/MainView/MainView';
 import FestivalScreen from './src/pages/FestivalScreen/FestivalScreen';
 import DestinationScreen from './src/pages/DestinationScreen/DestinationScreen';
 import CameraScreen from './src/pages/CameraScreen/CameraScreen';
 import GuideResultView from './src/pages/CameraScreen/GuideResultView';
-import NearbyPlacesScreen from './src/pages/NearbyPlacesScreen/NearbyPlacesScreen';
-import CommunityView from './src/pages/CommunityView/CommunityView';
-import PostDetailView from './src/pages/CommunityView/PostDetailView';
-import PostCreateView from './src/pages/CommunityView/PostCreateView';
-import DestinationPickerView from './src/pages/CommunityView/DestinationPickerView';
-import MissionView from './src/pages/MissionView/MissionView';
-import type { Mission } from './src/entities/mission/api';
-import AttendanceView from './src/pages/MissionView/AttendanceView';
-import MissionListView from './src/pages/MissionView/MissionListView';
-import MissionDetailView from './src/pages/MissionView/MissionDetailView';
-import MissionVerifyView from './src/pages/MissionView/MissionVerifyView';
+import DestinationPickerView from './src/pages/DestinationScreen/DestinationPickerView';
 import ProfileView from './src/pages/ProfileView/ProfileView';
 import RecordView from './src/pages/RecordView/RecordView';
 import RecordMapView from './src/pages/RecordView/RecordMapView';
 import RecordEditView from './src/pages/RecordView/RecordEditView';
 import RecordCompleteView from './src/pages/RecordView/RecordCompleteView';
 import ProfileEditView from './src/pages/ProfileView/ProfileEditView';
-import { consumeDestinationCallback } from './src/pages/CommunityView/destinationSelectBridge';
+import { consumeDestinationCallback } from './src/pages/DestinationScreen/destinationSelectBridge';
 import { clearTokens } from './src/shared/api/tokenStorage';
 
 export type RootStackParamList = {
@@ -52,32 +41,17 @@ export type RootStackParamList = {
     from?: 'login' | 'profile';
     initialEmail?: string;
   };
-  Survey: { from?: 'signup' | 'profile' } | undefined;
   ResetPassword: { email: string; from?: 'login' | 'profile' };
   Main: undefined;
   Festival: undefined;
   Destination: undefined;
   Camera: undefined;
-  NearbyPlaces: undefined;
   GuideResult: { imageId: number; photoUri: string };
-  Community: undefined;
-  PostDetail: { id: string; type?: 'free' | 'review' | 'route' };
-  PostCreate: {
-    tab?: 'free' | 'review' | 'route';
-    destination?: { countryInfoId: number; name: string };
-    editType?: 'free' | 'review' | 'route';
-    editId?: string;
-  };
   DestinationPicker: undefined;
   Record: undefined;
   RecordMap: undefined;
   RecordEdit: { id?: string };
   RecordComplete: undefined;
-  Mission: undefined;
-  Attendance: undefined;
-  MissionList: undefined;
-  MissionDetail: { mission: Mission };
-  MissionVerify: { missionId: number };
   Profile: undefined;
   ProfileEdit: undefined;
 };
@@ -111,15 +85,11 @@ const AUTH_ROUTES = [
 // 탭 ↔ 라우트 매핑
 const ROUTE_BY_TAB: Record<TabKey, keyof RootStackParamList> = {
   home: 'Main',
-  community: 'Community',
   record: 'Record',
-  mission: 'Mission',
 };
 const TAB_BY_ROUTE: Record<string, TabKey> = {
   Main: 'home',
-  Community: 'community',
   Record: 'record',
-  Mission: 'mission',
 };
 
 function App() {
@@ -173,9 +143,7 @@ function App() {
               <Stack.Screen name="Login">
                 {({ navigation }) => (
                   <LoginView
-                    onLogin={surveyCompleted =>
-                      navigation.replace(surveyCompleted ? 'Main' : 'Survey')
-                    }
+                    onLogin={() => navigation.replace('Main')}
                     onSignup={() => navigation.navigate('SignUp')}
                     onResetPassword={() =>
                       navigation.navigate('ConfirmEmail', {
@@ -223,17 +191,6 @@ function App() {
                 }}
               </Stack.Screen>
 
-              <Stack.Screen name="Survey">
-                {({ navigation, route }) => (
-                  <SurveyView
-                    onComplete={() =>
-                      route.params?.from === 'profile'
-                        ? navigation.goBack()
-                        : navigation.replace('Main')
-                    }
-                  />
-                )}
-              </Stack.Screen>
 
               <Stack.Screen name="ResetPassword">
                 {({ navigation, route }) => (
@@ -280,7 +237,6 @@ function App() {
                   />
                 )}
               </Stack.Screen>
-              <Stack.Screen name="NearbyPlaces" component={NearbyPlacesScreen} />
 
               <Stack.Screen name="Festival" component={FestivalScreen} />
               <Stack.Screen name="Destination">
@@ -292,43 +248,6 @@ function App() {
               </Stack.Screen>
 
               {/* 커뮤니티 */}
-              <Stack.Screen name="Community">
-                {({ navigation }) => (
-                  <CommunityView
-                    onWrite={tab => navigation.navigate('PostCreate', { tab })}
-                    onOpenPost={(id, type) =>
-                      navigation.navigate('PostDetail', { id, type })
-                    }
-                  />
-                )}
-              </Stack.Screen>
-              <Stack.Screen name="PostDetail">
-                {({ navigation, route }) => (
-                  <PostDetailView
-                    id={route.params?.id}
-                    type={route.params?.type}
-                    onBack={() => navigation.goBack()}
-                    onEdit={(editType, editId) =>
-                      navigation.navigate('PostCreate', { editType, editId })
-                    }
-                  />
-                )}
-              </Stack.Screen>
-              <Stack.Screen name="PostCreate">
-                {({ navigation, route }) => (
-                  <PostCreateView
-                    initialTab={route.params?.tab}
-                    destination={route.params?.destination}
-                    editType={route.params?.editType}
-                    editId={route.params?.editId}
-                    onBack={() => navigation.goBack()}
-                    onPickDestination={() =>
-                      navigation.navigate('DestinationPicker')
-                    }
-                    onSubmit={() => navigation.goBack()}
-                  />
-                )}
-              </Stack.Screen>
               <Stack.Screen name="DestinationPicker">
                 {({ navigation }) => (
                   <DestinationPickerView
@@ -381,63 +300,11 @@ function App() {
               </Stack.Screen>
 
               {/* 미션 */}
-              <Stack.Screen name="Mission">
-                {({ navigation }) => (
-                  <MissionView
-                    onOpenAttendance={() => navigation.navigate('Attendance')}
-                    onOpenCompleted={() => navigation.navigate('MissionList')}
-                    onOpenDetail={mission =>
-                      navigation.navigate('MissionDetail', { mission })
-                    }
-                  />
-                )}
-              </Stack.Screen>
-              <Stack.Screen name="Attendance">
-                {({ navigation }) => (
-                  <AttendanceView onBack={() => navigation.goBack()} />
-                )}
-              </Stack.Screen>
-              <Stack.Screen name="MissionList">
-                {({ navigation }) => (
-                  <MissionListView
-                    onBack={() => navigation.goBack()}
-                    onOpenDetail={mission =>
-                      navigation.navigate('MissionDetail', { mission })
-                    }
-                  />
-                )}
-              </Stack.Screen>
-              <Stack.Screen name="MissionDetail">
-                {({ navigation, route }) => (
-                  <MissionDetailView
-                    mission={route.params.mission}
-                    onBack={() => navigation.goBack()}
-                    onVerify={() =>
-                      navigation.navigate('MissionVerify', {
-                        missionId: route.params.mission.missionId,
-                      })
-                    }
-                  />
-                )}
-              </Stack.Screen>
-              <Stack.Screen name="MissionVerify">
-                {({ navigation, route }) => (
-                  <MissionVerifyView
-                    missionId={route.params.missionId}
-                    onBack={() => navigation.goBack()}
-                    onDone={() => navigation.navigate('MissionList')}
-                    onHome={() => navigation.navigate('Main')}
-                  />
-                )}
-              </Stack.Screen>
 
               <Stack.Screen name="Profile">
                 {({ navigation }) => (
                   <ProfileView
                     onEdit={() => navigation.navigate('ProfileEdit')}
-                    onOpenPost={(id, type) =>
-                      navigation.navigate('PostDetail', { id, type })
-                    }
                     onLogout={() =>
                       navigation.reset({
                         index: 0,
@@ -451,9 +318,6 @@ function App() {
                 {({ navigation }) => (
                   <ProfileEditView
                     onConfirm={() => navigation.goBack()}
-                    onResetSurvey={() =>
-                      navigation.navigate('Survey', { from: 'profile' })
-                    }
                     onChangePassword={email =>
                       navigation.navigate('ConfirmEmail', {
                         mode: 'resetPassword',

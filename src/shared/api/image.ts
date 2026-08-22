@@ -25,7 +25,7 @@ export async function uploadImage(
 
   let res: Response;
   try {
-    res = await fetch(`${BASE_URL}/api/community/images`, {
+    res = await fetch(`${BASE_URL}/api/profile/image`, {
       method: 'POST',
       headers,
       body: formData,

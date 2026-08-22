@@ -13,31 +13,17 @@ import { mainStyles as s } from './MainView.styles';
 import {
   getDday,
   getCountryInfo,
-  getPopulationInfo,
   getTourPlaces,
-  getFoodInfo,
   getFestivals,
-  getExchangeRate,
-  getWeather,
   DdayInfo,
   CountryInfo,
-  PopulationInfo,
   TourPlace,
-  FoodInfo,
   Festival,
-  ExchangeRate,
-  Weather,
 } from '../../entities/main/api';
 import { toImageUrl } from '../../shared/api/image';
 
-const POP_COLORS = ['#1a7fd4', '#f06b6b', '#1bb89a', '#f0a93b', '#8a6bd8'];
 
-const INFO_TABS = [
-  '인구 구성',
-  '관광 장소',
-  '대표 음식',
-  '현지 에티켓',
-] as const;
+const INFO_TABS = ['관광 장소'] as const;
 type InfoTab = (typeof INFO_TABS)[number];
 
 interface MainViewProps {
@@ -49,16 +35,12 @@ const MainView: React.FC<MainViewProps> = ({
   onOpenFestival,
   onOpenDestination,
 }) => {
-  const [tab, setTab] = useState<InfoTab>('인구 구성');
+  const [tab, setTab] = useState<InfoTab>('관광 장소');
   const [loading, setLoading] = useState(true);
   const [dday, setDday] = useState<DdayInfo | null>(null);
   const [countryInfo, setCountryInfo] = useState<CountryInfo | null>(null);
-  const [population, setPopulation] = useState<PopulationInfo[]>([]);
   const [places, setPlaces] = useState<TourPlace[]>([]);
-  const [foods, setFoods] = useState<FoodInfo[]>([]);
   const [festivals, setFestivals] = useState<Festival[]>([]);
-  const [exchangeRate, setExchangeRate] = useState<ExchangeRate | null>(null);
-  const [weather, setWeather] = useState<Weather | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -70,24 +52,16 @@ const MainView: React.FC<MainViewProps> = ({
           if (!alive) return;
           setDday(d);
 
-          const [info, pop, tour, food, fest, rate, currentWeather] =
+          const [info, tour, fest] =
             await Promise.all([
               getCountryInfo(d.countryName).catch(() => null),
-              getPopulationInfo(d.countryName).catch(() => []),
               getTourPlaces(d.countryName).catch(() => []),
-              getFoodInfo(d.countryName).catch(() => []),
               getFestivals(d.countryName).catch(() => []),
-              getExchangeRate(d.countryName).catch(() => null),
-              getWeather(d.countryName).catch(() => null),
             ]);
           if (!alive) return;
           setCountryInfo(info);
-          setPopulation(pop);
           setPlaces(tour);
-          setFoods(food);
           setFestivals(fest);
-          setExchangeRate(rate);
-          setWeather(currentWeather);
         } catch {
           if (!alive) return;
           setDday(null);
@@ -185,46 +159,6 @@ const MainView: React.FC<MainViewProps> = ({
           </ImageBackground>
         </View>
 
-        {/* 날씨 / 환율 */}
-        <View style={s.statRow}>
-          <View style={s.statCard}>
-            <Text style={s.statLabel}>현지 날씨</Text>
-            {weather ? (
-              <>
-                <Text style={s.statValue}>
-                  {Math.round(weather.temperature)}°C
-                </Text>
-                <Text style={s.statSub}>
-                  {weather.description} · 체감 {Math.round(weather.feelsLike)}
-                  °C
-                </Text>
-              </>
-            ) : (
-              <Text style={s.statSub}>날씨 정보가 없습니다.</Text>
-            )}
-          </View>
-          <View style={s.statCardWide}>
-            <Text style={s.statLabel}>오늘의 환율</Text>
-            {exchangeRate ? (
-              <>
-                <Text style={s.statValue}>
-                  1 {exchangeRate.currencyCode} ={' '}
-                  {exchangeRate.krwRate.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                  원
-                </Text>
-                {exchangeRate.date && (
-                  <Text style={s.statSub}>{exchangeRate.date} 기준</Text>
-                )}
-              </>
-            ) : (
-              <Text style={s.statSub}>환율 정보가 없습니다.</Text>
-            )}
-          </View>
-        </View>
-
         {/* 여행지 정보 (탭) */}
         <View>
           <View style={s.sectionHeader}>
@@ -250,35 +184,7 @@ const MainView: React.FC<MainViewProps> = ({
           </View>
 
           <View style={s.card}>
-            {tab === '인구 구성' &&
-              (population.length === 0 ? (
-                <Text style={s.noteText}>
-                  아직 등록된 인구 구성 정보가 없습니다.
-                </Text>
-              ) : (
-                population.map((p, i) => (
-                  <View key={`${p.nationCode}-${i}`} style={s.popItem}>
-                    <View style={s.popLabelRow}>
-                      <Text style={s.popLabel}>{p.nationName}</Text>
-                      <Text style={s.popPct}>{p.percent}%</Text>
-                    </View>
-                    <View style={s.popTrack}>
-                      <View
-                        style={[
-                          s.popFill,
-                          {
-                            width: `${p.percent}%`,
-                            backgroundColor: POP_COLORS[i % POP_COLORS.length],
-                          },
-                        ]}
-                      />
-                    </View>
-                  </View>
-                ))
-              ))}
-
-            {tab === '관광 장소' &&
-              (places.length === 0 ? (
+            {places.length === 0 ? (
                 <Text style={s.noteText}>
                   아직 등록된 관광 장소 정보가 없습니다.
                 </Text>
@@ -299,35 +205,8 @@ const MainView: React.FC<MainViewProps> = ({
                     </View>
                   </View>
                 ))
-              ))}
+              )}
 
-            {tab === '대표 음식' &&
-              (foods.length === 0 ? (
-                <Text style={s.noteText}>
-                  아직 등록된 대표 음식 정보가 없습니다.
-                </Text>
-              ) : (
-                <View style={s.foodRow}>
-                  {foods.map((f, i) => (
-                    <View key={`${f.foodName}-${i}`} style={s.foodItem}>
-                      {f.imageUrl ? (
-                        <Image
-                          source={{ uri: toImageUrl(f.imageUrl) }}
-                          style={s.foodThumb}
-                        />
-                      ) : (
-                        <View style={s.foodThumb} />
-                      )}
-                      <Text style={s.foodName}>{f.foodName}</Text>
-                      <Text style={s.foodDesc}>{f.description}</Text>
-                    </View>
-                  ))}
-                </View>
-              ))}
-
-            {tab === '현지 에티켓' && (
-              <Text style={s.noteText}>준비 중인 정보입니다.</Text>
-            )}
           </View>
         </View>
 

@@ -22,7 +22,7 @@ import {
 import { saveTokens, saveProvider } from '../../shared/api/tokenStorage';
 
 interface LoginViewProps {
-  onLogin?: (surveyCompleted: boolean) => void;
+  onLogin?: () => void;
   onSignup?: () => void;
   onResetPassword?: () => void;
 }
@@ -47,7 +47,7 @@ const LoginView: React.FC<LoginViewProps> = ({
       const tokens = await login(id.trim(), password);
       await saveTokens(tokens);
       await saveProvider('EMAIL');
-      onLogin?.(tokens.surveyCompleted);
+      onLogin?.();
     } catch (e: any) {
       Alert.alert('로그인 실패', e?.message ?? '로그인에 실패했습니다.');
     } finally {
@@ -66,7 +66,7 @@ const LoginView: React.FC<LoginViewProps> = ({
       const tokens = await googleLogin(idToken);
       await saveTokens(tokens);
       await saveProvider('GOOGLE');
-      onLogin?.(tokens.surveyCompleted);
+      onLogin?.();
     } catch (e: any) {
       Alert.alert('Google 로그인 실패', e?.message ?? '다시 시도해주세요.');
     } finally {

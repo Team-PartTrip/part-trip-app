@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { tabBarStyles as styles } from './TabBar.styles';
 import colors from '../../shared/tokens/colors';
 
-export type TabKey = 'home' | 'community' | 'record' | 'mission';
+export type TabKey = 'home' | 'record';
 
 interface TabItem {
   key: TabKey;
@@ -14,11 +14,6 @@ interface TabItem {
 
 const LEFT_TABS: TabItem[] = [
   { key: 'home', label: '홈', icon: require('../../shared/assets/images/tab-home.png') },
-  {
-    key: 'community',
-    label: '커뮤니티',
-    icon: require('../../shared/assets/images/tab-community.png'),
-  },
 ];
 
 const RIGHT_TABS: TabItem[] = [
@@ -26,11 +21,6 @@ const RIGHT_TABS: TabItem[] = [
     key: 'record',
     label: '기록',
     icon: require('../../shared/assets/images/tab-record.png'),
-  },
-  {
-    key: 'mission',
-    label: '미션',
-    icon: require('../../shared/assets/images/tab-mission.png'),
   },
 ];
 

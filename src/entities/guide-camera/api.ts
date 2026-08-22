@@ -86,26 +86,7 @@ export function getAnalysisResult(imageId: number): Promise<PhotoAnalysis> {
   });
 }
 
-export interface NearbyPlaceRecommendation {
-  name: string;
-  description: string;
-  latitude: number;
-  longitude: number;
-  distanceMeters: number;
-  sourceName: string | null;
-  sourceUrl: string | null;
-}
 
-/** 현재 위치 기준 주변 명소 추천 */
-export function getNearbyRecommendations(
-  latitude: number,
-  longitude: number,
-): Promise<NearbyPlaceRecommendation[]> {
-  return authRequest<NearbyPlaceRecommendation[]>(
-    `/api/guide-camera/recommendations?latitude=${latitude}&longitude=${longitude}`,
-    { method: 'GET' },
-  );
-}
 
 export interface GuideCameraRecordPayload {
   photoId: number;
@@ -131,25 +112,4 @@ export interface GuideCameraMissionPayload {
   longitude?: number;
 }
 
-export interface GuideCameraMission {
-  missionId: number;
-  missionType: string;
-  title: string;
-  description: string;
-  targetPlaceName: string;
-  placeType: string | null;
-  latitude: number | null;
-  longitude: number | null;
-  completed: boolean;
-  createDate: string;
-}
 
-/** 주변 명소를 기반으로 해설 카메라 미션 생성 */
-export function createGuideCameraMission(
-  payload: GuideCameraMissionPayload,
-): Promise<GuideCameraMission> {
-  return authRequest<GuideCameraMission>('/api/guide-camera/missions', {
-    method: 'POST',
-    body: payload,
-  });
-}

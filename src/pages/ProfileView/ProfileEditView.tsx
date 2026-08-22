@@ -21,13 +21,11 @@ const DEFAULT_AVATAR = require('../../shared/assets/images/profile-character.jpg
 
 interface Props {
   onConfirm?: () => void;
-  onResetSurvey?: () => void;
   onChangePassword?: (email: string) => void;
 }
 
 const ProfileEditView: React.FC<Props> = ({
   onConfirm,
-  onResetSurvey,
   onChangePassword,
 }) => {
   const [nickname, setNickname] = useState('');
@@ -161,14 +159,6 @@ const ProfileEditView: React.FC<Props> = ({
             )}
 
             {/* 여행 취향 재설정 */}
-            <TouchableOpacity
-              style={s.linkRow}
-              activeOpacity={0.85}
-              onPress={onResetSurvey}
-            >
-              <Text style={s.linkText}>여행 취향 재설정</Text>
-              <Text style={s.linkArrow}>›</Text>
-            </TouchableOpacity>
           </View>
 
           <TouchableOpacity
