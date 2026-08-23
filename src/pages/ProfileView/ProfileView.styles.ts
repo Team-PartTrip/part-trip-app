@@ -10,6 +10,27 @@ const cardShadow = {
 };
 
 export const profileStyles = StyleSheet.create({
+  settingsRow: {
+    marginHorizontal: 24,
+    marginTop: 12,
+    height: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 18,
+    borderRadius: 14,
+    backgroundColor: colors.white,
+  },
+  settingsRowText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  settingsRowChevron: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.textTertiary,
+  },
   safeArea: { flex: 1, backgroundColor: colors.background },
   content: { padding: 16, paddingBottom: 24 },
 

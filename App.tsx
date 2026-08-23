@@ -24,6 +24,8 @@ import GuideResultView from './src/pages/CameraScreen/GuideResultView';
 import DestinationPickerView from './src/pages/DestinationScreen/DestinationPickerView';
 import ProfileView from './src/pages/ProfileView/ProfileView';
 import PlannerScreen from './src/pages/PlannerScreen/PlannerScreen';
+import NotificationListView from './src/pages/NotificationView/NotificationListView';
+import NotificationSettingsView from './src/pages/NotificationView/NotificationSettingsView';
 import RecordView from './src/pages/RecordView/RecordView';
 import RecordMapView from './src/pages/RecordView/RecordMapView';
 import RecordEditView from './src/pages/RecordView/RecordEditView';
@@ -45,6 +47,8 @@ export type RootStackParamList = {
   ResetPassword: { email: string; from?: 'login' | 'profile' };
   Main: undefined;
   Planner: undefined;
+  Notifications: undefined;
+  NotificationSettings: undefined;
   Festival: undefined;
   Destination: undefined;
   Camera: undefined;
@@ -213,12 +217,25 @@ function App() {
                 {({ navigation }) => (
                   <MainView
                     onOpenDestination={() => navigation.navigate('Destination')}
+                    onOpenNotifications={() => navigation.navigate('Notifications')}
                   />
                 )}
               </Stack.Screen>
 
               <Stack.Screen name="Planner">
                 {() => <PlannerScreen />}
+              </Stack.Screen>
+
+              <Stack.Screen name="Notifications">
+                {({ navigation }) => (
+                  <NotificationListView onBack={() => navigation.goBack()} />
+                )}
+              </Stack.Screen>
+
+              <Stack.Screen name="NotificationSettings">
+                {({ navigation }) => (
+                  <NotificationSettingsView onBack={() => navigation.goBack()} />
+                )}
               </Stack.Screen>
 
               <Stack.Screen name="Camera">
@@ -309,6 +326,9 @@ function App() {
               <Stack.Screen name="Profile">
                 {({ navigation }) => (
                   <ProfileView
+                    onNotificationSettings={() =>
+                      navigation.navigate('NotificationSettings')
+                    }
                     onEdit={() => navigation.navigate('ProfileEdit')}
                     onLogout={() =>
                       navigation.reset({

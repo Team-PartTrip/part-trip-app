@@ -82,12 +82,14 @@ interface Props {
   onEdit?: () => void;
   onSeeAllBadges?: () => void;
   onLogout?: () => void;
+  onNotificationSettings?: () => void;
 }
 
 const ProfileView: React.FC<Props> = ({
   onEdit,
   onSeeAllBadges,
   onLogout,
+  onNotificationSettings,
 }) => {
   const [selected, setSelected] = useState<Badge | null>(null);
 
@@ -189,6 +191,15 @@ const ProfileView: React.FC<Props> = ({
           ))}
         </View>
 
+
+        <TouchableOpacity
+          style={s.settingsRow}
+          activeOpacity={0.85}
+          onPress={onNotificationSettings}
+        >
+          <Text style={s.settingsRowText}>알림 설정</Text>
+          <Text style={s.settingsRowChevron}>›</Text>
+        </TouchableOpacity>
 
         <TouchableOpacity
           style={s.logoutBtn}
