@@ -17,6 +17,7 @@ import colors from '../../shared/tokens/colors';
 export interface SignUpData {
   userId: string;
   userPwd: string;
+  phoneNumber: string;
 }
 
 interface SignUpViewProps {
@@ -49,7 +50,7 @@ const SignUpView: React.FC<SignUpViewProps> = ({ onBack, onNext }) => {
       return;
     }
     // 실제 회원가입(/signup) 호출은 이메일 인증 단계에서 이메일과 함께 진행
-    onNext?.({ userId: id.trim(), userPwd: password });
+    onNext?.({ userId: id.trim(), userPwd: password, phoneNumber: phone });
   };
 
   return (
