@@ -20,10 +20,12 @@ import { getUnreadCount } from '../../entities/notification/api';
 import { toImageUrl } from '../../shared/api/image';
 
 // "2026-08-23" + "2026-08-27" → "2026.08.23 – 08.27"
+// 해가 바뀌면 끝 날짜에도 연도를 남긴다 → "2026.06.10 – 2027.03.27"
 function formatRange(start: string, end: string): string {
-  const from = start.split('-').join('.');
-  const to = end.split('-').slice(1).join('.');
-  return `${from} – ${to}`;
+  const from = start.split('-');
+  const to = end.split('-');
+  const sameYear = from[0] === to[0];
+  return `${from.join('.')} – ${(sameYear ? to.slice(1) : to).join('.')}`;
 }
 
 // "3박 4일"
