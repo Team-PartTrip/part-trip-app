@@ -48,12 +48,15 @@ interface RecordViewProps {
   onOpenMap?: () => void;
   onOpenRecord?: (id: string) => void;
   onWrite?: () => void;
+  /** 해설 카메라. 탭바 가운데 버튼이 없어지면서 이리로 옮겼다. */
+  onCamera?: () => void;
 }
 
 const RecordView: React.FC<RecordViewProps> = ({
   onOpenMap,
   onOpenRecord,
   onWrite,
+  onCamera,
 }) => {
   const [records, setRecords] = useState(INITIAL);
   const [pendingDelete, setPendingDelete] = useState<string | null>(null);
@@ -77,13 +80,22 @@ const RecordView: React.FC<RecordViewProps> = ({
           <Text style={s.tripTitle}>
             {TRIP.title} {TRIP.flag}
           </Text>
-          <TouchableOpacity
-            style={s.toggleBtn}
-            onPress={onOpenMap}
-            activeOpacity={0.8}
-          >
-            <Text style={s.toggleIcon}>🗺️</Text>
-          </TouchableOpacity>
+          <View style={s.headerActions}>
+            <TouchableOpacity
+              style={s.toggleBtn}
+              onPress={onCamera}
+              activeOpacity={0.8}
+            >
+              <Text style={s.toggleIcon}>📷</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={s.toggleBtn}
+              onPress={onOpenMap}
+              activeOpacity={0.8}
+            >
+              <Text style={s.toggleIcon}>🗺️</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* 기록 작성 — 여행 중일 때만 가능 */}

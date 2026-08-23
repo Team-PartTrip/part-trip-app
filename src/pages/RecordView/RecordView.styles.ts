@@ -10,6 +10,10 @@ const cardShadow = {
 };
 
 export const recordStyles = StyleSheet.create({
+  headerActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
   safeArea: { flex: 1, backgroundColor: colors.background },
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 24 },

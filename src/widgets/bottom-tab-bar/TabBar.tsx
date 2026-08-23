@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { tabBarStyles as styles } from './TabBar.styles';
 import colors from '../../shared/tokens/colors';
 
-export type TabKey = 'home' | 'record';
+export type TabKey = 'home' | 'planner' | 'record' | 'profile';
 
 interface TabItem {
   key: TabKey;
@@ -12,62 +12,63 @@ interface TabItem {
   icon: number;
 }
 
-const LEFT_TABS: TabItem[] = [
-  { key: 'home', label: '홈', icon: require('../../shared/assets/images/tab-home.png') },
-];
-
-const RIGHT_TABS: TabItem[] = [
+// 순서와 아이콘 모두 피그마 TabBar 컴포넌트에서 내보낸 것을 그대로 쓴다
+const TABS: TabItem[] = [
+  {
+    key: 'home',
+    label: '홈',
+    icon: require('../../shared/assets/images/tab-home.png'),
+  },
+  {
+    key: 'planner',
+    label: '플래너',
+    icon: require('../../shared/assets/images/tab-planner.png'),
+  },
   {
     key: 'record',
     label: '기록',
     icon: require('../../shared/assets/images/tab-record.png'),
   },
+  {
+    key: 'profile',
+    label: '마이',
+    icon: require('../../shared/assets/images/tab-profile.png'),
+  },
 ];
 
 interface TabBarProps {
-  /** 현재 활성 탭 강조용 */
   active?: string;
   onTabPress?: (key: TabKey) => void;
-  onCamera?: () => void;
 }
 
-const TabBar: React.FC<TabBarProps> = ({ active = 'home', onTabPress, onCamera }) => {
+const TabBar: React.FC<TabBarProps> = ({ active = 'home', onTabPress }) => {
   const insets = useSafeAreaInsets();
-
-  const renderItem = (tab: TabItem) => {
-    const isActive = active === tab.key;
-    return (
-      <TouchableOpacity
-        key={tab.key}
-        style={styles.item}
-        activeOpacity={0.7}
-        onPress={() => onTabPress?.(tab.key)}
-      >
-        <Image
-          source={tab.icon}
-          resizeMode="contain"
-          style={[
-            styles.iconImage,
-            { tintColor: isActive ? colors.primary : colors.tabInactive },
-          ]}
-        />
-        <Text style={[styles.label, isActive && styles.labelActive]}>{tab.label}</Text>
-      </TouchableOpacity>
-    );
-  };
 
   return (
     <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
-      {LEFT_TABS.map(renderItem)}
-
-      {/* 가운데 카메라 버튼 */}
-      <View style={styles.centerWrap}>
-        <TouchableOpacity style={styles.cameraBtn} activeOpacity={0.85} onPress={onCamera}>
-          <Text style={styles.cameraIcon}>📷</Text>
-        </TouchableOpacity>
-      </View>
-
-      {RIGHT_TABS.map(renderItem)}
+      {TABS.map(tab => {
+        const isActive = active === tab.key;
+        return (
+          <TouchableOpacity
+            key={tab.key}
+            style={styles.item}
+            activeOpacity={0.7}
+            onPress={() => onTabPress?.(tab.key)}
+          >
+            <Image
+              source={tab.icon}
+              resizeMode="contain"
+              style={[
+                styles.icon,
+                { tintColor: isActive ? colors.primary : colors.tabInactive },
+              ]}
+            />
+            <Text style={[styles.label, isActive && styles.labelActive]}>
+              {tab.label}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
     </View>
   );
 };

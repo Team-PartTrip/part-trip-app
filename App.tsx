@@ -23,6 +23,7 @@ import CameraScreen from './src/pages/CameraScreen/CameraScreen';
 import GuideResultView from './src/pages/CameraScreen/GuideResultView';
 import DestinationPickerView from './src/pages/DestinationScreen/DestinationPickerView';
 import ProfileView from './src/pages/ProfileView/ProfileView';
+import PlannerScreen from './src/pages/PlannerScreen/PlannerScreen';
 import RecordView from './src/pages/RecordView/RecordView';
 import RecordMapView from './src/pages/RecordView/RecordMapView';
 import RecordEditView from './src/pages/RecordView/RecordEditView';
@@ -43,6 +44,7 @@ export type RootStackParamList = {
   };
   ResetPassword: { email: string; from?: 'login' | 'profile' };
   Main: undefined;
+  Planner: undefined;
   Festival: undefined;
   Destination: undefined;
   Camera: undefined;
@@ -85,11 +87,15 @@ const AUTH_ROUTES = [
 // 탭 ↔ 라우트 매핑
 const ROUTE_BY_TAB: Record<TabKey, keyof RootStackParamList> = {
   home: 'Main',
+  planner: 'Planner',
   record: 'Record',
+  profile: 'Profile',
 };
 const TAB_BY_ROUTE: Record<string, TabKey> = {
   Main: 'home',
+  Planner: 'planner',
   Record: 'record',
+  Profile: 'profile',
 };
 
 function App() {
@@ -211,10 +217,14 @@ function App() {
               <Stack.Screen name="Main">
                 {({ navigation }) => (
                   <MainView
-                    onOpenFestival={() => navigation.navigate('Festival')}
                     onOpenDestination={() => navigation.navigate('Destination')}
+                    onOpenProfile={() => navigation.navigate('Profile')}
                   />
                 )}
+              </Stack.Screen>
+
+              <Stack.Screen name="Planner">
+                {() => <PlannerScreen />}
               </Stack.Screen>
 
               <Stack.Screen name="Camera">
@@ -268,6 +278,7 @@ function App() {
                       navigation.navigate('RecordEdit', { id })
                     }
                     onWrite={() => navigation.navigate('RecordEdit', {})}
+                    onCamera={() => navigation.navigate('Camera')}
                   />
                 )}
               </Stack.Screen>
@@ -336,7 +347,6 @@ function App() {
             <TabBar
               active={activeTab}
               onTabPress={key => navRef.navigate(ROUTE_BY_TAB[key] as never)}
-              onCamera={() => navRef.navigate('Camera')}
             />
           )}
         </View>

@@ -4,12 +4,18 @@ export type AppColors = {
   primary: string;
   primaryDark: string;
   accent: string;
+  success: string;
+  badge: string;
+  onPrimaryMuted: string;
+  onPrimaryTrack: string;
   white: string;
   background: string;
   cardBg: string;
   text: string;
   textPrimary: string;
   textSub: string;
+  textSecondary: string;
+  textTertiary: string;
   textMuted: string;
   textOnPrimary: string;
   noteText: string;
@@ -44,6 +50,10 @@ export const lightColors: AppColors = {
   primary: '#1a6ebf', // 메인 파랑 (DS Primary 500)
   primaryDark: '#0d4a84', // 진한 파랑 (DS Primary 700)
   accent: '#ff7a35', // 주의·타이머 (DS Accent 500)
+  success: '#087f5b', // 확정·완료 (DS Success)
+  badge: '#ff3e3e', // 안읽은 알림 점
+  onPrimaryMuted: '#ebf4fc', // 파란 배경 위 보조 텍스트
+  onPrimaryTrack: 'rgba(255,255,255,0.3)', // 파란 배경 위 진행바 트랙
 
   // 기본 배경
   white: '#ffffff', // 흰 표면 (카드/시트 배경)
@@ -54,6 +64,8 @@ export const lightColors: AppColors = {
   text: '#1A3D5C', // LaunchScreen 슬로건 등 기본 텍스트
   textPrimary: '#1a2a3a', // 제목/본문 진한 텍스트
   textSub: '#7a8a9a', // 보조 설명 텍스트
+  textSecondary: '#536579', // 폼 라벨 · 항목 라벨
+  textTertiary: '#5d6f83', // 비활성 탭 라벨 · 화살표
   textMuted: '#6b7c8c', // 흐린 텍스트(구분선 라벨·보조 설명)
   textOnPrimary: '#ffffff', // 파란 버튼 위 텍스트
   noteText: '#46566a', // 설명 박스 텍스트
@@ -100,6 +112,10 @@ export const darkColors: AppColors = {
   primary: '#2b8fe6', // 메인 파랑 (다크에서 약간 밝게)
   primaryDark: '#5aa8ec', // 진한 파랑 (다크에선 더 밝게)
   accent: '#ff9457', // 주의·타이머 (다크에서 약간 밝게)
+  success: '#2bb888', // 확정·완료
+  badge: '#ff5f5f', // 안읽은 알림 점
+  onPrimaryMuted: '#d7e8f8', // 파란 배경 위 보조 텍스트
+  onPrimaryTrack: 'rgba(255,255,255,0.28)', // 파란 배경 위 진행바 트랙
 
   // 기본 배경 (라이트의 흰 표면 → 어두운 표면)
   white: '#1c2230', // 카드/시트 표면
@@ -110,6 +126,8 @@ export const darkColors: AppColors = {
   text: '#e6edf5', // 기본 텍스트
   textPrimary: '#f2f6fb', // 제목/본문
   textSub: '#a7b4c2', // 보조 설명
+  textSecondary: '#9fb0c0', // 폼 라벨 · 항목 라벨
+  textTertiary: '#8c9dae', // 비활성 탭 라벨 · 화살표
   textMuted: '#7a8798', // 흐린 텍스트
   textOnPrimary: '#ffffff', // 파란 버튼 위 텍스트
   noteText: '#c3cdd9', // 설명 박스 텍스트
