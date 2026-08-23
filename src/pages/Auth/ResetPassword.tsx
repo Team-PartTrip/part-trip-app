@@ -9,11 +9,11 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
-  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { loginStyles as styles } from './LoginView.styles';
 import { resetPassword as resetPasswordApi } from '../../entities/auth/api';
+import colors from '../../shared/tokens/colors';
 
 interface ResetPasswordProps {
   /** 비밀번호를 변경할 (인증 완료된) 이메일 */
@@ -66,11 +66,7 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({
         >
           {/* 로고 + 타이틀 */}
           <View style={styles.logoArea}>
-            <Image
-              source={require('../../shared/assets/images/logo.png')}
-              style={{ width: 170, height: 40 }}
-              resizeMode="contain"
-            />
+            <Text style={styles.logo}>PartTrip</Text>
             <Text style={styles.title}>
               {from === 'profile' ? '비밀번호 변경' : '비밀번호 찾기'}
             </Text>
@@ -80,16 +76,20 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({
           <View style={styles.form}>
             <TextInput
               style={styles.input}
-              placeholder="비밀번호를 입력하세요."
-              placeholderTextColor="#aab4be"
+              placeholder="새 비밀번호"
+              placeholderTextColor={colors.placeholder}
               value={password}
               onChangeText={setPassword}
               secureTextEntry
             />
+            <Text style={styles.helper}>
+              8~64자 · 영문 / 숫자 / 특수문자 중 2종 이상
+            </Text>
+
             <TextInput
-              style={styles.input}
-              placeholder="비밀번호를 다시 입력하세요."
-              placeholderTextColor="#aab4be"
+              style={[styles.input, styles.fieldAfterHelper]}
+              placeholder="새 비밀번호 확인"
+              placeholderTextColor={colors.placeholder}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               secureTextEntry
@@ -107,7 +107,7 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({
               {loading ? (
                 <ActivityIndicator color="#ffffff" />
               ) : (
-                <Text style={styles.loginBtnText}>비밀번호 변경하기</Text>
+                <Text style={styles.loginBtnText}>비밀번호 변경</Text>
               )}
             </TouchableOpacity>
           </View>

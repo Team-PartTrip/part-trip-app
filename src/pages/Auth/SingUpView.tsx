@@ -8,11 +8,11 @@ import {
   Platform,
   ScrollView,
   Alert,
-  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { loginStyles as styles } from './LoginView.styles';
 import PhoneInput from '../../shared/ui/PhoneInput';
+import colors from '../../shared/tokens/colors';
 
 export interface SignUpData {
   userId: string;
@@ -65,11 +65,7 @@ const SignUpView: React.FC<SignUpViewProps> = ({ onBack, onNext }) => {
         >
           {/* 로고 + 타이틀 */}
           <View style={styles.logoArea}>
-            <Image
-              source={require('../../shared/assets/images/logo.png')}
-              style={{ width: 170, height: 40 }}
-              resizeMode="contain"
-            />
+            <Text style={styles.logo}>PartTrip</Text>
             <Text style={styles.title}>회원가입</Text>
           </View>
 
@@ -77,30 +73,38 @@ const SignUpView: React.FC<SignUpViewProps> = ({ onBack, onNext }) => {
           <View style={styles.form}>
             <TextInput
               style={styles.input}
-              placeholder="아이디를 입력하세요."
-              placeholderTextColor="#aab4be"
+              placeholder="아이디"
+              placeholderTextColor={colors.placeholder}
               value={id}
               onChangeText={setId}
               autoCapitalize="none"
             />
+            <Text style={styles.helper}>6~20자 · 영문 소문자와 숫자</Text>
+
             <TextInput
-              style={styles.input}
-              placeholder="비밀번호를 입력하세요."
-              placeholderTextColor="#aab4be"
+              style={[styles.input, styles.fieldAfterHelper]}
+              placeholder="비밀번호"
+              placeholderTextColor={colors.placeholder}
               value={password}
               onChangeText={setPassword}
               secureTextEntry
             />
+            <Text style={styles.helper}>
+              8~64자 · 영문 / 숫자 / 특수문자 중 2종 이상
+            </Text>
+
             <TextInput
-              style={styles.input}
-              placeholder="비밀번호를 다시 입력하세요."
-              placeholderTextColor="#aab4be"
+              style={[styles.input, styles.fieldAfterHelper]}
+              placeholder="비밀번호 확인"
+              placeholderTextColor={colors.placeholder}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               secureTextEntry
             />
-            {/* 전화번호 입력 */}
-            <PhoneInput onChange={(number) => setPhone(number)} />
+
+            <View style={styles.field}>
+              <PhoneInput onChange={(number) => setPhone(number)} />
+            </View>
           </View>
 
           {/* 버튼 영역 */}

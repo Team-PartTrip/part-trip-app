@@ -31,19 +31,22 @@ const PhoneInput: React.FC<PhoneInputProps> = ({ onChange }) => {
 
   return (
     <View style={styles.container}>
-      {/* 국기 + 고정 국번 */}
+      {/* 국기 + 국가 선택 표시 */}
       <View style={styles.dialArea}>
         <Text style={styles.flag}>{FLAG}</Text>
-        <Text style={styles.code}>{DIAL}</Text>
+        <Text style={styles.chevron}>▾</Text>
       </View>
 
       {/* 구분선 */}
       <View style={styles.divider} />
 
+      {/* 고정 국번 */}
+      <Text style={styles.code}>{DIAL}</Text>
+
       {/* 전화번호 입력 — value를 포맷된 문자열로 고정 */}
       <TextInput
         style={styles.input}
-        placeholder="전화번호를 입력하세요."
+        placeholder="전화번호를 입력하세요"
         placeholderTextColor={colors.placeholder}
         keyboardType="number-pad"
         value={formatPhone(digits)}

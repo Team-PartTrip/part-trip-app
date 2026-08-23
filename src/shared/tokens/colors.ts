@@ -3,6 +3,7 @@ import { Appearance } from 'react-native';
 export type AppColors = {
   primary: string;
   primaryDark: string;
+  accent: string;
   white: string;
   background: string;
   cardBg: string;
@@ -40,8 +41,9 @@ export type AppColors = {
 // ── 라이트 모드 ──────────────────────────────────────────────
 export const lightColors: AppColors = {
   // 브랜드
-  primary: '#1a7fd4', // 메인 파랑 (버튼/강조)
-  primaryDark: '#155fa0', // 진한 파랑 (로고 Trip 등)
+  primary: '#1a6ebf', // 메인 파랑 (DS Primary 500)
+  primaryDark: '#0d4a84', // 진한 파랑 (DS Primary 700)
+  accent: '#ff7a35', // 주의·타이머 (DS Accent 500)
 
   // 기본 배경
   white: '#ffffff', // 흰 표면 (카드/시트 배경)
@@ -52,19 +54,19 @@ export const lightColors: AppColors = {
   text: '#1A3D5C', // LaunchScreen 슬로건 등 기본 텍스트
   textPrimary: '#1a2a3a', // 제목/본문 진한 텍스트
   textSub: '#7a8a9a', // 보조 설명 텍스트
-  textMuted: '#9ab0c4', // 흐린 텍스트(구분선 라벨 등)
+  textMuted: '#6b7c8c', // 흐린 텍스트(구분선 라벨·보조 설명)
   textOnPrimary: '#ffffff', // 파란 버튼 위 텍스트
   noteText: '#46566a', // 설명 박스 텍스트
   eventMeta: '#6a7a8a', // 이벤트 시간/장소 텍스트
-  forgotText: '#7a9ab5', // '비밀번호를 잊으셨나요?'
+  forgotText: '#6b7c8c', // '비밀번호를 잊으셨나요?'
 
   // 보더 / 구분선
-  border: '#dce6f0', // 기본 테두리
+  border: '#d8dddd', // 기본 테두리
   borderLight: '#e3ecf6', // 연한 테두리/구분선
 
   // 입력 필드
-  inputBg: '#f8fafd', // 입력창 배경
-  placeholder: '#aab4be', // placeholder 텍스트
+  inputBg: '#f7fafd', // 입력창 배경 (DS BG subtle)
+  placeholder: '#9aa7b4', // placeholder 텍스트
 
   // 상태 / 강조
   red: '#f06b6b', // 일요일/경고
@@ -73,7 +75,7 @@ export const lightColors: AppColors = {
   google: '#4285F4', // 구글 브랜드
 
   // 보조 배경 / 틴트
-  tint: '#e8f1fb', // 연한 파랑 배지/원형 배경
+  tint: '#ebf4fc', // 연한 파랑 배지/버튼 배경 (DS Primary 100)
   tintStrong: '#dbe9f7', // 달력 선택/썸네일 배경
   surface: '#eef2f7', // 탭바 보더 등 연한 회색
   surfaceAlt: '#f2f5f9', // 설명 박스 배경
@@ -97,6 +99,7 @@ export const darkColors: AppColors = {
   // 브랜드
   primary: '#2b8fe6', // 메인 파랑 (다크에서 약간 밝게)
   primaryDark: '#5aa8ec', // 진한 파랑 (다크에선 더 밝게)
+  accent: '#ff9457', // 주의·타이머 (다크에서 약간 밝게)
 
   // 기본 배경 (라이트의 흰 표면 → 어두운 표면)
   white: '#1c2230', // 카드/시트 표면

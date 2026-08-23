@@ -1,6 +1,9 @@
 import { StyleSheet } from 'react-native';
 import colors from '../../shared/tokens/colors';
 
+// 인증 화면(A2~A6) 공통 스타일.
+// 피그마 "A. 인증 · Func-001" 프레임(402pt 기준) 값을 그대로 옮겼다.
+// 본문 폭 298 · 좌우 여백 52 · 입력 높이 36 · 버튼 높이 40 · 라운드 10.
 export const loginStyles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -12,85 +15,89 @@ export const loginStyles = StyleSheet.create({
   container: {
     flexGrow: 1,
     justifyContent: 'center',
-    paddingHorizontal: 32,
+    paddingHorizontal: 52,
     paddingVertical: 40,
-    gap: 32,
   },
 
-  // 로고
+  // 로고 + 타이틀
   logoArea: {
     alignItems: 'center',
-    gap: 8,
   },
   logo: {
-    fontSize: 42,
-    fontWeight: '900',
-    fontStyle: 'italic',
-    letterSpacing: -1,
-  },
-  logoPart: {
+    fontSize: 26,
+    fontWeight: '700',
     color: colors.primary,
   },
-  logoTrip: {
-    color: colors.primaryDark,
-  },
   title: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: colors.textPrimary,
-    letterSpacing: -0.5,
+    marginTop: 20,
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.text,
   },
 
   // 폼
   form: {
-    gap: 12,
+    marginTop: 72,
   },
   input: {
-    borderWidth: 1.5,
+    height: 36,
+    borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 15,
-    color: colors.textPrimary,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 0,
+    fontSize: 13,
+    color: colors.text,
     backgroundColor: colors.inputBg,
   },
+  // 입력창 사이 기본 간격
+  field: {
+    marginTop: 12,
+  },
+  // 도움말 바로 뒤에 오는 입력창은 조금 좁게 붙는다
+  fieldAfterHelper: {
+    marginTop: 9,
+  },
+  // 입력 규칙 안내 ("6~20자 · 영문 소문자와 숫자")
+  helper: {
+    marginTop: 4,
+    marginLeft: 2,
+    fontSize: 11,
+    color: colors.textMuted,
+  },
+
   forgotBtn: {
+    marginTop: 12,
     alignSelf: 'flex-end',
   },
   forgotText: {
-    fontSize: 13,
+    fontSize: 11,
     color: colors.forgotText,
   },
 
-  // 버튼
+  // 주 버튼
   actions: {
-    gap: 12,
+    marginTop: 32,
   },
   loginBtn: {
+    height: 40,
     backgroundColor: colors.primary,
-    borderRadius: 12,
-    paddingVertical: 16,
+    borderRadius: 10,
     alignItems: 'center',
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
+    justifyContent: 'center',
   },
   loginBtnText: {
     color: colors.textOnPrimary,
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 0.3,
+    fontSize: 14,
+    fontWeight: '600',
   },
 
   // 구분선
   divider: {
+    marginTop: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginVertical: 4,
   },
   dividerLine: {
     flex: 1,
@@ -98,50 +105,37 @@ export const loginStyles = StyleSheet.create({
     backgroundColor: colors.border,
   },
   dividerText: {
-    fontSize: 13,
+    fontSize: 11,
     color: colors.textMuted,
-    fontWeight: '500',
   },
 
-  // Google 버튼
-  googleBtn: {
+  // 보조 버튼 (Google · 회원가입) — 흰 배경에 테두리
+  outlineBtn: {
+    height: 40,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
+    gap: 8,
+    borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 12,
-    paddingVertical: 14,
-    gap: 10,
+    borderRadius: 10,
     backgroundColor: colors.white,
   },
-  googleG: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: colors.google,
-  },
-  googleText: {
-    fontSize: 15,
+  outlineBtnText: {
+    fontSize: 14,
     fontWeight: '600',
-    color: colors.textPrimary,
+    color: colors.text,
   },
-
-  // 회원가입 버튼
+  googleBtn: {
+    marginTop: 20,
+  },
+  googleMark: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: colors.surface,
+  },
   signupBtn: {
-    backgroundColor: colors.primary,
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  signupText: {
-    color: colors.textOnPrimary,
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 0.3,
+    marginTop: 4,
   },
 });

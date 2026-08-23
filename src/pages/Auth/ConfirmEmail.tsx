@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,6 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
-  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { loginStyles as shared } from './LoginView.styles';
@@ -24,6 +23,15 @@ import type { SignUpData } from './SingUpView';
 import colors from '../../shared/tokens/colors';
 
 type ConfirmEmailMode = 'signup' | 'resetPassword';
+
+// 인증번호 유효시간(초). 서버가 메일로 보낸 코드의 만료 시간과 맞춘다.
+const CODE_TTL_SECONDS = 180;
+
+function formatRemaining(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
 
 interface ConfirmEmailProps {
   mode?: ConfirmEmailMode;
@@ -48,6 +56,34 @@ const ConfirmEmail: React.FC<ConfirmEmailProps> = ({
   const [code, setCode] = useState('');
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [sentAt, setSentAt] = useState(0);
+  const [remaining, setRemaining] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // 인증번호를 보낼 때마다 남은 시간을 다시 센다
+  useEffect(() => {
+    if (!sent) {
+      return;
+    }
+    setRemaining(CODE_TTL_SECONDS);
+    timerRef.current = setInterval(() => {
+      setRemaining((prev) => {
+        if (prev <= 1) {
+          if (timerRef.current) {
+            clearInterval(timerRef.current);
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [sent, sentAt]);
 
   const handleSendCode = async () => {
     if (!email.trim()) {
@@ -60,7 +96,8 @@ const ConfirmEmail: React.FC<ConfirmEmailProps> = ({
         setLoading(true);
         await sendPasswordResetCode(email.trim());
         setSent(true);
-        Alert.alert('알림', '인증코드를 전송했습니다.');
+        setSentAt(Date.now());
+        Alert.alert('알림', '인증번호를 전송했습니다.');
       } catch (e: any) {
         Alert.alert('전송 실패', e?.message ?? '인증코드 전송에 실패했습니다.');
       } finally {
@@ -81,7 +118,8 @@ const ConfirmEmail: React.FC<ConfirmEmailProps> = ({
         userMail: email.trim(),
       });
       setSent(true);
-      Alert.alert('알림', '인증코드를 전송했습니다.');
+      setSentAt(Date.now());
+      Alert.alert('알림', '인증번호를 전송했습니다.');
     } catch (e: any) {
       Alert.alert('전송 실패', e?.message ?? '인증코드 전송에 실패했습니다.');
     } finally {
@@ -91,7 +129,7 @@ const ConfirmEmail: React.FC<ConfirmEmailProps> = ({
 
   const handleConfirm = async () => {
     if (!code.trim()) {
-      Alert.alert('알림', '인증코드를 입력해주세요.');
+      Alert.alert('알림', '인증번호를 입력해주세요.');
       return;
     }
     // 비밀번호 찾기: 인증번호 확인 후 새 비밀번호 입력 화면으로 이동
@@ -132,11 +170,7 @@ const ConfirmEmail: React.FC<ConfirmEmailProps> = ({
         >
           {/* 로고 + 타이틀 */}
           <View style={shared.logoArea}>
-            <Image
-              source={require('../../shared/assets/images/logo.png')}
-              style={{ width: 170, height: 40 }}
-              resizeMode="contain"
-            />
+            <Text style={shared.logo}>PartTrip</Text>
             <Text style={shared.title}>
               {mode === 'signup'
                 ? '회원가입'
@@ -148,11 +182,15 @@ const ConfirmEmail: React.FC<ConfirmEmailProps> = ({
 
           {/* 입력 폼 */}
           <View style={shared.form}>
-            {/* 이메일 + 인증코드 보내기 버튼 */}
+            {/* 이메일 + 인증 요청 버튼 */}
             <View style={styles.emailRow}>
               <TextInput
                 style={[shared.input, styles.emailInput]}
-                placeholder="이메일을 입력하세요."
+                placeholder={
+                  mode === 'signup'
+                    ? '이메일을 입력하세요'
+                    : '가입한 아이디 또는 이메일'
+                }
                 placeholderTextColor={colors.placeholder}
                 value={email}
                 onChangeText={setEmail}
@@ -160,26 +198,36 @@ const ConfirmEmail: React.FC<ConfirmEmailProps> = ({
                 keyboardType="email-address"
               />
               <TouchableOpacity
-                style={[styles.sendBtn, sent && styles.sendBtnSent]}
+                style={styles.sendBtn}
                 activeOpacity={0.8}
                 onPress={handleSendCode}
                 disabled={loading}
               >
                 <Text style={styles.sendBtnText}>
-                  {sent ? '재전송' : '인증코드 보내기'}
+                  {sent ? '재전송' : '인증 요청'}
                 </Text>
               </TouchableOpacity>
             </View>
 
-            {/* 인증코드 입력 */}
+            {/* 인증번호 입력 */}
             <TextInput
-              style={shared.input}
-              placeholder="인증코드를 입력하세요."
+              style={[shared.input, shared.field]}
+              placeholder="인증번호 6자리"
               placeholderTextColor={colors.placeholder}
               value={code}
               onChangeText={setCode}
               keyboardType="number-pad"
+              maxLength={6}
             />
+
+            {/* 남은 유효시간 */}
+            {sent && (
+              <Text style={styles.timer}>
+                {remaining > 0
+                  ? `남은 시간 ${formatRemaining(remaining)}`
+                  : '인증 시간이 만료되었습니다. 재전송해주세요.'}
+              </Text>
+            )}
           </View>
 
           {/* 회원가입 하기 버튼 */}
@@ -194,7 +242,7 @@ const ConfirmEmail: React.FC<ConfirmEmailProps> = ({
                 <ActivityIndicator color="#ffffff" />
               ) : (
                 <Text style={shared.loginBtnText}>
-                  {mode === 'signup' ? '회원가입 하기' : '인증하기'}
+                  {mode === 'signup' ? '가입 완료' : '다음'}
                 </Text>
               )}
             </TouchableOpacity>

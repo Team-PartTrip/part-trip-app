@@ -10,7 +10,6 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
-  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { loginStyles as styles } from './LoginView.styles';
@@ -20,6 +19,7 @@ import {
   signInWithGoogle,
 } from '../../shared/lib/googleSignin';
 import { saveTokens, saveProvider } from '../../shared/api/tokenStorage';
+import colors from '../../shared/tokens/colors';
 
 interface LoginViewProps {
   onLogin?: () => void;
@@ -87,11 +87,7 @@ const LoginView: React.FC<LoginViewProps> = ({
         >
           {/* 로고 + 타이틀 */}
           <View style={styles.logoArea}>
-            <Image
-              source={require('../../shared/assets/images/logo.png')}
-              style={{ width: 170, height: 40 }}
-              resizeMode="contain"
-            />
+            <Text style={styles.logo}>PartTrip</Text>
             <Text style={styles.title}>로그인</Text>
           </View>
 
@@ -99,17 +95,17 @@ const LoginView: React.FC<LoginViewProps> = ({
           <View style={styles.form}>
             <TextInput
               style={styles.input}
-              placeholder="아이디를 입력하세요."
-              placeholderTextColor="#aab4be"
+              placeholder="아이디를 입력하세요"
+              placeholderTextColor={colors.placeholder}
               value={id}
               onChangeText={setId}
               autoCapitalize="none"
               keyboardType="email-address"
             />
             <TextInput
-              style={styles.input}
-              placeholder="비밀번호를 입력하세요."
-              placeholderTextColor="#aab4be"
+              style={[styles.input, styles.field]}
+              placeholder="비밀번호를 입력하세요"
+              placeholderTextColor={colors.placeholder}
               value={password}
               onChangeText={setPassword}
               secureTextEntry
@@ -133,7 +129,7 @@ const LoginView: React.FC<LoginViewProps> = ({
               {loading ? (
                 <ActivityIndicator color="#ffffff" />
               ) : (
-                <Text style={styles.loginBtnText}>로그인 하기</Text>
+                <Text style={styles.loginBtnText}>로그인</Text>
               )}
             </TouchableOpacity>
 
@@ -144,17 +140,21 @@ const LoginView: React.FC<LoginViewProps> = ({
             </View>
 
             <TouchableOpacity
-              style={styles.googleBtn}
+              style={[styles.outlineBtn, styles.googleBtn]}
               activeOpacity={0.85}
               onPress={handleGoogleLogin}
               disabled={loading}
             >
-              <Text style={styles.googleG}>G</Text>
-              <Text style={styles.googleText}>Google로 계속하기</Text>
+              <View style={styles.googleMark} />
+              <Text style={styles.outlineBtnText}>Google로 계속하기</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.signupBtn} onPress={onSignup}>
-              <Text style={styles.signupText}>회원가입 하기</Text>
+            <TouchableOpacity
+              style={[styles.outlineBtn, styles.signupBtn]}
+              activeOpacity={0.85}
+              onPress={onSignup}
+            >
+              <Text style={styles.outlineBtnText}>회원가입</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>

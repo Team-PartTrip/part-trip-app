@@ -1,41 +1,45 @@
 import { StyleSheet } from 'react-native';
 import colors from '../tokens/colors';
 
+// 피그마 A3 회원가입 전화번호 행: 298x36 · 라운드 10 · 국기 + ▾ + 구분선 + +82 + 입력
 export const phoneInputStyles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 12,
+    borderRadius: 10,
     backgroundColor: colors.inputBg,
     paddingHorizontal: 14,
-    height: 52,
+    height: 36,
   },
   dialArea: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingRight: 10,
+    gap: 4,
   },
   flag: {
-    fontSize: 20,
+    fontSize: 15,
   },
-  code: {
-    fontSize: 14,
-    color: colors.textSub,
-    fontWeight: '600',
+  chevron: {
+    fontSize: 9,
+    color: colors.textMuted,
   },
   divider: {
     width: 1,
-    height: 22,
+    height: 18,
     backgroundColor: colors.border,
-    marginRight: 12,
+    marginHorizontal: 10,
+  },
+  code: {
+    fontSize: 13,
+    color: colors.text,
+    marginRight: 8,
   },
   input: {
     flex: 1,
-    fontSize: 15,
-    color: colors.textPrimary,
+    fontSize: 13,
+    color: colors.text,
     padding: 0,
   },
 });
