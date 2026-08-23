@@ -38,14 +38,12 @@ function formatNights(start: string, end: string): string {
 
 interface MainViewProps {
   onOpenDestination?: () => void;
-  onOpenProfile?: () => void;
   /** 알림 화면이 생기면 연결한다. 없으면 배지만 보여준다. */
   onOpenNotifications?: () => void;
 }
 
 const MainView: React.FC<MainViewProps> = ({
   onOpenDestination,
-  onOpenProfile,
   onOpenNotifications,
 }) => {
   const [loading, setLoading] = useState(true);
@@ -143,17 +141,6 @@ const MainView: React.FC<MainViewProps> = ({
                   style={s.circleIcon}
                 />
                 {unread > 0 && <View style={s.badge} />}
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={s.circleBtn}
-                activeOpacity={0.85}
-                onPress={onOpenProfile}
-              >
-                <Image
-                  source={require('../../shared/assets/images/tab-profile.png')}
-                  resizeMode="contain"
-                  style={s.circleIcon}
-                />
               </TouchableOpacity>
             </View>
           </View>
