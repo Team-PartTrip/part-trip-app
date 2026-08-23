@@ -5,98 +5,33 @@ import {
   Image,
   ScrollView,
   TouchableOpacity,
-  Modal,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { profileStyles as s } from './ProfileView.styles';
+import { getMyProfile, UserProfile } from '../../entities/profile/api';
 import { logout } from '../../entities/auth/api';
 import { getRefreshToken, clearTokens } from '../../shared/api/tokenStorage';
-import { getMyProfile, UserProfile } from '../../entities/profile/api';
 import { toImageUrl } from '../../shared/api/image';
 
-interface Badge {
-  id: string;
-  icon: number;
-  label: string;
-  sub: string;
-  earned: boolean;
-  desc: string;
-}
-
-const DEFAULT_AVATAR = require('../../shared/assets/images/profile-character.jpg');
-
-const BADGES: Badge[] = [
-  {
-    id: 'b1',
-    icon: require('../../shared/assets/images/profile-badge-1.png'),
-    label: '첫 발걸음',
-    sub: '첫 여행지 등록',
-    earned: true,
-    desc: '첫 여행지를 등록하고 여정을 시작했어요!',
-  },
-  {
-    id: 'b2',
-    icon: require('../../shared/assets/images/profile-badge-2.png'),
-    label: '세계 탐험가',
-    sub: '5개국 방문',
-    earned: true,
-    desc: '5개국을 방문한 진정한 탐험가예요.',
-  },
-  {
-    id: 'b3',
-    icon: require('../../shared/assets/images/profile-badge-3.png'),
-    label: '초보 모험가',
-    sub: 'LV.5 달성',
-    earned: true,
-    desc: '레벨 5를 달성했어요.',
-  },
-  {
-    id: 'b4',
-    icon: require('../../shared/assets/images/profile-badge-4.png'),
-    label: '탐험의 시작',
-    sub: '첫 사진 분석',
-    earned: true,
-    desc: '첫 사진 분석을 완료했어요.',
-  },
-  {
-    id: 'b5',
-    icon: require('../../shared/assets/images/profile-badge-5.png'),
-    label: '지구 한 바퀴',
-    sub: '20개국 방문',
-    earned: false,
-    desc: '20개국을 방문하면 획득할 수 있어요.',
-  },
-  {
-    id: 'b6',
-    icon: require('../../shared/assets/images/profile-badge-6.png'),
-    label: '속련 탐험가',
-    sub: 'LV.20 달성',
-    earned: false,
-    desc: '레벨 20을 달성하면 획득할 수 있어요.',
-  },
-];
-
+// 세계지도 미리보기 칸 수 (피그마 E1 은 6칸)
+const MAP_CELLS = 6;
 
 interface Props {
   onEdit?: () => void;
-  onSeeAllBadges?: () => void;
   onLogout?: () => void;
   onNotificationSettings?: () => void;
+  onOpenWorldMap?: () => void;
 }
 
 const ProfileView: React.FC<Props> = ({
   onEdit,
-  onSeeAllBadges,
   onLogout,
   onNotificationSettings,
+  onOpenWorldMap,
 }) => {
-  const [selected, setSelected] = useState<Badge | null>(null);
-
   const [profile, setProfile] = useState<UserProfile | null>(null);
-
-
-
 
   useFocusEffect(
     useCallback(() => {
@@ -127,121 +62,129 @@ const ProfileView: React.FC<Props> = ({
     ]);
   };
 
+  // 아직 화면이 없는 항목은 조용히 무반응으로 두지 않고 준비 중임을 알린다
+  const notReady = (what: string) =>
+    Alert.alert('준비 중', `${what} 화면은 아직 준비 중이에요.`);
+
+  const initial = profile?.nickName?.trim().charAt(0) ?? '';
+
   return (
     <View style={s.safeArea}>
-      <ScrollView
-        contentContainerStyle={s.content}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* 프로필 카드 */}
-        <View style={s.profileCard}>
-          <View style={s.avatar}>
-            <Image
-              source={
-                profile?.imgUrl
-                  ? { uri: toImageUrl(profile.imgUrl) }
-                  : DEFAULT_AVATAR
-              }
-              style={{ width: '100%', height: '100%', borderRadius: 38 }}
-              resizeMode="cover"
-            />
-          </View>
-          <View style={s.profileInfo}>
-            <Text style={s.nickname}>{profile?.nickName ?? '...'}</Text>
-            <Text style={s.type}>
-              {profile?.themeName ?? '여행 타입을 골라보세요'}
-            </Text>
+      <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
+        <SafeAreaView edges={['top']} style={s.header}>
+          <View style={s.headerTop}>
+            <Text style={s.headerTitle}>마이</Text>
             <TouchableOpacity
-              style={s.editBtn}
+              style={s.headerCircle}
               activeOpacity={0.85}
-              onPress={onEdit}
+              onPress={onNotificationSettings}
             >
-              <Text style={s.editBtnText}>정보 수정</Text>
+              <Image
+                source={require('../../shared/assets/images/tab-planner.png')}
+                resizeMode="contain"
+                style={s.headerCircleIcon}
+              />
             </TouchableOpacity>
           </View>
-        </View>
 
-        {/* 뱃지 */}
-        <View style={s.sectionHeader}>
-          <Text style={s.sectionTitle}>뱃지</Text>
-          <TouchableOpacity onPress={onSeeAllBadges}>
-            <Text style={s.seeAll}>전체보기 →</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={s.grid}>
-          {BADGES.map(b => (
-            <TouchableOpacity
-              key={b.id}
-              style={s.badgeCard}
-              activeOpacity={0.85}
-              onPress={() => setSelected(b)}
-            >
-              <View style={[s.badgeEmblem, !b.earned && s.badgeLocked]}>
+          <View style={s.profileRow}>
+            <View style={s.avatar}>
+              {profile?.imgUrl ? (
                 <Image
-                  source={b.icon}
-                  style={{ width: '100%', height: '100%', borderRadius: 44 }}
+                  source={{ uri: toImageUrl(profile.imgUrl) }}
+                  style={s.avatarImage}
                   resizeMode="cover"
                 />
-              </View>
-              <View style={[s.ribbon, !b.earned && s.ribbonLocked]}>
-                <Text style={s.ribbonText}>{b.label}</Text>
-              </View>
-              <Text style={s.badgeSub}>{b.sub}</Text>
+              ) : (
+                <Text style={s.avatarInitial}>{initial}</Text>
+              )}
+            </View>
+
+            <View style={s.profileInfo}>
+              <Text style={s.nickname}>{profile?.nickName ?? '...'}</Text>
+              {!!profile?.themeName && (
+                <View style={s.themeBadge}>
+                  <Text style={s.themeBadgeText}>{profile.themeName}</Text>
+                </View>
+              )}
+              <Text style={s.handle}>@{profile?.userId ?? ''}</Text>
+            </View>
+
+            <TouchableOpacity style={s.editBtn} activeOpacity={0.85} onPress={onEdit}>
+              <Text style={s.editBtnText}>프로필 수정</Text>
             </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+
+        {/* 여행 · 국가 · 기록 수를 주는 API 가 아직 없어 값은 - 로 둔다 */}
+        <View style={s.statsCard}>
+          {[
+            { value: '-', label: '여행' },
+            { value: '-', label: '국가' },
+            { value: '-', label: '기록' },
+          ].map((stat, i) => (
+            <React.Fragment key={stat.label}>
+              {i > 0 && <View style={s.statDivider} />}
+              <View style={s.statCol}>
+                <Text style={s.statValue}>{stat.value}</Text>
+                <Text style={s.statLabel}>{stat.label}</Text>
+              </View>
+            </React.Fragment>
           ))}
         </View>
 
-
-        <TouchableOpacity
-          style={s.settingsRow}
-          activeOpacity={0.85}
-          onPress={onNotificationSettings}
-        >
-          <Text style={s.settingsRowText}>알림 설정</Text>
-          <Text style={s.settingsRowChevron}>›</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={s.logoutBtn}
-          activeOpacity={0.85}
-          onPress={handleLogout}
-        >
-          <Text style={s.logoutBtnText}>로그아웃</Text>
-        </TouchableOpacity>
-      </ScrollView>
-
-      {/* 뱃지 상세 */}
-      <Modal
-        visible={selected !== null}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setSelected(null)}
-      >
-        <View style={s.modalOverlay}>
-          <View style={s.modalBox}>
-            <TouchableOpacity
-              style={s.modalClose}
-              onPress={() => setSelected(null)}
-            >
-              <Text style={s.modalCloseText}>✕</Text>
-            </TouchableOpacity>
-            <View style={s.modalEmblem}>
-              {selected && (
-                <Image
-                  source={selected.icon}
-                  style={{ width: '100%', height: '100%', borderRadius: 60 }}
-                  resizeMode="cover"
-                />
-              )}
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>내 세계지도</Text>
+          <View style={s.mapCard}>
+            <View style={s.mapGrid}>
+              {Array.from({ length: MAP_CELLS }).map((_, i) => (
+                <View key={i} style={s.mapCell} />
+              ))}
             </View>
-            <Text style={s.modalTitle}>{selected?.label}</Text>
-            <Text style={s.modalSub}>{selected?.sub}</Text>
-            <View style={s.modalDescBox}>
-              <Text style={s.modalDesc}>{selected?.desc}</Text>
+            <View style={s.mapFooter}>
+              <Text style={s.mapSummary}>아직 획득한 국가가 없어요</Text>
+              <TouchableOpacity
+                style={s.moreBtn}
+                activeOpacity={0.85}
+                onPress={onOpenWorldMap ?? (() => notReady('세계지도'))}
+              >
+                <Text style={s.moreBtnText}>더보기</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
-      </Modal>
+
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>설정</Text>
+
+          <TouchableOpacity style={s.settingsRow} activeOpacity={0.85} onPress={onEdit}>
+            <Text style={s.settingsRowText}>여행 타입 수정</Text>
+            <Text style={s.settingsRowChevron}>›</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={s.settingsRow}
+            activeOpacity={0.85}
+            onPress={onNotificationSettings}
+          >
+            <Text style={s.settingsRowText}>알림 설정</Text>
+            <Text style={s.settingsRowChevron}>›</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={s.settingsRow}
+            activeOpacity={0.85}
+            onPress={() => notReady('계정 · 보안')}
+          >
+            <Text style={s.settingsRowText}>계정 · 보안</Text>
+            <Text style={s.settingsRowChevron}>›</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={s.settingsRow} activeOpacity={0.85} onPress={handleLogout}>
+            <Text style={[s.settingsRowText, s.settingsRowDanger]}>로그아웃</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </View>
   );
 };

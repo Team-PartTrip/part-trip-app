@@ -25,7 +25,9 @@ import DestinationPickerView from './src/pages/DestinationScreen/DestinationPick
 import ProfileView from './src/pages/ProfileView/ProfileView';
 import PlannerScreen from './src/pages/PlannerScreen/PlannerScreen';
 import NotificationListView from './src/pages/NotificationView/NotificationListView';
+import NotificationDetailView from './src/pages/NotificationView/NotificationDetailView';
 import NotificationSettingsView from './src/pages/NotificationView/NotificationSettingsView';
+import type { Notification } from './src/entities/notification/api';
 import RecordView from './src/pages/RecordView/RecordView';
 import RecordMapView from './src/pages/RecordView/RecordMapView';
 import RecordEditView from './src/pages/RecordView/RecordEditView';
@@ -48,6 +50,7 @@ export type RootStackParamList = {
   Main: undefined;
   Planner: undefined;
   Notifications: undefined;
+  NotificationDetail: { notification: Notification };
   NotificationSettings: undefined;
   Festival: undefined;
   Destination: undefined;
@@ -228,7 +231,31 @@ function App() {
 
               <Stack.Screen name="Notifications">
                 {({ navigation }) => (
-                  <NotificationListView onBack={() => navigation.goBack()} />
+                  <NotificationListView
+                    onBack={() => navigation.goBack()}
+                    onOpen={notification =>
+                      navigation.navigate('NotificationDetail', { notification })
+                    }
+                  />
+                )}
+              </Stack.Screen>
+
+              <Stack.Screen name="NotificationDetail">
+                {({ navigation, route }) => (
+                  <NotificationDetailView
+                    notification={route.params.notification}
+                    onBack={() => navigation.goBack()}
+                    onOpenLink={linkType => {
+                      // 플래너 화면은 아직 준비 중 안내만 띄운다
+                      if (linkType === 'VOTE' || linkType === 'GROUP') {
+                        navigation.navigate('Planner');
+                      } else if (linkType === 'WORLD_MAP') {
+                        navigation.navigate('Profile');
+                      } else {
+                        navigation.navigate('Record');
+                      }
+                    }}
+                  />
                 )}
               </Stack.Screen>
 
