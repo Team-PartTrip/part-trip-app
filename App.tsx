@@ -33,6 +33,15 @@ import RecordMapView from './src/pages/RecordView/RecordMapView';
 import RecordEditView from './src/pages/RecordView/RecordEditView';
 import RecordCompleteView from './src/pages/RecordView/RecordCompleteView';
 import ProfileEditView from './src/pages/ProfileView/ProfileEditView';
+import WorldMapView from './src/pages/WorldMapView/WorldMapView';
+import CountryRecordView from './src/pages/WorldMapView/CountryRecordView';
+import CountryAcquiredView from './src/pages/WorldMapView/CountryAcquiredView';
+import AchievementView from './src/pages/WorldMapView/AchievementView';
+import type {
+  CountryAcquiredParams,
+  VisitedCountry,
+} from './src/entities/worldmap/types';
+import { sampleAcquiredParamsOf } from './src/entities/worldmap/sampleData';
 import { consumeDestinationCallback } from './src/pages/DestinationScreen/destinationSelectBridge';
 import { clearTokens } from './src/shared/api/tokenStorage';
 
@@ -63,6 +72,10 @@ export type RootStackParamList = {
   RecordComplete: undefined;
   Profile: undefined;
   ProfileEdit: undefined;
+  WorldMap: undefined;
+  CountryRecord: { country: VisitedCountry };
+  CountryAcquired: CountryAcquiredParams;
+  Achievement: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -89,6 +102,10 @@ const AUTH_ROUTES = [
   'RecordMap',
   'RecordEdit',
   'RecordComplete',
+  'WorldMap',
+  'CountryRecord',
+  'CountryAcquired',
+  'Achievement',
 ];
 
 // 탭 ↔ 라우트 매핑
@@ -245,12 +262,18 @@ function App() {
                   <NotificationDetailView
                     notification={route.params.notification}
                     onBack={() => navigation.goBack()}
-                    onOpenLink={linkType => {
-                      // 플래너 화면은 아직 준비 중 안내만 띄운다
-                      if (linkType === 'VOTE' || linkType === 'GROUP') {
+                    onOpenLink={(linkType, linkId) => {
+                      // 국가 획득 알림은 축하 화면(E3)으로 바로 보낸다
+                      if (route.params.notification.type === 'COUNTRY_ACQUIRED') {
+                        navigation.navigate(
+                          'CountryAcquired',
+                          sampleAcquiredParamsOf(linkId),
+                        );
+                      } else if (linkType === 'VOTE' || linkType === 'GROUP') {
+                        // 플래너 화면은 아직 준비 중 안내만 띄운다
                         navigation.navigate('Planner');
                       } else if (linkType === 'WORLD_MAP') {
-                        navigation.navigate('Profile');
+                        navigation.navigate('WorldMap');
                       } else {
                         navigation.navigate('Record');
                       }
@@ -357,6 +380,7 @@ function App() {
                       navigation.navigate('NotificationSettings')
                     }
                     onEdit={() => navigation.navigate('ProfileEdit')}
+                    onOpenWorldMap={() => navigation.navigate('WorldMap')}
                     onLogout={() =>
                       navigation.reset({
                         index: 0,
@@ -378,6 +402,45 @@ function App() {
                       })
                     }
                   />
+                )}
+              </Stack.Screen>
+
+              {/* 세계지도 */}
+              <Stack.Screen name="WorldMap">
+                {({ navigation }) => (
+                  <WorldMapView
+                    onBack={() => navigation.goBack()}
+                    onOpenCountry={country =>
+                      navigation.navigate('CountryRecord', { country })
+                    }
+                    onOpenAchievement={() => navigation.navigate('Achievement')}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="CountryRecord">
+                {({ navigation, route }) => (
+                  <CountryRecordView
+                    country={route.params.country}
+                    onBack={() => navigation.goBack()}
+                    onOpenRecord={id =>
+                      navigation.navigate('RecordEdit', { id: String(id) })
+                    }
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="CountryAcquired">
+                {({ navigation, route }) => (
+                  <CountryAcquiredView
+                    params={route.params}
+                    onClose={() => navigation.goBack()}
+                    onOpenCountry={() => navigation.navigate('Record')}
+                    onOpenWorldMap={() => navigation.navigate('WorldMap')}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="Achievement">
+                {({ navigation }) => (
+                  <AchievementView onBack={() => navigation.goBack()} />
                 )}
               </Stack.Screen>
             </Stack.Navigator>
