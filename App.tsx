@@ -108,6 +108,16 @@ const AUTH_ROUTES = [
   'Achievement',
 ];
 
+// 자체 상단 영역(파란 헤더 또는 뒤로가기)을 가진 화면.
+// 공용 AppHeader 까지 얹으면 상단 여백이 두 번 들어가서 크게 빈다.
+const OWN_HEADER_ROUTES = [
+  'Main',
+  'Profile',
+  'Notifications',
+  'NotificationDetail',
+  'NotificationSettings',
+];
+
 // 탭 ↔ 라우트 매핑
 const ROUTE_BY_TAB: Record<TabKey, keyof RootStackParamList> = {
   home: 'Main',
@@ -148,7 +158,9 @@ function App() {
       >
         <View style={{ flex: 1, backgroundColor: colors.background }}>
           {/* 고정 상단 헤더 */}
-          {showChrome && routeName !== 'Main' && <AppHeader />}
+          {showChrome && !OWN_HEADER_ROUTES.includes(routeName ?? '') && (
+            <AppHeader />
+          )}
 
           {/* 콘텐츠 (네비게이터로 교체되는 영역) */}
           <View style={{ flex: 1 }}>

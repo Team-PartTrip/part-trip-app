@@ -6,7 +6,7 @@ export const notificationDetailStyles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
   content: { paddingBottom: 32 },
 
-  back: { marginTop: 40, paddingHorizontal: 24, fontSize: 24, fontWeight: '700', color: colors.text },
+  back: { marginTop: 12, paddingHorizontal: 24, fontSize: 24, fontWeight: '700', color: colors.text },
   titleRow: {
     marginTop: 16,
     paddingHorizontal: 24,

@@ -11,7 +11,7 @@ export const notificationListStyles = StyleSheet.create({
     alignItems: 'flex-end',
     justifyContent: 'space-between',
     paddingHorizontal: 24,
-    marginTop: 40,
+    marginTop: 12,
   },
   back: { fontSize: 24, fontWeight: '700', color: colors.text },
   title: { marginTop: 16, fontSize: 24, fontWeight: '700', color: colors.text },

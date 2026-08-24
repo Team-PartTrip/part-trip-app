@@ -6,7 +6,7 @@ export const notificationSettingsStyles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
   scrollContent: { paddingBottom: 32 },
 
-  back: { marginTop: 40, paddingHorizontal: 24, fontSize: 24, fontWeight: '700', color: colors.text },
+  back: { marginTop: 12, paddingHorizontal: 24, fontSize: 24, fontWeight: '700', color: colors.text },
   title: { marginTop: 16, paddingHorizontal: 24, fontSize: 24, fontWeight: '700', color: colors.text },
   desc: { marginTop: 12, paddingHorizontal: 24, fontSize: 15, color: colors.textMuted },
 
