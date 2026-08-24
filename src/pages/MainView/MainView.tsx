@@ -161,9 +161,27 @@ const MainView: React.FC<MainViewProps> = ({
               가짜 수치를 보여주지 않고 섹션 자체를 그리지 않는다. */}
         </SafeAreaView>
 
-        {places.length > 0 && (
-          <View style={s.section}>
-            <Text style={s.sectionTitle}>이번 주 추천</Text>
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>이번 주 추천</Text>
+
+          {places.length === 0 ? (
+            // 관광지 데이터가 없는 나라도 많다. 빈 화면 대신 이유를 알려준다.
+            <View style={s.noPlaces}>
+              <Text style={s.noPlacesText}>
+                아직 {dday.countryName} 추천 장소가 없어요
+              </Text>
+              <Text style={s.noPlacesDesc}>
+                추천 장소가 준비된 여행지를 고르면{'\n'}가볼 만한 곳을 모아서 보여드려요.
+              </Text>
+              <TouchableOpacity
+                style={s.noPlacesBtn}
+                activeOpacity={0.85}
+                onPress={onOpenDestination}
+              >
+                <Text style={s.noPlacesBtnText}>여행지 바꾸기</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
             <View style={s.placeRow}>
               {places.slice(0, 3).map((p, i) => (
                 <View key={`${p.placeName}-${i}`} style={s.placeCard}>
@@ -181,8 +199,8 @@ const MainView: React.FC<MainViewProps> = ({
                 </View>
               ))}
             </View>
-          </View>
-        )}
+          )}
+        </View>
       </ScrollView>
     </View>
   );

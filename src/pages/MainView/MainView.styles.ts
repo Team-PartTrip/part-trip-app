@@ -202,6 +202,43 @@ export const mainStyles = StyleSheet.create({
     color: colors.text,
   },
 
+  // ── 추천 장소가 없을 때 ──
+  noPlaces: {
+    marginTop: 8,
+    borderRadius: 14,
+    backgroundColor: colors.white,
+    paddingVertical: 28,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    gap: 8,
+  },
+  noPlacesText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.text,
+    textAlign: 'center',
+  },
+  noPlacesDesc: {
+    fontSize: 12,
+    lineHeight: 18,
+    color: colors.textMuted,
+    textAlign: 'center',
+  },
+  noPlacesBtn: {
+    marginTop: 8,
+    height: 34,
+    paddingHorizontal: 16,
+    borderRadius: 17,
+    backgroundColor: colors.tint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  noPlacesBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.primaryDark,
+  },
+
   // ── 여행 일정이 없을 때 ──
   empty: {
     flex: 1,
