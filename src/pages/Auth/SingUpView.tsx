@@ -4,6 +4,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -66,7 +67,11 @@ const SignUpView: React.FC<SignUpViewProps> = ({ onBack, onNext }) => {
         >
           {/* 로고 + 타이틀 */}
           <View style={styles.logoArea}>
-            <Text style={styles.logo}>PartTrip</Text>
+            <Image
+              source={require('../../shared/assets/images/logo.png')}
+              style={styles.brandLogo}
+              resizeMode="contain"
+            />
             <Text style={styles.title}>회원가입</Text>
           </View>
 

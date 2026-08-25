@@ -23,10 +23,10 @@ export const loginStyles = StyleSheet.create({
   logoArea: {
     alignItems: 'center',
   },
-  logo: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: colors.primary,
+  // 재디자인 전과 같은 브랜드 로고 이미지 크기 (170x40)
+  brandLogo: {
+    width: 170,
+    height: 40,
   },
   title: {
     marginTop: 20,
@@ -129,11 +129,10 @@ export const loginStyles = StyleSheet.create({
   googleBtn: {
     marginTop: 20,
   },
-  googleMark: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: colors.surface,
+  googleG: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: colors.google,
   },
   signupBtn: {
     marginTop: 4,

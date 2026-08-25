@@ -4,6 +4,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -66,7 +67,11 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({
         >
           {/* 로고 + 타이틀 */}
           <View style={styles.logoArea}>
-            <Text style={styles.logo}>PartTrip</Text>
+            <Image
+              source={require('../../shared/assets/images/logo.png')}
+              style={styles.brandLogo}
+              resizeMode="contain"
+            />
             <Text style={styles.title}>
               {from === 'profile' ? '비밀번호 변경' : '비밀번호 찾기'}
             </Text>

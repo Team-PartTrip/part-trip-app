@@ -4,6 +4,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -171,7 +172,11 @@ const ConfirmEmail: React.FC<ConfirmEmailProps> = ({
         >
           {/* 로고 + 타이틀 */}
           <View style={shared.logoArea}>
-            <Text style={shared.logo}>PartTrip</Text>
+            <Image
+              source={require('../../shared/assets/images/logo.png')}
+              style={shared.brandLogo}
+              resizeMode="contain"
+            />
             <Text style={shared.title}>
               {mode === 'signup'
                 ? '회원가입'

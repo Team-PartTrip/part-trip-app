@@ -5,6 +5,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -87,7 +88,11 @@ const LoginView: React.FC<LoginViewProps> = ({
         >
           {/* 로고 + 타이틀 */}
           <View style={styles.logoArea}>
-            <Text style={styles.logo}>PartTrip</Text>
+            <Image
+              source={require('../../shared/assets/images/logo.png')}
+              style={styles.brandLogo}
+              resizeMode="contain"
+            />
             <Text style={styles.title}>로그인</Text>
           </View>
 
@@ -145,7 +150,7 @@ const LoginView: React.FC<LoginViewProps> = ({
               onPress={handleGoogleLogin}
               disabled={loading}
             >
-              <View style={styles.googleMark} />
+              <Text style={styles.googleG}>G</Text>
               <Text style={styles.outlineBtnText}>Google로 계속하기</Text>
             </TouchableOpacity>
 
