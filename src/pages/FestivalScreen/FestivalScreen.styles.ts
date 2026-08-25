@@ -1,175 +1,140 @@
 import { StyleSheet } from 'react-native';
 import colors from '../../shared/tokens/colors';
 
+// 피그마 D7 · Func-005-07 축제 & 이벤트 캘린더
 export const festivalStyles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
+  safeArea: { flex: 1, backgroundColor: colors.background },
+  content: { paddingBottom: 32 },
 
-  // 헤더
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  backBtn: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backIcon: {
-    fontSize: 26,
-    color: colors.textPrimary,
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: '800',
-    color: colors.textPrimary,
-  },
-  headerProfile: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.profileBg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerProfileIcon: { fontSize: 18 },
-
-  scroll: { flex: 1 },
-  scrollContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 32,
-    gap: 16,
-  },
-
-  // 연도 선택
-  yearRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingVertical: 4,
-  },
-  yearText: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: colors.textPrimary,
-  },
-  yearCaret: {
-    fontSize: 14,
-    color: colors.textSub,
-  },
+  header: { paddingHorizontal: 24, paddingTop: 4 },
+  back: { fontSize: 28, lineHeight: 32, color: colors.text },
+  title: { marginTop: 8, fontSize: 24, fontWeight: '700', color: colors.text },
+  subtitle: { marginTop: 8, fontSize: 12, color: colors.textSecondary },
 
   // 달력
   calCard: {
-    backgroundColor: colors.cardBg,
+    marginTop: 24,
+    marginHorizontal: 24,
+    padding: 20,
     borderRadius: 16,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
+    backgroundColor: colors.white,
   },
-  calRow: {
-    flexDirection: 'row',
-    marginBottom: 8,
+  calHead: { flexDirection: 'row', alignItems: 'center' },
+  calMonth: { flex: 1, fontSize: 15, fontWeight: '600', color: colors.text },
+  calArrow: {
+    width: 28,
+    fontSize: 14,
+    textAlign: 'center',
+    color: colors.textTertiary,
   },
+  calWeekRow: { flexDirection: 'row', marginTop: 16 },
+  calWeek: { flexDirection: 'row', marginTop: 8 },
   calWeekday: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 12,
-    color: colors.textSub,
-    fontWeight: '600',
-  },
-  calCell: {
-    flex: 1,
-    height: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  calDay: {
-    fontSize: 14,
-    color: colors.textPrimary,
-    fontWeight: '600',
-  },
-  calSelected: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  calSelectedText: {
-    color: colors.textOnPrimary,
-    fontWeight: '800',
-  },
-
-  // 선택 날짜
-  dateTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: colors.textPrimary,
-    marginTop: 4,
-  },
-
-  // 이벤트 카드
-  eventCard: {
-    flexDirection: 'row',
-    backgroundColor: colors.cardBg,
-    borderRadius: 16,
-    padding: 14,
-    gap: 14,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  eventThumb: {
-    width: 76,
-    height: 76,
-    borderRadius: 12,
-    backgroundColor: colors.eventThumbBg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  eventThumbIcon: { fontSize: 30 },
-  eventBody: { flex: 1, gap: 3 },
-  eventTag: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    marginBottom: 2,
-  },
-  eventTagText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '500',
+    color: colors.textTertiary,
   },
-  eventTitle: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: colors.textPrimary,
+  calSunday: { color: colors.danger },
+  calCell: { flex: 1, height: 34, alignItems: 'center' },
+  dayPill: {
+    width: 36,
+    height: 28,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  eventDesc: {
-    fontSize: 12,
-    color: colors.textSub,
+  // 여행 기간에 걸친 날은 옅은 파랑, 고른 날은 진한 파랑 원
+  dayInTrip: { backgroundColor: colors.tint },
+  daySelected: {
+    width: 28,
+    borderRadius: 14,
+    backgroundColor: colors.primary,
   },
-  eventMetaRow: {
+  dayText: { fontSize: 12, color: colors.text },
+  dayTextSelected: { color: colors.textOnPrimary },
+  // 날짜 알약 아래에 찍히는 일정 표시 점
+  dot: {
+    position: 'absolute',
+    bottom: 0,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.accent,
+  },
+  dotOnSelected: { backgroundColor: colors.textOnPrimary },
+
+  tripRange: {
+    marginTop: 12,
+    paddingHorizontal: 24,
+    fontSize: 11,
+    fontWeight: '500',
+    color: colors.primary,
+  },
+
+  chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 8,
+    paddingHorizontal: 24,
+    marginTop: 16,
+    marginBottom: 12,
+  },
+  chip: {
+    height: 30,
+    paddingHorizontal: 16,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chipOn: { borderColor: colors.primary, backgroundColor: colors.primary },
+  chipText: { fontSize: 11, fontWeight: '500', color: colors.textSecondary },
+  chipTextOn: { color: colors.textOnPrimary },
+
+  loader: { marginTop: 24 },
+  list: { paddingHorizontal: 24, gap: 12 },
+  card: {
+    minHeight: 76,
+    flexDirection: 'row',
+    borderRadius: 14,
+    backgroundColor: colors.white,
+    overflow: 'hidden',
+  },
+  cardStripe: { width: 5, backgroundColor: colors.accent },
+  cardBody: { flex: 1, paddingHorizontal: 15, paddingVertical: 14 },
+  cardTitle: { fontSize: 15, fontWeight: '600', color: colors.text },
+  cardMeta: { marginTop: 4, fontSize: 12, color: colors.textSecondary },
+  cardPlace: {
     marginTop: 4,
-  },
-  eventMeta: {
     fontSize: 11,
-    color: colors.eventMeta,
+    fontWeight: '500',
+    color: colors.textTertiary,
   },
+  cardPill: {
+    alignSelf: 'flex-start',
+    height: 22,
+    marginTop: 14,
+    marginRight: 16,
+    paddingHorizontal: 12,
+    borderRadius: 11,
+    backgroundColor: colors.tint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardPillText: { fontSize: 11, fontWeight: '500', color: colors.primary },
+
+  empty: {
+    marginHorizontal: 24,
+    borderRadius: 14,
+    backgroundColor: colors.white,
+    paddingVertical: 40,
+    alignItems: 'center',
+    gap: 6,
+  },
+  emptyText: { fontSize: 15, fontWeight: '600', color: colors.text },
+  emptyDesc: { fontSize: 12, textAlign: 'center', color: colors.textMuted },
 });

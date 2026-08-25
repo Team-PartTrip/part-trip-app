@@ -27,6 +27,8 @@ export type AppColors = {
   placeholder: string;
   red: string;
   redAccent: string;
+  danger: string;
+  dangerBg: string;
   teal: string;
   google: string;
   tint: string;
@@ -42,6 +44,7 @@ export type AppColors = {
   bannerBg: string;
   bannerOverlay: string;
   eventThumbBg: string;
+  night: string;
 };
 
 // ── 라이트 모드 ──────────────────────────────────────────────
@@ -83,6 +86,8 @@ export const lightColors: AppColors = {
   // 상태 / 강조
   red: '#f06b6b', // 일요일/경고
   redAccent: '#f0564b', // New 배지 등 강한 빨강
+  danger: '#ff3e3e', // 삭제 등 되돌릴 수 없는 동작 (DS Danger)
+  dangerBg: '#feefee', // 삭제 경고 박스 배경
   teal: '#1bb89a', // 완료/성공
   google: '#4285F4', // 구글 브랜드
 
@@ -104,6 +109,7 @@ export const lightColors: AppColors = {
   bannerBg: '#2c4a66', // 여행지 배너 폴백 배경
   bannerOverlay: 'rgba(0,30,70,0.25)', // 배너 오버레이
   eventThumbBg: '#1a1f2b', // 이벤트 썸네일 배경
+  night: '#17191f', // 사진 뷰어 · 여행카드 배경 (DS BG night)
 };
 
 // ── 다크 모드 (라이트와 같은 키를 어두운 톤으로 매핑) ──────────
@@ -145,6 +151,8 @@ export const darkColors: AppColors = {
   // 상태 / 강조 (모드 무관 유지)
   red: '#f06b6b', // 일요일/경고
   redAccent: '#f0564b', // New 배지
+  danger: '#ff5f5f', // 삭제 등 되돌릴 수 없는 동작
+  dangerBg: '#3a2323', // 삭제 경고 박스 배경
   teal: '#1bb89a', // 완료/성공
   google: '#4285F4', // 구글 브랜드
 
@@ -166,6 +174,7 @@ export const darkColors: AppColors = {
   bannerBg: '#2c4a66', // 여행지 배너 폴백 배경
   bannerOverlay: 'rgba(0,0,0,0.35)', // 배너 오버레이
   eventThumbBg: '#0d1017', // 이벤트 썸네일 배경
+  night: '#17191f', // 사진 뷰어 · 여행카드 배경 (두 모드 공통)
 };
 
 // 앱 실행 시점의 시스템 테마로 팔레트 선택

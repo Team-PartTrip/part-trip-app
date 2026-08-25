@@ -1,182 +1,126 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { recordStyles as s } from './RecordView.styles';
+import { sampleTripCards } from '../../entities/record/sampleData';
+import { formatTripRange, isTraveling } from '../../entities/record/types';
 
-interface RecordItem {
-  id: string;
-  title: string;
-  desc: string;
-  time: string;
-  date: string;
+/** 카드 위쪽 사진 띠 — 실제 썸네일이 붙기 전까지 옅어지는 네 칸으로 둔다 */
+const STRIP_OPACITY = [1, 0.88, 0.76, 0.64];
+
+interface Props {
+  /** 여행 하나를 열어 촬영 위치를 본다 (D1) */
+  onOpenTrip?: (tripCardId: number) => void;
+  onOpenTripCards?: () => void;
+  onOpenEvents?: () => void;
 }
 
-// ── 더미 데이터 (추후 GET /api/records 연동) ──
-const TRIP = { title: '2026 여름의 싱가포르', flag: '🇸🇬', traveling: true };
-
-const INITIAL: RecordItem[] = [
-  {
-    id: 'r1',
-    title: '싱가포르의 라이트쇼',
-    desc: '멋있는 싱가포르의 라이트쇼를 보았다.',
-    time: '오후 19:40',
-    date: '2024.05.12',
-  },
-  {
-    id: 'r2',
-    title: '싱가포르의 푸른 바닷가',
-    desc: '보트 등 다양한 수상레저를 즐겼다.',
-    time: '오후 19:40',
-    date: '2024.05.12',
-  },
-  {
-    id: 'r3',
-    title: '플라이어 탑승 후기',
-    desc: '엄청 높았고, 야경이 훌륭했다.',
-    time: '오후 19:40',
-    date: '2024.05.12',
-  },
-  {
-    id: 'r4',
-    title: '유니버셜 스튜디오 체험기',
-    desc: '유니버셜에는 생각보다 다양한 테마가 있어서 색달랐다.',
-    time: '오후 19:40',
-    date: '2024.05.12',
-  },
-];
-
-interface RecordViewProps {
-  onOpenMap?: () => void;
-  onOpenRecord?: (id: string) => void;
-  onWrite?: () => void;
-  /** 해설 카메라. 탭바 가운데 버튼이 없어지면서 이리로 옮겼다. */
-  onCamera?: () => void;
-}
-
-const RecordView: React.FC<RecordViewProps> = ({
-  onOpenMap,
-  onOpenRecord,
-  onWrite,
-  onCamera,
+const RecordView: React.FC<Props> = ({
+  onOpenTrip,
+  onOpenTripCards,
+  onOpenEvents,
 }) => {
-  const [records, setRecords] = useState(INITIAL);
-  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+  const [year, setYear] = useState('전체');
 
-  const confirmDelete = () => {
-    if (pendingDelete) {
-      setRecords(prev => prev.filter(r => r.id !== pendingDelete));
-    }
-    setPendingDelete(null);
-  };
+  // 연도 칩은 가지고 있는 여행에서 뽑는다
+  const years = Array.from(
+    new Set(sampleTripCards.map(card => card.startDate.slice(0, 4))),
+  ).sort((a, b) => b.localeCompare(a));
+  const filters = ['전체', ...years];
+
+  const cards = sampleTripCards.filter(
+    card => year === '전체' || card.startDate.startsWith(year),
+  );
 
   return (
     <View style={s.safeArea}>
-      <ScrollView
-        style={s.scroll}
-        contentContainerStyle={s.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* 트립 헤더 + 지도 토글 */}
-        <View style={s.tripHeader}>
-          <Text style={s.tripTitle}>
-            {TRIP.title} {TRIP.flag}
-          </Text>
-          <View style={s.headerActions}>
-            <TouchableOpacity
-              style={s.toggleBtn}
-              onPress={onCamera}
-              activeOpacity={0.8}
-            >
-              <Text style={s.toggleIcon}>📷</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={s.toggleBtn}
-              onPress={onOpenMap}
-              activeOpacity={0.8}
-            >
-              <Text style={s.toggleIcon}>🗺️</Text>
-            </TouchableOpacity>
-          </View>
+      <SafeAreaView edges={['top']} style={s.header}>
+        <View style={s.headerRow}>
+          <Text style={s.pageTitle}>기록</Text>
+          {/* 피그마 D2 에는 동그란 버튼이 하나뿐이지만, 여행카드(D9)와
+              축제·이벤트(D7)로 들어갈 입구가 여기밖에 없어서 둘로 나눴다 */}
+          <TouchableOpacity
+            style={s.headerBtn}
+            activeOpacity={0.8}
+            onPress={onOpenEvents}
+          >
+            <Text style={s.headerBtnIcon}>🎉</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={s.headerBtn}
+            activeOpacity={0.8}
+            onPress={onOpenTripCards}
+          >
+            <Text style={s.headerBtnIcon}>🎴</Text>
+          </TouchableOpacity>
         </View>
 
-        {/* 기록 작성 — 여행 중일 때만 가능 */}
-        <TouchableOpacity
-          style={[s.writeBtn, !TRIP.traveling && s.writeBtnDisabled]}
-          activeOpacity={0.85}
-          disabled={!TRIP.traveling}
-          onPress={onWrite}
-        >
-          <Text style={s.writeBtnText}>＋ 기록 작성</Text>
-        </TouchableOpacity>
-        {!TRIP.traveling && (
-          <Text style={s.writeNote}>여행 중에만 기록을 작성할 수 있어요.</Text>
-        )}
+        <View style={s.filterRow}>
+          {filters.map(item => {
+            const on = item === year;
+            return (
+              <TouchableOpacity
+                key={item}
+                style={[s.chip, on && s.chipOn]}
+                activeOpacity={0.85}
+                onPress={() => setYear(item)}
+              >
+                <Text style={[s.chipText, on && s.chipTextOn]}>{item}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </SafeAreaView>
 
-        {/* 기록 목록 */}
-        {records.length === 0 ? (
+      <ScrollView
+        contentContainerStyle={s.content}
+        showsVerticalScrollIndicator={false}
+      >
+        {cards.length === 0 ? (
           <View style={s.empty}>
-            <Text style={s.emptyText}>기록이 없습니다.</Text>
+            <Text style={s.emptyText}>이 연도에 남긴 기록이 없어요</Text>
+            <Text style={s.emptyDesc}>
+              여행을 시작하면 기록이 여기에 쌓여요.
+            </Text>
           </View>
         ) : (
-          records.map(r => (
+          cards.map(card => (
             <TouchableOpacity
-              key={r.id}
+              key={card.tripCardId}
               style={s.card}
               activeOpacity={0.9}
-              onPress={() => onOpenRecord?.(r.id)}
+              onPress={() => onOpenTrip?.(card.tripCardId)}
             >
-              <View style={s.cardImage} />
-              <View style={s.cardBody}>
-                <View style={s.cardTopRow}>
-                  <Text style={s.cardTitle}>{r.title}</Text>
-                  <TouchableOpacity
-                    style={s.menuBtn}
-                    onPress={() => setPendingDelete(r.id)}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  >
-                    <Text style={s.menuIcon}>⋮</Text>
-                  </TouchableOpacity>
+              <View style={s.strip}>
+                {STRIP_OPACITY.map((opacity, i) => (
+                  <View key={i} style={[s.stripTile, { opacity }]} />
+                ))}
+              </View>
+              {isTraveling(card) && (
+                <View style={s.travelBadge}>
+                  <Text style={s.travelBadgeText}>여행 중</Text>
                 </View>
-                <Text style={s.cardDesc} numberOfLines={2}>
-                  {r.desc}
-                </Text>
-                <Text style={s.cardMeta}>
-                  {r.time} · {r.date}
-                </Text>
+              )}
+
+              <View style={s.cardBottom}>
+                <View style={s.cardBody}>
+                  <Text style={s.cardTitle}>{card.title}</Text>
+                  <Text style={s.cardDate}>
+                    {formatTripRange(card.startDate, card.endDate)}
+                  </Text>
+                </View>
+                <View style={s.countPill}>
+                  <Text style={s.countPillText}>사진 {card.photoCount}장</Text>
+                </View>
               </View>
             </TouchableOpacity>
           ))
         )}
-      </ScrollView>
 
-      {/* 삭제 확인 다이얼로그 */}
-      <Modal
-        visible={pendingDelete !== null}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setPendingDelete(null)}
-      >
-        <View style={s.modalOverlay}>
-          <View style={s.modalBox}>
-            <Text style={s.modalText}>기록을 정말 삭제하시겠습니까?</Text>
-            <View style={s.modalBtns}>
-              <TouchableOpacity
-                style={[s.modalBtn, s.modalYes]}
-                activeOpacity={0.85}
-                onPress={confirmDelete}
-              >
-                <Text style={s.modalYesText}>예</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[s.modalBtn, s.modalNo]}
-                activeOpacity={0.85}
-                onPress={() => setPendingDelete(null)}
-              >
-                <Text style={s.modalNoText}>아니오</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        <Text style={s.note}>
+          기록 API 연동 전이라 예시 데이터로 보여주고 있어요.
+        </Text>
+      </ScrollView>
     </View>
   );
 };

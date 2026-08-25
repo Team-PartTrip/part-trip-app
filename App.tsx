@@ -46,6 +46,13 @@ import NotificationSettingsView from './src/pages/NotificationView/NotificationS
 import type { Notification } from './src/entities/notification/api';
 import RecordView from './src/pages/RecordView/RecordView';
 import RecordMapView from './src/pages/RecordView/RecordMapView';
+import PhotoDetailView from './src/pages/RecordView/PhotoDetailView';
+import CommentEditView from './src/pages/RecordView/CommentEditView';
+import PhotoDeleteView from './src/pages/RecordView/PhotoDeleteView';
+import TripCardListView from './src/pages/RecordView/TripCardListView';
+import TripCardDetailView from './src/pages/RecordView/TripCardDetailView';
+import TripCardEditView from './src/pages/RecordView/TripCardEditView';
+import TripCardDeleteView from './src/pages/RecordView/TripCardDeleteView';
 import RecordEditView from './src/pages/RecordView/RecordEditView';
 import RecordCompleteView from './src/pages/RecordView/RecordCompleteView';
 import ProfileEditView from './src/pages/ProfileView/ProfileEditView';
@@ -90,7 +97,18 @@ export type RootStackParamList = {
   GuideResult: { imageId: number; photoUri: string };
   DestinationPicker: undefined;
   Record: undefined;
-  RecordMap: undefined;
+  RecordMap: { tripCardId: number };
+  PhotoDetail: {
+    tripCardId: number;
+    tripCardPlaceId?: number;
+    photoId?: number;
+  };
+  CommentEdit: { photoId: number; mode: 'create' | 'edit' };
+  PhotoDelete: { tripCardId: number };
+  TripCards: undefined;
+  TripCardDetail: { tripCardId: number };
+  TripCardEdit: { tripCardId: number };
+  TripCardDelete: undefined;
   RecordEdit: { id?: string };
   RecordComplete: undefined;
   Profile: undefined;
@@ -122,7 +140,6 @@ const AUTH_ROUTES = [
   'PostCreate',
   'DestinationPicker',
   'GuideResult',
-  'RecordMap',
   'RecordEdit',
   'RecordComplete',
   'WorldMap',
@@ -135,6 +152,11 @@ const AUTH_ROUTES = [
   'PlanCart',
   'PlaceVote',
   'PlanConfirm',
+  'PhotoDetail',
+  'CommentEdit',
+  'PhotoDelete',
+  'TripCards',
+  'TripCardDelete',
 ];
 
 // 자체 상단 영역(파란 헤더 또는 뒤로가기)을 가진 화면.
@@ -143,6 +165,11 @@ const OWN_HEADER_ROUTES = [
   'Main',
   'Planner',
   'PlanStatus',
+  'Record',
+  'RecordMap',
+  'Festival',
+  'TripCardDetail',
+  'TripCardEdit',
   'Profile',
   'Notifications',
   'NotificationDetail',
@@ -161,6 +188,10 @@ const TAB_BY_ROUTE: Record<string, TabKey> = {
   Planner: 'planner',
   PlanStatus: 'planner',
   Record: 'record',
+  RecordMap: 'record',
+  Festival: 'record',
+  TripCardDetail: 'record',
+  TripCardEdit: 'record',
   Profile: 'profile',
 };
 
@@ -461,7 +492,11 @@ function App() {
                 )}
               </Stack.Screen>
 
-              <Stack.Screen name="Festival" component={FestivalScreen} />
+              <Stack.Screen name="Festival">
+                {({ navigation }) => (
+                  <FestivalScreen onBack={() => navigation.goBack()} />
+                )}
+              </Stack.Screen>
               <Stack.Screen name="Destination">
                 {({ navigation }) => (
                   <DestinationScreen
@@ -483,29 +518,123 @@ function App() {
                 )}
               </Stack.Screen>
 
+              {/* 기록 (Func-005) */}
               <Stack.Screen name="Record">
                 {({ navigation }) => (
                   <RecordView
-                    onOpenMap={() => navigation.navigate('RecordMap')}
-                    onOpenRecord={id =>
-                      navigation.navigate('RecordEdit', { id })
+                    onOpenTrip={tripCardId =>
+                      navigation.navigate('RecordMap', { tripCardId })
                     }
-                    onWrite={() => navigation.navigate('RecordEdit', {})}
-                    onCamera={() => navigation.navigate('Camera')}
+                    onOpenTripCards={() => navigation.navigate('TripCards')}
+                    onOpenEvents={() => navigation.navigate('Festival')}
                   />
                 )}
               </Stack.Screen>
               <Stack.Screen name="RecordMap">
-                {({ navigation }) => (
+                {({ navigation, route }) => (
                   <RecordMapView
+                    tripCardId={route.params.tripCardId}
                     onBack={() => navigation.goBack()}
-                    onToggleList={() => navigation.goBack()}
-                    onOpenRecord={id =>
-                      navigation.navigate('RecordEdit', { id })
+                    onOpenSpot={spot =>
+                      navigation.navigate('PhotoDetail', {
+                        tripCardId: spot.tripCardId,
+                        tripCardPlaceId: spot.tripCardPlaceId,
+                      })
+                    }
+                    onCamera={() => navigation.navigate('Camera')}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="PhotoDetail">
+                {({ navigation, route }) => (
+                  <PhotoDetailView
+                    tripCardId={route.params.tripCardId}
+                    tripCardPlaceId={route.params.tripCardPlaceId}
+                    photoId={route.params.photoId}
+                    onBack={() => navigation.goBack()}
+                    onWriteComment={photo =>
+                      navigation.navigate('CommentEdit', {
+                        photoId: photo.photoId,
+                        mode: 'create',
+                      })
+                    }
+                    onEditComment={photo =>
+                      navigation.navigate('CommentEdit', {
+                        photoId: photo.photoId,
+                        mode: 'edit',
+                      })
+                    }
+                    onDeletePhotos={() =>
+                      navigation.navigate('PhotoDelete', {
+                        tripCardId: route.params.tripCardId,
+                      })
                     }
                   />
                 )}
               </Stack.Screen>
+              <Stack.Screen name="CommentEdit">
+                {({ navigation, route }) => (
+                  <CommentEditView
+                    photoId={route.params.photoId}
+                    mode={route.params.mode}
+                    onBack={() => navigation.goBack()}
+                    onSaved={() => navigation.goBack()}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="PhotoDelete">
+                {({ navigation, route }) => (
+                  <PhotoDeleteView
+                    tripCardId={route.params.tripCardId}
+                    onBack={() => navigation.goBack()}
+                    onDeleted={() => navigation.goBack()}
+                  />
+                )}
+              </Stack.Screen>
+
+              {/* 여행 카드 (Func-003) */}
+              <Stack.Screen name="TripCards">
+                {({ navigation }) => (
+                  <TripCardListView
+                    onBack={() => navigation.goBack()}
+                    onOpenCard={tripCardId =>
+                      navigation.navigate('TripCardDetail', { tripCardId })
+                    }
+                    onManage={() => navigation.navigate('TripCardDelete')}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="TripCardDetail">
+                {({ navigation, route }) => (
+                  <TripCardDetailView
+                    tripCardId={route.params.tripCardId}
+                    onBack={() => navigation.goBack()}
+                    onAddPhoto={() =>
+                      navigation.navigate('TripCardEdit', {
+                        tripCardId: route.params.tripCardId,
+                      })
+                    }
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="TripCardEdit">
+                {({ navigation, route }) => (
+                  <TripCardEditView
+                    tripCardId={route.params.tripCardId}
+                    onBack={() => navigation.goBack()}
+                    onSaved={() => navigation.goBack()}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="TripCardDelete">
+                {({ navigation }) => (
+                  <TripCardDeleteView
+                    onBack={() => navigation.goBack()}
+                    onDeleted={() => navigation.goBack()}
+                  />
+                )}
+              </Stack.Screen>
+
               <Stack.Screen name="RecordEdit">
                 {({ navigation }) => (
                   <RecordEditView

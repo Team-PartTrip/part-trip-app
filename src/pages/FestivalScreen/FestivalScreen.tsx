@@ -1,102 +1,255 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
-  Image,
   ActivityIndicator,
 } from 'react-native';
-import colors from '../../shared/tokens/colors';
-import { festivalStyles as styles } from './FestivalScreen.styles';
-import { getDday, getFestivals, Festival } from '../../entities/main/api';
-import { toImageUrl } from '../../shared/api/image';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { festivalStyles as s } from './FestivalScreen.styles';
+import { getDday, getFestivals, DdayInfo, Festival } from '../../entities/main/api';
+import {
+  formatShortDate,
+  formatTripRange,
+} from '../../entities/record/types';
 
-const FestivalScreen: React.FC = () => {
+const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+
+function toIso(year: number, monthIndex: number, day: number): string {
+  const month = `${monthIndex + 1}`.padStart(2, '0');
+  return `${year}-${month}-${`${day}`.padStart(2, '0')}`;
+}
+
+interface Props {
+  onBack?: () => void;
+}
+
+const FestivalScreen: React.FC<Props> = ({ onBack }) => {
   const [loading, setLoading] = useState(true);
-  const [countryName, setCountryName] = useState<string | null>(null);
-  const [festivals, setFestivals] = useState<Festival[]>([]);
+  const [dday, setDday] = useState<DdayInfo | null>(null);
+  const [events, setEvents] = useState<Festival[]>([]);
+  const [cursor, setCursor] = useState(() => new Date());
+  const [categories, setCategories] = useState<string[]>([]);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
+  const year = cursor.getFullYear();
+  const monthIndex = cursor.getMonth();
+
+  // 여행 일정을 먼저 읽어 그 달로 달력을 맞춰 놓는다
   useEffect(() => {
     (async () => {
       try {
-        const d = await getDday();
-        setCountryName(d.countryName);
-        const list = await getFestivals(d.countryName).catch(() => []);
-        setFestivals(list);
+        const info = await getDday();
+        setDday(info);
+        const [y, m] = info.startDate.split('-').map(Number);
+        setCursor(new Date(y, m - 1, 1));
       } catch {
-        setCountryName(null);
-        setFestivals([]);
-      } finally {
-        setLoading(false);
+        setDday(null);
       }
     })();
   }, []);
 
+  useEffect(() => {
+    if (!dday) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    getFestivals(dday.countryName, { year, month: monthIndex + 1 })
+      .then(setEvents)
+      .catch(() => setEvents([]))
+      .finally(() => setLoading(false));
+  }, [dday, year, monthIndex]);
+
+  const weeks = useMemo(() => {
+    const leading = new Date(year, monthIndex, 1).getDay();
+    const lastDay = new Date(year, monthIndex + 1, 0).getDate();
+    const cells: (number | null)[] = [
+      ...Array<null>(leading).fill(null),
+      ...Array.from({ length: lastDay }, (_, i) => i + 1),
+    ];
+    while (cells.length % 7 !== 0) {
+      cells.push(null);
+    }
+    return Array.from({ length: cells.length / 7 }, (_, i) =>
+      cells.slice(i * 7, i * 7 + 7),
+    );
+  }, [year, monthIndex]);
+
+  const eventDates = useMemo(
+    () => new Set(events.map(event => event.startDate)),
+    [events],
+  );
+
+  const chips = useMemo(
+    () => Array.from(new Set(events.map(event => event.category))),
+    [events],
+  );
+
+  // 이 달의 일정을 모두 보여주고, 날짜를 고르면 그 하루로 좁힌다.
+  // 여행 기간은 달력에 옅은 파랑으로만 표시한다.
+  const visible = useMemo(() => {
+    let list = events;
+    if (selectedDate) {
+      list = list.filter(event => event.startDate === selectedDate);
+    }
+    if (categories.length > 0) {
+      list = list.filter(event => categories.includes(event.category));
+    }
+    return list;
+  }, [events, selectedDate, categories]);
+
+  const toggleCategory = (category: string) =>
+    setCategories(prev =>
+      prev.includes(category)
+        ? prev.filter(item => item !== category)
+        : [...prev, category],
+    );
+
   return (
-    <View style={styles.safeArea}>
+    <View style={s.safeArea}>
       <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.yearRow}>
-          <Text style={styles.yearText}>
-            {countryName ? `${countryName} 축제/이벤트` : '축제/이벤트'}
+        <SafeAreaView edges={['top']} style={s.header}>
+          <TouchableOpacity onPress={onBack} hitSlop={12}>
+            <Text style={s.back}>‹</Text>
+          </TouchableOpacity>
+          <Text style={s.title}>축제 & 이벤트</Text>
+          <Text style={s.subtitle}>
+            {dday
+              ? `${dday.countryName} · ${year}년 ${monthIndex + 1}월 기준`
+              : '등록된 여행 일정이 없어요'}
           </Text>
+        </SafeAreaView>
+
+        <View style={s.calCard}>
+          <View style={s.calHead}>
+            <Text style={s.calMonth}>
+              {year}년 {monthIndex + 1}월
+            </Text>
+            <TouchableOpacity
+              hitSlop={10}
+              onPress={() => setCursor(new Date(year, monthIndex - 1, 1))}
+            >
+              <Text style={s.calArrow}>‹</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              hitSlop={10}
+              onPress={() => setCursor(new Date(year, monthIndex + 1, 1))}
+            >
+              <Text style={s.calArrow}>›</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={s.calWeekRow}>
+            {WEEKDAYS.map((weekday, i) => (
+              <Text
+                key={weekday}
+                style={[s.calWeekday, i === 0 && s.calSunday]}
+              >
+                {weekday}
+              </Text>
+            ))}
+          </View>
+
+          {weeks.map((week, weekIndex) => (
+            <View key={weekIndex} style={s.calWeek}>
+              {week.map((day, dayIndex) => {
+                if (day === null) {
+                  return <View key={dayIndex} style={s.calCell} />;
+                }
+                const date = toIso(year, monthIndex, day);
+                const inTrip =
+                  !!dday &&
+                  date >= dday.startDate &&
+                  date <= dday.endDate;
+                const on = date === selectedDate;
+                return (
+                  <TouchableOpacity
+                    key={dayIndex}
+                    style={s.calCell}
+                    activeOpacity={0.7}
+                    onPress={() => setSelectedDate(on ? null : date)}
+                  >
+                    <View
+                      style={[
+                        s.dayPill,
+                        inTrip && s.dayInTrip,
+                        on && s.daySelected,
+                      ]}
+                    >
+                      <Text style={[s.dayText, on && s.dayTextSelected]}>
+                        {day}
+                      </Text>
+                    </View>
+                    {eventDates.has(date) && (
+                      <View style={[s.dot, on && s.dotOnSelected]} />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ))}
         </View>
 
-        {loading ? (
-          <ActivityIndicator style={{ marginTop: 24 }} />
-        ) : !countryName ? (
-          <Text style={{ color: colors.textSub }}>
-            등록된 여행 일정이 없어 축제 정보를 불러올 수 없습니다.
+        {!!dday && (
+          <Text style={s.tripRange}>
+            여행 기간 {formatTripRange(dday.startDate, dday.endDate)}
           </Text>
-        ) : festivals.length === 0 ? (
-          <Text style={{ color: colors.textSub }}>
-            아직 등록된 축제/이벤트 정보가 없습니다.
-          </Text>
-        ) : (
-          festivals.map(e => (
-            <TouchableOpacity
-              key={e.title}
-              style={styles.eventCard}
-              activeOpacity={0.85}
-            >
-              <View style={styles.eventThumb}>
-                {e.imageUrl ? (
-                  <Image
-                    source={{ uri: toImageUrl(e.imageUrl) }}
-                    style={{ width: '100%', height: '100%', borderRadius: 12 }}
-                  />
-                ) : (
-                  <Text style={styles.eventThumbIcon}>🎆</Text>
-                )}
-              </View>
-              <View style={styles.eventBody}>
-                <View
-                  style={[
-                    styles.eventTag,
-                    { backgroundColor: colors.tagRedBg },
-                  ]}
+        )}
+
+        {chips.length > 0 && (
+          <View style={s.chipRow}>
+            {chips.map(category => {
+              const on = categories.includes(category);
+              return (
+                <TouchableOpacity
+                  key={category}
+                  style={[s.chip, on && s.chipOn]}
+                  activeOpacity={0.85}
+                  onPress={() => toggleCategory(category)}
                 >
-                  <Text
-                    style={[styles.eventTagText, { color: colors.redAccent }]}
-                  >
-                    {e.category}
+                  <Text style={[s.chipText, on && s.chipTextOn]}>
+                    {category}
                   </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
+
+        {loading ? (
+          <ActivityIndicator style={s.loader} />
+        ) : visible.length === 0 ? (
+          <View style={s.empty}>
+            <Text style={s.emptyText}>보여줄 일정이 없어요</Text>
+            <Text style={s.emptyDesc}>
+              {dday
+                ? '다른 날짜나 카테고리를 골라보세요.'
+                : '여행 일정을 등록하면 축제·이벤트를 알려드려요.'}
+            </Text>
+          </View>
+        ) : (
+          <View style={s.list}>
+            {visible.map(event => (
+              <View key={`${event.title}-${event.startDate}`} style={s.card}>
+                <View style={s.cardStripe} />
+                <View style={s.cardBody}>
+                  <Text style={s.cardTitle}>{event.title}</Text>
+                  <Text style={s.cardMeta}>
+                    {formatShortDate(event.startDate)} · {event.startTime}
+                  </Text>
+                  <Text style={s.cardPlace}>{event.location}</Text>
                 </View>
-                <Text style={styles.eventTitle}>{e.title}</Text>
-                <Text style={styles.eventDesc}>{e.description}</Text>
-                <View style={styles.eventMetaRow}>
-                  <Text style={styles.eventMeta}>
-                    🕐 {e.startDate} {e.startTime}
-                  </Text>
-                  <Text style={styles.eventMeta}>📍 {e.location}</Text>
+                <View style={s.cardPill}>
+                  <Text style={s.cardPillText}>{event.category}</Text>
                 </View>
               </View>
-            </TouchableOpacity>
-          ))
+            ))}
+          </View>
         )}
       </ScrollView>
     </View>
