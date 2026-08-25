@@ -56,16 +56,6 @@ export interface CountryAcquiredParams {
   continentName: string;
 }
 
-/** 달성 뱃지 (E5) */
-export interface Milestone {
-  key: string;
-  label: string;
-  desc: string;
-  /** 달성 조건 대비 현재 값 */
-  current: number;
-  goal: number;
-}
-
 /** "JP" → 🇯🇵 — 국기 이미지 없이 유니코드 지역표시 기호로 만든다 */
 export function flagOf(countryCode: string): string {
   if (countryCode.length !== 2) {

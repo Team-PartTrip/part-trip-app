@@ -2,91 +2,113 @@ import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { achievementStyles as s } from './AchievementView.styles';
-import { sampleMilestones, sampleSummary } from '../../entities/worldmap/sampleData';
+import { sampleSummary } from '../../entities/worldmap/sampleData';
+
+/**
+ * 도넛 진행률.
+ *
+ * SVG 라이브러리가 없어서 원을 좌·우 반쪽으로 자르고, 각 반쪽 안에서
+ * "위+오른쪽 두 변만 색칠한 링"을 돌려 호를 만든다. 색칠된 구간은
+ * 회전각 기준 (rot-45)~(rot+135) 이므로, 진행각 deg 를 보여주려면
+ * rot = deg - 135 로 두면 된다. 오른쪽 반쪽은 180도에서 멈춘다.
+ */
+const ProgressRing: React.FC<{ percent: number; value: number }> = ({
+  percent,
+  value,
+}) => {
+  const deg = Math.min(100, Math.max(0, percent)) * 3.6;
+  const rightRotate = Math.min(deg, 180) - 135;
+  const leftRotate = Math.max(deg, 180) - 135;
+
+  return (
+    <View style={s.ring}>
+      <View style={[s.ringHalf, s.ringHalfRight]}>
+        <View
+          style={[
+            s.ringArc,
+            s.ringArcRight,
+            { transform: [{ rotate: `${rightRotate}deg` }] },
+          ]}
+        />
+      </View>
+      <View style={[s.ringHalf, s.ringHalfLeft]}>
+        <View
+          style={[
+            s.ringArc,
+            s.ringArcLeft,
+            { transform: [{ rotate: `${leftRotate}deg` }] },
+          ]}
+        />
+      </View>
+      <Text style={s.ringValue}>{value}</Text>
+      <Text style={s.ringUnit}>국가</Text>
+    </View>
+  );
+};
 
 interface Props {
   onBack?: () => void;
 }
 
 const AchievementView: React.FC<Props> = ({ onBack }) => {
-  const { visitedCount, totalCount, continents } = sampleSummary;
+  const { visitedCount, totalCount, continents, countries } = sampleSummary;
   const percent = Math.round((visitedCount / totalCount) * 1000) / 10;
-  const doneCount = sampleMilestones.filter(m => m.current >= m.goal).length;
+
+  // 올해 처음 밟은 나라 수
+  const thisYear = `${new Date().getFullYear()}`;
+  const gainedThisYear = countries.filter(c =>
+    c.firstVisitedAt.startsWith(thisYear),
+  ).length;
+
+  // 다음 목표는 10개국 단위로 올린다 (5개국 → 10개국 → 20개국 …)
+  const goal = visitedCount < 10 ? 10 : Math.ceil((visitedCount + 1) / 10) * 10;
 
   return (
     <View style={s.safeArea}>
-      <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={s.content}
+        showsVerticalScrollIndicator={false}
+      >
         <SafeAreaView edges={['top']} style={s.header}>
           <TouchableOpacity onPress={onBack} hitSlop={12}>
             <Text style={s.back}>‹</Text>
           </TouchableOpacity>
           <Text style={s.title}>여행 달성 현황</Text>
-
-          <Text style={s.headline}>
-            {totalCount}개국 중 {visitedCount}개국을 다녀왔어요
-          </Text>
-          <View style={s.percentRow}>
-            <Text style={s.percent}>{percent}</Text>
-            <Text style={s.percentUnit}>%</Text>
-          </View>
-
-          <View style={s.headerTrack}>
-            {/* 1% 미만이어도 막대가 보이도록 최소 너비를 준다 */}
-            <View style={[s.headerFill, { width: `${Math.max(percent, 2)}%` }]} />
-          </View>
         </SafeAreaView>
 
-        <View style={s.section}>
-          <Text style={s.sectionTitle}>대륙별 달성</Text>
-          <View style={s.grid}>
-            {continents.map(c => (
-              <View key={c.code} style={s.continentCard}>
-                <Text style={s.continentName}>{c.name}</Text>
-                <Text style={s.continentCount}>
-                  {c.visited} / {c.total}개국
-                </Text>
-                <View style={s.track}>
-                  <View
-                    style={[s.fill, { width: `${(c.visited / c.total) * 100}%` }]}
-                  />
-                </View>
-              </View>
-            ))}
+        <View style={s.summaryCard}>
+          <ProgressRing percent={percent} value={visitedCount} />
+
+          <View style={s.summaryBody}>
+            <Text style={s.summaryEyebrow}>전 세계 {totalCount}개국 중</Text>
+            <Text style={s.summaryPercent}>{percent}% 달성</Text>
+            <Text style={s.summaryThisYear}>
+              올해 +{gainedThisYear}개국
+            </Text>
+            <View style={s.goalPill}>
+              <Text style={s.goalPillText}>다음 목표 {goal}개국</Text>
+            </View>
           </View>
         </View>
 
         <View style={s.section}>
-          <Text style={s.sectionTitle}>
-            달성 뱃지 {doneCount}/{sampleMilestones.length}
-          </Text>
+          <Text style={s.sectionTitle}>대륙별 현황</Text>
 
-          {sampleMilestones.map(m => {
-            const done = m.current >= m.goal;
-            return (
-              <View key={m.key} style={s.milestone}>
-                <View style={[s.milestoneIcon, done && s.milestoneIconDone]}>
-                  <Text style={s.milestoneIconText}>{done ? '🏅' : '🔒'}</Text>
-                </View>
-                <View style={s.milestoneBody}>
-                  <Text style={[s.milestoneLabel, !done && s.milestoneLabelLocked]}>
-                    {m.label}
-                  </Text>
-                  <Text style={s.milestoneDesc}>{m.desc}</Text>
-                </View>
-                <View style={s.milestoneRight}>
-                  {done ? (
-                    <View style={s.doneBadge}>
-                      <Text style={s.doneBadgeText}>달성</Text>
-                    </View>
-                  ) : (
-                    <Text style={s.progressText}>
-                      {m.current} / {m.goal}
-                    </Text>
-                  )}
-                </View>
+          {continents.map(c => (
+            <View key={c.code} style={s.continentRow}>
+              <View style={s.continentTop}>
+                <Text style={s.continentName}>{c.name}</Text>
+                <Text style={s.continentCount}>
+                  {c.visited} / {c.total}
+                </Text>
               </View>
-            );
-          })}
+              <View style={s.track}>
+                <View
+                  style={[s.fill, { width: `${(c.visited / c.total) * 100}%` }]}
+                />
+              </View>
+            </View>
+          ))}
         </View>
 
         <Text style={s.note}>

@@ -5,7 +5,6 @@ import {
   Continent,
   CountryAcquiredParams,
   CountryTripRecord,
-  Milestone,
   VisitedCountry,
   WorldMapSummary,
 } from './types';
@@ -154,48 +153,3 @@ export function sampleAcquiredParamsOf(
     continentName: continent?.name ?? '-',
   };
 }
-
-export const sampleMilestones: Milestone[] = [
-  {
-    key: 'first',
-    label: '첫 발자국',
-    desc: '첫 국가를 획득했어요',
-    current: 5,
-    goal: 1,
-  },
-  {
-    key: 'five',
-    label: '다섯 나라',
-    desc: '5개국을 획득했어요',
-    current: 5,
-    goal: 5,
-  },
-  {
-    key: 'continent3',
-    label: '대륙 횡단',
-    desc: '3개 대륙을 밟아보세요',
-    current: 3,
-    goal: 3,
-  },
-  {
-    key: 'ten',
-    label: '열 나라',
-    desc: '10개국을 획득해보세요',
-    current: 5,
-    goal: 10,
-  },
-  {
-    key: 'repeat',
-    label: '단골 여행자',
-    desc: '같은 나라를 5번 방문해보세요',
-    current: 3,
-    goal: 5,
-  },
-  {
-    key: 'allContinent',
-    label: '세계일주',
-    desc: '6개 대륙을 모두 밟아보세요',
-    current: 3,
-    goal: 6,
-  },
-];
