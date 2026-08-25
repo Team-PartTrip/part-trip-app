@@ -311,7 +311,6 @@ function App() {
                   <MainView
                     onOpenDestination={() => navigation.navigate('Destination')}
                     onOpenNotifications={() => navigation.navigate('Notifications')}
-                    onOpenProfile={() => navigation.navigate('Profile')}
                     onOpenPlanner={() => navigation.navigate('Planner')}
                   />
                 )}
@@ -662,6 +661,9 @@ function App() {
               <Stack.Screen name="Profile">
                 {({ navigation }) => (
                   <ProfileView
+                    onOpenNotifications={() =>
+                      navigation.navigate('Notifications')
+                    }
                     onNotificationSettings={() =>
                       navigation.navigate('NotificationSettings')
                     }

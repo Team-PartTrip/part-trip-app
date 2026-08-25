@@ -55,7 +55,6 @@ interface MainViewProps {
   onOpenDestination?: () => void;
   /** 알림 화면이 생기면 연결한다. 없으면 배지만 보여준다. */
   onOpenNotifications?: () => void;
-  onOpenProfile?: () => void;
   /** "플래너에서 투표 이어가기" 행 */
   onOpenPlanner?: () => void;
 }
@@ -63,7 +62,6 @@ interface MainViewProps {
 const MainView: React.FC<MainViewProps> = ({
   onOpenDestination,
   onOpenNotifications,
-  onOpenProfile,
   onOpenPlanner,
 }) => {
   const [loading, setLoading] = useState(true);
@@ -159,27 +157,19 @@ const MainView: React.FC<MainViewProps> = ({
               <TouchableOpacity
                 style={s.circleBtn}
                 activeOpacity={0.85}
-                disabled={!onOpenNotifications}
-                onPress={onOpenNotifications}
+                disabled={!onOpenDestination}
+                onPress={onOpenDestination}
               >
-                <Image
-                  source={require('../../shared/assets/images/tab-planner.png')}
-                  resizeMode="contain"
-                  style={s.circleIcon}
-                />
-                {unread > 0 && <View style={s.badge} />}
+                <Text style={s.circleEmoji}>✈️</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={s.circleBtn}
                 activeOpacity={0.85}
-                disabled={!onOpenProfile}
-                onPress={onOpenProfile}
+                disabled={!onOpenNotifications}
+                onPress={onOpenNotifications}
               >
-                <Image
-                  source={require('../../shared/assets/images/tab-profile.png')}
-                  resizeMode="contain"
-                  style={s.circleIcon}
-                />
+                <Text style={s.circleEmoji}>🔔</Text>
+                {unread > 0 && <View style={s.badge} />}
               </TouchableOpacity>
             </View>
           </View>

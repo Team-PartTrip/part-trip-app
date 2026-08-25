@@ -51,6 +51,10 @@ export const mainStyles = StyleSheet.create({
     height: 16,
     tintColor: colors.primary,
   },
+  // 여행 변경(✈️) · 알림(🔔) — 쓸 만한 아이콘 이미지가 없어 이모지로 둔다
+  circleEmoji: {
+    fontSize: 15,
+  },
   // 안읽은 알림 표시. 원 오른쪽 위에 겹친다.
   badge: {
     position: 'absolute',

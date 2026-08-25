@@ -23,6 +23,8 @@ const MAP_CELLS = 6;
 
 interface Props {
   onEdit?: () => void;
+  /** 상단 종 버튼 — 알림 목록 */
+  onOpenNotifications?: () => void;
   onLogout?: () => void;
   onNotificationSettings?: () => void;
   onOpenWorldMap?: () => void;
@@ -30,6 +32,7 @@ interface Props {
 
 const ProfileView: React.FC<Props> = ({
   onEdit,
+  onOpenNotifications,
   onLogout,
   onNotificationSettings,
   onOpenWorldMap,
@@ -87,16 +90,14 @@ const ProfileView: React.FC<Props> = ({
         <SafeAreaView edges={['top']} style={s.header}>
           <View style={s.headerTop}>
             <Text style={s.headerTitle}>마이</Text>
+            {/* 알림 목록. 아래 설정 목록의 "알림 설정" 과는 다른 화면이다 */}
             <TouchableOpacity
               style={s.headerCircle}
               activeOpacity={0.85}
-              onPress={onNotificationSettings}
+              disabled={!onOpenNotifications}
+              onPress={onOpenNotifications}
             >
-              <Image
-                source={require('../../shared/assets/images/tab-planner.png')}
-                resizeMode="contain"
-                style={s.headerCircleIcon}
-              />
+              <Text style={s.headerCircleEmoji}>🔔</Text>
             </TouchableOpacity>
           </View>
 
