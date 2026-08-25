@@ -24,6 +24,22 @@ import GuideResultView from './src/pages/CameraScreen/GuideResultView';
 import DestinationPickerView from './src/pages/DestinationScreen/DestinationPickerView';
 import ProfileView from './src/pages/ProfileView/ProfileView';
 import PlannerScreen from './src/pages/PlannerScreen/PlannerScreen';
+import PlanGroupView from './src/pages/PlannerScreen/PlanGroupView';
+import PlanDestinationView from './src/pages/PlannerScreen/PlanDestinationView';
+import PlacePickerView from './src/pages/PlannerScreen/PlacePickerView';
+import PlaceVoteView from './src/pages/PlannerScreen/PlaceVoteView';
+import PlanCartView from './src/pages/PlannerScreen/PlanCartView';
+import PlanStatusView from './src/pages/PlannerScreen/PlanStatusView';
+import PlanConfirmView from './src/pages/PlannerScreen/PlanConfirmView';
+import type {
+  PlaceCategory,
+  PlanDraft,
+  TourPlace,
+} from './src/entities/planner/types';
+import {
+  SAMPLE_PLAN_ID,
+  samplePlanOf,
+} from './src/entities/planner/sampleData';
 import NotificationListView from './src/pages/NotificationView/NotificationListView';
 import NotificationDetailView from './src/pages/NotificationView/NotificationDetailView';
 import NotificationSettingsView from './src/pages/NotificationView/NotificationSettingsView';
@@ -58,6 +74,13 @@ export type RootStackParamList = {
   ResetPassword: { email: string; from?: 'login' | 'profile' };
   Main: undefined;
   Planner: undefined;
+  PlanGroup: undefined;
+  PlanDestination: { draft: PlanDraft };
+  PlacePicker: { draft: PlanDraft };
+  PlanCart: { places: TourPlace[] };
+  PlaceVote: { planId: number; category?: PlaceCategory };
+  PlanStatus: { planId: number };
+  PlanConfirm: { planId: number };
   Notifications: undefined;
   NotificationDetail: { notification: Notification };
   NotificationSettings: undefined;
@@ -106,12 +129,20 @@ const AUTH_ROUTES = [
   'CountryRecord',
   'CountryAcquired',
   'Achievement',
+  'PlanGroup',
+  'PlanDestination',
+  'PlacePicker',
+  'PlanCart',
+  'PlaceVote',
+  'PlanConfirm',
 ];
 
 // 자체 상단 영역(파란 헤더 또는 뒤로가기)을 가진 화면.
 // 공용 AppHeader 까지 얹으면 상단 여백이 두 번 들어가서 크게 빈다.
 const OWN_HEADER_ROUTES = [
   'Main',
+  'Planner',
+  'PlanStatus',
   'Profile',
   'Notifications',
   'NotificationDetail',
@@ -128,6 +159,7 @@ const ROUTE_BY_TAB: Record<TabKey, keyof RootStackParamList> = {
 const TAB_BY_ROUTE: Record<string, TabKey> = {
   Main: 'home',
   Planner: 'planner',
+  PlanStatus: 'planner',
   Record: 'record',
   Profile: 'profile',
 };
@@ -254,8 +286,116 @@ function App() {
                 )}
               </Stack.Screen>
 
+              {/* 플래너 (Func-008) */}
               <Stack.Screen name="Planner">
-                {() => <PlannerScreen />}
+                {({ navigation }) => (
+                  <PlannerScreen
+                    onCreate={() => navigation.navigate('PlanGroup')}
+                    onOpenPlan={planId => {
+                      // 확정된 계획은 최종 확인 화면, 그 밖에는 진행 현황으로
+                      if (samplePlanOf(planId).status === 'CONFIRMED') {
+                        navigation.navigate('PlanConfirm', { planId });
+                      } else {
+                        navigation.navigate('PlanStatus', { planId });
+                      }
+                    }}
+                  />
+                )}
+              </Stack.Screen>
+
+              <Stack.Screen name="PlanGroup">
+                {({ navigation }) => (
+                  <PlanGroupView
+                    onBack={() => navigation.goBack()}
+                    onNext={draft =>
+                      navigation.navigate('PlanDestination', { draft })
+                    }
+                  />
+                )}
+              </Stack.Screen>
+
+              <Stack.Screen name="PlanDestination">
+                {({ navigation, route }) => (
+                  <PlanDestinationView
+                    draft={route.params.draft}
+                    onBack={() => navigation.goBack()}
+                    onNext={draft =>
+                      navigation.navigate('PlacePicker', { draft })
+                    }
+                  />
+                )}
+              </Stack.Screen>
+
+              <Stack.Screen name="PlacePicker">
+                {({ navigation, route }) => (
+                  <PlacePickerView
+                    draft={route.params.draft}
+                    onBack={() => navigation.goBack()}
+                    onOpenCart={places =>
+                      navigation.navigate('PlanCart', { places })
+                    }
+                    // 그룹 · 계획 생성 API 가 붙으면 응답으로 받은 planId 를 쓴다
+                    onStartVote={() =>
+                      navigation.navigate('PlaceVote', {
+                        planId: SAMPLE_PLAN_ID,
+                      })
+                    }
+                  />
+                )}
+              </Stack.Screen>
+
+              <Stack.Screen name="PlanCart">
+                {({ navigation, route }) => (
+                  <PlanCartView
+                    places={route.params.places}
+                    onBack={() => navigation.goBack()}
+                    onConfirm={() =>
+                      navigation.navigate('PlanConfirm', {
+                        planId: SAMPLE_PLAN_ID,
+                      })
+                    }
+                  />
+                )}
+              </Stack.Screen>
+
+              <Stack.Screen name="PlaceVote">
+                {({ navigation, route }) => (
+                  <PlaceVoteView
+                    planId={route.params.planId}
+                    category={route.params.category}
+                    onBack={() => navigation.goBack()}
+                    onDone={() =>
+                      navigation.navigate('PlanConfirm', {
+                        planId: route.params.planId,
+                      })
+                    }
+                  />
+                )}
+              </Stack.Screen>
+
+              <Stack.Screen name="PlanStatus">
+                {({ navigation, route }) => (
+                  <PlanStatusView
+                    planId={route.params.planId}
+                    onBack={() => navigation.goBack()}
+                    onOpenVote={category =>
+                      navigation.navigate('PlaceVote', {
+                        planId: route.params.planId,
+                        category,
+                      })
+                    }
+                  />
+                )}
+              </Stack.Screen>
+
+              <Stack.Screen name="PlanConfirm">
+                {({ navigation, route }) => (
+                  <PlanConfirmView
+                    planId={route.params.planId}
+                    onBack={() => navigation.goBack()}
+                    onStart={() => navigation.navigate('Planner')}
+                  />
+                )}
               </Stack.Screen>
 
               <Stack.Screen name="Notifications">
