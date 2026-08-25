@@ -311,6 +311,8 @@ function App() {
                   <MainView
                     onOpenDestination={() => navigation.navigate('Destination')}
                     onOpenNotifications={() => navigation.navigate('Notifications')}
+                    onOpenProfile={() => navigation.navigate('Profile')}
+                    onOpenPlanner={() => navigation.navigate('Planner')}
                   />
                 )}
               </Stack.Screen>

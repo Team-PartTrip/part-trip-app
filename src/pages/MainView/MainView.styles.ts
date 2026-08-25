@@ -162,6 +162,10 @@ export const mainStyles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: colors.tint,
   },
+  // 제목/보조문구가 남는 폭을 다 먹어야 화살표가 오른쪽 끝에 붙는다
+  prepBody: {
+    flex: 1,
+  },
   prepTitle: {
     fontSize: 15,
     fontWeight: '600',

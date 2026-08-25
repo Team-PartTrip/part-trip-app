@@ -17,7 +17,13 @@ import {
   TourPlace,
 } from '../../entities/main/api';
 import { getUnreadCount } from '../../entities/notification/api';
+import {
+  PREP_STATUS_LABEL,
+  PrepStatus,
+  SAMPLE_READINESS,
+} from '../../entities/main/readiness';
 import { toImageUrl } from '../../shared/api/image';
+import colors from '../../shared/tokens/colors';
 
 // "2026-08-23" + "2026-08-27" → "2026.08.23 – 08.27"
 // 해가 바뀌면 끝 날짜에도 연도를 남긴다 → "2026.06.10 – 2027.03.27"
@@ -38,15 +44,27 @@ function formatNights(start: string, end: string): string {
   return `${nights}박 ${nights + 1}일`;
 }
 
+// 확정은 초록, 투표 중은 주황, 미정은 흐리게 — 상태를 색으로도 구분한다
+const STATUS_COLOR: Record<PrepStatus, string> = {
+  CONFIRMED: colors.success,
+  VOTING: colors.accent,
+  TODO: colors.textSub,
+};
+
 interface MainViewProps {
   onOpenDestination?: () => void;
   /** 알림 화면이 생기면 연결한다. 없으면 배지만 보여준다. */
   onOpenNotifications?: () => void;
+  onOpenProfile?: () => void;
+  /** "플래너에서 투표 이어가기" 행 */
+  onOpenPlanner?: () => void;
 }
 
 const MainView: React.FC<MainViewProps> = ({
   onOpenDestination,
   onOpenNotifications,
+  onOpenProfile,
+  onOpenPlanner,
 }) => {
   const [loading, setLoading] = useState(true);
   const [dday, setDday] = useState<DdayInfo | null>(null);
@@ -119,6 +137,7 @@ const MainView: React.FC<MainViewProps> = ({
   }
 
   const nights = formatNights(dday.startDate, dday.endDate);
+  const prep = SAMPLE_READINESS;
 
   return (
     <View style={s.safeArea}>
@@ -144,6 +163,18 @@ const MainView: React.FC<MainViewProps> = ({
                 />
                 {unread > 0 && <View style={s.badge} />}
               </TouchableOpacity>
+              <TouchableOpacity
+                style={s.circleBtn}
+                activeOpacity={0.85}
+                disabled={!onOpenProfile}
+                onPress={onOpenProfile}
+              >
+                <Image
+                  source={require('../../shared/assets/images/tab-profile.png')}
+                  resizeMode="contain"
+                  style={s.circleIcon}
+                />
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -153,13 +184,67 @@ const MainView: React.FC<MainViewProps> = ({
             {nights ? `${dday.cityName} · ${nights}` : dday.cityName}
           </Text>
           <Text style={s.tripMeta}>
-            {formatRange(dday.startDate, dday.endDate)}
+            {formatRange(dday.startDate, dday.endDate)} · {prep.memberCount}명
           </Text>
 
-          {/* 준비 진행률 · 항공/숙소/일정 상태 · 여행 준비 목록은
-              플래너 API(#65)가 생기면 여기에 붙는다. 값이 없는 동안에는
-              가짜 수치를 보여주지 않고 섹션 자체를 그리지 않는다. */}
+          {/* 준비 진행률 — 플래너 API(#65) 전까지는 예시 값이다 */}
+          <View style={s.progressTrack}>
+            <View style={[s.progressFill, { width: `${prep.percent}%` }]} />
+          </View>
+          <Text style={s.progressLabel}>준비 {prep.percent}% 완료</Text>
         </SafeAreaView>
+
+        {/* 항공 / 숙소 / 일정 — 파란 헤더에 절반쯤 걸쳐 놓인다 */}
+        <View style={s.statusCard}>
+          {[
+            { label: '항공', status: prep.flight },
+            { label: '숙소', status: prep.accommodation },
+            { label: '일정', status: prep.schedule },
+          ].map((item, i) => (
+            <React.Fragment key={item.label}>
+              {i > 0 && <View style={s.statusDivider} />}
+              <View style={s.statusCol}>
+                <Text style={s.statusLabel}>{item.label}</Text>
+                <Text
+                  style={[s.statusValue, { color: STATUS_COLOR[item.status] }]}
+                >
+                  {PREP_STATUS_LABEL[item.status]}
+                </Text>
+              </View>
+            </React.Fragment>
+          ))}
+        </View>
+
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>여행 준비</Text>
+
+          <TouchableOpacity
+            style={s.prepRow}
+            activeOpacity={0.85}
+            disabled={!onOpenPlanner}
+            onPress={onOpenPlanner}
+          >
+            <View style={s.prepIcon} />
+            <View style={s.prepBody}>
+              <Text style={s.prepTitle}>플래너에서 투표 이어가기</Text>
+              <Text style={[s.prepSub, { color: colors.accent }]}>
+                {prep.pendingVotes}건 대기 중
+              </Text>
+            </View>
+            <Text style={s.chevron}>›</Text>
+          </TouchableOpacity>
+
+          <View style={s.prepRow}>
+            <View style={s.prepIcon} />
+            <View style={s.prepBody}>
+              <Text style={s.prepTitle}>체크리스트 작성</Text>
+              <Text style={[s.prepSub, { color: colors.textSub }]}>
+                {prep.checklistTotal}개 중 {prep.checklistDone}개 완료
+              </Text>
+            </View>
+            <Text style={s.chevron}>›</Text>
+          </View>
+        </View>
 
         <View style={s.section}>
           <Text style={s.sectionTitle}>이번 주 추천</Text>
