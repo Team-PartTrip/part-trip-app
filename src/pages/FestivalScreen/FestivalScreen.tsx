@@ -16,6 +16,13 @@ import {
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
+/** 날짜와 나라가 모두 있는 여행 일정 ("쉬는 중" 응답을 걸러낸 뒤의 모습) */
+type TripDday = DdayInfo & {
+  countryName: string;
+  startDate: string;
+  endDate: string;
+};
+
 function toIso(year: number, monthIndex: number, day: number): string {
   const month = `${monthIndex + 1}`.padStart(2, '0');
   return `${year}-${month}-${`${day}`.padStart(2, '0')}`;
@@ -27,7 +34,8 @@ interface Props {
 
 const FestivalScreen: React.FC<Props> = ({ onBack }) => {
   const [loading, setLoading] = useState(true);
-  const [dday, setDday] = useState<DdayInfo | null>(null);
+  // 날짜와 나라가 확정된 일정만 담는다. 그래야 아래에서 매번 null 검사를 안 한다.
+  const [dday, setDday] = useState<TripDday | null>(null);
   const [events, setEvents] = useState<Festival[]>([]);
   const [cursor, setCursor] = useState(() => new Date());
   const [categories, setCategories] = useState<string[]>([]);
@@ -41,7 +49,13 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
     (async () => {
       try {
         const info = await getDday();
-        setDday(info);
+        // 일정이 없으면 서버가 200 으로 "쉬는 중"(전 필드 null)을 준다.
+        // 맞출 달도 물어볼 나라도 없으니 일정 없음으로 둔다.
+        if (!info.startDate || !info.endDate || !info.countryName) {
+          setDday(null);
+          return;
+        }
+        setDday(info as TripDday);
         const [y, m] = info.startDate.split('-').map(Number);
         setCursor(new Date(y, m - 1, 1));
       } catch {

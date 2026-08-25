@@ -21,15 +21,22 @@ export function getCountryInfo(countryName: string): Promise<CountryInfo> {
   );
 }
 
+/**
+ * 등록된 여행 일정이 없으면 서버가 에러 대신
+ * 모든 값이 null 이고 dday 만 "쉬는 중" 인 응답을 내려준다.
+ * (TravelPlanService.getDday 참고) — 그래서 날짜까지 null 이 될 수 있다.
+ */
 export interface DdayInfo {
-  countryName: string;
-  cityName: string;
-  startDate: string;
-  endDate: string;
+  countryName: string | null;
+  cityName: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  /** 여행 그룹 인원. 일정이 없으면 null */
+  headcount: number | null;
   dday: string;
 }
 
-/** 등록된 여행 일정의 D-Day 조회 (등록된 일정이 없으면 에러) */
+/** D-Day 조회. 일정이 없으면 "쉬는 중" 응답이 온다 */
 export function getDday(): Promise<DdayInfo> {
   return authRequest<DdayInfo>('/api/main/dday', { method: 'GET' });
 }

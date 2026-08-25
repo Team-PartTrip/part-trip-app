@@ -89,6 +89,10 @@ const MainView: React.FC<MainViewProps> = ({
           setDday(d);
           setUnread(count);
 
+          // 일정이 없으면 countryName 도 null 이라 추천 장소를 물어볼 게 없다
+          if (!d.countryName) {
+            return;
+          }
           const tour = await getTourPlaces(d.countryName).catch(() => []);
           if (alive) {
             setPlaces(tour);
@@ -117,7 +121,9 @@ const MainView: React.FC<MainViewProps> = ({
     );
   }
 
-  if (!dday) {
+  // 서버는 일정이 없을 때도 200 으로 "쉬는 중" 을 주는데, 그때는 날짜가 null 이다.
+  // 날짜가 없으면 D-Day 를 그릴 수 없으니 일정 없음 화면과 똑같이 다룬다.
+  if (!dday || !dday.startDate || !dday.endDate) {
     return (
       <SafeAreaView style={s.safeArea} edges={['top']}>
         <View style={s.empty}>
