@@ -1,165 +1,288 @@
 import { StyleSheet } from 'react-native';
 import colors from '../../shared/tokens/colors';
 
+// B2 · Func-002-03 여행 정보 설정
+// 피그마 402pt 프레임 기준. 좌우 여백 24 · 입력 높이 54 · 라운드 14.
 export const destinationStyles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background,
   },
 
-  // 헤더
+  // 헤더 — 뒤로가기 + 제목 + 안내문
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingHorizontal: 24,
   },
-  backBtn: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backIcon: {
-    fontSize: 26,
+  back: {
+    fontSize: 28,
+    lineHeight: 32,
     color: colors.textPrimary,
   },
-  headerTitle: {
-    flex: 1,
-    fontSize: 18,
+  title: {
+    marginTop: 8,
+    fontSize: 24,
     fontWeight: '800',
     color: colors.textPrimary,
   },
-  headerProfile: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.profileBg,
-    alignItems: 'center',
-    justifyContent: 'center',
+  subtitle: {
+    marginTop: 8,
+    fontSize: 14,
+    color: colors.textSub,
   },
-  headerProfileIcon: { fontSize: 18 },
 
-  scroll: { flex: 1 },
+  scroll: {
+    flex: 1,
+  },
   scrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 20,
+    paddingHorizontal: 24,
+    paddingTop: 24,
     paddingBottom: 24,
-    gap: 20,
   },
 
-  // 검색 (스크롤 영역 밖, 상단 고정)
-  searchBarWrap: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 12,
-    backgroundColor: colors.background,
+  // 항목 라벨 ("여행지" · "여행 기간" …)
+  label: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.textSecondary,
   },
-  searchBar: {
+  labelSpaced: {
+    marginTop: 26,
+  },
+
+  // 공통 입력 박스 (높이 54)
+  field: {
+    marginTop: 10,
+    height: 54,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.white,
+    paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    backgroundColor: colors.cardBg,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    paddingHorizontal: 14,
-    height: 48,
   },
-  searchIcon: { fontSize: 16, color: colors.textSub },
-  searchInput: {
+  fieldText: {
+    fontSize: 15,
+    color: colors.textPrimary,
+  },
+  fieldPlaceholder: {
+    fontSize: 15,
+    color: colors.placeholder,
+  },
+  // 값이 채워진 박스는 테두리를 파랗게 해서 선택된 걸 알린다
+  fieldFilled: {
+    borderColor: colors.primary,
+  },
+
+  // 여행 기간 — 170pt 짜리 두 칸 + 가운데 대시
+  dateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  dateBox: {
+    flex: 1,
+  },
+  dash: {
+    width: 14,
+    textAlign: 'center',
+    fontSize: 15,
+    color: colors.textSub,
+  },
+  // "4박 5일" — 기간이 정해졌을 때만 보인다
+  nights: {
+    marginTop: 8,
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.primary,
+  },
+
+  // 인원 — 라벨 + 스테퍼
+  peopleLabel: {
     flex: 1,
     fontSize: 15,
     color: colors.textPrimary,
-    padding: 0,
+  },
+  stepBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepBtnOff: {
+    opacity: 0.4,
+  },
+  stepText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    // 유니코드 −/+ 가 살짝 위로 떠서 광학 보정
+    marginTop: -2,
+  },
+  stepValue: {
+    width: 32,
+    textAlign: 'center',
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.textPrimary,
   },
 
-  // 섹션 헤더
-  sectionRow: {
+  // 여행 스타일 칩
+  chipRow: {
+    marginTop: 10,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  chip: {
+    height: 36,
+    paddingHorizontal: 18,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chipOn: {
+    borderColor: colors.primary,
+    backgroundColor: colors.tint,
+  },
+  chipText: {
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+  chipTextOn: {
+    color: colors.primary,
+    fontWeight: '700',
+  },
+
+  // 하단 고정 버튼
+  footer: {
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 12,
+    backgroundColor: colors.background,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderLight,
+  },
+  saveBtn: {
+    height: 54,
+    borderRadius: 14,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  saveBtnOff: {
+    backgroundColor: colors.border,
+  },
+  saveText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.textOnPrimary,
+  },
+
+  // 달력 시트
+  sheetBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
+  },
+  sheet: {
+    backgroundColor: colors.white,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: 20,
+  },
+  sheetHead: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
+    gap: 12,
   },
-  sectionLabel: {
+  sheetMonth: {
+    flex: 1,
     fontSize: 16,
     fontWeight: '800',
     color: colors.textPrimary,
   },
-  clearText: {
-    fontSize: 13,
-    color: colors.primary,
-    fontWeight: '600',
+  sheetArrow: {
+    width: 32,
+    fontSize: 22,
+    textAlign: 'center',
+    color: colors.textTertiary,
   },
-
-  // 최근 검색 칩
-  chip: {
+  calRow: {
+    marginTop: 12,
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    alignSelf: 'flex-start',
-    backgroundColor: colors.cardBg,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
   },
-  chipFlag: { fontSize: 16 },
-  chipText: {
-    fontSize: 14,
-    fontWeight: '600',
+  calWeekday: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 11,
+    color: colors.textSub,
+  },
+  calWeekend: {
+    color: colors.red,
+  },
+  calWeek: {
+    flexDirection: 'row',
+    marginTop: 4,
+  },
+  calCell: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 40,
+  },
+  dayPill: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dayPillMid: {
+    backgroundColor: colors.tint,
+    borderRadius: 0,
+    width: '100%',
+  },
+  dayPillEdge: {
+    backgroundColor: colors.primary,
+  },
+  dayText: {
+    fontSize: 13,
     color: colors.textPrimary,
   },
-  chipSub: {
+  dayTextEdge: {
+    color: colors.textOnPrimary,
+    fontWeight: '700',
+  },
+  dayTextOff: {
+    color: colors.calMuted,
+  },
+  sheetHint: {
+    marginTop: 12,
     fontSize: 12,
     color: colors.textSub,
+    textAlign: 'center',
   },
-  chipClose: {
-    fontSize: 14,
-    color: colors.textSub,
-    marginLeft: 2,
+  sheetDone: {
+    marginTop: 14,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-
-  // 인기 여행지 그리드
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    rowGap: 14,
+  sheetDoneOff: {
+    backgroundColor: colors.border,
   },
-  destCard: {
-    width: '48%',
-    height: 150,
-    borderRadius: 16,
-    overflow: 'hidden',
-    justifyContent: 'flex-end',
-  },
-  destOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.28)',
-  },
-  destIcon: {
-    position: 'absolute',
-    top: 12,
-    right: 14,
-    fontSize: 26,
-  },
-  destTextWrap: {
-    padding: 12,
-  },
-  destName: {
-    fontSize: 18,
-    fontWeight: '800',
+  sheetDoneText: {
+    fontSize: 15,
+    fontWeight: '700',
     color: colors.textOnPrimary,
-  },
-  destCountry: {
-    fontSize: 12,
-    color: colors.textOnPrimary,
-    opacity: 0.9,
   },
 });

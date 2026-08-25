@@ -17,7 +17,10 @@ import { useCountrySearch } from '../../shared/hooks/useCountrySearch';
 
 export interface SelectedDestination {
   countryInfoId: number;
+  /** 도시 이름. 화면에 그대로 보여주는 값 */
   name: string;
+  /** 여행 일정 등록(POST /api/main/travel-plan)에 도시와 함께 필요하다 */
+  countryName: string;
 }
 
 interface Props {
@@ -39,6 +42,7 @@ const DestinationPickerView: React.FC<Props> = ({ onBack, onSelect }) => {
     onSelect?.({
       countryInfoId: country.countryInfoId,
       name: country.cityName,
+      countryName: country.countryName,
     });
   };
 

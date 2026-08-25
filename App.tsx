@@ -135,9 +135,7 @@ const AUTH_ROUTES = [
   'MissionVerify',
   'PostDetail',
   'PostCreate',
-  'DestinationPicker',
-  'PostDetail',
-  'PostCreate',
+  'Destination',
   'DestinationPicker',
   'GuideResult',
   'RecordEdit',
@@ -500,7 +498,12 @@ function App() {
               <Stack.Screen name="Destination">
                 {({ navigation }) => (
                   <DestinationScreen
-                    onSaved={() => navigation.navigate('Main')}
+                    onBack={() => navigation.goBack()}
+                    onPickDestination={() =>
+                      navigation.navigate('DestinationPicker')
+                    }
+                    // 피그마 B2 의 버튼 문구가 "저장하고 플래너로" 다
+                    onSaved={() => navigation.navigate('Planner')}
                   />
                 )}
               </Stack.Screen>

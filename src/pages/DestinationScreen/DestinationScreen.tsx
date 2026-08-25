@@ -1,59 +1,154 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
   ScrollView,
   TouchableOpacity,
-  ImageBackground,
   ActivityIndicator,
   Modal,
   Alert,
 } from 'react-native';
-import colors from '../../shared/tokens/colors';
-import { destinationStyles as styles } from './DestinationScreen.styles';
-import { saveTravelPlan, CountryInfo } from '../../entities/main/api';
-import { toImageUrl } from '../../shared/api/image';
-import { useCountrySearch } from '../../shared/hooks/useCountrySearch';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { destinationStyles as s } from './DestinationScreen.styles';
+import { saveTravelPlan } from '../../entities/main/api';
+import { setDestinationCallback } from './destinationSelectBridge';
 
-const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+
+// 피그마 B2 의 여행 스타일 칩. 서버에 저장할 곳이 아직 없어서 화면 상태로만 둔다.
+const STYLES = ['휴양', '맛집', '액티비티', '문화'];
+
+/** 2026, 7(=8월), 23 → "2026-08-23" */
+function toIso(year: number, monthIndex: number, day: number): string {
+  const month = `${monthIndex + 1}`.padStart(2, '0');
+  return `${year}-${month}-${`${day}`.padStart(2, '0')}`;
+}
+
+/** "2026-08-23" → "08.23" (피그마 표기) */
+function toDotLabel(date: string): string {
+  const [, month, day] = date.split('-');
+  return `${month}.${day}`;
+}
+
+/** "4박 5일" */
+function formatNights(start: string, end: string): string {
+  const ms = new Date(end).getTime() - new Date(start).getTime();
+  if (Number.isNaN(ms)) {
+    return '';
+  }
+  const nights = Math.max(0, Math.round(ms / 86_400_000));
+  return `${nights}박 ${nights + 1}일`;
+}
+
+interface Destination {
+  countryName: string;
+  cityName: string;
+}
 
 interface DestinationScreenProps {
+  onBack?: () => void;
+  /** 여행지 칸을 누르면 여행지 선택 화면으로 보낸다 */
+  onPickDestination?: () => void;
   onSaved?: () => void;
 }
 
-const DestinationScreen: React.FC<DestinationScreenProps> = ({ onSaved }) => {
-  const { query, setQuery, loading, filtered } = useCountrySearch();
-  const [selected, setSelected] = useState<CountryInfo | null>(null);
+const DestinationScreen: React.FC<DestinationScreenProps> = ({
+  onBack,
+  onPickDestination,
+  onSaved,
+}) => {
+  const [destination, setDestination] = useState<Destination | null>(null);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [people, setPeople] = useState(4);
+  const [styleTags, setStyleTags] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
-  const closeForm = () => {
-    setSelected(null);
-    setStartDate('');
-    setEndDate('');
+  // 달력 시트
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [cursor, setCursor] = useState(() => new Date());
+  const [draftStart, setDraftStart] = useState('');
+  const [draftEnd, setDraftEnd] = useState('');
+
+  const year = cursor.getFullYear();
+  const monthIndex = cursor.getMonth();
+
+  // 여행지 선택 화면은 콜백 하나만 물고 돌아오므로 화면이 살아있는 동안 등록해둔다
+  useEffect(() => {
+    setDestinationCallback(picked => {
+      setDestination({
+        countryName: picked.countryName,
+        cityName: picked.name,
+      });
+    });
+  }, []);
+
+  // 1일이 무슨 요일인지에 맞춰 앞을 빈 칸으로 채운 뒤 주 단위로 자른다
+  const weeks = useMemo(() => {
+    const leading = new Date(year, monthIndex, 1).getDay();
+    const lastDay = new Date(year, monthIndex + 1, 0).getDate();
+    const cells: (number | null)[] = [
+      ...Array<null>(leading).fill(null),
+      ...Array.from({ length: lastDay }, (_, i) => i + 1),
+    ];
+    while (cells.length % 7 !== 0) {
+      cells.push(null);
+    }
+    return Array.from({ length: cells.length / 7 }, (_, i) =>
+      cells.slice(i * 7, i * 7 + 7),
+    );
+  }, [year, monthIndex]);
+
+  const openSheet = () => {
+    setDraftStart(startDate);
+    setDraftEnd(endDate);
+    if (startDate) {
+      const [y, m] = startDate.split('-').map(Number);
+      setCursor(new Date(y, m - 1, 1));
+    }
+    setSheetOpen(true);
   };
 
-  const handleSave = async () => {
-    if (!selected) return;
-    if (!DATE_RE.test(startDate) || !DATE_RE.test(endDate)) {
-      Alert.alert('알림', '날짜를 YYYY-MM-DD 형식으로 입력해주세요.');
+  const pickDay = (day: number) => {
+    const date = toIso(year, monthIndex, day);
+    // 시작만 정해진 상태에서 뒷날짜를 누르면 기간이 되고, 그 밖에는 새로 시작한다
+    if (draftStart && !draftEnd && date > draftStart) {
+      setDraftEnd(date);
       return;
     }
-    if (startDate > endDate) {
-      Alert.alert('알림', '종료일은 시작일보다 빠를 수 없습니다.');
+    setDraftStart(date);
+    setDraftEnd('');
+  };
+
+  const confirmDates = () => {
+    if (!draftStart || !draftEnd) {
+      return;
+    }
+    setStartDate(draftStart);
+    setEndDate(draftEnd);
+    setSheetOpen(false);
+  };
+
+  const toggleStyle = (tag: string) =>
+    setStyleTags(prev =>
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag],
+    );
+
+  const ready = !!destination && !!startDate && !!endDate;
+
+  const handleSave = async () => {
+    if (!ready || !destination) {
       return;
     }
     try {
       setSaving(true);
+      // 인원·여행 스타일은 아직 받는 필드가 없어서 보내지 않는다
       await saveTravelPlan({
-        countryName: selected.countryName,
-        cityName: selected.cityName,
+        countryName: destination.countryName,
+        cityName: destination.cityName,
         startDate,
         endDate,
       });
-      closeForm();
       onSaved?.();
     } catch (e: any) {
       Alert.alert('등록 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
@@ -63,165 +158,208 @@ const DestinationScreen: React.FC<DestinationScreenProps> = ({ onSaved }) => {
   };
 
   return (
-    <View style={styles.safeArea}>
-      {/* 검색 - 스크롤해도 상단에 고정 */}
-      <View style={styles.searchBarWrap}>
-        <View style={styles.searchBar}>
-          <Text style={styles.searchIcon}>🔍</Text>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="어디로 여행을 떠나시나요?"
-            placeholderTextColor={colors.placeholder}
-            value={query}
-            onChangeText={setQuery}
-          />
-        </View>
-      </View>
+    <View style={s.safeArea}>
+      <SafeAreaView edges={['top']} style={s.header}>
+        <TouchableOpacity onPress={onBack} hitSlop={12}>
+          <Text style={s.back}>‹</Text>
+        </TouchableOpacity>
+        <Text style={s.title}>여행 정보 설정</Text>
+        <Text style={s.subtitle}>여행지와 기간, 인원을 알려주세요</Text>
+      </SafeAreaView>
 
       <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
+        style={s.scroll}
+        contentContainerStyle={s.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* 여행지 목록 */}
-        <View>
-          <View style={styles.sectionRow}>
-            <Text style={styles.sectionLabel}>여행지 목록</Text>
-          </View>
-          {loading ? (
-            <ActivityIndicator style={{ marginTop: 24 }} />
-          ) : filtered.length === 0 ? (
-            <Text style={{ color: colors.textSub, marginBottom: 20 }}>
-              등록된 여행지가 없습니다.
+        <Text style={s.label}>여행지</Text>
+        <TouchableOpacity
+          style={[s.field, !!destination && s.fieldFilled]}
+          activeOpacity={0.85}
+          onPress={onPickDestination}
+        >
+          <Text style={destination ? s.fieldText : s.fieldPlaceholder}>
+            {destination
+              ? `${destination.cityName}, ${destination.countryName}`
+              : '여행지를 선택해주세요'}
+          </Text>
+        </TouchableOpacity>
+
+        <Text style={[s.label, s.labelSpaced]}>여행 기간</Text>
+        <View style={s.dateRow}>
+          <TouchableOpacity
+            style={[s.field, s.dateBox, !!startDate && s.fieldFilled]}
+            activeOpacity={0.85}
+            onPress={openSheet}
+          >
+            <Text style={startDate ? s.fieldText : s.fieldPlaceholder}>
+              {startDate ? toDotLabel(startDate) : '시작일'}
             </Text>
-          ) : (
-            <View style={styles.grid}>
-              {filtered.map(c => (
-                <TouchableOpacity
-                  key={c.countryInfoId}
-                  style={styles.destCard}
-                  activeOpacity={0.85}
-                  onPress={() => setSelected(c)}
-                >
-                  <ImageBackground
-                    source={{ uri: toImageUrl(c.imageUrl) }}
-                    style={{ flex: 1, justifyContent: 'flex-end' }}
-                    resizeMode="cover"
-                  >
-                    <View style={styles.destOverlay} />
-                    <View style={styles.destTextWrap}>
-                      <Text style={styles.destName}>{c.cityName}</Text>
-                      <Text style={styles.destCountry}>{c.countryName}</Text>
-                    </View>
-                  </ImageBackground>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
+          </TouchableOpacity>
+          <Text style={s.dash}>–</Text>
+          <TouchableOpacity
+            style={[s.field, s.dateBox, !!endDate && s.fieldFilled]}
+            activeOpacity={0.85}
+            onPress={openSheet}
+          >
+            <Text style={endDate ? s.fieldText : s.fieldPlaceholder}>
+              {endDate ? toDotLabel(endDate) : '종료일'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+        {!!startDate && !!endDate && (
+          <Text style={s.nights}>{formatNights(startDate, endDate)}</Text>
+        )}
+
+        <Text style={[s.label, s.labelSpaced]}>인원</Text>
+        <View style={s.field}>
+          <Text style={s.peopleLabel}>함께 가는 인원</Text>
+          <TouchableOpacity
+            style={[s.stepBtn, people <= 1 && s.stepBtnOff]}
+            activeOpacity={0.7}
+            disabled={people <= 1}
+            onPress={() => setPeople(n => Math.max(1, n - 1))}
+          >
+            <Text style={s.stepText}>−</Text>
+          </TouchableOpacity>
+          <Text style={s.stepValue}>{people}</Text>
+          <TouchableOpacity
+            style={[s.stepBtn, people >= 20 && s.stepBtnOff]}
+            activeOpacity={0.7}
+            disabled={people >= 20}
+            onPress={() => setPeople(n => Math.min(20, n + 1))}
+          >
+            <Text style={s.stepText}>+</Text>
+          </TouchableOpacity>
+        </View>
+
+        <Text style={[s.label, s.labelSpaced]}>여행 스타일</Text>
+        <View style={s.chipRow}>
+          {STYLES.map(tag => {
+            const on = styleTags.includes(tag);
+            return (
+              <TouchableOpacity
+                key={tag}
+                style={[s.chip, on && s.chipOn]}
+                activeOpacity={0.85}
+                onPress={() => toggleStyle(tag)}
+              >
+                <Text style={[s.chipText, on && s.chipTextOn]}>{tag}</Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </ScrollView>
 
-      {/* 날짜 입력 모달 */}
+      <SafeAreaView edges={['bottom']} style={s.footer}>
+        <TouchableOpacity
+          style={[s.saveBtn, (!ready || saving) && s.saveBtnOff]}
+          activeOpacity={0.85}
+          disabled={!ready || saving}
+          onPress={handleSave}
+        >
+          {saving ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={s.saveText}>저장하고 플래너로</Text>
+          )}
+        </TouchableOpacity>
+      </SafeAreaView>
+
+      {/* 날짜 선택 — 외부 달력 라이브러리 없이 C3 와 같은 방식으로 그린다 */}
       <Modal
         transparent
-        animationType="fade"
-        visible={!!selected}
-        onRequestClose={closeForm}
+        animationType="slide"
+        visible={sheetOpen}
+        onRequestClose={() => setSheetOpen(false)}
       >
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: 'rgba(0,0,0,0.4)',
-            justifyContent: 'center',
-            padding: 24,
-          }}
+        <TouchableOpacity
+          style={s.sheetBackdrop}
+          activeOpacity={1}
+          onPress={() => setSheetOpen(false)}
         >
-          <View
-            style={{
-              backgroundColor: colors.cardBg,
-              borderRadius: 16,
-              padding: 20,
-              gap: 12,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 16,
-                fontWeight: '800',
-                color: colors.textPrimary,
-              }}
-            >
-              {selected?.cityName} 여행 일정 등록
-            </Text>
-            <TextInput
-              style={{
-                borderWidth: 1.5,
-                borderColor: colors.border,
-                borderRadius: 12,
-                paddingHorizontal: 14,
-                height: 46,
-                fontSize: 15,
-                color: colors.textPrimary,
-              }}
-              placeholder="시작일 (예: 2026-07-10)"
-              placeholderTextColor={colors.placeholder}
-              value={startDate}
-              onChangeText={setStartDate}
-            />
-            <TextInput
-              style={{
-                borderWidth: 1.5,
-                borderColor: colors.border,
-                borderRadius: 12,
-                paddingHorizontal: 14,
-                height: 46,
-                fontSize: 15,
-                color: colors.textPrimary,
-              }}
-              placeholder="종료일 (예: 2026-07-15)"
-              placeholderTextColor={colors.placeholder}
-              value={endDate}
-              onChangeText={setEndDate}
-            />
-            <View style={{ flexDirection: 'row', gap: 10, marginTop: 8 }}>
+          <TouchableOpacity activeOpacity={1} style={s.sheet}>
+            <View style={s.sheetHead}>
+              <Text style={s.sheetMonth}>
+                {year}년 {monthIndex + 1}월
+              </Text>
               <TouchableOpacity
-                style={{
-                  flex: 1,
-                  backgroundColor: colors.surface,
-                  borderRadius: 12,
-                  paddingVertical: 12,
-                  alignItems: 'center',
-                }}
-                onPress={closeForm}
-                disabled={saving}
+                hitSlop={10}
+                onPress={() => setCursor(new Date(year, monthIndex - 1, 1))}
               >
-                <Text style={{ color: colors.textSub, fontWeight: '700' }}>
-                  취소
-                </Text>
+                <Text style={s.sheetArrow}>‹</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={{
-                  flex: 1,
-                  backgroundColor: colors.primary,
-                  borderRadius: 12,
-                  paddingVertical: 12,
-                  alignItems: 'center',
-                }}
-                onPress={handleSave}
-                disabled={saving}
+                hitSlop={10}
+                onPress={() => setCursor(new Date(year, monthIndex + 1, 1))}
               >
-                {saving ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={{ color: '#fff', fontWeight: '700' }}>
-                    등록하기
-                  </Text>
-                )}
+                <Text style={s.sheetArrow}>›</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
+
+            <View style={s.calRow}>
+              {WEEKDAYS.map((weekday, i) => (
+                <Text
+                  key={weekday}
+                  style={[s.calWeekday, i === 0 && s.calWeekend]}
+                >
+                  {weekday}
+                </Text>
+              ))}
+            </View>
+
+            {weeks.map((week, weekIndex) => (
+              <View key={weekIndex} style={s.calWeek}>
+                {week.map((day, dayIndex) => {
+                  if (day === null) {
+                    return <View key={dayIndex} style={s.calCell} />;
+                  }
+                  const date = toIso(year, monthIndex, day);
+                  const isEdge = date === draftStart || date === draftEnd;
+                  const isMid =
+                    !!draftEnd && date > draftStart && date < draftEnd;
+                  return (
+                    <TouchableOpacity
+                      key={dayIndex}
+                      style={s.calCell}
+                      activeOpacity={0.7}
+                      onPress={() => pickDay(day)}
+                    >
+                      <View
+                        style={[
+                          s.dayPill,
+                          isMid && s.dayPillMid,
+                          isEdge && s.dayPillEdge,
+                        ]}
+                      >
+                        <Text style={[s.dayText, isEdge && s.dayTextEdge]}>
+                          {day}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            ))}
+
+            <Text style={s.sheetHint}>
+              {draftStart && draftEnd
+                ? `${toDotLabel(draftStart)} – ${toDotLabel(
+                    draftEnd,
+                  )} · ${formatNights(draftStart, draftEnd)}`
+                : '시작일과 종료일을 차례로 눌러주세요'}
+            </Text>
+
+            <TouchableOpacity
+              style={[s.sheetDone, !(draftStart && draftEnd) && s.sheetDoneOff]}
+              activeOpacity={0.85}
+              disabled={!(draftStart && draftEnd)}
+              onPress={confirmDates}
+            >
+              <Text style={s.sheetDoneText}>선택 완료</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
     </View>
   );
