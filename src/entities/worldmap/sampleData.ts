@@ -23,6 +23,7 @@ const COUNTRIES: VisitedCountry[] = [
   {
     countryInfoId: 1,
     countryName: '일본',
+    countryNameEn: 'Japan',
     countryCode: 'JP',
     continent: 'AS',
     firstVisitedAt: '2024-03-12',
@@ -32,6 +33,7 @@ const COUNTRIES: VisitedCountry[] = [
   {
     countryInfoId: 2,
     countryName: '대만',
+    countryNameEn: 'Taiwan',
     countryCode: 'TW',
     continent: 'AS',
     firstVisitedAt: '2024-11-04',
@@ -41,6 +43,7 @@ const COUNTRIES: VisitedCountry[] = [
   {
     countryInfoId: 3,
     countryName: '태국',
+    countryNameEn: 'Thailand',
     countryCode: 'TH',
     continent: 'AS',
     firstVisitedAt: '2025-01-20',
@@ -50,6 +53,7 @@ const COUNTRIES: VisitedCountry[] = [
   {
     countryInfoId: 4,
     countryName: '프랑스',
+    countryNameEn: 'France',
     countryCode: 'FR',
     continent: 'EU',
     firstVisitedAt: '2025-06-08',
@@ -59,6 +63,7 @@ const COUNTRIES: VisitedCountry[] = [
   {
     countryInfoId: 5,
     countryName: '싱가포르',
+    countryNameEn: 'Singapore',
     countryCode: 'SG',
     continent: 'AS',
     firstVisitedAt: '2026-02-14',
@@ -151,12 +156,19 @@ export function sampleAcquiredParamsOf(
   const country =
     COUNTRIES.find(c => c.countryInfoId === countryInfoId) ?? COUNTRIES[0];
   const continent = CONTINENTS.find(c => c.code === country.continent);
+  const records = sampleRecordsOf(country.countryInfoId);
   return {
     countryInfoId: country.countryInfoId,
     countryName: country.countryName,
+    countryNameEn: country.countryNameEn,
     countryCode: country.countryCode,
     order: COUNTRIES.indexOf(country) + 1,
     acquiredAt: country.firstVisitedAt,
+    // 가장 최근 기록의 도시를 획득 근거로 보여준다
+    cityName: records[0]?.cityName ?? '-',
+    visitCount: country.visitCount,
     continentName: continent?.name ?? '-',
+    continentVisited: continent?.visited ?? 0,
+    continentTotal: continent?.total ?? 0,
   };
 }

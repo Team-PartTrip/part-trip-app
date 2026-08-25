@@ -4,8 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { countryAcquiredStyles as s } from './CountryAcquiredView.styles';
 import {
   CountryAcquiredParams,
-  flagOf,
   formatDate,
+  objectParticle,
 } from '../../entities/worldmap/types';
 
 interface Props {
@@ -20,55 +20,91 @@ const CountryAcquiredView: React.FC<Props> = ({
   onClose,
   onOpenCountry,
   onOpenWorldMap,
-}) => (
-  <SafeAreaView style={s.safeArea} edges={['top', 'bottom']}>
-    <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
-      <TouchableOpacity onPress={onClose} hitSlop={12}>
-        <Text style={s.close}>✕</Text>
-      </TouchableOpacity>
+}) => {
+  const ratio =
+    params.continentTotal > 0
+      ? params.continentVisited / params.continentTotal
+      : 0;
 
-      <View style={s.body}>
-        <View style={s.ribbon}>
-          <Text style={s.ribbonText}>NEW COUNTRY</Text>
+  return (
+    <SafeAreaView style={s.safeArea} edges={['top', 'bottom']}>
+      <ScrollView
+        contentContainerStyle={s.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <TouchableOpacity onPress={onClose} hitSlop={12}>
+          <Text style={s.back}>‹</Text>
+        </TouchableOpacity>
+
+        <View style={s.halo}>
+          <View style={s.badge}>
+            <Text style={s.badgeCode}>{params.countryCode}</Text>
+          </View>
+          <View style={s.newPill}>
+            <Text style={s.newPillText}>NEW</Text>
+          </View>
         </View>
 
-        <View style={s.flagCircle}>
-          <Text style={s.flag}>{flagOf(params.countryCode)}</Text>
-        </View>
-
-        <Text style={s.headline}>{params.countryName}을(를) 획득했어요!</Text>
+        <Text style={s.headline}>
+          {params.countryName}
+          {objectParticle(params.countryName)} 획득했어요!
+        </Text>
         <Text style={s.sub}>
-          세계지도에 {params.countryName}이(가) 칠해졌어요.{'\n'}
-          기록을 남기면 여행이 더 오래 남아요.
+          {params.cityName} 여행 기록을 바탕으로 자동 등록됐어요
         </Text>
 
-        <View style={s.statsCard}>
+        <View style={s.infoCard}>
           {[
-            { value: `${params.order}번째`, label: '획득 국가', small: false },
-            { value: params.continentName, label: '대륙', small: false },
-            { value: formatDate(params.acquiredAt), label: '획득일', small: true },
-          ].map((item, i) => (
-            <React.Fragment key={item.label}>
-              {i > 0 && <View style={s.statDivider} />}
-              <View style={s.statCol}>
-                <Text style={item.small ? s.statValueSm : s.statValue}>
-                  {item.value}
-                </Text>
-                <Text style={s.statLabel}>{item.label}</Text>
-              </View>
-            </React.Fragment>
+            {
+              label: '국가',
+              value: `${params.countryName} (${params.countryNameEn})`,
+            },
+            { label: '대륙', value: params.continentName },
+            { label: '첫 방문', value: formatDate(params.acquiredAt) },
+            { label: '방문 횟수', value: `${params.visitCount}회` },
+          ].map(row => (
+            <View key={row.label} style={s.infoRow}>
+              <Text style={s.infoLabel}>{row.label}</Text>
+              <Text style={s.infoValue}>{row.value}</Text>
+            </View>
           ))}
         </View>
-      </View>
 
-      <TouchableOpacity style={s.primaryBtn} activeOpacity={0.85} onPress={onOpenCountry}>
-        <Text style={s.primaryBtnText}>기록 보러가기</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={s.secondaryBtn} activeOpacity={0.85} onPress={onOpenWorldMap}>
-        <Text style={s.secondaryBtnText}>세계지도에서 보기</Text>
-      </TouchableOpacity>
-    </ScrollView>
-  </SafeAreaView>
-);
+        <View style={s.notice}>
+          <Text style={s.noticeText}>
+            이미 획득한 국가는 중복 등록되지 않아요
+          </Text>
+        </View>
+
+        <View style={s.progressCard}>
+          <View style={s.progressTop}>
+            <Text style={s.progressLabel}>{params.continentName} 진행도</Text>
+            <Text style={s.progressCount}>
+              {params.continentVisited} / {params.continentTotal}
+            </Text>
+          </View>
+          <View style={s.track}>
+            <View style={[s.fill, { width: `${ratio * 100}%` }]} />
+          </View>
+        </View>
+
+        <TouchableOpacity
+          style={s.primaryBtn}
+          activeOpacity={0.85}
+          onPress={onOpenWorldMap}
+        >
+          <Text style={s.primaryBtnText}>세계지도에서 보기</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={s.secondaryBtn}
+          activeOpacity={0.85}
+          onPress={onOpenCountry}
+        >
+          <Text style={s.secondaryBtnText}>기록 보러가기</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
+  );
+};
 
 export default CountryAcquiredView;

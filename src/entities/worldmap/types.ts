@@ -18,6 +18,8 @@ export interface Continent {
 export interface VisitedCountry {
   countryInfoId: number;
   countryName: string;
+  /** 영문 국가명. E3 가 "일본 (Japan)" 처럼 같이 보여준다 */
+  countryNameEn: string;
   /** ISO 3166-1 alpha-2. 서버 CountryCodeMapper 가 쓰는 코드와 같다 */
   countryCode: string;
   continent: ContinentCode;
@@ -50,12 +52,19 @@ export interface CountryTripRecord {
 export interface CountryAcquiredParams {
   countryInfoId: number;
   countryName: string;
+  countryNameEn: string;
   countryCode: string;
   /** 몇 번째로 획득한 국가인지 */
   order: number;
   /** YYYY-MM-DD */
   acquiredAt: string;
+  /** 획득의 근거가 된 여행 기록의 도시 */
+  cityName: string;
+  visitCount: number;
   continentName: string;
+  /** 그 대륙에서 획득한 국가 수 / 전체 국가 수 */
+  continentVisited: number;
+  continentTotal: number;
 }
 
 /** "JP" → 🇯🇵 — 국기 이미지 없이 유니코드 지역표시 기호로 만든다 */
@@ -82,4 +91,14 @@ export function formatDateRange(start: string, end: string): string {
   const from = start.split('-');
   const to = end.split('-');
   return `${from.join('.')} – ${(from[0] === to[0] ? to.slice(1) : to).join('.')}`;
+}
+
+/** 받침 유무에 따라 목적격 조사를 고른다. "일본" → "을", "대만" → "을", "프랑스" → "를" */
+export function objectParticle(word: string): string {
+  const last = word.charCodeAt(word.length - 1);
+  // 한글 음절이 아니면 판단할 수 없으니 둘 다 적는다
+  if (Number.isNaN(last) || last < 0xac00 || last > 0xd7a3) {
+    return '을(를)';
+  }
+  return (last - 0xac00) % 28 === 0 ? '를' : '을';
 }
