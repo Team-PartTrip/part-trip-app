@@ -18,21 +18,18 @@ export interface TripReadiness {
   flight: PrepStatus;
   accommodation: PrepStatus;
   schedule: PrepStatus;
-  /** 여행 그룹 인원 수 */
-  memberCount: number;
   /** 아직 결과가 안 난 투표 수 */
   pendingVotes: number;
   checklistDone: number;
   checklistTotal: number;
 }
 
-/** 피그마 B1 에 그려진 값 그대로 (67% · 확정/확정/투표 중 · 4명) */
+/** 피그마 B1 에 그려진 값 그대로 (67% · 확정/확정/투표 중) */
 export const SAMPLE_READINESS: TripReadiness = {
   percent: 67,
   flight: 'CONFIRMED',
   accommodation: 'CONFIRMED',
   schedule: 'VOTING',
-  memberCount: 4,
   pendingVotes: 3,
   checklistDone: 8,
   checklistTotal: 12,

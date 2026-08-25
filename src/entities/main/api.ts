@@ -46,6 +46,8 @@ export interface TravelPlanPayload {
   cityName: string;
   startDate: string;
   endDate: string;
+  /** 함께 가는 인원(본인 포함). 서버가 1~30 으로 검증한다 */
+  headcount: number;
 }
 
 /** 여행 일정 등록 또는 수정 */

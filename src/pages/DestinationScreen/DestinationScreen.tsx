@@ -142,12 +142,13 @@ const DestinationScreen: React.FC<DestinationScreenProps> = ({
     }
     try {
       setSaving(true);
-      // 인원·여행 스타일은 아직 받는 필드가 없어서 보내지 않는다
+      // 여행 스타일은 아직 서버에 받는 필드가 없어서 보내지 않는다
       await saveTravelPlan({
         countryName: destination.countryName,
         cityName: destination.cityName,
         startDate,
         endDate,
+        headcount: people,
       });
       onSaved?.();
     } catch (e: any) {
@@ -224,10 +225,10 @@ const DestinationScreen: React.FC<DestinationScreenProps> = ({
           </TouchableOpacity>
           <Text style={s.stepValue}>{people}</Text>
           <TouchableOpacity
-            style={[s.stepBtn, people >= 20 && s.stepBtnOff]}
+            style={[s.stepBtn, people >= 30 && s.stepBtnOff]}
             activeOpacity={0.7}
-            disabled={people >= 20}
-            onPress={() => setPeople(n => Math.min(20, n + 1))}
+            disabled={people >= 30}
+            onPress={() => setPeople(n => Math.min(30, n + 1))}
           >
             <Text style={s.stepText}>+</Text>
           </TouchableOpacity>

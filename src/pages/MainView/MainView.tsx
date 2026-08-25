@@ -190,7 +190,8 @@ const MainView: React.FC<MainViewProps> = ({
             {nights ? `${dday.cityName} · ${nights}` : dday.cityName}
           </Text>
           <Text style={s.tripMeta}>
-            {formatRange(dday.startDate, dday.endDate)} · {prep.memberCount}명
+            {formatRange(dday.startDate, dday.endDate)}
+            {dday.headcount ? ` · ${dday.headcount}명` : ''}
           </Text>
 
           {/* 준비 진행률 — 플래너 API(#65) 전까지는 예시 값이다 */}
