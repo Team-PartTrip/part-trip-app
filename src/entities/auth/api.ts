@@ -46,6 +46,13 @@ export function logout(refreshToken: string): Promise<string> {
   });
 }
 
+export function checkUserIdAvailable(userId: string): Promise<boolean> {
+  return request<{ available: boolean }>(
+    `/api/auth/check-id?userId=${encodeURIComponent(userId)}`,
+    { method: 'GET' },
+  ).then(res => res.available);
+}
+
 /** 회원가입 시작: 임시 저장 + 이메일 인증번호 발송 */
 export function startSignUp(payload: SignUpPayload): Promise<string> {
   return request<string>('/api/auth/signup', {
