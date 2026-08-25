@@ -9,10 +9,11 @@ import {
   WorldMapSummary,
 } from './types';
 
+// 피그마 E5 의 수치(아시아 4 / 유럽 1, 나머지 0)에 맞춰둔다
 const CONTINENTS: Continent[] = [
-  { code: 'AS', name: '아시아', visited: 3, total: 48 },
+  { code: 'AS', name: '아시아', visited: 4, total: 48 },
   { code: 'EU', name: '유럽', visited: 1, total: 44 },
-  { code: 'NA', name: '북아메리카', visited: 1, total: 23 },
+  { code: 'NA', name: '북아메리카', visited: 0, total: 23 },
   { code: 'SA', name: '남아메리카', visited: 0, total: 12 },
   { code: 'OC', name: '오세아니아', visited: 0, total: 14 },
   { code: 'AF', name: '아프리카', visited: 0, total: 54 },
@@ -30,8 +31,8 @@ const COUNTRIES: VisitedCountry[] = [
   },
   {
     countryInfoId: 2,
-    countryName: '베트남',
-    countryCode: 'VN',
+    countryName: '대만',
+    countryCode: 'TW',
     continent: 'AS',
     firstVisitedAt: '2024-11-04',
     lastVisitedAt: '2024-11-11',
@@ -57,9 +58,9 @@ const COUNTRIES: VisitedCountry[] = [
   },
   {
     countryInfoId: 5,
-    countryName: '미국',
-    countryCode: 'US',
-    continent: 'NA',
+    countryName: '싱가포르',
+    countryCode: 'SG',
+    continent: 'AS',
     firstVisitedAt: '2026-02-14',
     lastVisitedAt: null,
     visitCount: 1,
@@ -100,8 +101,8 @@ const RECORDS_BY_COUNTRY: Record<number, CountryTripRecord[]> = {
   2: [
     {
       recordId: 21,
-      title: '다낭 휴양',
-      cityName: '다낭',
+      title: '타이베이 야시장',
+      cityName: '타이베이',
       visitedAt: '2024-11-04',
       photoCount: 35,
     },

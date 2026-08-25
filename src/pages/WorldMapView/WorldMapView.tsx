@@ -1,9 +1,41 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Dimensions,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { worldMapStyles as s } from './WorldMapView.styles';
 import { sampleSummary } from '../../entities/worldmap/sampleData';
-import { flagOf, formatDate, VisitedCountry } from '../../entities/worldmap/types';
+import { flagOf, VisitedCountry } from '../../entities/worldmap/types';
+
+// 피그마 E2 의 지도 일러스트. 402pt 프레임 안의 좌표를 그대로 적고,
+// 실제 화면 폭에 맞춰 비율로 늘린다. (퍼센트 + aspectRatio 로 짜면
+// 칸이 자리만 차지하고 안 그려지는 문제가 있어 픽셀로 계산한다)
+const FRAME_WIDTH = 402;
+const MAP_HEIGHT = 420;
+
+interface Landmass {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  /** 방문한 대륙 덩어리는 파랗게 칠한다 */
+  visited: boolean;
+}
+
+const LANDMASSES: Landmass[] = [
+  { x: 40, y: 42, w: 90, h: 70, visited: false },
+  { x: 140, y: 22, w: 120, h: 90, visited: true },
+  { x: 268, y: 60, w: 90, h: 60, visited: true },
+  { x: 60, y: 142, w: 110, h: 80, visited: false },
+  { x: 186, y: 154, w: 120, h: 86, visited: true },
+  { x: 300, y: 162, w: 70, h: 64, visited: true },
+  { x: 92, y: 260, w: 120, h: 70, visited: false },
+  { x: 232, y: 254, w: 120, h: 76, visited: true },
+];
 
 interface Props {
   onBack?: () => void;
@@ -16,75 +48,61 @@ const WorldMapView: React.FC<Props> = ({
   onOpenCountry,
   onOpenAchievement,
 }) => {
-  const { visitedCount, totalCount, continents, countries } = sampleSummary;
-  const percent = Math.round((visitedCount / totalCount) * 1000) / 10;
-  const continentCount = continents.filter(c => c.visited > 0).length;
-  const totalVisits = countries.reduce((sum, c) => sum + c.visitCount, 0);
+  const { visitedCount, countries } = sampleSummary;
+  const scale = Dimensions.get('window').width / FRAME_WIDTH;
 
   return (
     <View style={s.safeArea}>
-      <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={s.content}
+        showsVerticalScrollIndicator={false}
+      >
         <SafeAreaView edges={['top']} style={s.header}>
-          <TouchableOpacity onPress={onBack} hitSlop={12}>
-            <Text style={s.back}>‹</Text>
-          </TouchableOpacity>
-          <Text style={s.title}>내 세계지도</Text>
-
-          <View style={s.bigCount}>
-            <Text style={s.bigValue}>{visitedCount}</Text>
-            <Text style={s.bigTotal}>/ {totalCount}개국</Text>
-          </View>
-          <Text style={s.bigCaption}>전 세계의 {percent}%를 여행했어요</Text>
-
-          <View style={s.headerTrack}>
-            {/* 1% 미만이어도 막대가 보이도록 최소 너비를 준다 */}
-            <View style={[s.headerFill, { width: `${Math.max(percent, 2)}%` }]} />
+          <View style={s.headerRow}>
+            <Text style={s.title}>내 세계지도</Text>
+            <TouchableOpacity onPress={onBack} hitSlop={12} style={s.backBtn}>
+              <Text style={s.back}>‹</Text>
+            </TouchableOpacity>
           </View>
         </SafeAreaView>
 
-        <View style={s.summaryCard}>
-          {[
-            { value: String(continentCount), label: '대륙' },
-            { value: String(visitedCount), label: '국가' },
-            { value: String(totalVisits), label: '방문' },
-          ].map((item, i) => (
-            <React.Fragment key={item.label}>
-              {i > 0 && <View style={s.summaryDivider} />}
-              <View style={s.summaryCol}>
-                <Text style={s.summaryValue}>{item.value}</Text>
-                <Text style={s.summaryLabel}>{item.label}</Text>
-              </View>
-            </React.Fragment>
+        <View style={[s.map, { height: MAP_HEIGHT * scale }]}>
+          {LANDMASSES.map((land, i) => (
+            <View
+              key={i}
+              style={[
+                s.landmass,
+                land.visited ? s.landmassVisited : s.landmassIdle,
+                {
+                  left: land.x * scale,
+                  top: land.y * scale,
+                  width: land.w * scale,
+                  height: land.h * scale,
+                },
+              ]}
+            />
           ))}
+        </View>
+
+        <View style={s.legend}>
+          <View style={s.legendItem}>
+            <View style={[s.legendDot, s.legendDotVisited]} />
+            <Text style={s.legendText}>방문한 국가 {visitedCount}</Text>
+          </View>
+          <View style={s.legendItem}>
+            <View style={[s.legendDot, s.legendDotIdle]} />
+            <Text style={s.legendText}>미방문</Text>
+          </View>
         </View>
 
         <View style={s.section}>
           <View style={s.sectionHead}>
-            <Text style={s.sectionTitle}>대륙별 진행</Text>
+            <Text style={s.sectionTitle}>획득한 국가</Text>
+            {/* 피그마에는 없지만 달성 현황(E5)으로 들어갈 길이 여기밖에 없다 */}
             <TouchableOpacity onPress={onOpenAchievement} hitSlop={8}>
               <Text style={s.sectionMore}>달성 현황 ›</Text>
             </TouchableOpacity>
           </View>
-
-          {continents.map(c => (
-            <View key={c.code} style={s.continentRow}>
-              <View style={s.continentTop}>
-                <Text style={s.continentName}>{c.name}</Text>
-                <Text style={s.continentCount}>
-                  {c.visited} / {c.total}
-                </Text>
-              </View>
-              <View style={s.track}>
-                <View
-                  style={[s.fill, { width: `${(c.visited / c.total) * 100}%` }]}
-                />
-              </View>
-            </View>
-          ))}
-        </View>
-
-        <View style={s.section}>
-          <Text style={s.sectionTitle}>획득한 국가</Text>
 
           {countries.length === 0 ? (
             <View style={s.empty}>
@@ -92,25 +110,23 @@ const WorldMapView: React.FC<Props> = ({
               <Text style={s.emptyDesc}>여행 기록을 남기면 국가가 채워져요.</Text>
             </View>
           ) : (
-            <View style={s.grid}>
-              {countries.map(c => (
-                <TouchableOpacity
-                  key={c.countryInfoId}
-                  style={s.countryCard}
-                  activeOpacity={0.85}
-                  onPress={() => onOpenCountry?.(c)}
-                >
-                  <Text style={s.countryFlag}>{flagOf(c.countryCode)}</Text>
+            countries.map(c => (
+              <TouchableOpacity
+                key={c.countryInfoId}
+                style={s.countryRow}
+                activeOpacity={0.85}
+                onPress={() => onOpenCountry?.(c)}
+              >
+                <View style={s.flagCircle}>
+                  <Text style={s.flag}>{flagOf(c.countryCode)}</Text>
+                </View>
+                <View style={s.countryBody}>
                   <Text style={s.countryName}>{c.countryName}</Text>
-                  <Text style={s.countryMeta}>
-                    {formatDate(c.firstVisitedAt)} 획득
-                  </Text>
-                  <View style={s.visitBadge}>
-                    <Text style={s.visitBadgeText}>{c.visitCount}번 방문</Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
+                  <Text style={s.countryMeta}>{c.visitCount}회 방문</Text>
+                </View>
+                <Text style={s.chevron}>›</Text>
+              </TouchableOpacity>
+            ))
           )}
         </View>
 

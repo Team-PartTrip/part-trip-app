@@ -1,129 +1,176 @@
 import { StyleSheet } from 'react-native';
 import colors from '../../shared/tokens/colors';
 
-// 피그마 E2 내 세계지도 — 파란 요약 헤더 + 대륙별 진행 + 획득 국가 그리드
+// E2 · Func-009-01 개인 세계지도 조회
+// 피그마 402pt 프레임 기준. 좌우 여백 24 · 본문 354 · 지도 402x420.
 export const worldMapStyles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: colors.background },
-  content: { paddingBottom: 32 },
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  content: {
+    paddingBottom: 32,
+  },
 
+  // 헤더 — 뒤로가기는 왼쪽, 제목은 화면 가운데
   header: {
-    backgroundColor: colors.primary,
     paddingHorizontal: 24,
-    paddingTop: 12,
-    paddingBottom: 52,
+    paddingBottom: 8,
+    backgroundColor: colors.background,
   },
-  back: { fontSize: 28, lineHeight: 30, color: colors.white },
-  title: { marginTop: 4, fontSize: 24, fontWeight: '700', color: colors.white },
-
-  bigCount: { marginTop: 20, flexDirection: 'row', alignItems: 'flex-end' },
-  bigValue: { fontSize: 40, fontWeight: '700', color: colors.white },
-  bigTotal: {
-    marginLeft: 6,
-    marginBottom: 6,
-    fontSize: 15,
-    color: colors.onPrimaryMuted,
+  headerRow: {
+    height: 32,
+    justifyContent: 'center',
   },
-  bigCaption: { marginTop: 6, fontSize: 12, color: colors.onPrimaryMuted },
+  backBtn: {
+    position: 'absolute',
+    left: 0,
+  },
+  back: {
+    fontSize: 28,
+    lineHeight: 32,
+    color: colors.textPrimary,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    textAlign: 'center',
+  },
 
-  headerTrack: {
-    marginTop: 14,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.onPrimaryTrack,
+  // ── 지도 일러스트 ──
+  // 실제 지도 데이터 대신 피그마에 그려진 대륙 덩어리를 그대로 옮겼다.
+  map: {
+    backgroundColor: colors.surfaceAlt,
     overflow: 'hidden',
   },
-  headerFill: { height: 8, borderRadius: 4, backgroundColor: colors.white },
+  landmass: {
+    position: 'absolute',
+    borderRadius: 18,
+  },
+  landmassVisited: {
+    backgroundColor: colors.primary,
+  },
+  landmassIdle: {
+    backgroundColor: colors.border,
+  },
 
-  // 요약 카드는 파란 헤더에 걸쳐 놓는다 (E1 통계 카드와 같은 방식)
-  summaryCard: {
-    marginTop: -36,
+  // ── 범례 ──
+  legend: {
+    marginTop: 24,
     marginHorizontal: 24,
-    height: 84,
+    height: 60,
+    borderRadius: 14,
+    backgroundColor: colors.white,
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 16,
-    backgroundColor: colors.white,
+    paddingHorizontal: 16,
   },
-  summaryCol: { flex: 1, alignItems: 'center', gap: 6 },
-  summaryValue: { fontSize: 18, fontWeight: '600', color: colors.text },
-  summaryLabel: { fontSize: 11, fontWeight: '500', color: colors.textSecondary },
-  summaryDivider: { width: 1, height: 40, backgroundColor: colors.border },
+  legendItem: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  legendDot: {
+    width: 14,
+    height: 14,
+    borderRadius: 4,
+  },
+  legendDotVisited: {
+    backgroundColor: colors.primary,
+  },
+  legendDotIdle: {
+    backgroundColor: colors.border,
+  },
+  legendText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+  },
 
-  section: { marginTop: 28, paddingHorizontal: 24 },
+  // ── 획득한 국가 ──
+  section: {
+    marginTop: 28,
+    paddingHorizontal: 24,
+  },
   sectionHead: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  sectionTitle: { fontSize: 18, fontWeight: '600', color: colors.text },
-  sectionMore: { fontSize: 12, fontWeight: '500', color: colors.primary },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  sectionMore: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.primary,
+  },
 
-  continentRow: { marginTop: 16 },
-  continentTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  continentName: { fontSize: 13, fontWeight: '500', color: colors.textSecondary },
-  continentCount: { fontSize: 12, color: colors.textMuted },
-  track: {
-    marginTop: 8,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors.track,
-    overflow: 'hidden',
-  },
-  fill: { height: 6, borderRadius: 3, backgroundColor: colors.primary },
-
-  grid: {
-    marginTop: 12,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  countryCard: {
-    width: '48%',
+  countryRow: {
+    marginTop: 10,
+    height: 52,
     borderRadius: 14,
     backgroundColor: colors.white,
-    paddingVertical: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 14,
+    gap: 12,
   },
-  countryFlag: { fontSize: 30 },
-  countryName: {
-    marginTop: 10,
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  countryMeta: { marginTop: 4, fontSize: 11, color: colors.textMuted },
-  visitBadge: {
-    marginTop: 10,
-    alignSelf: 'flex-start',
-    height: 22,
-    paddingHorizontal: 10,
-    borderRadius: 11,
+  flagCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: colors.tint,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  visitBadgeText: { fontSize: 10, fontWeight: '500', color: colors.primaryDark },
+  flag: {
+    fontSize: 15,
+  },
+  countryBody: {
+    flex: 1,
+  },
+  countryName: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+  countryMeta: {
+    marginTop: 1,
+    fontSize: 11,
+    color: colors.textSub,
+  },
+  chevron: {
+    fontSize: 18,
+    color: colors.textTertiary,
+  },
 
   empty: {
-    marginTop: 12,
+    marginTop: 10,
     borderRadius: 14,
     backgroundColor: colors.white,
-    paddingVertical: 36,
+    paddingVertical: 28,
     alignItems: 'center',
     gap: 6,
   },
-  emptyText: { fontSize: 15, fontWeight: '600', color: colors.text },
-  emptyDesc: { fontSize: 12, color: colors.textMuted },
+  emptyText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+  emptyDesc: {
+    fontSize: 12,
+    color: colors.textMuted,
+  },
 
   note: {
     marginTop: 24,
     paddingHorizontal: 24,
     fontSize: 11,
-    lineHeight: 16,
-    color: colors.textMuted,
+    color: colors.noteText,
+    textAlign: 'center',
   },
 });
