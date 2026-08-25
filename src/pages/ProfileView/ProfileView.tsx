@@ -14,6 +14,9 @@ import { getMyProfile, UserProfile } from '../../entities/profile/api';
 import { logout } from '../../entities/auth/api';
 import { getRefreshToken, clearTokens } from '../../shared/api/tokenStorage';
 import { toImageUrl } from '../../shared/api/image';
+import { sampleSummary } from '../../entities/worldmap/sampleData';
+import { flagOf } from '../../entities/worldmap/types';
+import { sampleTripCards } from '../../entities/record/sampleData';
 
 // 세계지도 미리보기 칸 수 (피그마 E1 은 6칸)
 const MAP_CELLS = 6;
@@ -68,6 +71,16 @@ const ProfileView: React.FC<Props> = ({
 
   const initial = profile?.nickName?.trim().charAt(0) ?? '';
 
+  // 여행 수·기록 수·획득 국가를 주는 API 가 아직 없어서 예시 데이터로 채운다
+  const visitedCountries = sampleSummary.countries;
+  const tripCount = sampleTripCards.length;
+  const photoCount = sampleTripCards.reduce((sum, t) => sum + t.photoCount, 0);
+  // "아시아 4 · 유럽 1" — 획득한 국가가 있는 대륙만 추린다
+  const continentSummary = sampleSummary.continents
+    .filter(c => c.visited > 0)
+    .map(c => `${c.name} ${c.visited}`)
+    .join(' · ');
+
   return (
     <View style={s.safeArea}>
       <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
@@ -116,12 +129,11 @@ const ProfileView: React.FC<Props> = ({
           </View>
         </SafeAreaView>
 
-        {/* 여행 · 국가 · 기록 수를 주는 API 가 아직 없어 값은 - 로 둔다 */}
         <View style={s.statsCard}>
           {[
-            { value: '-', label: '여행' },
-            { value: '-', label: '국가' },
-            { value: '-', label: '기록' },
+            { value: String(tripCount), label: '여행' },
+            { value: String(visitedCountries.length), label: '국가' },
+            { value: String(photoCount), label: '기록' },
           ].map((stat, i) => (
             <React.Fragment key={stat.label}>
               {i > 0 && <View style={s.statDivider} />}
@@ -137,12 +149,25 @@ const ProfileView: React.FC<Props> = ({
           <Text style={s.sectionTitle}>내 세계지도</Text>
           <View style={s.mapCard}>
             <View style={s.mapGrid}>
-              {Array.from({ length: MAP_CELLS }).map((_, i) => (
-                <View key={i} style={s.mapCell} />
-              ))}
+              {Array.from({ length: MAP_CELLS }).map((_, i) => {
+                const country = visitedCountries[i];
+                return (
+                  <View key={i} style={s.mapCell}>
+                    {!!country && (
+                      <Text style={s.mapCellFlag}>
+                        {flagOf(country.countryCode)}
+                      </Text>
+                    )}
+                  </View>
+                );
+              })}
             </View>
             <View style={s.mapFooter}>
-              <Text style={s.mapSummary}>아직 획득한 국가가 없어요</Text>
+              <Text style={s.mapSummary}>
+                {visitedCountries.length === 0
+                  ? '아직 획득한 국가가 없어요'
+                  : `${visitedCountries.length}개국 획득 · ${continentSummary}`}
+              </Text>
               <TouchableOpacity
                 style={s.moreBtn}
                 activeOpacity={0.85}

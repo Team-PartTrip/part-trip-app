@@ -89,8 +89,15 @@ export const profileStyles = StyleSheet.create({
     padding: 20,
   },
   mapGrid: { flexDirection: 'row', gap: 10, justifyContent: 'center' },
-  mapCell: { width: 46, height: 46, borderRadius: 10, backgroundColor: colors.white },
-  mapCellOn: { backgroundColor: colors.primary },
+  mapCell: {
+    width: 46,
+    height: 46,
+    borderRadius: 10,
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mapCellFlag: { fontSize: 22 },
   mapFooter: {
     marginTop: 18,
     flexDirection: 'row',
