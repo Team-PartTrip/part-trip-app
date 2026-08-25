@@ -39,8 +39,10 @@ export interface CountryTripRecord {
   recordId: number;
   title: string;
   cityName: string;
-  /** YYYY-MM-DD */
+  /** 여행 시작일 YYYY-MM-DD */
   visitedAt: string;
+  /** 여행 종료일 YYYY-MM-DD */
+  endedAt: string;
   photoCount: number;
 }
 
@@ -73,4 +75,11 @@ export function flagOf(countryCode: string): string {
 /** "2026-08-21" → "2026.08.21" */
 export function formatDate(date: string | null): string {
   return date ? date.replace(/-/g, '.') : '-';
+}
+
+/** "2026-08-23", "2026-08-27" → "2026.08.23 – 08.27" (해가 넘어가면 연도를 남긴다) */
+export function formatDateRange(start: string, end: string): string {
+  const from = start.split('-');
+  const to = end.split('-');
+  return `${from.join('.')} – ${(from[0] === to[0] ? to.slice(1) : to).join('.')}`;
 }
