@@ -312,7 +312,6 @@ function App() {
                   <MainView
                     onOpenDestination={() => navigation.navigate('Destination')}
                     onOpenNotifications={() => navigation.navigate('Notifications')}
-                    onOpenPlanner={() => navigation.navigate('Planner')}
                     onOpenEvents={() => navigation.navigate('Festival')}
                   />
                 )}

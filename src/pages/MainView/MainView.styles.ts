@@ -89,55 +89,6 @@ export const mainStyles = StyleSheet.create({
     color: colors.onPrimaryMuted,
   },
 
-  // 준비 진행률
-  progressTrack: {
-    marginTop: 20,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors.onPrimaryTrack,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors.white,
-  },
-  progressLabel: {
-    marginTop: 10,
-    fontSize: 11,
-    fontWeight: '500',
-    color: colors.onPrimaryMuted,
-  },
-
-  // ── 항공 / 숙소 / 일정 상태 카드 (헤더에 걸쳐 놓인다) ──
-  statusCard: {
-    marginTop: -28,
-    marginHorizontal: 24,
-    height: 108,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 16,
-    backgroundColor: colors.white,
-  },
-  statusCol: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 8,
-  },
-  statusLabel: {
-    fontSize: 12,
-    color: colors.textSecondary,
-  },
-  statusValue: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  statusDivider: {
-    width: 1,
-    height: 56,
-    backgroundColor: colors.border,
-  },
-
   // ── 섹션 공통 ──
   section: {
     marginTop: 32,
@@ -149,9 +100,10 @@ export const mainStyles = StyleSheet.create({
     color: colors.text,
   },
 
-  // ── 여행 준비 ──
-  prepRow: {
-    marginTop: 8,
+  // ── 축제 · 이벤트 캘린더 행 (Func-002-03) ──
+  eventRow: {
+    marginTop: 20,
+    marginHorizontal: 24,
     height: 72,
     flexDirection: 'row',
     alignItems: 'center',
@@ -160,24 +112,30 @@ export const mainStyles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: colors.white,
   },
-  prepIcon: {
+  eventIcon: {
     width: 44,
     height: 44,
     borderRadius: 12,
     backgroundColor: colors.tint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  eventEmoji: {
+    fontSize: 20,
   },
   // 제목/보조문구가 남는 폭을 다 먹어야 화살표가 오른쪽 끝에 붙는다
-  prepBody: {
+  eventBody: {
     flex: 1,
   },
-  prepTitle: {
+  eventTitle: {
     fontSize: 15,
     fontWeight: '600',
     color: colors.text,
   },
-  prepSub: {
+  eventSub: {
     marginTop: 2,
     fontSize: 12,
+    color: colors.textSub,
   },
   chevron: {
     fontSize: 18,

@@ -17,13 +17,7 @@ import {
   TourPlace,
 } from '../../entities/main/api';
 import { getUnreadCount } from '../../entities/notification/api';
-import {
-  PREP_STATUS_LABEL,
-  PrepStatus,
-  SAMPLE_READINESS,
-} from '../../entities/main/readiness';
 import { toImageUrl } from '../../shared/api/image';
-import colors from '../../shared/tokens/colors';
 
 // "2026-08-23" + "2026-08-27" → "2026.08.23 – 08.27"
 // 해가 바뀌면 끝 날짜에도 연도를 남긴다 → "2026.06.10 – 2027.03.27"
@@ -44,27 +38,17 @@ function formatNights(start: string, end: string): string {
   return `${nights}박 ${nights + 1}일`;
 }
 
-// 확정은 초록, 투표 중은 주황, 미정은 흐리게 — 상태를 색으로도 구분한다
-const STATUS_COLOR: Record<PrepStatus, string> = {
-  CONFIRMED: colors.success,
-  VOTING: colors.accent,
-  TODO: colors.textSub,
-};
-
 interface MainViewProps {
   onOpenDestination?: () => void;
   /** 알림 화면이 생기면 연결한다. 없으면 배지만 보여준다. */
   onOpenNotifications?: () => void;
-  /** "플래너에서 투표 이어가기" 행 */
-  onOpenPlanner?: () => void;
-  /** "축제 · 이벤트 캘린더" 행 (기능명세서 v3 에서 메인 소속이 됐다) */
+  /** 축제 · 이벤트 캘린더 (Func-002-03) */
   onOpenEvents?: () => void;
 }
 
 const MainView: React.FC<MainViewProps> = ({
   onOpenDestination,
   onOpenNotifications,
-  onOpenPlanner,
   onOpenEvents,
 }) => {
   const [loading, setLoading] = useState(true);
@@ -144,7 +128,6 @@ const MainView: React.FC<MainViewProps> = ({
   }
 
   const nights = formatNights(dday.startDate, dday.endDate);
-  const prep = SAMPLE_READINESS;
 
   return (
     <View style={s.safeArea}>
@@ -177,93 +160,42 @@ const MainView: React.FC<MainViewProps> = ({
             </View>
           </View>
 
-          <Text style={s.eyebrow}>다가오는 여행</Text>
-          <Text style={s.dday}>{dday.dday}</Text>
-          <Text style={s.tripTitle}>
-            {nights ? `${dday.cityName} · ${nights}` : dday.cityName}
-          </Text>
-          <Text style={s.tripMeta}>
-            {formatRange(dday.startDate, dday.endDate)}
-            {dday.headcount ? ` · ${dday.headcount}명` : ''}
-          </Text>
-
-          {/* 준비 진행률 — 플래너 API(#65) 전까지는 예시 값이다 */}
-          <View style={s.progressTrack}>
-            <View style={[s.progressFill, { width: `${prep.percent}%` }]} />
-          </View>
-          <Text style={s.progressLabel}>준비 {prep.percent}% 완료</Text>
+          {/* Func-002-02: "D-day 버튼 클릭 → 여행지 & 기간 & 인원 입력 화면으로" */}
+          <TouchableOpacity
+            activeOpacity={0.85}
+            disabled={!onOpenDestination}
+            onPress={onOpenDestination}
+          >
+            <Text style={s.eyebrow}>다가오는 여행</Text>
+            <Text style={s.dday}>{dday.dday}</Text>
+            <Text style={s.tripTitle}>
+              {nights ? `${dday.cityName} · ${nights}` : dday.cityName}
+            </Text>
+            <Text style={s.tripMeta}>
+              {formatRange(dday.startDate, dday.endDate)}
+              {dday.headcount ? ` · ${dday.headcount}명` : ''}
+            </Text>
+          </TouchableOpacity>
         </SafeAreaView>
 
-        {/* 항공 / 숙소 / 일정 — 파란 헤더에 절반쯤 걸쳐 놓인다 */}
-        <View style={s.statusCard}>
-          {[
-            { label: '항공', status: prep.flight },
-            { label: '숙소', status: prep.accommodation },
-            { label: '일정', status: prep.schedule },
-          ].map((item, i) => (
-            <React.Fragment key={item.label}>
-              {i > 0 && <View style={s.statusDivider} />}
-              <View style={s.statusCol}>
-                <Text style={s.statusLabel}>{item.label}</Text>
-                <Text
-                  style={[s.statusValue, { color: STATUS_COLOR[item.status] }]}
-                >
-                  {PREP_STATUS_LABEL[item.status]}
-                </Text>
-              </View>
-            </React.Fragment>
-          ))}
-        </View>
-
-        <View style={s.section}>
-          <Text style={s.sectionTitle}>여행 준비</Text>
-
-          <TouchableOpacity
-            style={s.prepRow}
-            activeOpacity={0.85}
-            disabled={!onOpenPlanner}
-            onPress={onOpenPlanner}
-          >
-            <View style={s.prepIcon} />
-            <View style={s.prepBody}>
-              <Text style={s.prepTitle}>플래너에서 투표 이어가기</Text>
-              <Text style={[s.prepSub, { color: colors.accent }]}>
-                {prep.pendingVotes}건 대기 중
-              </Text>
-            </View>
-            <Text style={s.chevron}>›</Text>
-          </TouchableOpacity>
-
-          <View style={s.prepRow}>
-            <View style={s.prepIcon} />
-            <View style={s.prepBody}>
-              <Text style={s.prepTitle}>체크리스트 작성</Text>
-              <Text style={[s.prepSub, { color: colors.textSub }]}>
-                {prep.checklistTotal}개 중 {prep.checklistDone}개 완료
-              </Text>
-            </View>
-            <Text style={s.chevron}>›</Text>
+        {/* 축제 · 이벤트 캘린더 (Func-002-03) — 메인에서 들어갈 유일한 입구 */}
+        <TouchableOpacity
+          style={s.eventRow}
+          activeOpacity={0.85}
+          disabled={!onOpenEvents}
+          onPress={onOpenEvents}
+        >
+          <View style={s.eventIcon}>
+            <Text style={s.eventEmoji}>🎉</Text>
           </View>
-
-          {/* 피그마 B1 에는 없는 행이다. 기능명세서 v3 에서 축제·이벤트가
-              기록 탭에서 메인(Func-002-03)으로 옮겨왔는데, 홈에 들어갈
-              입구가 여기밖에 없어서 여행 준비 목록에 붙였다. */}
-          <TouchableOpacity
-            style={s.prepRow}
-            activeOpacity={0.85}
-            disabled={!onOpenEvents}
-            onPress={onOpenEvents}
-          >
-            <View style={s.prepIcon} />
-            <View style={s.prepBody}>
-              <Text style={s.prepTitle}>축제 · 이벤트 캘린더</Text>
-              <Text style={[s.prepSub, { color: colors.textSub }]}>
-                {dday.countryName ?? '여행지'}의 이번 달 일정
-              </Text>
-            </View>
-            <Text style={s.chevron}>›</Text>
-          </TouchableOpacity>
-        </View>
+          <View style={s.eventBody}>
+            <Text style={s.eventTitle}>축제 · 이벤트 캘린더</Text>
+            <Text style={s.eventSub}>
+              {dday.countryName ?? '여행지'}의 이번 달 일정
+            </Text>
+          </View>
+          <Text style={s.chevron}>›</Text>
+        </TouchableOpacity>
 
         <View style={s.section}>
           <Text style={s.sectionTitle}>이번 주 추천</Text>
