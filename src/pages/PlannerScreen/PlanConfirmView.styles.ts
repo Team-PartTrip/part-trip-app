@@ -100,6 +100,47 @@ export const planConfirmStyles = StyleSheet.create({
   loading: {
     marginTop: 60,
   },
+  // ── 확정 전 / 조회 실패 화면 ──
+  // 본문 헤더가 파란 배경이라 back 글자가 흰색이다. 여기서는 밝은 배경이라
+  // 같은 스타일을 쓰면 화살표가 보이지 않아서 따로 둔다.
+  errorArea: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  errorBackBtn: {
+    paddingHorizontal: 24,
+    paddingTop: 8,
+  },
+  errorBack: {
+    fontSize: 28,
+    lineHeight: 32,
+    color: colors.textPrimary,
+  },
+  errorBody: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 40,
+    gap: 8,
+  },
+  errorTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    textAlign: 'center',
+  },
+  errorDesc: {
+    fontSize: 13,
+    lineHeight: 20,
+    color: colors.textMuted,
+    textAlign: 'center',
+  },
+  errorActions: {
+    paddingHorizontal: 24,
+    paddingBottom: 12,
+    gap: 10,
+  },
+
   empty: {
     borderRadius: 12,
     backgroundColor: colors.white,

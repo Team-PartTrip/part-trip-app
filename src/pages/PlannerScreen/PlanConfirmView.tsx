@@ -33,12 +33,16 @@ const PlanConfirmView: React.FC<Props> = ({ planId, onBack, onStart }) => {
   const [plan, setPlan] = useState<PlannerFinal | null>(null);
   const [members, setMembers] = useState<PlannerMember[]>([]);
   const [loading, setLoading] = useState(true);
+  // 서버가 "아직 확정 전" 도 400 으로 알려줘서 그 문구를 그대로 보여준다
+  const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useFocusEffect(
     useCallback(() => {
       let alive = true;
       (async () => {
         setLoading(true);
+        setError(null);
         try {
           const [final, memberList] = await Promise.all([
             getConfirmedPlaces(planId),
@@ -48,9 +52,10 @@ const PlanConfirmView: React.FC<Props> = ({ planId, onBack, onStart }) => {
             setPlan(final);
             setMembers(memberList);
           }
-        } catch {
+        } catch (e: any) {
           if (alive) {
             setPlan(null);
+            setError(e?.message ?? '확정 결과를 불러오지 못했어요.');
           }
         } finally {
           if (alive) {
@@ -61,7 +66,7 @@ const PlanConfirmView: React.FC<Props> = ({ planId, onBack, onStart }) => {
       return () => {
         alive = false;
       };
-    }, [planId]),
+    }, [planId, reloadKey]),
   );
 
   if (loading) {
@@ -74,14 +79,35 @@ const PlanConfirmView: React.FC<Props> = ({ planId, onBack, onStart }) => {
 
   if (!plan) {
     return (
-      <SafeAreaView style={s.safeArea} edges={['top']}>
-        <View style={s.backRow}>
-          <TouchableOpacity onPress={onBack} hitSlop={12}>
-            <Text style={s.back}>‹</Text>
-          </TouchableOpacity>
+      <SafeAreaView style={s.errorArea} edges={['top', 'bottom']}>
+        <TouchableOpacity
+          style={s.errorBackBtn}
+          onPress={onBack}
+          hitSlop={12}
+        >
+          <Text style={s.errorBack}>‹</Text>
+        </TouchableOpacity>
+
+        <View style={s.errorBody}>
+          <Text style={s.errorTitle}>아직 확정된 일정이 없어요</Text>
+          <Text style={s.errorDesc}>{error}</Text>
         </View>
-        <View style={s.empty}>
-          <Text style={s.emptyText}>확정 결과를 불러오지 못했어요.</Text>
+
+        <View style={s.errorActions}>
+          <TouchableOpacity
+            style={s.primaryBtn}
+            activeOpacity={0.85}
+            onPress={() => setReloadKey(k => k + 1)}
+          >
+            <Text style={s.primaryText}>다시 확인하기</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={s.secondaryBtn}
+            activeOpacity={0.85}
+            onPress={onBack}
+          >
+            <Text style={s.secondaryText}>진행 현황으로 돌아가기</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
