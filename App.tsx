@@ -36,10 +36,6 @@ import type {
   PlanDraft,
   TourPlace,
 } from './src/entities/planner/types';
-import {
-  SAMPLE_PLAN_ID,
-  samplePlanOf,
-} from './src/entities/planner/sampleData';
 import NotificationListView from './src/pages/NotificationView/NotificationListView';
 import NotificationDetailView from './src/pages/NotificationView/NotificationDetailView';
 import NotificationSettingsView from './src/pages/NotificationView/NotificationSettingsView';
@@ -84,7 +80,7 @@ export type RootStackParamList = {
   PlanGroup: undefined;
   PlanDestination: { draft: PlanDraft };
   PlacePicker: { draft: PlanDraft };
-  PlanCart: { places: TourPlace[] };
+  PlanCart: { plannerId: number; places: TourPlace[] };
   PlaceVote: { planId: number; category?: PlaceCategory };
   PlanStatus: { planId: number };
   PlanConfirm: { planId: number };
@@ -322,9 +318,9 @@ function App() {
                 {({ navigation }) => (
                   <PlannerScreen
                     onCreate={() => navigation.navigate('PlanGroup')}
-                    onOpenPlan={planId => {
+                    onOpenPlan={(planId, status) => {
                       // 확정된 계획은 최종 확인 화면, 그 밖에는 진행 현황으로
-                      if (samplePlanOf(planId).status === 'CONFIRMED') {
+                      if (status === 'CONFIRMED') {
                         navigation.navigate('PlanConfirm', { planId });
                       } else {
                         navigation.navigate('PlanStatus', { planId });
@@ -363,12 +359,14 @@ function App() {
                     draft={route.params.draft}
                     onBack={() => navigation.goBack()}
                     onOpenCart={places =>
-                      navigation.navigate('PlanCart', { places })
+                      navigation.navigate('PlanCart', {
+                        plannerId: route.params.draft.plannerId,
+                        places,
+                      })
                     }
-                    // 그룹 · 계획 생성 API 가 붙으면 응답으로 받은 planId 를 쓴다
                     onStartVote={() =>
                       navigation.navigate('PlaceVote', {
-                        planId: SAMPLE_PLAN_ID,
+                        planId: route.params.draft.plannerId,
                       })
                     }
                   />
@@ -382,7 +380,7 @@ function App() {
                     onBack={() => navigation.goBack()}
                     onConfirm={() =>
                       navigation.navigate('PlanConfirm', {
-                        planId: SAMPLE_PLAN_ID,
+                        planId: route.params.plannerId,
                       })
                     }
                   />

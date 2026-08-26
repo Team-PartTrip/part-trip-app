@@ -1,26 +1,26 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  Alert,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { planGroupStyles as s } from './PlanGroupView.styles';
 import WizardHeader from './WizardHeader';
 import MemberAvatar from './MemberAvatar';
 import colors from '../../shared/tokens/colors';
-import { sampleDraftMembers } from '../../entities/planner/sampleData';
-import { GroupMember, PlanDraft } from '../../entities/planner/types';
+import {
+  createPlanner,
+  getPlannerMembers,
+  PlannerMember,
+} from '../../entities/planner/api';
+import { PlanDraft } from '../../entities/planner/types';
 
 const MAX_HEADCOUNT = 10;
 
-/** 초대 상태별 보조 문구와 색 */
-function inviteMeta(member: GroupMember): { text: string; color: string } {
-  switch (member.invite) {
-    case 'ME':
-      return { text: '나', color: colors.primary };
-    case 'ACCEPTED':
-      return { text: '수락함', color: colors.success };
-    default:
-      return { text: '초대 대기', color: colors.textTertiary };
-  }
-}
 
 interface Props {
   onBack?: () => void;
@@ -30,33 +30,73 @@ interface Props {
 const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
   const [together, setTogether] = useState(true);
   const [headcount, setHeadcount] = useState(4);
-  const [members, setMembers] = useState<GroupMember[]>(sampleDraftMembers);
+  // 피그마 C2 에는 없는 입력이다. 서버가 title 을 @NotBlank 로 받고,
+  // 없으면 플래너 목록(C1)에서 계획을 구분할 수 없어서 넣었다.
+  const [title, setTitle] = useState('');
+  const [members, setMembers] = useState<PlannerMember[]>([]);
+  const [plannerId, setPlannerId] = useState<number | null>(null);
+  const [inviteCode, setInviteCode] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   // 혼자 여행이면 인원은 나 한 명으로 고정된다
   const finalHeadcount = together ? headcount : 1;
-  const finalMembers = together ? members : members.slice(0, 1);
 
-  const removeMember = (groupMemberId: number) =>
-    setMembers(prev =>
-      prev.filter(member => member.groupMemberId !== groupMemberId),
-    );
+  /**
+   * 플래너를 아직 안 만들었으면 만든다.
+   * 초대하기와 다음이 모두 필요로 해서, 한 번만 만들고 재사용한다.
+   */
+  const ensurePlanner = async (): Promise<number | null> => {
+    if (plannerId !== null) {
+      return plannerId;
+    }
+    if (!title.trim()) {
+      Alert.alert('알림', '여행 제목을 입력해주세요.');
+      return null;
+    }
+    try {
+      setBusy(true);
+      const created = await createPlanner({
+        title: title.trim(),
+        memberCount: finalHeadcount,
+        isSolo: !together,
+      });
+      setPlannerId(created.plannerId);
+      setInviteCode(created.inviteCode);
+      setMembers(await getPlannerMembers(created.plannerId).catch(() => []));
+      return created.plannerId;
+    } catch (e: any) {
+      Alert.alert('생성 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
+      return null;
+    } finally {
+      setBusy(false);
+    }
+  };
 
-  const invite = () =>
-    // 초대 링크는 서버가 invite_code 를 내려줘야 만들 수 있다 (TravelGroupEntity)
+  const invite = async () => {
+    const id = await ensurePlanner();
+    if (id === null) {
+      return;
+    }
     Alert.alert(
-      '링크로 초대하기',
-      '그룹 생성 API가 연결되면 초대 링크를 만들어 공유할 수 있어요.',
+      '초대 코드',
+      `${inviteCode ?? ''}\n\n이 코드를 전달하면 참여할 수 있어요.`,
     );
+  };
 
-  const next = () =>
+  const next = async () => {
+    const id = await ensurePlanner();
+    if (id === null) {
+      return;
+    }
     onNext?.({
+      plannerId: id,
       headcount: finalHeadcount,
-      members: finalMembers,
       countryName: '',
       cityName: '',
       startDate: '',
       endDate: '',
     });
+  };
 
   return (
     <View style={s.safeArea}>
@@ -86,6 +126,17 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
             </TouchableOpacity>
           ))}
         </View>
+
+        <Text style={s.label}>여행 제목</Text>
+        <TextInput
+          style={s.titleInput}
+          placeholder="예: 오사카 먹방 여행"
+          placeholderTextColor={colors.placeholder}
+          value={title}
+          onChangeText={setTitle}
+          editable={plannerId === null}
+          maxLength={40}
+        />
 
         {together ? (
           <>
@@ -118,32 +169,27 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
             </View>
 
             <Text style={s.label}>함께할 사람</Text>
-            {members.map((member, i) => {
-              const meta = inviteMeta(member);
-              return (
-                <View key={member.groupMemberId} style={s.memberRow}>
+            {members.length === 0 ? (
+              <Text style={s.memberEmpty}>
+                초대 코드를 전달하면 여기에 참여한 사람이 보여요.
+              </Text>
+            ) : (
+              members.map((member, i) => (
+                <View key={member.userId} style={s.memberRow}>
                   <MemberAvatar
-                    nickname={member.nickname}
+                    nickname={member.nickName}
                     index={i}
                     size={36}
                   />
                   <View style={s.memberBody}>
-                    <Text style={s.memberName}>{member.nickname}</Text>
-                    <Text style={[s.memberSub, { color: meta.color }]}>
-                      {meta.text}
+                    <Text style={s.memberName}>{member.nickName}</Text>
+                    <Text style={s.memberSub}>
+                      {member.role === 'OWNER' ? '방장' : '참여 완료'}
                     </Text>
                   </View>
-                  {member.invite !== 'ME' && (
-                    <TouchableOpacity
-                      hitSlop={12}
-                      onPress={() => removeMember(member.groupMemberId)}
-                    >
-                      <Text style={s.memberRemove}>✕</Text>
-                    </TouchableOpacity>
-                  )}
                 </View>
-              );
-            })}
+              ))
+            )}
 
             <TouchableOpacity
               style={s.inviteBtn}
@@ -165,9 +211,10 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
         <TouchableOpacity
           style={s.primaryBtn}
           activeOpacity={0.85}
+          disabled={busy}
           onPress={next}
         >
-          <Text style={s.primaryText}>다음</Text>
+          <Text style={s.primaryText}>{busy ? '만드는 중…' : '다음'}</Text>
         </TouchableOpacity>
       </SafeAreaView>
     </View>

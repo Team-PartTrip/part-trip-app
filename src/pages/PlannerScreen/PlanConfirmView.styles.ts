@@ -97,6 +97,9 @@ export const planConfirmStyles = StyleSheet.create({
   },
   rowPillText: { fontSize: 11, fontWeight: '500', color: colors.primary },
 
+  loading: {
+    marginTop: 60,
+  },
   empty: {
     borderRadius: 12,
     backgroundColor: colors.white,

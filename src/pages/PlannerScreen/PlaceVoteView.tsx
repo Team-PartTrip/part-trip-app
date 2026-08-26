@@ -1,21 +1,23 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { placeVoteStyles as s } from './PlaceVoteView.styles';
-import MemberAvatar from './MemberAvatar';
-import colors from '../../shared/tokens/colors';
+import React, { useCallback, useState } from 'react';
 import {
-  ME_USER_ID,
-  samplePlanOf,
-  sampleVotesOf,
-} from '../../entities/planner/sampleData';
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
+import { placeVoteStyles as s } from './PlaceVoteView.styles';
+import colors from '../../shared/tokens/colors';
+import { castBallot, getVotes, VoteStatusInfo } from '../../entities/planner/api';
 import {
   CATEGORIES,
   CATEGORY_EMOJI,
   CATEGORY_LABEL,
   formatDeadline,
   PlaceCategory,
-  Vote,
   VoteStatus,
 } from '../../entities/planner/types';
 
@@ -45,55 +47,81 @@ const PlaceVoteView: React.FC<Props> = ({
   onBack,
   onDone,
 }) => {
-  const plan = samplePlanOf(planId);
-  const [votes, setVotes] = useState<Vote[]>(() => sampleVotesOf(planId));
-  const [current, setCurrent] = useState<PlaceCategory>(
-    () =>
-      category ??
-      votes.find(vote => vote.status === 'OPEN' && vote.options.length > 0)
-        ?.category ??
-      CATEGORIES[0],
+  const [votes, setVotes] = useState<VoteStatusInfo[]>([]);
+  const [current, setCurrent] = useState<PlaceCategory | null>(
+    category ?? null,
+  );
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      (async () => {
+        setLoading(true);
+        try {
+          const list = await getVotes(planId);
+          if (!alive) {
+            return;
+          }
+          setVotes(list);
+          // 어느 카테고리로 열지 정하지 않았으면 후보가 있는 진행 중 투표를 연다
+          setCurrent(
+            prev =>
+              prev ??
+              list.find(v => v.status === 'OPEN' && v.options.length > 0)
+                ?.category ??
+              CATEGORIES[0],
+          );
+        } catch {
+          if (alive) {
+            setVotes([]);
+            setCurrent(prev => prev ?? CATEGORIES[0]);
+          }
+        } finally {
+          if (alive) {
+            setLoading(false);
+          }
+        }
+      })();
+      return () => {
+        alive = false;
+      };
+    }, [planId]),
   );
 
-  const vote = votes.find(item => item.category === current);
+  const active = current ?? CATEGORIES[0];
+  const vote = votes.find(item => item.category === active);
   const options = vote?.options ?? [];
   const status = vote?.status ?? 'OPEN';
   const meta = statusMeta(status);
+  const eligible = vote?.eligibleMemberCount ?? 0;
 
-  const myOptionId =
-    options.find(option => option.voterIds.includes(ME_USER_ID))?.optionId ??
-    null;
-  const voterCount = new Set(
-    options.flatMap(option => option.voterIds),
-  ).size;
+  const myOptionId = options.find(option => option.selectedByMe)?.optionId ?? null;
   const topCount = options.reduce(
-    (max, option) => Math.max(max, option.voterIds.length),
+    (max, option) => Math.max(max, option.voteCount),
     0,
   );
 
-  // 한 카테고리에 한 표만 던질 수 있다 (서버 vote_record 의 uk_vote_record_vote_user)
-  const castVote = (optionId: number) =>
-    setVotes(prev =>
-      prev.map(item =>
-        item.category !== current
-          ? item
-          : {
-              ...item,
-              options: item.options.map(option => {
-                const others = option.voterIds.filter(id => id !== ME_USER_ID);
-                const keepMine =
-                  option.optionId === optionId && option.optionId !== myOptionId;
-                return {
-                  ...option,
-                  voterIds: keepMine ? [...others, ME_USER_ID] : others,
-                };
-              }),
-            },
-      ),
-    );
+  // 한 카테고리에 한 표만 던질 수 있다 (서버 vote_record 의 uk_vote_record_vote_user).
+  // 서버가 갱신된 현황을 따로 주지 않아서, 성공하면 목록을 다시 받는다.
+  const castVote = async (optionId: number) => {
+    if (!vote || sending) {
+      return;
+    }
+    try {
+      setSending(true);
+      await castBallot(planId, vote.voteId, optionId);
+      setVotes(await getVotes(planId));
+    } catch (e: any) {
+      Alert.alert('투표 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
+    } finally {
+      setSending(false);
+    }
+  };
 
   const goNext = () => {
-    const index = CATEGORIES.indexOf(current);
+    const index = CATEGORIES.indexOf(active);
     if (index < CATEGORIES.length - 1) {
       setCurrent(CATEGORIES[index + 1]);
       return;
@@ -108,13 +136,13 @@ const PlaceVoteView: React.FC<Props> = ({
           <Text style={s.back}>‹</Text>
         </TouchableOpacity>
         <View style={s.titleRow}>
-          <Text style={s.title}>{CATEGORY_LABEL[current]} 투표</Text>
+          <Text style={s.title}>{CATEGORY_LABEL[active]} 투표</Text>
           <View style={[s.statusPill, { backgroundColor: meta.color }]}>
             <Text style={s.statusText}>{meta.text}</Text>
           </View>
         </View>
         <Text style={s.subtitle}>
-          {voterCount} / {plan.headcount}명 참여 ·{' '}
+          {vote?.votedMemberCount ?? 0} / {eligible}명 참여 ·{' '}
           {formatDeadline(vote?.deadline ?? null)} 마감
         </Text>
       </SafeAreaView>
@@ -126,7 +154,7 @@ const PlaceVoteView: React.FC<Props> = ({
         style={s.chipScroll}
       >
         {CATEGORIES.map(key => {
-          const on = key === current;
+          const on = key === active;
           return (
             <TouchableOpacity
               key={key}
@@ -146,7 +174,9 @@ const PlaceVoteView: React.FC<Props> = ({
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
       >
-        {options.length === 0 ? (
+        {loading ? (
+          <ActivityIndicator style={s.loading} />
+        ) : options.length === 0 ? (
           <View style={s.empty}>
             <Text style={s.emptyText}>아직 담긴 후보가 없어요</Text>
             <Text style={s.emptyDesc}>
@@ -156,49 +186,31 @@ const PlaceVoteView: React.FC<Props> = ({
         ) : (
           options.map(option => {
             const mine = option.optionId === myOptionId;
-            const count = option.voterIds.length;
+            const count = option.voteCount;
             const leading = count > 0 && count === topCount;
             return (
-              <View
-                key={option.optionId}
-                style={[s.card, mine && s.cardOn]}
-              >
+              <View key={option.optionId} style={[s.card, mine && s.cardOn]}>
                 <View style={s.cardTop}>
                   <View style={s.thumb}>
-                    <Text style={s.thumbEmoji}>{CATEGORY_EMOJI[current]}</Text>
+                    <Text style={s.thumbEmoji}>{CATEGORY_EMOJI[active]}</Text>
                   </View>
                   <View style={s.body}>
                     <Text style={s.name} numberOfLines={1}>
                       {option.placeName}
                     </Text>
+                    {/* 누가 찍었는지는 서버가 내려주지 않아 표 수만 보여준다 */}
                     <View style={s.countRow}>
                       <Text style={s.count}>{count}표</Text>
-                      <View style={s.voters}>
-                        {option.voterIds.map((userId, i) => {
-                          const member = plan.members.find(
-                            item => item.userId === userId,
-                          );
-                          return (
-                            <MemberAvatar
-                              key={userId}
-                              nickname={member?.nickname ?? userId}
-                              index={i}
-                              size={24}
-                              style={i > 0 && s.voterOverlap}
-                            />
-                          );
-                        })}
-                      </View>
                     </View>
                   </View>
                   <TouchableOpacity
                     style={[
                       s.voteBtn,
                       mine && s.voteBtnOn,
-                      status !== 'OPEN' && s.voteBtnOff,
+                      (status !== 'OPEN' || sending) && s.voteBtnOff,
                     ]}
                     activeOpacity={0.85}
-                    disabled={status !== 'OPEN'}
+                    disabled={status !== 'OPEN' || sending}
                     onPress={() => castVote(option.optionId)}
                   >
                     <Text style={[s.voteText, mine && s.voteTextOn]}>
@@ -212,7 +224,7 @@ const PlaceVoteView: React.FC<Props> = ({
                     style={[
                       s.fill,
                       {
-                        width: `${(count / plan.headcount) * 100}%`,
+                        width: `${eligible > 0 ? (count / eligible) * 100 : 0}%`,
                         backgroundColor: leading
                           ? colors.primary
                           : colors.textTertiary,
@@ -233,7 +245,7 @@ const PlaceVoteView: React.FC<Props> = ({
           onPress={goNext}
         >
           <Text style={s.primaryText}>
-            {current === CATEGORIES[CATEGORIES.length - 1]
+            {active === CATEGORIES[CATEGORIES.length - 1]
               ? '투표 마치기'
               : '다음 카테고리'}
           </Text>

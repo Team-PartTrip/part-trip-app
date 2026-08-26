@@ -1,16 +1,27 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { planStatusStyles as s } from './PlanStatusView.styles';
 import colors from '../../shared/tokens/colors';
-import { samplePlanOf, sampleVotesOf } from '../../entities/planner/sampleData';
+import {
+  getPlanner,
+  getVotes,
+  PlannerDetail,
+  VoteStatusInfo,
+} from '../../entities/planner/api';
 import {
   CATEGORIES,
   CATEGORY_LABEL,
   formatRange,
   PlaceCategory,
   planStatusLabel,
-  Vote,
 } from '../../entities/planner/types';
 
 type RowState = 'confirmed' | 'voting' | 'none';
@@ -27,8 +38,7 @@ interface CategoryRow {
 
 function buildRow(
   category: PlaceCategory,
-  vote: Vote | undefined,
-  headcount: number,
+  vote: VoteStatusInfo | undefined,
 ): CategoryRow {
   if (!vote || vote.options.length === 0) {
     return {
@@ -55,13 +65,14 @@ function buildRow(
     };
   }
 
-  const voted = new Set(vote.options.flatMap(option => option.voterIds)).size;
+  // 몇 명이 투표했는지는 서버가 세어서 내려준다
+  const { votedMemberCount: voted, eligibleMemberCount: total } = vote;
   return {
     category,
     state: 'voting',
-    sub: `투표 중 · ${voted}/${headcount}`,
+    sub: `투표 중 · ${voted}/${total}`,
     color: colors.accent,
-    ratio: headcount > 0 ? voted / headcount : 0,
+    ratio: total > 0 ? voted / total : 0,
     pill: '진행',
   };
 }
@@ -69,17 +80,48 @@ function buildRow(
 interface Props {
   planId: number;
   onBack?: () => void;
-  onOpenVote?: (category: PlaceCategory) => void;
+  onOpenVote?: (category: PlaceCategory, voteId?: number) => void;
 }
 
 const PlanStatusView: React.FC<Props> = ({ planId, onBack, onOpenVote }) => {
-  const plan = samplePlanOf(planId);
-  const votes = sampleVotesOf(planId);
+  const [plan, setPlan] = useState<PlannerDetail | null>(null);
+  const [votes, setVotes] = useState<VoteStatusInfo[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      (async () => {
+        setLoading(true);
+        try {
+          const [detail, voteList] = await Promise.all([
+            getPlanner(planId),
+            getVotes(planId).catch(() => []),
+          ]);
+          if (alive) {
+            setPlan(detail);
+            setVotes(voteList);
+          }
+        } catch {
+          if (alive) {
+            setPlan(null);
+          }
+        } finally {
+          if (alive) {
+            setLoading(false);
+          }
+        }
+      })();
+      return () => {
+        alive = false;
+      };
+    }, [planId]),
+  );
+
   const rows = CATEGORIES.map(category =>
     buildRow(
       category,
       votes.find(vote => vote.category === category),
-      plan.headcount,
     ),
   );
 
@@ -101,6 +143,27 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onOpenVote }) => {
     },
   ];
 
+  if (loading) {
+    return (
+      <View style={s.safeArea}>
+        <ActivityIndicator style={s.loading} />
+      </View>
+    );
+  }
+
+  if (!plan) {
+    return (
+      <SafeAreaView style={s.safeArea} edges={['top']}>
+        <TouchableOpacity onPress={onBack} hitSlop={12} style={s.errorBack}>
+          <Text style={s.back}>‹</Text>
+        </TouchableOpacity>
+        <View style={s.errorBox}>
+          <Text style={s.errorText}>계획을 불러오지 못했어요</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <View style={s.safeArea}>
       <ScrollView
@@ -113,14 +176,17 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onOpenVote }) => {
           </TouchableOpacity>
           <View style={s.titleRow}>
             <Text style={s.title} numberOfLines={1}>
-              {plan.travelTitle}
+              {plan.title}
             </Text>
             <View style={[s.statusPill, { backgroundColor: colors.accent }]}>
               <Text style={s.statusText}>{planStatusLabel(plan.status)}</Text>
             </View>
           </View>
           <Text style={s.meta}>
-            {formatRange(plan.startDate, plan.endDate)} · {plan.headcount}명
+            {plan.startDate && plan.endDate
+              ? `${formatRange(plan.startDate, plan.endDate)} · `
+              : ''}
+            {plan.joinedMemberCount}/{plan.memberCount}명
           </Text>
         </SafeAreaView>
 
@@ -146,7 +212,12 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onOpenVote }) => {
               key={row.category}
               style={s.row}
               activeOpacity={0.85}
-              onPress={() => onOpenVote?.(row.category)}
+              onPress={() =>
+                onOpenVote?.(
+                  row.category,
+                  votes.find(v => v.category === row.category)?.voteId,
+                )
+              }
             >
               <View style={[s.dot, { backgroundColor: row.color }]} />
               <View style={s.rowBody}>
@@ -174,10 +245,6 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onOpenVote }) => {
             </TouchableOpacity>
           ))}
         </View>
-
-        <Text style={s.note}>
-          플래너 API 연동 전이라 예시 데이터로 보여주고 있어요.
-        </Text>
       </ScrollView>
     </View>
   );

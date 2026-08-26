@@ -123,8 +123,9 @@ export interface PopularCity {
 
 /** 그룹 만들기 ~ 장소 담기까지 화면 사이로 들고 다니는 임시 값 */
 export interface PlanDraft {
+  /** C2 에서 만든 플래너 id. 이후 화면이 이 id 로 서버를 부른다 */
+  plannerId: number;
   headcount: number;
-  members: GroupMember[];
   countryName: string;
   cityName: string;
   /** YYYY-MM-DD. 아직 안 고른 단계에서는 빈 문자열 */

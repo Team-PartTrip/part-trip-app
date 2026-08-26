@@ -1,16 +1,27 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { plannerStyles as s } from './PlannerScreen.styles';
 import MemberAvatar from './MemberAvatar';
 import colors from '../../shared/tokens/colors';
-import { samplePlans, sampleVotesOf } from '../../entities/planner/sampleData';
+import {
+  getPlanners,
+  getPlannerMembers,
+  PlannerListItem,
+  PlannerMember,
+} from '../../entities/planner/api';
 import {
   formatRange,
+  GroupStatus,
   planStatusLabel,
   today,
-  TravelPlan,
-  votedMemberCount,
 } from '../../entities/planner/types';
 
 type FilterKey = 'ongoing' | 'upcoming' | 'done';
@@ -21,9 +32,14 @@ const FILTERS: { key: FilterKey; label: string }[] = [
   { key: 'done', label: '완료' },
 ];
 
+/** 목록 한 줄 + 그 플래너의 멤버들 */
+interface PlannerRow extends PlannerListItem {
+  members: PlannerMember[];
+}
+
 /** 상단 띠 · 상태 배지 색. 모집 중은 파랑, 투표/여행 중은 주황, 확정은 초록 */
-function toneOf(plan: TravelPlan): string {
-  switch (plan.status) {
+function toneOf(status: GroupStatus): string {
+  switch (status) {
     case 'PLANNING':
       return colors.primary;
     case 'VOTING':
@@ -37,29 +53,26 @@ function toneOf(plan: TravelPlan): string {
 }
 
 /** 카드 왼쪽 아래 문구 — 확정 전에는 참여 인원, 확정 뒤에는 상태를 보여준다 */
-function metaOf(plan: TravelPlan): string {
+function metaOf(plan: PlannerRow): string {
   if (plan.status === 'CONFIRMED') {
     return '확정 완료';
   }
   if (plan.status === 'DONE') {
     return '여행 완료';
   }
-  if (plan.status === 'VOTING') {
-    return `${votedMemberCount(sampleVotesOf(plan.planId))}/${
-      plan.headcount
-    } 참여`;
-  }
-  return `${plan.members.length}/${plan.headcount} 참여`;
+  return `${plan.joinedMemberCount}/${plan.memberCount} 참여`;
 }
 
 /** 진행 중 = 아직 끝나지 않은 계획, 예정 = 출발 전, 완료 = 끝난 계획 */
-function matches(plan: TravelPlan, filter: FilterKey): boolean {
-  const isDone = plan.status === 'DONE' || plan.endDate < today();
+function matches(plan: PlannerRow, filter: FilterKey): boolean {
+  // 여행지·기간을 아직 안 정한 플래너는 끝났다고 볼 수 없다
+  const isDone =
+    plan.status === 'DONE' || (!!plan.endDate && plan.endDate < today());
   switch (filter) {
     case 'ongoing':
       return !isDone;
     case 'upcoming':
-      return !isDone && plan.startDate > today();
+      return !isDone && !!plan.startDate && plan.startDate > today();
     default:
       return isDone;
   }
@@ -67,12 +80,50 @@ function matches(plan: TravelPlan, filter: FilterKey): boolean {
 
 interface Props {
   onCreate?: () => void;
-  onOpenPlan?: (planId: number) => void;
+  onOpenPlan?: (plannerId: number, status: GroupStatus) => void;
 }
 
 const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
   const [filter, setFilter] = useState<FilterKey>('ongoing');
-  const plans = samplePlans.filter(plan => matches(plan, filter));
+  const [rows, setRows] = useState<PlannerRow[] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      (async () => {
+        setLoading(true);
+        setFailed(false);
+        try {
+          const planners = await getPlanners();
+          // 목록 응답에는 멤버가 없어서 아바타를 그리려면 따로 받아야 한다.
+          // 내 플래너 수만큼이라 병렬로 한 번에 받는다.
+          const members = await Promise.all(
+            planners.map(p => getPlannerMembers(p.plannerId).catch(() => [])),
+          );
+          if (!alive) {
+            return;
+          }
+          setRows(planners.map((p, i) => ({ ...p, members: members[i] })));
+        } catch {
+          if (alive) {
+            setRows(null);
+            setFailed(true);
+          }
+        } finally {
+          if (alive) {
+            setLoading(false);
+          }
+        }
+      })();
+      return () => {
+        alive = false;
+      };
+    }, []),
+  );
+
+  const plans = (rows ?? []).filter(plan => matches(plan, filter));
 
   return (
     <View style={s.safeArea}>
@@ -111,7 +162,16 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
       >
-        {plans.length === 0 ? (
+        {loading ? (
+          <ActivityIndicator style={s.loading} />
+        ) : failed ? (
+          <View style={s.empty}>
+            <Text style={s.emptyText}>계획을 불러오지 못했어요</Text>
+            <Text style={s.emptyDesc}>
+              네트워크를 확인하고 다시 들어와 주세요.
+            </Text>
+          </View>
+        ) : plans.length === 0 ? (
           <View style={s.empty}>
             <Text style={s.emptyText}>여기에 보여줄 계획이 없어요</Text>
             <Text style={s.emptyDesc}>
@@ -120,19 +180,21 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
           </View>
         ) : (
           plans.map(plan => {
-            const tone = toneOf(plan);
+            const tone = toneOf(plan.status);
             return (
               <TouchableOpacity
-                key={plan.planId}
+                key={plan.plannerId}
                 style={s.card}
                 activeOpacity={0.85}
-                onPress={() => onOpenPlan?.(plan.planId)}
+                onPress={() => onOpenPlan?.(plan.plannerId, plan.status)}
               >
                 <View style={[s.cardStripe, { backgroundColor: tone }]} />
                 <View style={s.cardBody}>
-                  <Text style={s.cardTitle}>{plan.travelTitle}</Text>
+                  <Text style={s.cardTitle}>{plan.title}</Text>
                   <Text style={s.cardDate}>
-                    {formatRange(plan.startDate, plan.endDate)}
+                    {plan.startDate && plan.endDate
+                      ? formatRange(plan.startDate, plan.endDate)
+                      : '여행지 · 기간 미정'}
                   </Text>
 
                   <View style={s.cardMiddle}>
@@ -144,8 +206,8 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
                     <View style={s.avatars}>
                       {plan.members.map((member, i) => (
                         <MemberAvatar
-                          key={member.groupMemberId}
-                          nickname={member.nickname}
+                          key={member.userId}
+                          nickname={member.nickName}
                           index={i}
                           style={i > 0 && s.avatarOverlap}
                         />
@@ -162,10 +224,6 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
             );
           })
         )}
-
-        <Text style={s.note}>
-          플래너 API 연동 전이라 예시 데이터로 보여주고 있어요.
-        </Text>
       </ScrollView>
     </View>
   );

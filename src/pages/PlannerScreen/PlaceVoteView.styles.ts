@@ -91,6 +91,9 @@ export const placeVoteStyles = StyleSheet.create({
   },
   fill: { height: 8, borderRadius: 4 },
 
+  loading: {
+    marginTop: 60,
+  },
   empty: {
     borderRadius: 14,
     backgroundColor: colors.white,

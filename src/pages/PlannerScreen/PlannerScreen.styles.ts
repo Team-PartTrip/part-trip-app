@@ -73,6 +73,9 @@ export const plannerStyles = StyleSheet.create({
   cardMeta: { fontSize: 11, fontWeight: '500', color: colors.textTertiary },
   chevron: { fontSize: 18, fontWeight: '600', color: colors.textTertiary },
 
+  loading: {
+    marginTop: 60,
+  },
   empty: {
     borderRadius: 16,
     backgroundColor: colors.white,

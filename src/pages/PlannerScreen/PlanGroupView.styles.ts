@@ -78,6 +78,22 @@ export const planGroupStyles = StyleSheet.create({
   },
 
   // 멤버 목록
+  titleInput: {
+    marginTop: 10,
+    height: 48,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.white,
+    paddingHorizontal: 14,
+    fontSize: 15,
+    color: colors.textPrimary,
+  },
+  memberEmpty: {
+    marginTop: 10,
+    fontSize: 12,
+    color: colors.textSub,
+  },
   memberRow: {
     height: 60,
     flexDirection: 'row',

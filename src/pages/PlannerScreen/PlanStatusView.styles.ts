@@ -6,6 +6,23 @@ export const planStatusStyles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
   content: { paddingBottom: 32 },
 
+  loading: {
+    marginTop: 60,
+  },
+  errorBack: {
+    paddingHorizontal: 24,
+    paddingTop: 8,
+  },
+  errorBox: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  errorText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
   header: { paddingHorizontal: 24, paddingTop: 4 },
   back: { fontSize: 28, lineHeight: 32, color: colors.text },
   titleRow: {
