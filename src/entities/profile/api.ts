@@ -15,6 +15,22 @@ export function getMyProfile(): Promise<UserProfile> {
   return authRequest<UserProfile>('/api/profile/myInfo', { method: 'GET' });
 }
 
+/** 마이 탭 상단의 "여행 · 국가 · 기록" 3칸 (Func-007-01) */
+export interface ProfileStats {
+  tripCount: number;
+  countryCount: number;
+  recordCount: number;
+}
+
+/**
+ * 내 여행 통계.
+ * 여행 카드·세계지도 쓰기 API 가 아직 없어서 지금은 전부 0 이 온다.
+ * 서버가 null 대신 0 을 주므로 화면은 그대로 그리면 된다.
+ */
+export function getProfileStats(): Promise<ProfileStats> {
+  return authRequest<ProfileStats>('/api/profile/stats', { method: 'GET' });
+}
+
 export interface ProfileUpdatePayload {
   nickName: string;
   imgUrl?: string | null;

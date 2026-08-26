@@ -10,13 +10,17 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { profileStyles as s } from './ProfileView.styles';
-import { getMyProfile, UserProfile } from '../../entities/profile/api';
+import {
+  getMyProfile,
+  getProfileStats,
+  ProfileStats,
+  UserProfile,
+} from '../../entities/profile/api';
 import { logout } from '../../entities/auth/api';
 import { getRefreshToken, clearTokens } from '../../shared/api/tokenStorage';
 import { toImageUrl } from '../../shared/api/image';
 import { sampleSummary } from '../../entities/worldmap/sampleData';
 import { flagOf } from '../../entities/worldmap/types';
-import { sampleTripCards } from '../../entities/record/sampleData';
 
 // 세계지도 미리보기 칸 수 (피그마 E1 은 6칸)
 const MAP_CELLS = 6;
@@ -38,12 +42,17 @@ const ProfileView: React.FC<Props> = ({
   onOpenWorldMap,
 }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [stats, setStats] = useState<ProfileStats | null>(null);
 
   useFocusEffect(
     useCallback(() => {
       getMyProfile()
         .then(setProfile)
         .catch(() => setProfile(null));
+      // 통계는 못 받아와도 화면 나머지는 그대로 보여준다
+      getProfileStats()
+        .then(setStats)
+        .catch(() => setStats(null));
     }, []),
   );
 
@@ -74,14 +83,22 @@ const ProfileView: React.FC<Props> = ({
 
   const initial = profile?.nickName?.trim().charAt(0) ?? '';
 
-  // 여행 수·기록 수·획득 국가를 주는 API 가 아직 없어서 예시 데이터로 채운다
-  const visitedCountries = sampleSummary.countries;
-  const tripCount = sampleTripCards.length;
-  const photoCount = sampleTripCards.reduce((sum, t) => sum + t.photoCount, 0);
-  // "아시아 4 · 유럽 1" — 획득한 국가가 있는 대륙만 추린다
+  // 값을 못 받았을 때 0 으로 단정하지 않고 "-" 로 둔다
+  const statText = (n: number | undefined) =>
+    n === undefined ? '-' : String(n);
+
+  // 세계지도 미리보기는 아직 전용 API 가 없어 예시 데이터를 쓴다.
+  // 다만 몇 개국인지는 통계 API 를 따라가서, 위 "국가" 칸과 어긋나지 않게 한다.
+  const countryCount = stats?.countryCount ?? 0;
+  const visitedCountries = sampleSummary.countries.slice(0, countryCount);
+  // "아시아 4 · 유럽 1" — 위에서 자른 국가들만 세야 개수가 어긋나지 않는다
   const continentSummary = sampleSummary.continents
-    .filter(c => c.visited > 0)
-    .map(c => `${c.name} ${c.visited}`)
+    .map(c => ({
+      name: c.name,
+      n: visitedCountries.filter(v => v.continent === c.code).length,
+    }))
+    .filter(c => c.n > 0)
+    .map(c => `${c.name} ${c.n}`)
     .join(' · ');
 
   return (
@@ -132,9 +149,9 @@ const ProfileView: React.FC<Props> = ({
 
         <View style={s.statsCard}>
           {[
-            { value: String(tripCount), label: '여행' },
-            { value: String(visitedCountries.length), label: '국가' },
-            { value: String(photoCount), label: '기록' },
+            { value: statText(stats?.tripCount), label: '여행' },
+            { value: statText(stats?.countryCount), label: '국가' },
+            { value: statText(stats?.recordCount), label: '기록' },
           ].map((stat, i) => (
             <React.Fragment key={stat.label}>
               {i > 0 && <View style={s.statDivider} />}
