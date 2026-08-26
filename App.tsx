@@ -183,11 +183,12 @@ const ROUTE_BY_TAB: Record<TabKey, keyof RootStackParamList> = {
 };
 const TAB_BY_ROUTE: Record<string, TabKey> = {
   Main: 'home',
+  // 축제·이벤트는 기능명세서 v3 에서 메인(Func-002-03) 소속으로 옮겨졌다
+  Festival: 'home',
   Planner: 'planner',
   PlanStatus: 'planner',
   Record: 'record',
   RecordMap: 'record',
-  Festival: 'record',
   TripCardDetail: 'record',
   TripCardEdit: 'record',
   Profile: 'profile',
@@ -312,6 +313,7 @@ function App() {
                     onOpenDestination={() => navigation.navigate('Destination')}
                     onOpenNotifications={() => navigation.navigate('Notifications')}
                     onOpenPlanner={() => navigation.navigate('Planner')}
+                    onOpenEvents={() => navigation.navigate('Festival')}
                   />
                 )}
               </Stack.Screen>
@@ -530,7 +532,6 @@ function App() {
                       navigation.navigate('RecordMap', { tripCardId })
                     }
                     onOpenTripCards={() => navigation.navigate('TripCards')}
-                    onOpenEvents={() => navigation.navigate('Festival')}
                   />
                 )}
               </Stack.Screen>

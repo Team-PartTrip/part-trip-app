@@ -12,13 +12,11 @@ interface Props {
   /** 여행 하나를 열어 촬영 위치를 본다 (D1) */
   onOpenTrip?: (tripCardId: number) => void;
   onOpenTripCards?: () => void;
-  onOpenEvents?: () => void;
 }
 
 const RecordView: React.FC<Props> = ({
   onOpenTrip,
   onOpenTripCards,
-  onOpenEvents,
 }) => {
   const [year, setYear] = useState('전체');
 
@@ -37,15 +35,8 @@ const RecordView: React.FC<Props> = ({
       <SafeAreaView edges={['top']} style={s.header}>
         <View style={s.headerRow}>
           <Text style={s.pageTitle}>기록</Text>
-          {/* 피그마 D2 에는 동그란 버튼이 하나뿐이지만, 여행카드(D9)와
-              축제·이벤트(D7)로 들어갈 입구가 여기밖에 없어서 둘로 나눴다 */}
-          <TouchableOpacity
-            style={s.headerBtn}
-            activeOpacity={0.8}
-            onPress={onOpenEvents}
-          >
-            <Text style={s.headerBtnIcon}>🎉</Text>
-          </TouchableOpacity>
+          {/* 축제·이벤트는 기능명세서 v3 에서 메인(Func-002-03)으로 옮겨가서
+              여기 버튼을 뺐다. 피그마 D2 와 같이 버튼은 하나뿐이다. */}
           <TouchableOpacity
             style={s.headerBtn}
             activeOpacity={0.8}

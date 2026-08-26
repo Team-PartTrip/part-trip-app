@@ -57,12 +57,15 @@ interface MainViewProps {
   onOpenNotifications?: () => void;
   /** "플래너에서 투표 이어가기" 행 */
   onOpenPlanner?: () => void;
+  /** "축제 · 이벤트 캘린더" 행 (기능명세서 v3 에서 메인 소속이 됐다) */
+  onOpenEvents?: () => void;
 }
 
 const MainView: React.FC<MainViewProps> = ({
   onOpenDestination,
   onOpenNotifications,
   onOpenPlanner,
+  onOpenEvents,
 }) => {
   const [loading, setLoading] = useState(true);
   const [dday, setDday] = useState<DdayInfo | null>(null);
@@ -241,6 +244,25 @@ const MainView: React.FC<MainViewProps> = ({
             </View>
             <Text style={s.chevron}>›</Text>
           </View>
+
+          {/* 피그마 B1 에는 없는 행이다. 기능명세서 v3 에서 축제·이벤트가
+              기록 탭에서 메인(Func-002-03)으로 옮겨왔는데, 홈에 들어갈
+              입구가 여기밖에 없어서 여행 준비 목록에 붙였다. */}
+          <TouchableOpacity
+            style={s.prepRow}
+            activeOpacity={0.85}
+            disabled={!onOpenEvents}
+            onPress={onOpenEvents}
+          >
+            <View style={s.prepIcon} />
+            <View style={s.prepBody}>
+              <Text style={s.prepTitle}>축제 · 이벤트 캘린더</Text>
+              <Text style={[s.prepSub, { color: colors.textSub }]}>
+                {dday.countryName ?? '여행지'}의 이번 달 일정
+              </Text>
+            </View>
+            <Text style={s.chevron}>›</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={s.section}>

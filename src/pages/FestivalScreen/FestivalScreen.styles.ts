@@ -1,7 +1,7 @@
 import { StyleSheet } from 'react-native';
 import colors from '../../shared/tokens/colors';
 
-// 피그마 D7 · Func-005-07 축제 & 이벤트 캘린더
+// 피그마 D7 · Func-002-03 축제 & 이벤트 캘린더 (v3 에서 메인 소속)
 export const festivalStyles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
   content: { paddingBottom: 32 },
