@@ -17,14 +17,12 @@ interface Props {
   /** 촬영 위치를 눌러 그 장소의 사진을 본다 (D3) */
   onOpenSpot?: (spot: PhotoSpot) => void;
   /** 해설 카메라. 피그마에는 없지만 카메라로 들어갈 입구가 여기밖에 없다 */
-  onCamera?: () => void;
 }
 
 const RecordMapView: React.FC<Props> = ({
   tripCardId,
   onBack,
   onOpenSpot,
-  onCamera,
 }) => {
   const insets = useSafeAreaInsets();
   const [mode, setMode] = useState<'map' | 'list'>('map');
@@ -152,13 +150,6 @@ const RecordMapView: React.FC<Props> = ({
             </Text>
           </View>
           <View style={s.topBarSpacer} />
-          <TouchableOpacity
-            style={s.circleBtn}
-            activeOpacity={0.8}
-            onPress={onCamera}
-          >
-            <Text style={s.circleBtnText}>📷</Text>
-          </TouchableOpacity>
         </View>
       </View>
 

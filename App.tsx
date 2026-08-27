@@ -19,8 +19,6 @@ import ResetPassword from './src/pages/Auth/ResetPassword';
 import MainView from './src/pages/MainView/MainView';
 import FestivalScreen from './src/pages/FestivalScreen/FestivalScreen';
 import DestinationScreen from './src/pages/DestinationScreen/DestinationScreen';
-import CameraScreen from './src/pages/CameraScreen/CameraScreen';
-import GuideResultView from './src/pages/CameraScreen/GuideResultView';
 import DestinationPickerView from './src/pages/DestinationScreen/DestinationPickerView';
 import ProfileView from './src/pages/ProfileView/ProfileView';
 import PlannerScreen from './src/pages/PlannerScreen/PlannerScreen';
@@ -87,8 +85,6 @@ export type RootStackParamList = {
   NotificationDetail: { notification: Notification };
   Festival: undefined;
   Destination: undefined;
-  Camera: undefined;
-  GuideResult: { imageId: number; photoUri: string };
   DestinationPicker: undefined;
   Record: undefined;
   RecordMap: { tripCardId: number };
@@ -131,7 +127,6 @@ const AUTH_ROUTES = [
   'PostCreate',
   'Destination',
   'DestinationPicker',
-  'GuideResult',
   'RecordEdit',
   'RecordComplete',
   'WorldMap',
@@ -195,11 +190,7 @@ function App() {
   const showChrome = !!routeName && !AUTH_ROUTES.includes(routeName);
 
   const activeTab =
-    routeName && TAB_BY_ROUTE[routeName]
-      ? TAB_BY_ROUTE[routeName]
-      : routeName === 'Camera' || routeName === 'NearbyPlaces'
-      ? 'camera'
-      : '';
+    routeName && TAB_BY_ROUTE[routeName] ? TAB_BY_ROUTE[routeName] : '';
 
   const handleRouteChange = () => setRouteName(navRef.getCurrentRoute()?.name);
 
@@ -461,26 +452,6 @@ function App() {
               </Stack.Screen>
 
 
-              <Stack.Screen name="Camera">
-                {({ navigation }) => (
-                  <CameraScreen
-                    onOpenNearby={() => navigation.navigate('NearbyPlaces')}
-                    onCaptured={(imageId, photoUri) =>
-                      navigation.navigate('GuideResult', { imageId, photoUri })
-                    }
-                  />
-                )}
-              </Stack.Screen>
-              <Stack.Screen name="GuideResult">
-                {({ navigation, route }) => (
-                  <GuideResultView
-                    imageId={route.params.imageId}
-                    photoUri={route.params.photoUri}
-                    onBack={() => navigation.goBack()}
-                    onSaved={() => navigation.navigate('Camera')}
-                  />
-                )}
-              </Stack.Screen>
 
               <Stack.Screen name="Festival">
                 {({ navigation }) => (
@@ -535,7 +506,6 @@ function App() {
                         tripCardPlaceId: spot.tripCardPlaceId,
                       })
                     }
-                    onCamera={() => navigation.navigate('Camera')}
                   />
                 )}
               </Stack.Screen>
