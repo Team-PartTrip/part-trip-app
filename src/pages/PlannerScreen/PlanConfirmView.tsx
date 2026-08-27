@@ -35,11 +35,10 @@ const PlanConfirmView: React.FC<Props> = ({ planId, onBack, onStart }) => {
   const [loading, setLoading] = useState(true);
   // 서버가 "아직 확정 전" 도 400 으로 알려줘서 그 문구를 그대로 보여준다
   const [error, setError] = useState<string | null>(null);
-  const [reloadKey, setReloadKey] = useState(0);
 
-  useFocusEffect(
-    useCallback(() => {
-      let alive = true;
+  // 다시 확인하기 버튼도 같은 함수를 부른다
+  const load = useCallback(
+    (alive: () => boolean) =>
       (async () => {
         setLoading(true);
         setError(null);
@@ -48,25 +47,32 @@ const PlanConfirmView: React.FC<Props> = ({ planId, onBack, onStart }) => {
             getConfirmedPlaces(planId),
             getPlannerMembers(planId).catch(() => []),
           ]);
-          if (alive) {
+          if (alive()) {
             setPlan(final);
             setMembers(memberList);
           }
         } catch (e: any) {
-          if (alive) {
+          if (alive()) {
             setPlan(null);
             setError(e?.message ?? '확정 결과를 불러오지 못했어요.');
           }
         } finally {
-          if (alive) {
+          if (alive()) {
             setLoading(false);
           }
         }
-      })();
+      })(),
+    [planId],
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      let running = true;
+      void load(() => running);
       return () => {
-        alive = false;
+        running = false;
       };
-    }, [planId, reloadKey]),
+    }, [load]),
   );
 
   if (loading) {
@@ -97,7 +103,7 @@ const PlanConfirmView: React.FC<Props> = ({ planId, onBack, onStart }) => {
           <TouchableOpacity
             style={s.primaryBtn}
             activeOpacity={0.85}
-            onPress={() => setReloadKey(k => k + 1)}
+            onPress={() => void load(() => true)}
           >
             <Text style={s.primaryText}>다시 확인하기</Text>
           </TouchableOpacity>

@@ -34,12 +34,6 @@ export interface UnreadCount {
   unreadCount: number;
 }
 
-export interface NotificationSetting {
-  type: NotificationType;
-  /** 서버가 내려주는 한글 이름 */
-  label: string;
-  enabled: boolean;
-}
 
 /** Func-004-01 알림 목록 (커서 방식) */
 export function getNotifications(params?: {
@@ -78,22 +72,5 @@ export function markAsRead(notificationId: number): Promise<void> {
 export function markAllAsRead(): Promise<UnreadCount> {
   return authRequest<UnreadCount>('/api/notifications/read-all', {
     method: 'PATCH',
-  });
-}
-
-/** Func-004-03 알림 설정 조회 — 항상 6종을 모두 돌려준다 */
-export function getNotificationSettings(): Promise<NotificationSetting[]> {
-  return authRequest<NotificationSetting[]>('/api/notifications/settings', {
-    method: 'GET',
-  });
-}
-
-/** Func-004-03 알림 설정 변경 — 바꾼 것만 보내도 된다 */
-export function updateNotificationSettings(
-  settings: { type: NotificationType; enabled: boolean }[],
-): Promise<NotificationSetting[]> {
-  return authRequest<NotificationSetting[]>('/api/notifications/settings', {
-    method: 'PUT',
-    body: { settings },
   });
 }

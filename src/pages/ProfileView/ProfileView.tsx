@@ -30,7 +30,6 @@ interface Props {
   /** 상단 종 버튼 — 알림 목록 */
   onOpenNotifications?: () => void;
   onLogout?: () => void;
-  onNotificationSettings?: () => void;
   onOpenWorldMap?: () => void;
 }
 
@@ -38,7 +37,6 @@ const ProfileView: React.FC<Props> = ({
   onEdit,
   onOpenNotifications,
   onLogout,
-  onNotificationSettings,
   onOpenWorldMap,
 }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -202,15 +200,6 @@ const ProfileView: React.FC<Props> = ({
 
           <TouchableOpacity style={s.settingsRow} activeOpacity={0.85} onPress={onEdit}>
             <Text style={s.settingsRowText}>여행 타입 수정</Text>
-            <Text style={s.settingsRowChevron}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={s.settingsRow}
-            activeOpacity={0.85}
-            onPress={onNotificationSettings}
-          >
-            <Text style={s.settingsRowText}>알림 설정</Text>
             <Text style={s.settingsRowChevron}>›</Text>
           </TouchableOpacity>
 

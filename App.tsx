@@ -38,7 +38,6 @@ import type {
 } from './src/entities/planner/types';
 import NotificationListView from './src/pages/NotificationView/NotificationListView';
 import NotificationDetailView from './src/pages/NotificationView/NotificationDetailView';
-import NotificationSettingsView from './src/pages/NotificationView/NotificationSettingsView';
 import type { Notification } from './src/entities/notification/api';
 import RecordView from './src/pages/RecordView/RecordView';
 import RecordMapView from './src/pages/RecordView/RecordMapView';
@@ -86,7 +85,6 @@ export type RootStackParamList = {
   PlanConfirm: { planId: number };
   Notifications: undefined;
   NotificationDetail: { notification: Notification };
-  NotificationSettings: undefined;
   Festival: undefined;
   Destination: undefined;
   Camera: undefined;
@@ -167,7 +165,6 @@ const OWN_HEADER_ROUTES = [
   'Profile',
   'Notifications',
   'NotificationDetail',
-  'NotificationSettings',
 ];
 
 // 탭 ↔ 라우트 매핑
@@ -463,11 +460,6 @@ function App() {
                 )}
               </Stack.Screen>
 
-              <Stack.Screen name="NotificationSettings">
-                {({ navigation }) => (
-                  <NotificationSettingsView onBack={() => navigation.goBack()} />
-                )}
-              </Stack.Screen>
 
               <Stack.Screen name="Camera">
                 {({ navigation }) => (
@@ -661,9 +653,6 @@ function App() {
                   <ProfileView
                     onOpenNotifications={() =>
                       navigation.navigate('Notifications')
-                    }
-                    onNotificationSettings={() =>
-                      navigation.navigate('NotificationSettings')
                     }
                     onEdit={() => navigation.navigate('ProfileEdit')}
                     onOpenWorldMap={() => navigation.navigate('WorldMap')}
