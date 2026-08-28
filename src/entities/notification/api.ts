@@ -42,7 +42,8 @@ export function getNotifications(params?: {
   size?: number;
 }): Promise<NotificationPage> {
   const query = new URLSearchParams();
-  query.set('category', params?.category ?? 'ALL');
+  // 명세서(API-004-01)가 정한 이름은 type 이고, 값은 탭 구분이다
+  query.set('type', params?.category ?? 'ALL');
   if (params?.cursor != null) {
     query.set('cursor', String(params.cursor));
   }
