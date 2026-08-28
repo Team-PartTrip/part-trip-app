@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { profileEditStyles as s } from './ProfileEditView.styles';
-import { getProvider, getCurrentUserEmail } from '../../shared/api/tokenStorage';
 import { getMyProfile, updateProfile } from '../../entities/profile/api';
 import { uploadImage, toImageUrl } from '../../shared/api/image';
 
@@ -21,24 +20,18 @@ const DEFAULT_AVATAR = require('../../shared/assets/images/profile-character.jpg
 
 interface Props {
   onConfirm?: () => void;
-  onChangePassword?: (email: string) => void;
 }
 
 const ProfileEditView: React.FC<Props> = ({
   onConfirm,
-  onChangePassword,
 }) => {
   const [nickname, setNickname] = useState('');
   const [imgUrl, setImgUrl] = useState<string | null>(null);
-  const [isGoogle, setIsGoogle] = useState(false);
-  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    getProvider().then(p => setIsGoogle(p === 'GOOGLE'));
-    getCurrentUserEmail().then(e => setEmail(e ?? ''));
     getMyProfile()
       .then(p => {
         setNickname(p.nickName);
@@ -145,18 +138,6 @@ const ProfileEditView: React.FC<Props> = ({
               placeholderTextColor="#aab4be"
             />
 
-            {/* 비밀번호 변경 — 이메일 가입자만 표시, 회원가입과 동일하게
-                이메일 인증 후 새 비밀번호 2번 입력하는 플로우로 진행 */}
-            {!isGoogle && (
-              <TouchableOpacity
-                style={s.linkRow}
-                activeOpacity={0.85}
-                onPress={() => onChangePassword?.(email)}
-              >
-                <Text style={s.linkText}>비밀번호 변경</Text>
-                <Text style={s.linkArrow}>›</Text>
-              </TouchableOpacity>
-            )}
 
             {/* 여행 취향 재설정 */}
           </View>

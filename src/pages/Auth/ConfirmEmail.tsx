@@ -38,10 +38,6 @@ interface ConfirmEmailProps {
   mode?: ConfirmEmailMode;
   /** 회원가입 화면에서 입력한 아이디/비밀번호 (signup 모드에서 사용) */
   signupData?: SignUpData;
-  /** 이미 알고 있는 이메일로 미리 채워줄 때 사용 (프로필에서 비밀번호 변경 진입 시) */
-  initialEmail?: string;
-  /** 진입 경로. 'profile'이면 문구를 "비밀번호 변경"으로 표시 */
-  from?: 'login' | 'profile';
   /** 인증 완료 시 호출. resetPassword 모드에서는 인증된 이메일을 넘겨줌 */
   onConfirm?: (email?: string) => void;
 }
@@ -49,11 +45,9 @@ interface ConfirmEmailProps {
 const ConfirmEmail: React.FC<ConfirmEmailProps> = ({
   mode = 'signup',
   signupData,
-  initialEmail,
-  from,
   onConfirm,
 }) => {
-  const [email, setEmail] = useState(initialEmail ?? '');
+  const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -178,11 +172,7 @@ const ConfirmEmail: React.FC<ConfirmEmailProps> = ({
               resizeMode="contain"
             />
             <Text style={shared.title}>
-              {mode === 'signup'
-                ? '회원가입'
-                : from === 'profile'
-                ? '비밀번호 변경'
-                : '비밀번호 찾기'}
+              {mode === 'signup' ? '회원가입' : '비밀번호 찾기'}
             </Text>
           </View>
 

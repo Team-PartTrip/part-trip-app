@@ -19,14 +19,11 @@ import colors from '../../shared/tokens/colors';
 interface ResetPasswordProps {
   /** 비밀번호를 변경할 (인증 완료된) 이메일 */
   email: string;
-  /** 진입 경로. 'profile'이면 문구를 "비밀번호 변경"으로 표시 */
-  from?: 'login' | 'profile';
   onConfirm?: () => void;
 }
 
 const ResetPassword: React.FC<ResetPasswordProps> = ({
   email,
-  from,
   onConfirm,
 }) => {
   const [password, setPassword] = useState('');
@@ -73,7 +70,7 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({
               resizeMode="contain"
             />
             <Text style={styles.title}>
-              {from === 'profile' ? '비밀번호 변경' : '비밀번호 찾기'}
+              비밀번호 찾기
             </Text>
           </View>
 

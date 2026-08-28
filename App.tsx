@@ -68,10 +68,8 @@ export type RootStackParamList = {
   ConfirmEmail: {
     mode: 'signup' | 'resetPassword';
     signupData?: SignUpData;
-    from?: 'login' | 'profile';
-    initialEmail?: string;
   };
-  ResetPassword: { email: string; from?: 'login' | 'profile' };
+  ResetPassword: { email: string };
   Main: undefined;
   Planner: undefined;
   PlanGroup: undefined;
@@ -254,19 +252,15 @@ function App() {
               <Stack.Screen name="ConfirmEmail">
                 {({ navigation, route }) => {
                   const mode = route.params?.mode ?? 'signup';
-                  const from = route.params?.from;
                   return (
                     <ConfirmEmail
                       mode={mode}
                       signupData={route.params?.signupData}
-                      initialEmail={route.params?.initialEmail}
-                      from={from}
                       onConfirm={email =>
                         mode === 'signup'
                           ? navigation.navigate('Login')
                           : navigation.navigate('ResetPassword', {
                               email: email ?? '',
-                              from,
                             })
                       }
                     />
@@ -279,7 +273,6 @@ function App() {
                 {({ navigation, route }) => (
                   <ResetPassword
                     email={route.params?.email ?? ''}
-                    from={route.params?.from}
                     onConfirm={async () => {
                       await clearTokens();
                       navigation.reset({
@@ -639,13 +632,6 @@ function App() {
                 {({ navigation }) => (
                   <ProfileEditView
                     onConfirm={() => navigation.goBack()}
-                    onChangePassword={email =>
-                      navigation.navigate('ConfirmEmail', {
-                        mode: 'resetPassword',
-                        from: 'profile',
-                        initialEmail: email,
-                      })
-                    }
                   />
                 )}
               </Stack.Screen>
