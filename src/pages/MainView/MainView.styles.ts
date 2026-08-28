@@ -51,7 +51,7 @@ export const mainStyles = StyleSheet.create({
     height: 16,
     tintColor: colors.primary,
   },
-  // 여행 변경(✈️) · 알림(🔔) — 쓸 만한 아이콘 이미지가 없어 이모지로 둔다
+  // 알림(🔔) — 쓸 만한 아이콘 이미지가 없어 이모지로 둔다
   circleEmoji: {
     fontSize: 15,
   },
@@ -190,20 +190,6 @@ export const mainStyles = StyleSheet.create({
     color: colors.textMuted,
     textAlign: 'center',
   },
-  noPlacesBtn: {
-    marginTop: 8,
-    height: 34,
-    paddingHorizontal: 16,
-    borderRadius: 17,
-    backgroundColor: colors.tint,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  noPlacesBtnText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.primaryDark,
-  },
 
   // ── 여행 일정이 없을 때 ──
   empty: {
@@ -219,18 +205,5 @@ export const mainStyles = StyleSheet.create({
     color: colors.text,
     textAlign: 'center',
     lineHeight: 24,
-  },
-  emptyBtn: {
-    height: 40,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.textOnPrimary,
   },
 });

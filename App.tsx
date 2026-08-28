@@ -18,8 +18,6 @@ import ConfirmEmail from './src/pages/Auth/ConfirmEmail';
 import ResetPassword from './src/pages/Auth/ResetPassword';
 import MainView from './src/pages/MainView/MainView';
 import FestivalScreen from './src/pages/FestivalScreen/FestivalScreen';
-import DestinationScreen from './src/pages/DestinationScreen/DestinationScreen';
-import DestinationPickerView from './src/pages/DestinationScreen/DestinationPickerView';
 import ProfileView from './src/pages/ProfileView/ProfileView';
 import PlannerScreen from './src/pages/PlannerScreen/PlannerScreen';
 import PlanGroupView from './src/pages/PlannerScreen/PlanGroupView';
@@ -58,7 +56,6 @@ import type {
   VisitedCountry,
 } from './src/entities/worldmap/types';
 import { sampleAcquiredParamsOf } from './src/entities/worldmap/sampleData';
-import { consumeDestinationCallback } from './src/pages/DestinationScreen/destinationSelectBridge';
 import { clearTokens } from './src/shared/api/tokenStorage';
 
 export type RootStackParamList = {
@@ -82,8 +79,6 @@ export type RootStackParamList = {
   Notifications: undefined;
   NotificationDetail: { notification: Notification };
   Festival: undefined;
-  Destination: undefined;
-  DestinationPicker: undefined;
   Record: undefined;
   RecordMap: { tripCardId: number };
   PhotoDetail: {
@@ -123,8 +118,6 @@ const AUTH_ROUTES = [
   'MissionVerify',
   'PostDetail',
   'PostCreate',
-  'Destination',
-  'DestinationPicker',
   'RecordEdit',
   'RecordComplete',
   'WorldMap',
@@ -287,7 +280,6 @@ function App() {
               <Stack.Screen name="Main">
                 {({ navigation }) => (
                   <MainView
-                    onOpenDestination={() => navigation.navigate('Destination')}
                     onOpenNotifications={() => navigation.navigate('Notifications')}
                     onOpenEvents={() => navigation.navigate('Festival')}
                   />
@@ -444,36 +436,9 @@ function App() {
                 )}
               </Stack.Screen>
 
-
-
               <Stack.Screen name="Festival">
                 {({ navigation }) => (
                   <FestivalScreen onBack={() => navigation.goBack()} />
-                )}
-              </Stack.Screen>
-              <Stack.Screen name="Destination">
-                {({ navigation }) => (
-                  <DestinationScreen
-                    onBack={() => navigation.goBack()}
-                    onPickDestination={() =>
-                      navigation.navigate('DestinationPicker')
-                    }
-                    // 피그마 B2 의 버튼 문구가 "저장하고 플래너로" 다
-                    onSaved={() => navigation.navigate('Planner')}
-                  />
-                )}
-              </Stack.Screen>
-
-              {/* 커뮤니티 */}
-              <Stack.Screen name="DestinationPicker">
-                {({ navigation }) => (
-                  <DestinationPickerView
-                    onBack={() => navigation.goBack()}
-                    onSelect={destination => {
-                      consumeDestinationCallback(destination);
-                      navigation.goBack();
-                    }}
-                  />
                 )}
               </Stack.Screen>
 

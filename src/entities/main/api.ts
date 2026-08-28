@@ -41,24 +41,8 @@ export function getDday(): Promise<DdayInfo> {
   return authRequest<DdayInfo>('/api/main/dday', { method: 'GET' });
 }
 
-export interface TravelPlanPayload {
-  countryName: string;
-  cityName: string;
-  startDate: string;
-  endDate: string;
-  /** 함께 가는 인원(본인 포함). 서버가 1~30 으로 검증한다 */
-  headcount: number;
-}
-
-/** 여행 일정 등록 또는 수정 */
-export function saveTravelPlan(payload: TravelPlanPayload): Promise<DdayInfo> {
-  return authRequest<DdayInfo>('/api/main/travel-plan', {
-    method: 'POST',
-    body: payload,
-  });
-}
-
-
+// 여행 일정 등록(POST /api/main/travel-plan)은 쓰지 않는다.
+// 여행지 · 기간은 플래너(Func-005-02)에서만 정한다.
 
 export interface TourPlace {
   tourPlaceId: number;

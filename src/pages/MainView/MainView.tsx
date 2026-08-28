@@ -39,7 +39,6 @@ function formatNights(start: string, end: string): string {
 }
 
 interface MainViewProps {
-  onOpenDestination?: () => void;
   /** 알림 화면이 생기면 연결한다. 없으면 배지만 보여준다. */
   onOpenNotifications?: () => void;
   /** 축제 · 이벤트 캘린더 (Func-002-03) */
@@ -47,7 +46,6 @@ interface MainViewProps {
 }
 
 const MainView: React.FC<MainViewProps> = ({
-  onOpenDestination,
   onOpenNotifications,
   onOpenEvents,
 }) => {
@@ -112,16 +110,10 @@ const MainView: React.FC<MainViewProps> = ({
     return (
       <SafeAreaView style={s.safeArea} edges={['top']}>
         <View style={s.empty}>
+          {/* 여행지 · 기간은 플래너(Func-005)에서만 정한다 */}
           <Text style={s.emptyText}>
-            아직 등록된 여행 일정이 없어요{'\n'}여행지를 선택해보세요
+            쉬는 중{'\n'}플래너에서 여행을 만들면 D-day 를 보여드려요
           </Text>
-          <TouchableOpacity
-            style={s.emptyBtn}
-            activeOpacity={0.85}
-            onPress={onOpenDestination}
-          >
-            <Text style={s.emptyBtnText}>여행지 선택하러 가기</Text>
-          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -143,14 +135,6 @@ const MainView: React.FC<MainViewProps> = ({
               <TouchableOpacity
                 style={s.circleBtn}
                 activeOpacity={0.85}
-                disabled={!onOpenDestination}
-                onPress={onOpenDestination}
-              >
-                <Text style={s.circleEmoji}>✈️</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={s.circleBtn}
-                activeOpacity={0.85}
                 disabled={!onOpenNotifications}
                 onPress={onOpenNotifications}
               >
@@ -160,12 +144,8 @@ const MainView: React.FC<MainViewProps> = ({
             </View>
           </View>
 
-          {/* Func-002-02: "D-day 버튼 클릭 → 여행지 & 기간 & 인원 입력 화면으로" */}
-          <TouchableOpacity
-            activeOpacity={0.85}
-            disabled={!onOpenDestination}
-            onPress={onOpenDestination}
-          >
+          {/* Func-002-01 은 D-day 를 보여주기만 한다. 누르는 동작은 없다 */}
+          <View>
             <Text style={s.eyebrow}>다가오는 여행</Text>
             <Text style={s.dday}>{dday.dday}</Text>
             <Text style={s.tripTitle}>
@@ -175,7 +155,7 @@ const MainView: React.FC<MainViewProps> = ({
               {formatRange(dday.startDate, dday.endDate)}
               {dday.headcount ? ` · ${dday.headcount}명` : ''}
             </Text>
-          </TouchableOpacity>
+          </View>
         </SafeAreaView>
 
         {/* 축제 · 이벤트 캘린더 (Func-002-03) — 메인에서 들어갈 유일한 입구 */}
@@ -209,13 +189,6 @@ const MainView: React.FC<MainViewProps> = ({
               <Text style={s.noPlacesDesc}>
                 추천 장소가 준비된 여행지를 고르면{'\n'}가볼 만한 곳을 모아서 보여드려요.
               </Text>
-              <TouchableOpacity
-                style={s.noPlacesBtn}
-                activeOpacity={0.85}
-                onPress={onOpenDestination}
-              >
-                <Text style={s.noPlacesBtnText}>여행지 바꾸기</Text>
-              </TouchableOpacity>
             </View>
           ) : (
             <View style={s.placeRow}>
