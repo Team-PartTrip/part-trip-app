@@ -30,7 +30,6 @@ import PlanConfirmView from './src/pages/PlannerScreen/PlanConfirmView';
 import type {
   PlaceCategory,
   PlanDraft,
-  TourPlace,
 } from './src/entities/planner/types';
 import NotificationListView from './src/pages/NotificationView/NotificationListView';
 import NotificationDetailView from './src/pages/NotificationView/NotificationDetailView';
@@ -72,7 +71,7 @@ export type RootStackParamList = {
   PlanGroup: undefined;
   PlanDestination: { draft: PlanDraft };
   PlacePicker: { draft: PlanDraft };
-  PlanCart: { plannerId: number; places: TourPlace[] };
+  PlanCart: { plannerId: number };
   PlaceVote: { planId: number; category?: PlaceCategory };
   PlanStatus: { planId: number };
   PlanConfirm: { planId: number };
@@ -331,10 +330,9 @@ function App() {
                   <PlacePickerView
                     draft={route.params.draft}
                     onBack={() => navigation.goBack()}
-                    onOpenCart={places =>
+                    onOpenCart={() =>
                       navigation.navigate('PlanCart', {
                         plannerId: route.params.draft.plannerId,
-                        places,
                       })
                     }
                     onStartVote={() =>
@@ -349,7 +347,7 @@ function App() {
               <Stack.Screen name="PlanCart">
                 {({ navigation, route }) => (
                   <PlanCartView
-                    places={route.params.places}
+                    plannerId={route.params.plannerId}
                     onBack={() => navigation.goBack()}
                     onConfirm={() =>
                       navigation.navigate('PlanConfirm', {

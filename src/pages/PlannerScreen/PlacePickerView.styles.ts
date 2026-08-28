@@ -88,6 +88,9 @@ export const placePickerStyles = StyleSheet.create({
   toggleText: { fontSize: 12, color: colors.textTertiary },
   toggleTextOn: { color: colors.textOnPrimary },
 
+  loading: {
+    marginTop: 40,
+  },
   empty: {
     borderRadius: 14,
     backgroundColor: colors.white,

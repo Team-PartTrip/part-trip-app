@@ -1,48 +1,135 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { planCartStyles as s } from './PlanCartView.styles';
-import { sampleCartPlaces } from '../../entities/planner/sampleData';
+import React, { useCallback, useState } from 'react';
 import {
-  CATEGORY_EMOJI,
-  CATEGORY_LABEL,
-  TourPlace,
-} from '../../entities/planner/types';
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
+import { planCartStyles as s } from './PlanCartView.styles';
+import {
+  deleteVoteOption,
+  drawRandomPlace,
+  getVotes,
+} from '../../entities/planner/api';
+import { CATEGORY_EMOJI, CATEGORY_LABEL, PlaceCategory } from '../../entities/planner/types';
 
 type Mode = 'manual' | 'random';
 
-interface Props {
-  /** 장소 둘러보기(C4)에서 담아 온 후보. 비어 있으면 예시 장바구니를 보여준다 */
-  places?: TourPlace[];
-  onBack?: () => void;
-  onConfirm?: (chosen: TourPlace[]) => void;
+/** 장바구니 한 줄. 서버에서는 카테고리 투표의 후보 하나다 */
+interface CartItem {
+  voteId: number;
+  optionId: number;
+  tourPlaceId: number | null;
+  placeName: string;
+  category: PlaceCategory;
 }
 
-const PlanCartView: React.FC<Props> = ({ places, onBack, onConfirm }) => {
-  const [items, setItems] = useState<TourPlace[]>(
-    () => places ?? sampleCartPlaces(),
-  );
+interface Props {
+  plannerId: number;
+  onBack?: () => void;
+  onConfirm?: () => void;
+}
+
+const PlanCartView: React.FC<Props> = ({ plannerId, onBack, onConfirm }) => {
+  const [items, setItems] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
   const [mode, setMode] = useState<Mode>('manual');
   const [chosenIds, setChosenIds] = useState<number[]>([]);
-  const [drawn, setDrawn] = useState<TourPlace | null>(null);
+  const [drawn, setDrawn] = useState<CartItem | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  const remove = (tourPlaceId: number) => {
-    setItems(prev => prev.filter(item => item.tourPlaceId !== tourPlaceId));
-    setChosenIds(prev => prev.filter(id => id !== tourPlaceId));
-    setDrawn(prev => (prev?.tourPlaceId === tourPlaceId ? null : prev));
+  // 담은 목록은 카테고리별 투표의 후보로 저장돼 있다. 그래서 투표 현황을 펼쳐서 쓴다.
+  const load = useCallback(async (alive: () => boolean) => {
+    setLoading(true);
+    setFailed(false);
+    try {
+      const votes = await getVotes(plannerId);
+      const flat = votes.flatMap(vote =>
+        vote.options.map(option => ({
+          voteId: vote.voteId,
+          optionId: option.optionId,
+          tourPlaceId: option.tourPlaceId,
+          placeName: option.placeName,
+          category: vote.category,
+        })),
+      );
+      if (alive()) {
+        setItems(flat);
+      }
+    } catch {
+      if (alive()) {
+        setItems([]);
+        setFailed(true);
+      }
+    } finally {
+      if (alive()) {
+        setLoading(false);
+      }
+    }
+  }, [plannerId]);
+
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      load(() => alive);
+      return () => {
+        alive = false;
+      };
+    }, [load]),
+  );
+
+  const remove = async (item: CartItem) => {
+    if (busy) {
+      return;
+    }
+    try {
+      setBusy(true);
+      await deleteVoteOption(plannerId, item.voteId, item.optionId);
+      setItems(prev => prev.filter(row => row.optionId !== item.optionId));
+      setChosenIds(prev => prev.filter(id => id !== item.optionId));
+      setDrawn(prev => (prev?.optionId === item.optionId ? null : prev));
+    } catch (e: any) {
+      Alert.alert('빼기 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const toggle = (tourPlaceId: number) =>
+  const toggle = (optionId: number) =>
     setChosenIds(prev =>
-      prev.includes(tourPlaceId)
-        ? prev.filter(id => id !== tourPlaceId)
-        : [...prev, tourPlaceId],
+      prev.includes(optionId)
+        ? prev.filter(id => id !== optionId)
+        : [...prev, optionId],
     );
 
-  const draw = () => {
-    const picked = items[Math.floor(Math.random() * items.length)];
-    setDrawn(picked);
-    setChosenIds([picked.tourPlaceId]);
+  // 뽑기는 서버가 한다. 어느 후보가 뽑혔는지는 관광지 id 로 맞춰본다.
+  const draw = async () => {
+    if (busy) {
+      return;
+    }
+    try {
+      setBusy(true);
+      const picked = await drawRandomPlace(plannerId);
+      const matched =
+        items.find(item => item.tourPlaceId === picked.placeId) ??
+        items.find(item => item.placeName === picked.placeName) ??
+        null;
+      if (matched) {
+        setDrawn(matched);
+        setChosenIds([matched.optionId]);
+      } else {
+        Alert.alert('뽑기 결과', picked.placeName);
+      }
+    } catch (e: any) {
+      Alert.alert('뽑기 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   const switchMode = (next: Mode) => {
@@ -51,7 +138,7 @@ const PlanCartView: React.FC<Props> = ({ places, onBack, onConfirm }) => {
     setDrawn(null);
   };
 
-  const chosen = items.filter(item => chosenIds.includes(item.tourPlaceId));
+  const chosen = items.filter(item => chosenIds.includes(item.optionId));
   // 랜덤 모드에서는 뽑기 전까지 확정할 게 없다
   const canConfirm = mode === 'random' ? !!drawn : chosen.length > 0;
   const buttonLabel =
@@ -64,7 +151,7 @@ const PlanCartView: React.FC<Props> = ({ places, onBack, onConfirm }) => {
       }
       return;
     }
-    onConfirm?.(chosen);
+    onConfirm?.();
   };
 
   return (
@@ -108,7 +195,16 @@ const PlanCartView: React.FC<Props> = ({ places, onBack, onConfirm }) => {
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
       >
-        {items.length === 0 ? (
+        {loading ? (
+          <ActivityIndicator style={s.loading} />
+        ) : failed ? (
+          <View style={s.empty}>
+            <Text style={s.emptyText}>장바구니를 불러오지 못했어요</Text>
+            <Text style={s.emptyDesc}>
+              네트워크를 확인하고 다시 들어와 주세요.
+            </Text>
+          </View>
+        ) : items.length === 0 ? (
           <View style={s.empty}>
             <Text style={s.emptyText}>장바구니가 비었어요</Text>
             <Text style={s.emptyDesc}>
@@ -117,14 +213,14 @@ const PlanCartView: React.FC<Props> = ({ places, onBack, onConfirm }) => {
           </View>
         ) : (
           items.map(item => {
-            const on = chosenIds.includes(item.tourPlaceId);
+            const on = chosenIds.includes(item.optionId);
             return (
               <TouchableOpacity
-                key={item.tourPlaceId}
+                key={item.optionId}
                 style={[s.row, on && s.rowOn]}
                 activeOpacity={0.85}
                 disabled={mode === 'random'}
-                onPress={() => toggle(item.tourPlaceId)}
+                onPress={() => toggle(item.optionId)}
               >
                 <View style={s.thumb}>
                   <Text style={s.thumbEmoji}>
@@ -141,10 +237,7 @@ const PlanCartView: React.FC<Props> = ({ places, onBack, onConfirm }) => {
                     </Text>
                   </View>
                 </View>
-                <TouchableOpacity
-                  hitSlop={10}
-                  onPress={() => remove(item.tourPlaceId)}
-                >
+                <TouchableOpacity hitSlop={10} onPress={() => remove(item)}>
                   <Text style={s.remove}>✕</Text>
                 </TouchableOpacity>
                 <View style={[s.check, on && s.checkOn]}>
@@ -176,7 +269,7 @@ const PlanCartView: React.FC<Props> = ({ places, onBack, onConfirm }) => {
         <TouchableOpacity
           style={[s.primaryBtn, !canConfirm && s.primaryBtnOff]}
           activeOpacity={0.85}
-          disabled={mode === 'manual' ? !canConfirm : items.length === 0}
+          disabled={busy || (mode === 'manual' ? !canConfirm : items.length === 0)}
           onPress={press}
         >
           <Text style={s.primaryText}>{buttonLabel}</Text>

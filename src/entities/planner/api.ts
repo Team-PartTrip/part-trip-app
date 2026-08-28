@@ -3,8 +3,6 @@
 // 서버 planner 패키지의 DTO 를 그대로 옮겼다. 필드 이름이 다르면
 // 화면에서 헷갈리므로 임의로 줄이거나 바꾸지 않는다.
 //
-// 아직 없는 것: 투표 후보 등록·삭제 (서버 PR #79 대기).
-// 그래서 C4 장소 담기 · C6 장바구니는 예시 데이터를 계속 쓴다.
 
 import { authRequest } from '../../shared/api/http';
 import type { GroupRole, GroupStatus, PlaceCategory, VoteStatus } from './types';
@@ -283,6 +281,61 @@ export function confirmVote(
     `/api/planners/${plannerId}/votes/${voteId}/confirm`,
     { method: 'POST', body: { optionId } },
   );
+}
+
+/** 후보 하나 직접 추가. tourPlaceId 가 있으면 관광지 이름을 우선한다 */
+export function addVoteOption(
+  plannerId: number,
+  voteId: number,
+  payload: { tourPlaceId?: number; placeName?: string },
+): Promise<VoteOptionStatus> {
+  return authRequest<VoteOptionStatus>(
+    `/api/planners/${plannerId}/votes/${voteId}/options`,
+    { method: 'POST', body: payload },
+  );
+}
+
+/** 후보 빼기 (담은 사람 또는 OWNER) */
+export function deleteVoteOption(
+  plannerId: number,
+  voteId: number,
+  optionId: number,
+): Promise<void> {
+  return authRequest<void>(
+    `/api/planners/${plannerId}/votes/${voteId}/options/${optionId}`,
+    { method: 'DELETE' },
+  );
+}
+
+// ── 장바구니 (C4 · C6) ────────────────────────────────────
+
+/**
+ * 고른 관광지를 한 번에 담는다 (C4).
+ *
+ * 서버가 카테고리별로 알아서 투표를 만들고 그 후보로 넣어준다.
+ * 그래서 담긴 목록을 다시 볼 때는 getVotes 를 쓰면 된다.
+ * 이미 담긴 장소는 건너뛰고, 성공 문구("N개 장소를 …")를 돌려준다.
+ */
+export function addCartPlaces(
+  plannerId: number,
+  placeIds: number[],
+): Promise<string> {
+  return authRequest<string>(`/api/planners/${plannerId}/cart`, {
+    method: 'POST',
+    body: { placeIds },
+  });
+}
+
+export interface RandomPlace {
+  placeId: number;
+  placeName: string;
+}
+
+/** 담은 후보 중 하나를 서버가 무작위로 뽑아준다 (C6 랜덤 뽑기) */
+export function drawRandomPlace(plannerId: number): Promise<RandomPlace> {
+  return authRequest<RandomPlace>(`/api/planners/${plannerId}/cart/random`, {
+    method: 'POST',
+  });
 }
 
 // ── 최종 확인 (C8) ────────────────────────────────────────

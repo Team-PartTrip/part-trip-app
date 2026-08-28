@@ -1,8 +1,16 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { placePickerStyles as s } from './PlacePickerView.styles';
-import { samplePlacesOf } from '../../entities/planner/sampleData';
+import { getTourPlaces, TourPlace as ServerPlace } from '../../entities/main/api';
+import { addCartPlaces } from '../../entities/planner/api';
 import {
   CATEGORIES,
   CATEGORY_EMOJI,
@@ -10,16 +18,15 @@ import {
   formatRange,
   PlaceCategory,
   PlanDraft,
-  TourPlace,
 } from '../../entities/planner/types';
 
 interface Props {
   draft: PlanDraft;
   onBack?: () => void;
   /** 담은 장소를 장바구니(C6)로 넘긴다 */
-  onOpenCart?: (picks: TourPlace[]) => void;
+  onOpenCart?: () => void;
   /** 담은 장소로 카테고리별 투표(C5)를 연다 */
-  onStartVote?: (picks: TourPlace[]) => void;
+  onStartVote?: () => void;
 }
 
 const PlacePickerView: React.FC<Props> = ({
@@ -29,18 +36,69 @@ const PlacePickerView: React.FC<Props> = ({
   onStartVote,
 }) => {
   const [category, setCategory] = useState<PlaceCategory>('RESTAURANT');
-  const [picked, setPicked] = useState<TourPlace[]>([]);
+  const [places, setPlaces] = useState<ServerPlace[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+  const [picked, setPicked] = useState<number[]>([]);
+  const [sending, setSending] = useState(false);
 
-  const places = samplePlacesOf(category);
-  const isPicked = (place: TourPlace) =>
-    picked.some(item => item.tourPlaceId === place.tourPlaceId);
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      setLoading(true);
+      setFailed(false);
+      try {
+        // 서버는 카테고리를 한글로 받는다 (TourPlaceService 참고)
+        const list = await getTourPlaces(draft.countryName, {
+          cityName: draft.cityName,
+          category: CATEGORY_LABEL[category] as any,
+        });
+        if (alive) {
+          setPlaces(list);
+        }
+      } catch {
+        if (alive) {
+          setPlaces([]);
+          setFailed(true);
+        }
+      } finally {
+        if (alive) {
+          setLoading(false);
+        }
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [draft.countryName, draft.cityName, category]);
 
-  const toggle = (place: TourPlace) =>
+  const toggle = (tourPlaceId: number) =>
     setPicked(prev =>
-      prev.some(item => item.tourPlaceId === place.tourPlaceId)
-        ? prev.filter(item => item.tourPlaceId !== place.tourPlaceId)
-        : [...prev, place],
+      prev.includes(tourPlaceId)
+        ? prev.filter(id => id !== tourPlaceId)
+        : [...prev, tourPlaceId],
     );
+
+  // 담기와 동시에 서버가 카테고리별 투표를 만들어준다.
+  // 그래서 장바구니로 가든 투표로 가든 먼저 담아두어야 다음 화면에 내용이 있다.
+  const commit = useCallback(
+    async (next?: () => void) => {
+      if (picked.length === 0 || sending) {
+        return;
+      }
+      try {
+        setSending(true);
+        await addCartPlaces(draft.plannerId, picked);
+        setPicked([]);
+        next?.();
+      } catch (e: any) {
+        Alert.alert('담기 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
+      } finally {
+        setSending(false);
+      }
+    },
+    [draft.plannerId, picked, sending],
+  );
 
   return (
     <View style={s.safeArea}>
@@ -81,8 +139,8 @@ const PlacePickerView: React.FC<Props> = ({
         <Text style={s.countText}>선택한 장소 {picked.length}</Text>
         <TouchableOpacity
           hitSlop={8}
-          disabled={picked.length === 0}
-          onPress={() => onOpenCart?.(picked)}
+          disabled={picked.length === 0 || sending}
+          onPress={() => commit(onOpenCart)}
         >
           <Text style={[s.cartLink, picked.length === 0 && s.cartLinkOff]}>
             투표 후보로 넘기기
@@ -94,31 +152,41 @@ const PlacePickerView: React.FC<Props> = ({
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
       >
-        {places.length === 0 ? (
+        {loading ? (
+          <ActivityIndicator style={s.loading} />
+        ) : failed ? (
+          <View style={s.empty}>
+            <Text style={s.emptyText}>장소를 불러오지 못했어요.</Text>
+          </View>
+        ) : places.length === 0 ? (
           <View style={s.empty}>
             <Text style={s.emptyText}>이 카테고리에는 아직 장소가 없어요.</Text>
           </View>
         ) : (
           places.map(place => {
-            const on = isPicked(place);
+            const on = picked.includes(place.tourPlaceId);
             return (
               <TouchableOpacity
                 key={place.tourPlaceId}
                 style={[s.card, on && s.cardOn]}
                 activeOpacity={0.85}
-                onPress={() => toggle(place)}
+                onPress={() => toggle(place.tourPlaceId)}
               >
                 <View style={s.thumb}>
-                  <Text style={s.thumbEmoji}>
-                    {CATEGORY_EMOJI[place.category]}
-                  </Text>
+                  <Text style={s.thumbEmoji}>{CATEGORY_EMOJI[category]}</Text>
                 </View>
                 <View style={s.body}>
                   <Text style={s.name} numberOfLines={1}>
                     {place.placeName}
                   </Text>
-                  <Text style={s.meta}>
-                    ★ {place.rating.toFixed(1)} · {place.area}
+                  {/* 평점·주소가 없는 장소가 많아 있는 것만 붙인다 */}
+                  <Text style={s.meta} numberOfLines={1}>
+                    {[
+                      place.rating != null ? `★ ${place.rating.toFixed(1)}` : null,
+                      place.address,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ') || '정보 없음'}
                   </Text>
                   <View style={[s.statePill, on && s.statePillOn]}>
                     <Text style={[s.stateText, on && s.stateTextOn]}>
@@ -139,12 +207,14 @@ const PlacePickerView: React.FC<Props> = ({
 
       <SafeAreaView edges={['bottom']} style={s.footer}>
         <TouchableOpacity
-          style={[s.primaryBtn, picked.length === 0 && s.primaryBtnOff]}
+          style={[s.primaryBtn, (picked.length === 0 || sending) && s.primaryBtnOff]}
           activeOpacity={0.85}
-          disabled={picked.length === 0}
-          onPress={() => onStartVote?.(picked)}
+          disabled={picked.length === 0 || sending}
+          onPress={() => commit(onStartVote)}
         >
-          <Text style={s.primaryText}>투표 시작하기</Text>
+          <Text style={s.primaryText}>
+            {sending ? '담는 중…' : '투표 시작하기'}
+          </Text>
         </TouchableOpacity>
       </SafeAreaView>
     </View>

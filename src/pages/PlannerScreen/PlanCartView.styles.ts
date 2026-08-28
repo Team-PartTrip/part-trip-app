@@ -92,6 +92,9 @@ export const planCartStyles = StyleSheet.create({
   checkOn: { borderColor: colors.primary, backgroundColor: colors.primary },
   checkText: { fontSize: 12, color: colors.textOnPrimary },
 
+  loading: {
+    marginTop: 40,
+  },
   empty: {
     borderRadius: 14,
     backgroundColor: colors.white,
