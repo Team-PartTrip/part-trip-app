@@ -84,7 +84,7 @@ export const samplePlans: TravelPlan[] = [
     planId: 3,
     groupId: 3,
     travelTitle: '제주 한 달 살기',
-    countryName: '대한민국',
+    countryName: '한국',
     cityName: '제주',
     startDate: '2026-10-01',
     endDate: '2026-10-30',
@@ -343,6 +343,6 @@ export const POPULAR_CITIES: PopularCity[] = [
   { cityName: '타이베이', countryName: '대만', emoji: '🏙️' },
   { cityName: '도쿄', countryName: '일본', emoji: '🗼' },
   { cityName: '후쿠오카', countryName: '일본', emoji: '🍜' },
-  { cityName: '제주', countryName: '대한민국', emoji: '🍊' },
+  { cityName: '제주', countryName: '한국', emoji: '🍊' },
   { cityName: '파리', countryName: '프랑스', emoji: '🥐' },
 ];

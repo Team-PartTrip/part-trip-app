@@ -42,7 +42,7 @@ export const sampleTripCards: TripCard[] = [
     tripCardId: 3,
     planId: null,
     title: '제주 겨울 여행',
-    countryName: '대한민국',
+    countryName: '한국',
     cityName: '제주',
     cityNameEn: 'Jeju',
     startDate: '2025-12-20',
