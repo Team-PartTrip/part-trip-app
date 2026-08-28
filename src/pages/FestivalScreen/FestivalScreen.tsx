@@ -254,7 +254,9 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
                 <View style={s.cardBody}>
                   <Text style={s.cardTitle}>{event.title}</Text>
                   <Text style={s.cardMeta}>
-                    {formatShortDate(event.startDate)} · {event.startTime}
+                    {/* 시작 시각이 없는 축제는 날짜만 보여준다 */}
+                    {formatShortDate(event.startDate)}
+                    {event.startTime ? ` · ${event.startTime}` : ''}
                   </Text>
                   <Text style={s.cardPlace}>{event.location}</Text>
                 </View>
