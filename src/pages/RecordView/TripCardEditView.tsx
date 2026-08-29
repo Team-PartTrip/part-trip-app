@@ -73,7 +73,13 @@ const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
         fileName: asset.fileName ?? `photo-${Date.now()}-${index}.jpg`,
         mimeType: asset.type ?? 'image/jpeg',
       }));
-    setPicked(prev => [...prev, ...added].slice(0, MAX_PHOTOS));
+    // 같은 사진을 두 번 고를 수 있다. uri 를 식별자로 쓰는 곳이
+    // 여럿(목록 key · 낱장 제거 · 업로드 후 제거)이라 여기서 한 번에 막는다.
+    setPicked(prev => {
+      const seen = new Set(prev.map(photo => photo.uri));
+      const fresh = added.filter(photo => !seen.has(photo.uri));
+      return [...prev, ...fresh].slice(0, MAX_PHOTOS);
+    });
   };
 
   const remove = (uri: string) =>
