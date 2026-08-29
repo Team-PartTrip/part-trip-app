@@ -35,15 +35,22 @@ export function timeAgo(iso: string): string {
   return `${Math.floor(hour / 24)}일 전`;
 }
 
-/** 목록을 오늘 / 이번 주 / 이전 으로 나눈다 */
+/**
+ * 목록을 오늘 / 이번 주 / 이전 으로 나눈다.
+ *
+ * '오늘'은 달력 기준이다. 24시간을 재면 어제 밤 11시가 오늘로 들어간다.
+ */
 export function bucketOf(iso: string): '오늘' | '이번 주' | '이전' {
-  const then = new Date(iso).getTime();
-  if (Number.isNaN(then)) {
+  const then = new Date(iso);
+  if (Number.isNaN(then.getTime())) {
     return '이전';
   }
-  const days = (Date.now() - then) / 86_400_000;
-  if (days < 1) {
+  const midnight = new Date();
+  midnight.setHours(0, 0, 0, 0);
+  if (then.getTime() >= midnight.getTime()) {
     return '오늘';
   }
-  return days < 7 ? '이번 주' : '이전';
+  // 자정 기준으로 며칠 전인지 센다
+  const days = (midnight.getTime() - then.getTime()) / 86_400_000;
+  return days < 6 ? '이번 주' : '이전';
 }

@@ -83,8 +83,11 @@ const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
     setSaving(true);
     try {
       // 서버는 한 장씩 받는다. 고른 순서대로 올린다.
+      // 중간에 실패하면 올라간 사진은 목록에서 빼야 한다.
+      // 안 그러면 다시 누를 때 앞의 사진이 한 번 더 올라간다.
       for (const photo of picked) {
         await addTripCardEntry(tripCardId, photo, comment.trim() || undefined);
+        setPicked(prev => prev.filter(item => item.uri !== photo.uri));
       }
       onSaved?.();
     } catch (e: any) {

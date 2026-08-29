@@ -40,25 +40,42 @@ const NotificationListView: React.FC<Props> = ({ onBack, onOpen }) => {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  const load = useCallback(async (category: 'ALL' | NotificationCategory) => {
-    setLoading(true);
-    try {
-      const page = await getNotifications({ category });
-      setItems(page.items);
-      setCursor(page.nextCursor);
-      setHasNext(page.hasNext);
-    } catch {
-      setItems([]);
-      setCursor(null);
-      setHasNext(false);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // 필터를 연달아 누르면 앞선 요청이 뒤늦게 끝나 지금 필터의 목록을 덮어쓴다.
+  // 화면을 떠났거나 필터가 바뀐 요청의 결과는 버린다.
+  const load = useCallback(
+    async (category: 'ALL' | NotificationCategory, alive: () => boolean) => {
+      setLoading(true);
+      try {
+        const page = await getNotifications({ category });
+        if (!alive()) {
+          return;
+        }
+        setItems(page.items);
+        setCursor(page.nextCursor);
+        setHasNext(page.hasNext);
+      } catch {
+        if (!alive()) {
+          return;
+        }
+        setItems([]);
+        setCursor(null);
+        setHasNext(false);
+      } finally {
+        if (alive()) {
+          setLoading(false);
+        }
+      }
+    },
+    [],
+  );
 
   useFocusEffect(
     useCallback(() => {
-      load(filter);
+      let alive = true;
+      load(filter, () => alive);
+      return () => {
+        alive = false;
+      };
     }, [filter, load]),
   );
 

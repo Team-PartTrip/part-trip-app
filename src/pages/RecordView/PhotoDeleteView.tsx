@@ -38,6 +38,9 @@ const PhotoDeleteView: React.FC<Props> = ({ tripCardId, onBack, onDeleted }) => 
     useCallback(() => {
       let alive = true;
       setLoading(true);
+      // 목록을 다시 읽으니 선택도 비운다. 안 그러면 이미 지운 사진의
+      // entryId 가 남아 "3개 선택됨" 같은 헛수가 뜬다.
+      setSelected([]);
       getTripCard(tripCardId)
         .then(detail => {
           if (alive) {

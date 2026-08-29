@@ -92,7 +92,7 @@ export async function addTripCardEntry(
   cardId: number,
   photo: PickedPhoto,
   comment?: string,
-): Promise<TripCardEntry> {
+): Promise<TripCardEntry | null> {
   const token = await getAccessToken();
 
   const formData = new FormData();
@@ -139,7 +139,9 @@ export async function addTripCardEntry(
     throw new ApiError(res.status, message);
   }
 
-  return data as TripCardEntry;
+  // 본문 없이 201 만 오거나 JSON 이 아닌 문자열이 올 수 있다.
+  // 그럴 땐 올리기는 성공했으니 던지지 않고 null 로 돌려준다.
+  return data !== null && typeof data === 'object' ? (data as TripCardEntry) : null;
 }
 
 /** 여행 카드에서 사진 제거 (API-003-07) */

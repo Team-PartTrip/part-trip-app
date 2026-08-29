@@ -70,10 +70,16 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
       return;
     }
     setLoading(true);
+    // 달을 빨리 넘기면 앞선 요청이 뒤늦게 끝나 지금 달의 목록을 덮어쓴다.
+    // 화면을 떠난 요청의 결과는 버린다.
+    let alive = true;
     getFestivals(dday.countryName, { year, month: monthIndex + 1 })
-      .then(setEvents)
-      .catch(() => setEvents([]))
-      .finally(() => setLoading(false));
+      .then(list => alive && setEvents(list))
+      .catch(() => alive && setEvents([]))
+      .finally(() => alive && setLoading(false));
+    return () => {
+      alive = false;
+    };
   }, [dday, year, monthIndex]);
 
   const weeks = useMemo(() => {
@@ -114,6 +120,14 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
     return list;
   }, [events, selectedDate, categories]);
 
+  // 고른 날짜와 카테고리는 이 달에만 있는 값이다.
+  // 그대로 두면 다음 달 목록이 통째로 비거나, 칩에 없는 필터가 남아 못 푼다.
+  const changeMonth = (offset: number) => {
+    setSelectedDate(null);
+    setCategories([]);
+    setCursor(new Date(year, monthIndex + offset, 1));
+  };
+
   const toggleCategory = (category: string) =>
     setCategories(prev =>
       prev.includes(category)
@@ -146,13 +160,13 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
             </Text>
             <TouchableOpacity
               hitSlop={10}
-              onPress={() => setCursor(new Date(year, monthIndex - 1, 1))}
+              onPress={() => changeMonth(-1)}
             >
               <Text style={s.calArrow}>‹</Text>
             </TouchableOpacity>
             <TouchableOpacity
               hitSlop={10}
-              onPress={() => setCursor(new Date(year, monthIndex + 1, 1))}
+              onPress={() => changeMonth(1)}
             >
               <Text style={s.calArrow}>›</Text>
             </TouchableOpacity>

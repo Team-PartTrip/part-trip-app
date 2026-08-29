@@ -115,8 +115,9 @@ const TripCardDetailView: React.FC<Props> = ({
               const line = lineOf(entry);
               return (
                 <React.Fragment key={`${entry.type}-${i}`}>
-                  {/* 날짜가 바뀔 때만 구분 띠를 넣는다 */}
-                  {i > 0 && entries[i - 1].date !== entry.date && (
+                  {/* 날짜가 바뀔 때 구분 띠를 넣는다. 첫 줄에도 넣어야
+                      맨 위 묶음이 무슨 날짜인지 알 수 있다. */}
+                  {(i === 0 || entries[i - 1].date !== entry.date) && (
                     <View style={s.dateBar}>
                       <Text style={s.dateBarText}>
                         {formatDotDate(entry.date)}  |  {place}
