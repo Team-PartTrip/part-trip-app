@@ -89,6 +89,9 @@ export const recordStyles = StyleSheet.create({
   },
   countPillText: { fontSize: 11, fontWeight: '500', color: colors.primary },
 
+  loading: {
+    marginTop: 60,
+  },
   empty: {
     borderRadius: 16,
     backgroundColor: colors.white,
@@ -98,11 +101,4 @@ export const recordStyles = StyleSheet.create({
   },
   emptyText: { fontSize: 15, fontWeight: '600', color: colors.text },
   emptyDesc: { fontSize: 12, color: colors.textMuted },
-
-  note: {
-    paddingHorizontal: 24,
-    fontSize: 11,
-    lineHeight: 16,
-    color: colors.textMuted,
-  },
 });

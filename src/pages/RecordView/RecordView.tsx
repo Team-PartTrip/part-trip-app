@@ -1,9 +1,16 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { recordStyles as s } from './RecordView.styles';
-import { sampleTripCards } from '../../entities/record/sampleData';
-import { formatTripRange, isTraveling } from '../../entities/record/types';
+import { getTripCards, TripCardSummary } from '../../entities/record/api';
+import { formatTripRange, today } from '../../entities/record/types';
 
 /** 카드 위쪽 사진 띠 — 실제 썸네일이 붙기 전까지 옅어지는 네 칸으로 둔다 */
 const STRIP_OPACITY = [1, 0.88, 0.76, 0.64];
@@ -19,14 +26,29 @@ const RecordView: React.FC<Props> = ({
   onOpenTripCards,
 }) => {
   const [year, setYear] = useState('전체');
+  const [all, setAll] = useState<TripCardSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      getTripCards()
+        .then(list => alive && setAll(list))
+        .catch(() => alive && setAll([]))
+        .finally(() => alive && setLoading(false));
+      return () => {
+        alive = false;
+      };
+    }, []),
+  );
 
   // 연도 칩은 가지고 있는 여행에서 뽑는다
   const years = Array.from(
-    new Set(sampleTripCards.map(card => card.startDate.slice(0, 4))),
+    new Set(all.map(card => card.startDate.slice(0, 4))),
   ).sort((a, b) => b.localeCompare(a));
   const filters = ['전체', ...years];
 
-  const cards = sampleTripCards.filter(
+  const cards = all.filter(
     card => year === '전체' || card.startDate.startsWith(year),
   );
 
@@ -67,7 +89,9 @@ const RecordView: React.FC<Props> = ({
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
       >
-        {cards.length === 0 ? (
+        {loading ? (
+          <ActivityIndicator style={s.loading} />
+        ) : cards.length === 0 ? (
           <View style={s.empty}>
             <Text style={s.emptyText}>이 연도에 남긴 기록이 없어요</Text>
             <Text style={s.emptyDesc}>
@@ -77,17 +101,17 @@ const RecordView: React.FC<Props> = ({
         ) : (
           cards.map(card => (
             <TouchableOpacity
-              key={card.tripCardId}
+              key={card.cardId}
               style={s.card}
               activeOpacity={0.9}
-              onPress={() => onOpenTrip?.(card.tripCardId)}
+              onPress={() => onOpenTrip?.(card.cardId)}
             >
               <View style={s.strip}>
                 {STRIP_OPACITY.map((opacity, i) => (
                   <View key={i} style={[s.stripTile, { opacity }]} />
                 ))}
               </View>
-              {isTraveling(card) && (
+              {card.startDate <= today() && today() <= card.endDate && (
                 <View style={s.travelBadge}>
                   <Text style={s.travelBadgeText}>여행 중</Text>
                 </View>
@@ -95,22 +119,22 @@ const RecordView: React.FC<Props> = ({
 
               <View style={s.cardBottom}>
                 <View style={s.cardBody}>
-                  <Text style={s.cardTitle}>{card.title}</Text>
+                  <Text style={s.cardTitle}>
+                    {card.countryName} {card.cityName}
+                  </Text>
                   <Text style={s.cardDate}>
                     {formatTripRange(card.startDate, card.endDate)}
                   </Text>
                 </View>
                 <View style={s.countPill}>
-                  <Text style={s.countPillText}>사진 {card.photoCount}장</Text>
+                  <Text style={s.countPillText}>
+                    사진 {card.photoCount ?? 0}장
+                  </Text>
                 </View>
               </View>
             </TouchableOpacity>
           ))
         )}
-
-        <Text style={s.note}>
-          기록 API 연동 전이라 예시 데이터로 보여주고 있어요.
-        </Text>
       </ScrollView>
     </View>
   );
