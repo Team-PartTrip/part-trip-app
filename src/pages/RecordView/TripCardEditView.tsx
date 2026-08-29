@@ -77,7 +77,14 @@ const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
     // 여럿(목록 key · 낱장 제거 · 업로드 후 제거)이라 여기서 한 번에 막는다.
     setPicked(prev => {
       const seen = new Set(prev.map(photo => photo.uri));
-      const fresh = added.filter(photo => !seen.has(photo.uri));
+      const fresh: PickedPhoto[] = [];
+      for (const photo of added) {
+        // 한 번에 고른 목록 안에도 같은 사진이 들어올 수 있어 담으면서 센다
+        if (!seen.has(photo.uri)) {
+          seen.add(photo.uri);
+          fresh.push(photo);
+        }
+      }
       return [...prev, ...fresh].slice(0, MAX_PHOTOS);
     });
   };
