@@ -151,3 +151,15 @@ export function deleteTripCardEntry(
     method: 'DELETE',
   });
 }
+
+/** 사진 코멘트 수정 (API-003-08). 빈 값을 보내면 코멘트를 지운다 */
+export function updateTripCardEntryComment(
+  cardId: number,
+  entryId: number,
+  comment: string,
+): Promise<TripCardEntry> {
+  return authRequest<TripCardEntry>(
+    `/api/travel-cards/${cardId}/entries/${entryId}`,
+    { method: 'PATCH', body: { comment } },
+  );
+}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -8,46 +8,97 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Image,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { commentEditStyles as s } from './CommentEditView.styles';
 import {
-  samplePhotoOf,
-  sampleRevisionsOf,
-} from '../../entities/record/sampleData';
-import {
-  formatDateTime,
-  formatShortDate,
-} from '../../entities/record/types';
+  getTripCard,
+  TimelineItem,
+  updateTripCardEntryComment,
+} from '../../entities/record/api';
+import { toImageUrl } from '../../shared/api/image';
 
-const MAX_LENGTH = 500;
+// 서버가 100자까지 받는다
+const MAX_LENGTH = 100;
 
 interface Props {
+  tripCardId: number;
+  /** 여행카드 타임라인의 사진 식별자(entryId) */
   photoId: number;
   mode: 'create' | 'edit';
   onBack?: () => void;
   onSaved?: () => void;
 }
 
+/** 촬영 시각을 "2026.08.23 14:20" 으로. 시각이 없는 사진도 있다 */
+function formatTakenAt(takenAt: string | null): string {
+  if (!takenAt) {
+    return '촬영 시각 정보 없음';
+  }
+  return `${takenAt.slice(0, 10).replace(/-/g, '.')} ${takenAt.slice(11, 16)}`;
+}
+
 const CommentEditView: React.FC<Props> = ({
+  tripCardId,
   photoId,
   mode,
   onBack,
   onSaved,
 }) => {
-  const photo = samplePhotoOf(photoId);
+  const [photo, setPhoto] = useState<TimelineItem | null>(null);
+  const [text, setText] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const editing = mode === 'edit';
-  const [text, setText] = useState(editing ? photo.commContent : '');
 
-  const revisions = sampleRevisionsOf(photo);
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      setLoading(true);
+      getTripCard(tripCardId)
+        .then(detail => {
+          if (!alive) {
+            return;
+          }
+          const found = (detail.timeline ?? []).find(
+            item => item.entryId === photoId,
+          );
+          setPhoto(found ?? null);
+          setText(found?.comment ?? '');
+        })
+        .catch(() => {
+          if (alive) {
+            setPhoto(null);
+          }
+        })
+        .finally(() => {
+          if (alive) {
+            setLoading(false);
+          }
+        });
+      return () => {
+        alive = false;
+      };
+    }, [tripCardId, photoId]),
+  );
 
-  const save = () => {
+  const save = async () => {
     if (!text.trim()) {
       Alert.alert('알림', '코멘트를 입력해주세요.');
       return;
     }
-    // 코멘트 저장 API(/api/records/{id}/comments)가 붙으면 여기서 호출한다
-    onSaved?.();
+    setSaving(true);
+    try {
+      await updateTripCardEntryComment(tripCardId, photoId, text.trim());
+      onSaved?.();
+    } catch (e: any) {
+      Alert.alert('저장 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -59,7 +110,7 @@ const CommentEditView: React.FC<Props> = ({
         <Text style={s.headerTitle}>
           {editing ? '코멘트 수정' : '코멘트 작성'}
         </Text>
-        <TouchableOpacity onPress={save} hitSlop={12}>
+        <TouchableOpacity onPress={save} hitSlop={12} disabled={saving}>
           <Text style={s.headerAction}>{editing ? '완료' : '저장'}</Text>
         </TouchableOpacity>
       </View>
@@ -73,23 +124,23 @@ const CommentEditView: React.FC<Props> = ({
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View style={s.photo}>
-            <Text style={s.photoCaption}>{photo.commTitle}</Text>
-          </View>
-
-          <View style={s.titleRow}>
-            <Text style={s.title}>{photo.commTitle}</Text>
-            {editing && !!photo.commentUpdatedAt && (
-              <View style={s.editedPill}>
-                <Text style={s.editedPillText}>
-                  {formatShortDate(photo.commentUpdatedAt.slice(0, 10))} 수정됨
-                </Text>
-              </View>
-            )}
-          </View>
-          {!editing && (
-            <Text style={s.takenAt}>{formatDateTime(photo.takenAt)}</Text>
+          {loading ? (
+            <ActivityIndicator style={s.photo} />
+          ) : (
+            <View style={s.photo}>
+              {photo?.imageUrl ? (
+                <Image
+                  source={{ uri: toImageUrl(photo.imageUrl) }}
+                  style={s.photoImage}
+                  resizeMode="contain"
+                />
+              ) : (
+                <Text style={s.photoCaption}>사진</Text>
+              )}
+            </View>
           )}
+
+          <Text style={s.takenAt}>{formatTakenAt(photo?.takenAt ?? null)}</Text>
 
           <TextInput
             style={[s.input, editing && s.inputEditing]}
@@ -105,66 +156,22 @@ const CommentEditView: React.FC<Props> = ({
           <Text style={s.counter}>
             {text.length} / {MAX_LENGTH}
           </Text>
-
-          {editing ? (
-            <>
-              <Text style={s.label}>수정 이력</Text>
-              {revisions.map((item, i) => (
-                <View key={item.photoCommentHistoryId} style={s.revision}>
-                  <View
-                    style={[
-                      s.revisionDot,
-                      i === revisions.length - 1
-                        ? s.revisionDotLatest
-                        : s.revisionDotFirst,
-                    ]}
-                  />
-                  <Text style={s.revisionLabel}>
-                    {item.revision === 0 ? '최초 작성' : `${item.revision}차 수정`}
-                  </Text>
-                  <Text style={s.revisionAt}>
-                    {formatDateTime(item.createdAt)}
-                  </Text>
-                </View>
-              ))}
-            </>
-          ) : (
-            <>
-              <Text style={s.label}>태그</Text>
-              <View style={s.tagRow}>
-                {photo.tags.map(tag => (
-                  <View key={tag} style={s.tag}>
-                    <Text style={s.tagText}>#{tag}</Text>
-                  </View>
-                ))}
-                <TouchableOpacity
-                  style={s.tagAdd}
-                  activeOpacity={0.85}
-                  onPress={() =>
-                    // 태그 목록 API 가 없어서 아직 고를 수 있는 후보가 없다
-                    Alert.alert(
-                      '태그 추가',
-                      '태그 API가 연결되면 직접 고를 수 있어요.',
-                    )
-                  }
-                >
-                  <Text style={s.tagAddText}>+</Text>
-                </TouchableOpacity>
-              </View>
-            </>
-          )}
         </ScrollView>
 
         <SafeAreaView edges={['bottom']} style={s.footer}>
           <TouchableOpacity
-            style={[s.primaryBtn, !text.trim() && s.primaryBtnOff]}
+            style={[s.primaryBtn, (!text.trim() || saving) && s.primaryBtnOff]}
             activeOpacity={0.85}
-            disabled={!text.trim()}
+            disabled={!text.trim() || saving}
             onPress={save}
           >
-            <Text style={s.primaryText}>
-              {editing ? '수정 저장' : '코멘트 저장'}
-            </Text>
+            {saving ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={s.primaryText}>
+                {editing ? '수정 저장' : '코멘트 저장'}
+              </Text>
+            )}
           </TouchableOpacity>
         </SafeAreaView>
       </KeyboardAvoidingView>

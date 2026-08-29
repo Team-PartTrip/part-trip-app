@@ -85,7 +85,7 @@ export type RootStackParamList = {
     /** 여행카드 타임라인의 사진 식별자(entryId) */
     photoId?: number;
   };
-  CommentEdit: { photoId: number; mode: 'create' | 'edit' };
+  CommentEdit: { tripCardId: number; photoId: number; mode: 'create' | 'edit' };
   PhotoDelete: { tripCardId: number };
   TripCards: undefined;
   TripCardDetail: { tripCardId: number };
@@ -473,12 +473,14 @@ function App() {
                     onBack={() => navigation.goBack()}
                     onWriteComment={photo =>
                       navigation.navigate('CommentEdit', {
+                        tripCardId: route.params.tripCardId,
                         photoId: photo.entryId ?? 0,
                         mode: 'create',
                       })
                     }
                     onEditComment={photo =>
                       navigation.navigate('CommentEdit', {
+                        tripCardId: route.params.tripCardId,
                         photoId: photo.entryId ?? 0,
                         mode: 'edit',
                       })
@@ -494,6 +496,7 @@ function App() {
               <Stack.Screen name="CommentEdit">
                 {({ navigation, route }) => (
                   <CommentEditView
+                    tripCardId={route.params.tripCardId}
                     photoId={route.params.photoId}
                     mode={route.params.mode}
                     onBack={() => navigation.goBack()}

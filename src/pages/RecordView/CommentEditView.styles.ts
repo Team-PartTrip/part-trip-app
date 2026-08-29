@@ -27,11 +27,13 @@ export const commentEditStyles = StyleSheet.create({
 
   photo: {
     height: 180,
+    overflow: 'hidden',
     borderRadius: 14,
     backgroundColor: colors.tint,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  photoImage: { width: '100%', height: '100%' },
   photoCaption: { fontSize: 13, color: colors.textMuted },
 
   titleRow: {
