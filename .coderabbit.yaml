@@ -10,11 +10,23 @@ reviews:
   profile: assertive
 
   path_filters:
+    # 락파일이 12,670줄로 전체의 41% 다. 사람이 쓰는 파일이 아니라 통째로 뺀다.
+    - "!package-lock.json"
+    - "!**/*.lock"
+    - "!Gemfile"
+    - "!.bundle/**"
+
     # 색상·여백 상수만 있어서 리뷰할 게 없다. 파일 수가 많아 빼면 그만큼
     # 분석량이 실제 로직으로 간다.
     - "!**/*.styles.ts"
+
+    # 네이티브 프로젝트 파일. 앱 로직이 아니고 대부분 자동 생성이다.
     - "!ios/**"
     - "!android/**"
+
+    # 도구 설정. 기본값에서 거의 안 바뀌었고 리뷰할 로직이 없다.
+    - "!.gitignore"
+    - "!.watchmanconfig"
 
   auto_review:
     enabled: true
