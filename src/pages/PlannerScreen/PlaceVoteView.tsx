@@ -94,6 +94,9 @@ const PlaceVoteView: React.FC<Props> = ({
   const vote = votes.find(item => item.category === active);
   const options = vote?.options ?? [];
   const status = vote?.status ?? 'OPEN';
+  // 마감 시각이 지나도 status 는 한동안 OPEN 으로 남는다. 그 사이에 누르면
+  // 서버가 거부해서 실패 Alert 만 보게 되므로 여기서 먼저 막는다.
+  const closed = status !== 'OPEN' || !!vote?.deadlinePassed;
   const meta = statusMeta(status);
   const eligible = vote?.eligibleMemberCount ?? 0;
 
@@ -207,10 +210,10 @@ const PlaceVoteView: React.FC<Props> = ({
                     style={[
                       s.voteBtn,
                       mine && s.voteBtnOn,
-                      (status !== 'OPEN' || sending) && s.voteBtnOff,
+                      (closed || sending) && s.voteBtnOff,
                     ]}
                     activeOpacity={0.85}
-                    disabled={status !== 'OPEN' || sending}
+                    disabled={closed || sending}
                     onPress={() => castVote(option.optionId)}
                   >
                     <Text style={[s.voteText, mine && s.voteTextOn]}>

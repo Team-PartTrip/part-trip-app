@@ -67,7 +67,8 @@ const CountryRecordView: React.FC<Props> = ({
             {[
               { value: `${country.visitCount}회`, label: '방문 횟수' },
               { value: `${cities.length}곳`, label: '방문 도시' },
-              { value: `${photoTotal}장`, label: '총 기록' },
+              // photoCount 의 합이라 사진 수다. 기록 수는 records.length 다.
+              { value: `${photoTotal}장`, label: '총 사진' },
             ].map(item => (
               <View key={item.label} style={s.statCol}>
                 <Text style={s.statValue}>{item.value}</Text>

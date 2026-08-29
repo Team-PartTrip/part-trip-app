@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -21,6 +21,11 @@ import { PlanDraft } from '../../entities/planner/types';
 
 const MAX_HEADCOUNT = 10;
 
+/** 만들고 나서 필요한 것만 담는다 */
+interface CreatedPlanner {
+  plannerId: number;
+  inviteCode: string;
+}
 
 interface Props {
   onBack?: () => void;
@@ -34,62 +39,83 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
   // 없으면 플래너 목록(C1)에서 계획을 구분할 수 없어서 넣었다.
   const [title, setTitle] = useState('');
   const [members, setMembers] = useState<PlannerMember[]>([]);
-  const [plannerId, setPlannerId] = useState<number | null>(null);
-  const [inviteCode, setInviteCode] = useState<string | null>(null);
+  const [planner, setPlanner] = useState<CreatedPlanner | null>(null);
   const [busy, setBusy] = useState(false);
+  // 만드는 중인 요청. 초대하기와 다음을 연달아 누르면 둘 다 여기로 들어온다.
+  const creating = useRef<Promise<CreatedPlanner | null> | null>(null);
 
   // 혼자 여행이면 인원은 나 한 명으로 고정된다
   const finalHeadcount = together ? headcount : 1;
+  // 이미 만든 플래너의 인원·모드는 서버에 다시 보낼 방법이 없다(server#96).
+  // 그래서 만든 뒤에는 조건을 잠근다.
+  const locked = planner !== null;
+  // 참여한 사람보다 적게 줄일 수 없고, 아무도 없어도 나 한 명은 남는다
+  const minHeadcount = Math.max(1, members.length);
 
   /**
    * 플래너를 아직 안 만들었으면 만든다.
    * 초대하기와 다음이 모두 필요로 해서, 한 번만 만들고 재사용한다.
+   *
+   * 만든 결과를 그대로 돌려준다. 상태로만 두면 이 함수를 부른 쪽의
+   * closure 에는 아직 옛 값이 남아 초대 코드가 빈 값으로 나온다.
    */
-  const ensurePlanner = async (): Promise<number | null> => {
-    if (plannerId !== null) {
-      return plannerId;
+  const ensurePlanner = (): Promise<CreatedPlanner | null> => {
+    if (planner) {
+      return Promise.resolve(planner);
+    }
+    // 만드는 중이면 새로 만들지 않고 그 요청을 같이 기다린다
+    if (creating.current) {
+      return creating.current;
     }
     if (!title.trim()) {
       Alert.alert('알림', '여행 제목을 입력해주세요.');
-      return null;
+      return Promise.resolve(null);
     }
-    try {
-      setBusy(true);
-      const created = await createPlanner({
-        title: title.trim(),
-        memberCount: finalHeadcount,
-        isSolo: !together,
-      });
-      setPlannerId(created.plannerId);
-      setInviteCode(created.inviteCode);
-      setMembers(await getPlannerMembers(created.plannerId).catch(() => []));
-      return created.plannerId;
-    } catch (e: any) {
-      Alert.alert('생성 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
-      return null;
-    } finally {
-      setBusy(false);
-    }
+    setBusy(true);
+    const task = (async (): Promise<CreatedPlanner | null> => {
+      try {
+        const created = await createPlanner({
+          title: title.trim(),
+          memberCount: finalHeadcount,
+          isSolo: !together,
+        });
+        const made = {
+          plannerId: created.plannerId,
+          inviteCode: created.inviteCode,
+        };
+        setPlanner(made);
+        setMembers(await getPlannerMembers(created.plannerId).catch(() => []));
+        return made;
+      } catch (e: any) {
+        Alert.alert('생성 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
+        return null;
+      } finally {
+        creating.current = null;
+        setBusy(false);
+      }
+    })();
+    creating.current = task;
+    return task;
   };
 
   const invite = async () => {
-    const id = await ensurePlanner();
-    if (id === null) {
+    const made = await ensurePlanner();
+    if (!made) {
       return;
     }
     Alert.alert(
       '초대 코드',
-      `${inviteCode ?? ''}\n\n이 코드를 전달하면 참여할 수 있어요.`,
+      `${made.inviteCode}\n\n이 코드를 전달하면 참여할 수 있어요.`,
     );
   };
 
   const next = async () => {
-    const id = await ensurePlanner();
-    if (id === null) {
+    const made = await ensurePlanner();
+    if (!made) {
       return;
     }
     onNext?.({
-      plannerId: id,
+      plannerId: made.plannerId,
       headcount: finalHeadcount,
       countryName: '',
       cityName: '',
@@ -115,6 +141,7 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
               key={mode.label}
               style={[s.modeCard, mode.on && s.modeCardOn]}
               activeOpacity={0.85}
+              disabled={locked}
               onPress={() => setTogether(mode.label === '함께 여행')}
             >
               <View style={[s.modeDot, mode.on && s.modeDotOn]}>
@@ -134,7 +161,7 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
           placeholderTextColor={colors.placeholder}
           value={title}
           onChangeText={setTitle}
-          editable={plannerId === null}
+          editable={!locked}
           maxLength={40}
         />
 
@@ -146,11 +173,13 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
               <TouchableOpacity
                 style={[
                   s.stepperBtn,
-                  headcount <= members.length && s.stepperBtnOff,
+                  (locked || headcount <= minHeadcount) && s.stepperBtnOff,
                 ]}
                 activeOpacity={0.7}
-                disabled={headcount <= members.length}
-                onPress={() => setHeadcount(count => count - 1)}
+                disabled={locked || headcount <= minHeadcount}
+                onPress={() =>
+                  setHeadcount(count => Math.max(minHeadcount, count - 1))
+                }
               >
                 <Text style={s.stepperSign}>−</Text>
               </TouchableOpacity>
@@ -158,11 +187,13 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
               <TouchableOpacity
                 style={[
                   s.stepperBtn,
-                  headcount >= MAX_HEADCOUNT && s.stepperBtnOff,
+                  (locked || headcount >= MAX_HEADCOUNT) && s.stepperBtnOff,
                 ]}
                 activeOpacity={0.7}
-                disabled={headcount >= MAX_HEADCOUNT}
-                onPress={() => setHeadcount(count => count + 1)}
+                disabled={locked || headcount >= MAX_HEADCOUNT}
+                onPress={() =>
+                  setHeadcount(count => Math.min(MAX_HEADCOUNT, count + 1))
+                }
               >
                 <Text style={s.stepperSign}>＋</Text>
               </TouchableOpacity>

@@ -143,6 +143,9 @@ const PlanCartView: React.FC<Props> = ({ plannerId, onBack, onConfirm }) => {
   const canConfirm = mode === 'random' ? !!drawn : chosen.length > 0;
   const buttonLabel =
     mode === 'random' && !drawn ? '랜덤으로 뽑기' : '선택 확정하기';
+  // 버튼이 지금 할 일이 있는지. 스타일과 비활성이 갈리면 꺼진 것처럼 보이는데
+  // 눌리는 버튼이 된다. 한 값으로 둘 다 결정한다.
+  const actionable = mode === 'random' ? items.length > 0 : canConfirm;
 
   const press = () => {
     if (mode === 'random' && !drawn) {
@@ -267,9 +270,9 @@ const PlanCartView: React.FC<Props> = ({ plannerId, onBack, onConfirm }) => {
 
       <SafeAreaView edges={['bottom']} style={s.footer}>
         <TouchableOpacity
-          style={[s.primaryBtn, !canConfirm && s.primaryBtnOff]}
+          style={[s.primaryBtn, !actionable && s.primaryBtnOff]}
           activeOpacity={0.85}
-          disabled={busy || (mode === 'manual' ? !canConfirm : items.length === 0)}
+          disabled={busy || !actionable}
           onPress={press}
         >
           <Text style={s.primaryText}>{buttonLabel}</Text>
