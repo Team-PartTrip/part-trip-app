@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -6,10 +6,18 @@ import {
   TouchableOpacity,
   Alert,
   Dimensions,
+  Image,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { photoDeleteStyles as s } from './PhotoDeleteView.styles';
-import { samplePhotosOf } from '../../entities/record/sampleData';
+import {
+  deleteTripCardEntry,
+  getTripCard,
+  TimelineItem,
+} from '../../entities/record/api';
+import { toImageUrl } from '../../shared/api/image';
 
 // 좌우 여백 20 · 칸 간격 8 을 빼고 세 칸으로 나눈 크기
 const CELL = (Dimensions.get('window').width - 20 * 2 - 8 * 2) / 3;
@@ -21,17 +29,65 @@ interface Props {
 }
 
 const PhotoDeleteView: React.FC<Props> = ({ tripCardId, onBack, onDeleted }) => {
-  const photos = samplePhotosOf(tripCardId);
+  const [photos, setPhotos] = useState<TimelineItem[]>([]);
   const [selected, setSelected] = useState<number[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      setLoading(true);
+      getTripCard(tripCardId)
+        .then(detail => {
+          if (alive) {
+            // 지울 수 있는 건 사용자가 올린 사진뿐이다. 확정 장소(PLACE)는 뺀다.
+            setPhotos(
+              (detail.timeline ?? []).filter(
+                item => item.type !== 'PLACE' && item.entryId != null,
+              ),
+            );
+          }
+        })
+        .catch(() => {
+          if (alive) {
+            setPhotos([]);
+          }
+        })
+        .finally(() => {
+          if (alive) {
+            setLoading(false);
+          }
+        });
+      return () => {
+        alive = false;
+      };
+    }, [tripCardId]),
+  );
 
   const allSelected = photos.length > 0 && selected.length === photos.length;
 
-  const toggle = (photoId: number) =>
+  const toggle = (entryId: number) =>
     setSelected(prev =>
-      prev.includes(photoId)
-        ? prev.filter(id => id !== photoId)
-        : [...prev, photoId],
+      prev.includes(entryId)
+        ? prev.filter(id => id !== entryId)
+        : [...prev, entryId],
     );
+
+  const remove = async () => {
+    setDeleting(true);
+    try {
+      // 서버는 한 장씩 받는다
+      for (const entryId of selected) {
+        await deleteTripCardEntry(tripCardId, entryId);
+      }
+      onDeleted?.();
+    } catch (e: any) {
+      Alert.alert('삭제 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const confirm = () =>
     Alert.alert(
@@ -39,12 +95,7 @@ const PhotoDeleteView: React.FC<Props> = ({ tripCardId, onBack, onDeleted }) => 
       `${selected.length}장을 삭제할까요? 삭제하면 되돌릴 수 없어요.`,
       [
         { text: '취소', style: 'cancel' },
-        {
-          text: '삭제',
-          style: 'destructive',
-          // 삭제 API(DELETE /api/records/{id})가 붙으면 여기서 호출한다
-          onPress: () => onDeleted?.(),
-        },
+        { text: '삭제', style: 'destructive', onPress: remove },
       ],
     );
 
@@ -59,7 +110,7 @@ const PhotoDeleteView: React.FC<Props> = ({ tripCardId, onBack, onDeleted }) => 
           hitSlop={12}
           onPress={() =>
             setSelected(
-              allSelected ? [] : photos.map(photo => photo.photoId),
+              allSelected ? [] : photos.map(photo => photo.entryId as number),
             )
           }
         >
@@ -73,21 +124,30 @@ const PhotoDeleteView: React.FC<Props> = ({ tripCardId, onBack, onDeleted }) => 
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
       >
-        {photos.length === 0 ? (
+        {loading ? (
+          <ActivityIndicator style={s.empty} />
+        ) : photos.length === 0 ? (
           <View style={s.empty}>
             <Text style={s.emptyText}>지울 사진이 없어요.</Text>
           </View>
         ) : (
           <View style={s.grid}>
             {photos.map(photo => {
-              const on = selected.includes(photo.photoId);
+              const entryId = photo.entryId as number;
+              const on = selected.includes(entryId);
               return (
                 <TouchableOpacity
-                  key={photo.photoId}
+                  key={entryId}
                   style={[s.cell, { width: CELL, height: CELL }, on && s.cellOn]}
                   activeOpacity={0.85}
-                  onPress={() => toggle(photo.photoId)}
+                  onPress={() => toggle(entryId)}
                 >
+                  {photo.imageUrl && (
+                    <Image
+                      source={{ uri: toImageUrl(photo.imageUrl) }}
+                      style={s.thumb}
+                    />
+                  )}
                   {on && <View style={s.cellVeil} />}
                   <View style={[s.check, on ? s.checkOn : s.checkOff]}>
                     {on && <Text style={s.checkText}>✓</Text>}
@@ -115,10 +175,14 @@ const PhotoDeleteView: React.FC<Props> = ({ tripCardId, onBack, onDeleted }) => 
         <TouchableOpacity
           style={[s.dangerBtn, selected.length === 0 && s.dangerBtnOff]}
           activeOpacity={0.85}
-          disabled={selected.length === 0}
+          disabled={selected.length === 0 || deleting}
           onPress={confirm}
         >
-          <Text style={s.dangerText}>{selected.length}개 삭제하기</Text>
+          {deleting ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={s.dangerText}>{selected.length}개 삭제하기</Text>
+          )}
         </TouchableOpacity>
         <TouchableOpacity
           style={s.cancelBtn}

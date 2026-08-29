@@ -26,6 +26,7 @@ export const photoDeleteStyles = StyleSheet.create({
   content: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 24 },
 
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  thumb: { width: '100%', height: '100%' },
   cell: {
     borderRadius: 10,
     // 사진 자리라 D11 과 같은 톤으로 조금 진하게 둔다

@@ -38,12 +38,14 @@ export const tripCardDetailStyles = StyleSheet.create({
   entry: { marginLeft: 52, marginRight: 24, marginBottom: 12 },
   entryImage: {
     height: 80,
+    overflow: 'hidden',
     borderRadius: 12,
     backgroundColor: colors.tintStrong,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
   },
+  entryPhoto: { width: '100%', height: '100%' },
   entryImageText: { fontSize: 12, fontWeight: '500', color: colors.textMuted },
   entryInfo: {
     minHeight: 52,

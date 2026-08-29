@@ -33,7 +33,13 @@ export const tripCardEditStyles = StyleSheet.create({
   cell: {
     borderRadius: 10,
     backgroundColor: colors.tintStrong,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
+  thumb: { width: '100%', height: '100%' },
+  addCell: { fontSize: 28, color: colors.textMuted },
+  hint: { marginTop: 10, fontSize: 12, color: colors.textMuted },
   check: {
     position: 'absolute',
     top: 8,

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -8,17 +8,27 @@ import {
   KeyboardAvoidingView,
   Platform,
   Dimensions,
+  Image,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
+import { launchImageLibrary } from 'react-native-image-picker';
 import { tripCardEditStyles as s } from './TripCardEditView.styles';
-import { sampleTripCardOf } from '../../entities/record/sampleData';
+import {
+  addTripCardEntry,
+  getTripCards,
+  PickedPhoto,
+  TripCardSummary,
+} from '../../entities/record/api';
 import { formatDotDate } from '../../entities/record/types';
 
 const MAX_LENGTH = 100;
 // 좌우 여백 24 · 칸 간격 12 를 빼고 세 칸으로 나눈 크기
 const CELL = (Dimensions.get('window').width - 24 * 2 - 12 * 2) / 3;
-// 갤러리 연동 전이라 고를 수 있는 자리만 만들어 둔다
-const GALLERY_SLOTS = [0, 1, 2, 3, 4, 5];
+// 한 번에 올릴 수 있는 장수. 서버는 한 장씩 받으므로 순서대로 보낸다.
+const MAX_PHOTOS = 9;
 
 interface Props {
   tripCardId: number;
@@ -26,21 +36,65 @@ interface Props {
   onSaved?: () => void;
 }
 
-const TripCardEditView: React.FC<Props> = ({
-  tripCardId,
-  onBack,
-  onSaved,
-}) => {
-  const card = sampleTripCardOf(tripCardId);
-  const [picked, setPicked] = useState<number[]>([]);
+const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
+  const [card, setCard] = useState<TripCardSummary | null>(null);
+  const [picked, setPicked] = useState<PickedPhoto[]>([]);
   const [comment, setComment] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  const toggle = (slot: number) =>
-    setPicked(prev =>
-      prev.includes(slot)
-        ? prev.filter(item => item !== slot)
-        : [...prev, slot],
-    );
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      getTripCards()
+        .then(cards => {
+          if (alive) {
+            setCard(cards.find(item => item.cardId === tripCardId) ?? null);
+          }
+        })
+        .catch(() => {});
+      return () => {
+        alive = false;
+      };
+    }, [tripCardId]),
+  );
+
+  const pickPhotos = async () => {
+    const result = await launchImageLibrary({
+      mediaType: 'photo',
+      selectionLimit: MAX_PHOTOS - picked.length,
+    });
+    if (result.didCancel || !result.assets?.length) {
+      return;
+    }
+    const added = result.assets
+      .filter(asset => asset.uri)
+      .map((asset, index) => ({
+        uri: asset.uri!,
+        fileName: asset.fileName ?? `photo-${Date.now()}-${index}.jpg`,
+        mimeType: asset.type ?? 'image/jpeg',
+      }));
+    setPicked(prev => [...prev, ...added].slice(0, MAX_PHOTOS));
+  };
+
+  const remove = (uri: string) =>
+    setPicked(prev => prev.filter(photo => photo.uri !== uri));
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      // 서버는 한 장씩 받는다. 고른 순서대로 올린다.
+      for (const photo of picked) {
+        await addTripCardEntry(tripCardId, photo, comment.trim() || undefined);
+      }
+      onSaved?.();
+    } catch (e: any) {
+      Alert.alert('사진 추가 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const title = card ? `${card.countryName} ${card.cityName}` : '여행';
 
   return (
     <View style={s.safeArea}>
@@ -61,31 +115,45 @@ const TripCardEditView: React.FC<Props> = ({
             <Text style={s.desc}>
               여행 카드는 여행 시작과 함께 자동으로 만들어져요
             </Text>
-            <View style={s.tripBar}>
-              <Text style={s.tripBarText}>
-                {card.title}  ·  {formatDotDate(card.startDate)} 시작
-              </Text>
-            </View>
+            {card && (
+              <View style={s.tripBar}>
+                <Text style={s.tripBarText}>
+                  {title}  ·  {formatDotDate(card.startDate)} 시작
+                </Text>
+              </View>
+            )}
           </SafeAreaView>
 
           <Text style={s.label}>사진 선택</Text>
           <View style={s.grid}>
-            {GALLERY_SLOTS.map(slot => {
-              const on = picked.includes(slot);
-              return (
-                <TouchableOpacity
-                  key={slot}
-                  style={[s.cell, { width: CELL, height: CELL }]}
-                  activeOpacity={0.85}
-                  onPress={() => toggle(slot)}
-                >
-                  <View style={[s.check, on ? s.checkOn : s.checkOff]}>
-                    {on && <Text style={s.checkText}>✓</Text>}
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
+            {picked.map(photo => (
+              <TouchableOpacity
+                key={photo.uri}
+                style={[s.cell, { width: CELL, height: CELL }]}
+                activeOpacity={0.85}
+                onPress={() => remove(photo.uri)}
+              >
+                <Image source={{ uri: photo.uri }} style={s.thumb} />
+                <View style={[s.check, s.checkOn]}>
+                  <Text style={s.checkText}>✓</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+            {picked.length < MAX_PHOTOS && (
+              <TouchableOpacity
+                style={[s.cell, { width: CELL, height: CELL }]}
+                activeOpacity={0.85}
+                onPress={pickPhotos}
+              >
+                <Text style={s.addCell}>＋</Text>
+              </TouchableOpacity>
+            )}
           </View>
+          <Text style={s.hint}>
+            {picked.length === 0
+              ? '갤러리에서 직접 찍은 사진을 골라주세요'
+              : '사진을 누르면 목록에서 빠져요'}
+          </Text>
 
           <Text style={s.label}>코멘트</Text>
           <View style={s.commentBox}>
@@ -107,12 +175,21 @@ const TripCardEditView: React.FC<Props> = ({
 
         <SafeAreaView edges={['bottom']} style={s.footer}>
           <TouchableOpacity
-            style={[s.primaryBtn, picked.length === 0 && s.primaryBtnOff]}
+            style={[
+              s.primaryBtn,
+              (picked.length === 0 || saving) && s.primaryBtnOff,
+            ]}
             activeOpacity={0.85}
-            disabled={picked.length === 0}
-            onPress={onSaved}
+            disabled={picked.length === 0 || saving}
+            onPress={save}
           >
-            <Text style={s.primaryText}>여행 카드에 담기</Text>
+            {saving ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={s.primaryText}>
+                여행 카드에 담기{picked.length > 0 ? ` (${picked.length})` : ''}
+              </Text>
+            )}
           </TouchableOpacity>
         </SafeAreaView>
       </KeyboardAvoidingView>

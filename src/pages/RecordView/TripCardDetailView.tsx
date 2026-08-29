@@ -5,6 +5,7 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -16,6 +17,7 @@ import {
   TripCardSummary,
 } from '../../entities/record/api';
 import { formatDotDate } from '../../entities/record/types';
+import { toImageUrl } from '../../shared/api/image';
 
 interface Props {
   tripCardId: number;
@@ -124,9 +126,16 @@ const TripCardDetailView: React.FC<Props> = ({
 
                   <View style={s.entry}>
                     <View style={s.entryImage}>
-                      <Text style={s.entryImageText}>
-                        {entry.type === 'PLACE' ? '방문 장소' : '촬영된 이미지'}
-                      </Text>
+                      {entry.imageUrl ? (
+                        <Image
+                          source={{ uri: toImageUrl(entry.imageUrl) }}
+                          style={s.entryPhoto}
+                        />
+                      ) : (
+                        <Text style={s.entryImageText}>
+                          {entry.type === 'PLACE' ? '방문 장소' : '사진'}
+                        </Text>
+                      )}
                     </View>
                     <View style={s.entryInfo}>
                       <Text style={s.entryTitle}>{line.title}</Text>
