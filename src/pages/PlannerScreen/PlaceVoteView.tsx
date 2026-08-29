@@ -65,12 +65,18 @@ const PlaceVoteView: React.FC<Props> = ({
             return;
           }
           setVotes(list);
-          // 어느 카테고리로 열지 정하지 않았으면 후보가 있는 진행 중 투표를 연다
+          // 어느 카테고리로 열지 정하지 않았으면 후보가 있는 진행 중 투표를 연다.
+          // 마감이 지난 투표는 status 가 아직 OPEN 이어도 열지 않는다.
+          // 열어봐야 버튼이 전부 막혀 있어 사용자가 직접 옮겨야 한다.
           setCurrent(
             prev =>
               prev ??
-              list.find(v => v.status === 'OPEN' && v.options.length > 0)
-                ?.category ??
+              list.find(
+                v =>
+                  v.status === 'OPEN' &&
+                  !v.deadlinePassed &&
+                  v.options.length > 0,
+              )?.category ??
               CATEGORIES[0],
           );
         } catch {
