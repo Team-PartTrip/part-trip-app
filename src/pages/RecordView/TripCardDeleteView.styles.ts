@@ -72,6 +72,9 @@ export const tripCardDeleteStyles = StyleSheet.create({
     color: colors.textMuted,
   },
 
+  loading: {
+    marginTop: 60,
+  },
   empty: { paddingVertical: 60, alignItems: 'center' },
   emptyText: { fontSize: 13, color: colors.textMuted },
 

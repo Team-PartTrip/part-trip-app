@@ -87,6 +87,9 @@ export const tripCardDetailStyles = StyleSheet.create({
   addTitle: { fontSize: 15, fontWeight: '600', color: colors.primary },
   addDesc: { fontSize: 11, color: colors.textMuted },
 
+  loading: {
+    marginTop: 60,
+  },
   empty: {
     marginHorizontal: 24,
     borderRadius: 12,

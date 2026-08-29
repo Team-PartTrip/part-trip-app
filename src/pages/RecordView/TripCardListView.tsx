@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -8,24 +8,24 @@ import {
   Share,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { tripCardListStyles as s } from './TripCardListView.styles';
-import { sampleTripCards } from '../../entities/record/sampleData';
-import {
-  cardTitleOf,
-  formatTripRange,
-  TripCard,
-} from '../../entities/record/types';
+import { getTripCards, TripCardSummary } from '../../entities/record/api';
+import { formatTripRange } from '../../entities/record/types';
 
 const PAGE_WIDTH = Dimensions.get('window').width;
 
-function statsOf(card: TripCard): { label: string; value: string }[] {
+// 목록 응답에는 사진 수만 있다. 동행 인원·방문 장소·이동 거리는 서버가 주지 않아
+// 지어내지 않고 뺐다. 대신 날짜로 계산되는 여행 기간을 보여준다.
+function statsOf(card: TripCardSummary): { label: string; value: string }[] {
+  const ms = new Date(card.endDate).getTime() - new Date(card.startDate).getTime();
+  const nights = Number.isNaN(ms) ? 0 : Math.max(0, Math.round(ms / 86_400_000));
   return [
-    { label: '함께한 사람', value: `${card.companionCount}명` },
-    { label: '방문 장소', value: `${card.placeCount}곳` },
-    { label: '남긴 사진', value: `${card.photoCount}장` },
-    { label: '이동 거리', value: `${card.distanceKm}km` },
+    { label: '여행 기간', value: `${nights}박 ${nights + 1}일` },
+    { label: '남긴 사진', value: `${card.photoCount ?? 0}장` },
   ];
 }
 
@@ -40,8 +40,22 @@ const TripCardListView: React.FC<Props> = ({
   onOpenCard,
   onManage,
 }) => {
-  const cards = sampleTripCards;
+  const [cards, setCards] = useState<TripCardSummary[]>([]);
+  const [loading, setLoading] = useState(true);
   const [index, setIndex] = useState(0);
+
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      getTripCards()
+        .then(list => alive && setCards(list))
+        .catch(() => alive && setCards([]))
+        .finally(() => alive && setLoading(false));
+      return () => {
+        alive = false;
+      };
+    }, []),
+  );
 
   const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) =>
     setIndex(Math.round(event.nativeEvent.contentOffset.x / PAGE_WIDTH));
@@ -53,8 +67,8 @@ const TripCardListView: React.FC<Props> = ({
     }
     Share.share({
       message: [
-        `${cardTitleOf(card)} — ${card.title}`,
-        `${card.countryName} · ${formatTripRange(card.startDate, card.endDate)}`,
+        `${card.cityName} — ${card.countryName}`,
+        formatTripRange(card.startDate, card.endDate),
         ...statsOf(card).map(stat => `${stat.label} ${stat.value}`),
       ].join('\n'),
     });
@@ -73,7 +87,9 @@ const TripCardListView: React.FC<Props> = ({
         </TouchableOpacity>
       </View>
 
-      {cards.length === 0 ? (
+      {loading ? (
+        <ActivityIndicator style={s.loading} />
+      ) : cards.length === 0 ? (
         <View style={s.empty}>
           <Text style={s.emptyText}>아직 만들어진 여행카드가 없어요</Text>
           <Text style={s.emptyDesc}>여행을 시작하면 카드가 만들어져요.</Text>
@@ -88,17 +104,17 @@ const TripCardListView: React.FC<Props> = ({
           >
             {cards.map(card => (
               <TouchableOpacity
-                key={card.tripCardId}
+                key={card.cardId}
                 style={[s.page, { width: PAGE_WIDTH }]}
                 activeOpacity={0.9}
-                onPress={() => onOpenCard?.(card.tripCardId)}
+                onPress={() => onOpenCard?.(card.cardId)}
               >
                 <View style={s.card}>
                   <View style={s.cover}>
-                    <Text style={s.coverText}>{card.title}</Text>
+                    <Text style={s.coverText}>{card.cityName}</Text>
                   </View>
                   <View style={s.body}>
-                    <Text style={s.cityName}>{cardTitleOf(card)}</Text>
+                    <Text style={s.cityName}>{card.cityName.toUpperCase()}</Text>
                     <Text style={s.tripMeta}>
                       {card.countryName} ·{' '}
                       {formatTripRange(card.startDate, card.endDate)}
@@ -122,7 +138,7 @@ const TripCardListView: React.FC<Props> = ({
           <View style={s.dots}>
             {cards.map((card, i) => (
               <View
-                key={card.tripCardId}
+                key={card.cardId}
                 style={[s.dot, i === index && s.dotOn]}
               />
             ))}

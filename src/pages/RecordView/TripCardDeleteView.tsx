@@ -1,8 +1,20 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { tripCardDeleteStyles as s } from './TripCardDeleteView.styles';
-import { sampleTripCards } from '../../entities/record/sampleData';
+import {
+  deleteTripCards,
+  getTripCards,
+  TripCardSummary,
+} from '../../entities/record/api';
 import { formatTripRange } from '../../entities/record/types';
 
 interface Props {
@@ -11,17 +23,44 @@ interface Props {
 }
 
 const TripCardDeleteView: React.FC<Props> = ({ onBack, onDeleted }) => {
-  const cards = sampleTripCards;
+  const [cards, setCards] = useState<TripCardSummary[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<number[]>([]);
+  const [sending, setSending] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      getTripCards()
+        .then(list => alive && setCards(list))
+        .catch(() => alive && setCards([]))
+        .finally(() => alive && setLoading(false));
+      return () => {
+        alive = false;
+      };
+    }, []),
+  );
 
   const allSelected = cards.length > 0 && selected.length === cards.length;
 
-  const toggle = (tripCardId: number) =>
+  const toggle = (cardId: number) =>
     setSelected(prev =>
-      prev.includes(tripCardId)
-        ? prev.filter(id => id !== tripCardId)
-        : [...prev, tripCardId],
+      prev.includes(cardId)
+        ? prev.filter(id => id !== cardId)
+        : [...prev, cardId],
     );
+
+  const remove = async () => {
+    try {
+      setSending(true);
+      await deleteTripCards(selected);
+      onDeleted?.();
+    } catch (e: any) {
+      Alert.alert('삭제 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
+    } finally {
+      setSending(false);
+    }
+  };
 
   const confirm = () =>
     Alert.alert(
@@ -32,8 +71,7 @@ const TripCardDeleteView: React.FC<Props> = ({ onBack, onDeleted }) => {
         {
           text: '삭제',
           style: 'destructive',
-          // 카드 삭제 API(DELETE /api/trip-cards/{id})가 붙으면 여기서 호출한다
-          onPress: () => onDeleted?.(),
+          onPress: remove,
         },
       ],
     );
@@ -48,7 +86,7 @@ const TripCardDeleteView: React.FC<Props> = ({ onBack, onDeleted }) => {
         <TouchableOpacity
           hitSlop={12}
           onPress={() =>
-            setSelected(allSelected ? [] : cards.map(card => card.tripCardId))
+            setSelected(allSelected ? [] : cards.map(card => card.cardId))
           }
         >
           <Text style={[s.headerSide, s.headerSideOn]}>
@@ -61,28 +99,32 @@ const TripCardDeleteView: React.FC<Props> = ({ onBack, onDeleted }) => {
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
       >
-        {cards.length === 0 ? (
+        {loading ? (
+          <ActivityIndicator style={s.loading} />
+        ) : cards.length === 0 ? (
           <View style={s.empty}>
             <Text style={s.emptyText}>지울 여행 카드가 없어요.</Text>
           </View>
         ) : (
           cards.map(card => {
-            const on = selected.includes(card.tripCardId);
+            const on = selected.includes(card.cardId);
             return (
               <TouchableOpacity
-                key={card.tripCardId}
+                key={card.cardId}
                 style={[s.row, on && s.rowOn]}
                 activeOpacity={0.85}
-                onPress={() => toggle(card.tripCardId)}
+                onPress={() => toggle(card.cardId)}
               >
                 <View style={s.thumb}>
                   <Text style={s.thumbText}>IMG</Text>
                 </View>
                 <View style={s.body}>
-                  <Text style={s.title}>{card.title}</Text>
+                  <Text style={s.title}>
+                    {card.countryName} {card.cityName}
+                  </Text>
                   <Text style={s.meta}>
                     {formatTripRange(card.startDate, card.endDate)}  ·  사진{' '}
-                    {card.photoCount}장
+                    {card.photoCount ?? 0}장
                   </Text>
                 </View>
                 <View style={[s.check, on ? s.checkOn : s.checkOff]}>
@@ -105,7 +147,7 @@ const TripCardDeleteView: React.FC<Props> = ({ onBack, onDeleted }) => {
         <TouchableOpacity
           style={[s.dangerBtn, selected.length === 0 && s.dangerBtnOff]}
           activeOpacity={0.85}
-          disabled={selected.length === 0}
+          disabled={selected.length === 0 || sending}
           onPress={confirm}
         >
           <Text style={s.dangerText}>{selected.length}개 삭제하기</Text>

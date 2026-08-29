@@ -100,6 +100,9 @@ export const tripCardListStyles = StyleSheet.create({
   },
   dotOn: { opacity: 1 },
 
+  loading: {
+    marginTop: 60,
+  },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 6 },
   emptyText: { fontSize: 15, fontWeight: '600', color: colors.textOnPrimary },
   emptyDesc: { fontSize: 12, color: colors.onPrimaryMuted },
