@@ -144,8 +144,9 @@ const PlanCartView: React.FC<Props> = ({ plannerId, onBack, onConfirm }) => {
   const buttonLabel =
     mode === 'random' && !drawn ? '랜덤으로 뽑기' : '선택 확정하기';
   // 버튼이 지금 할 일이 있는지. 스타일과 비활성이 갈리면 꺼진 것처럼 보이는데
-  // 눌리는 버튼이 된다. 한 값으로 둘 다 결정한다.
-  const actionable = mode === 'random' ? items.length > 0 : canConfirm;
+  // 눌리는 버튼이 된다(또는 그 반대). busy 까지 넣어 한 값으로 둘 다 결정한다.
+  const actionable =
+    !busy && (mode === 'random' ? items.length > 0 : canConfirm);
 
   const press = () => {
     if (mode === 'random' && !drawn) {
@@ -272,7 +273,7 @@ const PlanCartView: React.FC<Props> = ({ plannerId, onBack, onConfirm }) => {
         <TouchableOpacity
           style={[s.primaryBtn, !actionable && s.primaryBtnOff]}
           activeOpacity={0.85}
-          disabled={busy || !actionable}
+          disabled={!actionable}
           onPress={press}
         >
           <Text style={s.primaryText}>{buttonLabel}</Text>

@@ -97,7 +97,9 @@ const PlaceVoteView: React.FC<Props> = ({
   // 마감 시각이 지나도 status 는 한동안 OPEN 으로 남는다. 그 사이에 누르면
   // 서버가 거부해서 실패 Alert 만 보게 되므로 여기서 먼저 막는다.
   const closed = status !== 'OPEN' || !!vote?.deadlinePassed;
-  const meta = statusMeta(status);
+  // 버튼을 막았으면 배지도 '마감' 이어야 한다. '진행 중' 인데 못 누르면
+  // 사용자는 고장으로 읽는다.
+  const meta = statusMeta(closed && status === 'OPEN' ? 'CLOSED' : status);
   const eligible = vote?.eligibleMemberCount ?? 0;
 
   const myOptionId = options.find(option => option.selectedByMe)?.optionId ?? null;

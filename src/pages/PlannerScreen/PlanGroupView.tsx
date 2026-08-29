@@ -48,7 +48,9 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
   const finalHeadcount = together ? headcount : 1;
   // 이미 만든 플래너의 인원·모드는 서버에 다시 보낼 방법이 없다(server#96).
   // 그래서 만든 뒤에는 조건을 잠근다.
-  const locked = planner !== null;
+  // 만드는 중에도 잠근다. 요청이 나간 뒤 바꾸면 서버에 저장된 조건과
+  // 다음 단계로 넘기는 PlanDraft 가 어긋난다.
+  const locked = planner !== null || busy;
   // 참여한 사람보다 적게 줄일 수 없고, 아무도 없어도 나 한 명은 남는다
   const minHeadcount = Math.max(1, members.length);
 
