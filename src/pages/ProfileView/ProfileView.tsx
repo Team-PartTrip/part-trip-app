@@ -19,8 +19,6 @@ import {
 import { logout } from '../../entities/auth/api';
 import { getRefreshToken, clearTokens } from '../../shared/api/tokenStorage';
 import { toImageUrl } from '../../shared/api/image';
-import { sampleSummary } from '../../entities/worldmap/sampleData';
-import { flagOf } from '../../entities/worldmap/types';
 
 // 세계지도 미리보기 칸 수 (피그마 E1 은 6칸)
 const MAP_CELLS = 6;
@@ -85,19 +83,10 @@ const ProfileView: React.FC<Props> = ({
   const statText = (n: number | undefined) =>
     n === undefined ? '-' : String(n);
 
-  // 세계지도 미리보기는 아직 전용 API 가 없어 예시 데이터를 쓴다.
-  // 다만 몇 개국인지는 통계 API 를 따라가서, 위 "국가" 칸과 어긋나지 않게 한다.
-  const countryCount = stats?.countryCount ?? 0;
-  const visitedCountries = sampleSummary.countries.slice(0, countryCount);
-  // "아시아 4 · 유럽 1" — 위에서 자른 국가들만 세야 개수가 어긋나지 않는다
-  const continentSummary = sampleSummary.continents
-    .map(c => ({
-      name: c.name,
-      n: visitedCountries.filter(v => v.continent === c.code).length,
-    }))
-    .filter(c => c.n > 0)
-    .map(c => `${c.name} ${c.n}`)
-    .join(' · ');
+  // 어느 나라를 갔는지 알려주는 API 가 아직 없다(server feat/67).
+  // 예시 국기를 개수만큼 잘라 쓰면 가보지도 않은 나라 국기가 뜬다.
+  // 그래서 국기는 안 그리고 통계 API 의 개수만 보여준다.
+  const countryCount = stats?.countryCount ?? null;
 
   return (
     <View style={s.safeArea}>
@@ -165,24 +154,17 @@ const ProfileView: React.FC<Props> = ({
           <Text style={s.sectionTitle}>내 세계지도</Text>
           <View style={s.mapCard}>
             <View style={s.mapGrid}>
-              {Array.from({ length: MAP_CELLS }).map((_, i) => {
-                const country = visitedCountries[i];
-                return (
-                  <View key={i} style={s.mapCell}>
-                    {!!country && (
-                      <Text style={s.mapCellFlag}>
-                        {flagOf(country.countryCode)}
-                      </Text>
-                    )}
-                  </View>
-                );
-              })}
+              {Array.from({ length: MAP_CELLS }).map((_, i) => (
+                <View key={i} style={s.mapCell} />
+              ))}
             </View>
             <View style={s.mapFooter}>
               <Text style={s.mapSummary}>
-                {visitedCountries.length === 0
+                {countryCount === null
+                  ? '국가 정보를 불러오지 못했어요'
+                  : countryCount === 0
                   ? '아직 획득한 국가가 없어요'
-                  : `${visitedCountries.length}개국 획득 · ${continentSummary}`}
+                  : `${countryCount}개국 획득`}
               </Text>
               <TouchableOpacity
                 style={s.moreBtn}

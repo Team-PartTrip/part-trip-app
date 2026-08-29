@@ -53,6 +53,20 @@ export const profileEditStyles = StyleSheet.create({
     color: colors.textPrimary,
   },
 
+  themeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  themeChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 999,
+    backgroundColor: colors.cardBg,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  themeChipOn: { backgroundColor: colors.primary, borderColor: colors.primary },
+  themeChipText: { fontSize: 13, fontWeight: '700', color: colors.textSecondary },
+  themeChipTextOn: { color: '#fff' },
+  themeDesc: { fontSize: 12, color: colors.textTertiary, marginTop: 8 },
+
   linkRow: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -85,11 +85,11 @@ const CommentEditView: React.FC<Props> = ({
     }, [tripCardId, photoId]),
   );
 
-  const save = async () => {
-    if (!text.trim()) {
-      Alert.alert('알림', '코멘트를 입력해주세요.');
-      return;
-    }
+  // 원래 코멘트가 있었는데 비웠으면 지우는 것이다.
+  // 서버는 빈 값을 받으면 코멘트를 null 로 바꾼다.
+  const clearing = !text.trim() && !!photo?.comment;
+
+  const send = async () => {
     setSaving(true);
     try {
       await updateTripCardEntryComment(tripCardId, photoId, text.trim());
@@ -99,6 +99,21 @@ const CommentEditView: React.FC<Props> = ({
     } finally {
       setSaving(false);
     }
+  };
+
+  const save = () => {
+    if (clearing) {
+      Alert.alert('코멘트 삭제', '이 사진의 코멘트를 지울까요?', [
+        { text: '취소', style: 'cancel' },
+        { text: '지우기', style: 'destructive', onPress: send },
+      ]);
+      return;
+    }
+    if (!text.trim()) {
+      Alert.alert('알림', '코멘트를 입력해주세요.');
+      return;
+    }
+    send();
   };
 
   return (
@@ -160,16 +175,23 @@ const CommentEditView: React.FC<Props> = ({
 
         <SafeAreaView edges={['bottom']} style={s.footer}>
           <TouchableOpacity
-            style={[s.primaryBtn, (!text.trim() || saving) && s.primaryBtnOff]}
+            style={[
+              s.primaryBtn,
+              ((!text.trim() && !clearing) || saving) && s.primaryBtnOff,
+            ]}
             activeOpacity={0.85}
-            disabled={!text.trim() || saving}
+            disabled={(!text.trim() && !clearing) || saving}
             onPress={save}
           >
             {saving ? (
               <ActivityIndicator color="#fff" />
             ) : (
               <Text style={s.primaryText}>
-                {editing ? '수정 저장' : '코멘트 저장'}
+                {clearing
+                  ? '코멘트 지우기'
+                  : editing
+                  ? '수정 저장'
+                  : '코멘트 저장'}
               </Text>
             )}
           </TouchableOpacity>

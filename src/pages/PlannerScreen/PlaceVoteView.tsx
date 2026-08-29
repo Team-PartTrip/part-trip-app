@@ -65,12 +65,18 @@ const PlaceVoteView: React.FC<Props> = ({
             return;
           }
           setVotes(list);
-          // 어느 카테고리로 열지 정하지 않았으면 후보가 있는 진행 중 투표를 연다
+          // 어느 카테고리로 열지 정하지 않았으면 후보가 있는 진행 중 투표를 연다.
+          // 마감이 지난 투표는 status 가 아직 OPEN 이어도 열지 않는다.
+          // 열어봐야 버튼이 전부 막혀 있어 사용자가 직접 옮겨야 한다.
           setCurrent(
             prev =>
               prev ??
-              list.find(v => v.status === 'OPEN' && v.options.length > 0)
-                ?.category ??
+              list.find(
+                v =>
+                  v.status === 'OPEN' &&
+                  !v.deadlinePassed &&
+                  v.options.length > 0,
+              )?.category ??
               CATEGORIES[0],
           );
         } catch {
@@ -94,7 +100,12 @@ const PlaceVoteView: React.FC<Props> = ({
   const vote = votes.find(item => item.category === active);
   const options = vote?.options ?? [];
   const status = vote?.status ?? 'OPEN';
-  const meta = statusMeta(status);
+  // 마감 시각이 지나도 status 는 한동안 OPEN 으로 남는다. 그 사이에 누르면
+  // 서버가 거부해서 실패 Alert 만 보게 되므로 여기서 먼저 막는다.
+  const closed = status !== 'OPEN' || !!vote?.deadlinePassed;
+  // 버튼을 막았으면 배지도 '마감' 이어야 한다. '진행 중' 인데 못 누르면
+  // 사용자는 고장으로 읽는다.
+  const meta = statusMeta(closed && status === 'OPEN' ? 'CLOSED' : status);
   const eligible = vote?.eligibleMemberCount ?? 0;
 
   const myOptionId = options.find(option => option.selectedByMe)?.optionId ?? null;
@@ -207,10 +218,10 @@ const PlaceVoteView: React.FC<Props> = ({
                     style={[
                       s.voteBtn,
                       mine && s.voteBtnOn,
-                      (status !== 'OPEN' || sending) && s.voteBtnOff,
+                      (closed || sending) && s.voteBtnOff,
                     ]}
                     activeOpacity={0.85}
-                    disabled={status !== 'OPEN' || sending}
+                    disabled={closed || sending}
                     onPress={() => castVote(option.optionId)}
                   >
                     <Text style={[s.voteText, mine && s.voteTextOn]}>
