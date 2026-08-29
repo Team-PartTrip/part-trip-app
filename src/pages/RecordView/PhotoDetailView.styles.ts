@@ -3,6 +3,11 @@ import colors from '../../shared/tokens/colors';
 
 // 피그마 D3 · Func-005-03 촬영 기록 상세 조회 — 어두운 뷰어 + 아래 정보 시트
 export const photoDetailStyles = StyleSheet.create({
+  loading: { marginTop: 80 },
+  blankBody: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  blankText: { fontSize: 14, color: colors.textMuted },
+  photoImage: { width: '100%', height: '100%' },
+  thumbImage: { width: '100%', height: '100%', borderRadius: 8 },
   safeArea: { flex: 1, backgroundColor: colors.night },
 
   topBar: {

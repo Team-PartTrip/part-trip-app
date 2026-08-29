@@ -1,55 +1,108 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   Modal,
+  Image,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { photoDetailStyles as s } from './PhotoDetailView.styles';
-import { samplePhotosOf } from '../../entities/record/sampleData';
-import { formatDateTime, Photo } from '../../entities/record/types';
+import { getTripCard, TimelineItem } from '../../entities/record/api';
+import { toImageUrl } from '../../shared/api/image';
 
 interface Props {
   tripCardId: number;
-  /** 이 장소에서 찍은 사진만 볼 때 */
-  tripCardPlaceId?: number;
   /** 처음 보여줄 사진. 없으면 첫 장부터 */
   photoId?: number;
   onBack?: () => void;
   /** 코멘트 작성(D4) · 수정(D5) */
-  onWriteComment?: (photo: Photo) => void;
-  onEditComment?: (photo: Photo) => void;
+  onWriteComment?: (photo: TimelineItem) => void;
+  onEditComment?: (photo: TimelineItem) => void;
   /** 사진 삭제(D6) */
   onDeletePhotos?: () => void;
 }
 
+/** 촬영 시각을 "2026.08.23 14:20" 으로. 시각이 없는 사진도 있다 */
+function formatTakenAt(takenAt: string | null): string {
+  if (!takenAt) {
+    return '촬영 시각 정보 없음';
+  }
+  return `${takenAt.slice(0, 10).replace(/-/g, '.')} ${takenAt.slice(11, 16)}`;
+}
+
 const PhotoDetailView: React.FC<Props> = ({
   tripCardId,
-  tripCardPlaceId,
   photoId,
   onBack,
   onWriteComment,
   onEditComment,
   onDeletePhotos,
 }) => {
-  const photos = samplePhotosOf(tripCardId).filter(
-    photo =>
-      tripCardPlaceId === undefined ||
-      photo.tripCardPlaceId === tripCardPlaceId,
-  );
-  const [index, setIndex] = useState(() => {
-    const found = photos.findIndex(photo => photo.photoId === photoId);
-    return found < 0 ? 0 : found;
-  });
+  const [photos, setPhotos] = useState<TimelineItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [index, setIndex] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
 
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      setLoading(true);
+      getTripCard(tripCardId)
+        .then(detail => {
+          if (!alive) {
+            return;
+          }
+          // 확정 장소(PLACE)는 사진이 아니라 방문 기록이라 뺀다
+          const list = (detail.timeline ?? []).filter(
+            item => item.type !== 'PLACE',
+          );
+          setPhotos(list);
+          const found = list.findIndex(item => item.entryId === photoId);
+          setIndex(found < 0 ? 0 : found);
+        })
+        .catch(() => {
+          if (alive) {
+            setPhotos([]);
+          }
+        })
+        .finally(() => {
+          if (alive) {
+            setLoading(false);
+          }
+        });
+      return () => {
+        alive = false;
+      };
+    }, [tripCardId, photoId]),
+  );
+
   const photo = photos[index];
-  if (!photo) {
-    return <View style={s.safeArea} />;
+
+  if (loading) {
+    return (
+      <View style={s.safeArea}>
+        <ActivityIndicator style={s.loading} />
+      </View>
+    );
   }
-  const hasComment = photo.commContent.length > 0;
+  if (!photo) {
+    return (
+      <SafeAreaView edges={['top']} style={s.safeArea}>
+        <TouchableOpacity style={s.circleBtn} activeOpacity={0.8} onPress={onBack}>
+          <Text style={s.circleBtnText}>‹</Text>
+        </TouchableOpacity>
+        <View style={s.blankBody}>
+          <Text style={s.blankText}>아직 남긴 사진이 없어요</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+  const comment = photo.comment ?? '';
+  const hasComment = comment.length > 0;
 
   const openMenu = (action: () => void) => {
     setMenuOpen(false);
@@ -81,7 +134,15 @@ const PhotoDetailView: React.FC<Props> = ({
       </SafeAreaView>
 
       <View style={s.photo}>
-        <Text style={s.photoCaption}>{photo.commTitle}</Text>
+        {photo.imageUrl ? (
+          <Image
+            source={{ uri: toImageUrl(photo.imageUrl) }}
+            style={s.photoImage}
+            resizeMode="contain"
+          />
+        ) : (
+          <Text style={s.photoCaption}>사진</Text>
+        )}
       </View>
 
       <ScrollView
@@ -92,31 +153,27 @@ const PhotoDetailView: React.FC<Props> = ({
       >
         {photos.map((item, i) => (
           <TouchableOpacity
-            key={item.photoId}
+            key={item.entryId ?? i}
             style={[s.thumb, i === index && s.thumbOn]}
             activeOpacity={0.85}
             onPress={() => setIndex(i)}
-          />
+          >
+            {item.imageUrl && (
+              <Image
+                source={{ uri: toImageUrl(item.imageUrl) }}
+                style={s.thumbImage}
+              />
+            )}
+          </TouchableOpacity>
         ))}
       </ScrollView>
 
       <SafeAreaView edges={['bottom']} style={s.sheet}>
-        <Text style={s.title}>{photo.commTitle}</Text>
+        <Text style={s.title}>{hasComment ? comment : '사진'}</Text>
         <Text style={s.meta}>
-          {formatDateTime(photo.takenAt)} · {photo.areaName}
+          {formatTakenAt(photo.takenAt)}
+          {photo.type === 'NO_INFO_PHOTO' ? '  ·  위치 정보 없음' : ''}
         </Text>
-
-        {!!photo.aiSummary && (
-          <View style={s.aiCard}>
-            <View style={s.aiIcon}>
-              <Text style={s.aiIconText}>🤖</Text>
-            </View>
-            <View style={s.aiBody}>
-              <Text style={s.aiLabel}>AI 해설</Text>
-              <Text style={s.aiText}>{photo.aiSummary}</Text>
-            </View>
-          </View>
-        )}
 
         <Text style={s.label}>코멘트</Text>
         <View style={s.commentRow}>
@@ -124,7 +181,7 @@ const PhotoDetailView: React.FC<Props> = ({
             style={[s.commentText, !hasComment && s.commentPlaceholder]}
             numberOfLines={2}
           >
-            {hasComment ? photo.commContent : '이 사진에 대한 메모를 남겨보세요'}
+            {hasComment ? comment : '이 사진에 대한 메모를 남겨보세요'}
           </Text>
           <TouchableOpacity
             style={s.commentBtn}

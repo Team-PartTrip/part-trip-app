@@ -1,12 +1,69 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { recordMapStyles as s } from './RecordMapView.styles';
 import {
-  sampleSpotsOf,
-  sampleTripCardOf,
-} from '../../entities/record/sampleData';
-import { formatShortDate, PhotoSpot } from '../../entities/record/types';
+  getTripCard,
+  getTripCards,
+  TimelineItem,
+  TripCardSummary,
+} from '../../entities/record/api';
+import { formatShortDate } from '../../entities/record/types';
+
+/** 지도에 찍을 한 지점. 지도 SDK 가 없어서 위·경도를 0~1 비율로 바꿔 쓴다 */
+interface Spot {
+  key: string;
+  entryId: number | null;
+  title: string;
+  subtitle: string;
+  date: string;
+  x: number;
+  y: number;
+}
+
+// 핀이 화면 가장자리에 붙지 않도록 남기는 여백
+const PAD = 0.12;
+
+/** 좌표가 있는 타임라인 항목을 지도 위 비율 좌표로 바꾼다 */
+function toSpots(timeline: TimelineItem[]): Spot[] {
+  const located = timeline.filter(
+    item => item.latitude != null && item.longitude != null,
+  );
+  if (located.length === 0) {
+    return [];
+  }
+  const lats = located.map(item => item.latitude as number);
+  const lngs = located.map(item => item.longitude as number);
+  const minLat = Math.min(...lats);
+  const maxLat = Math.max(...lats);
+  const minLng = Math.min(...lngs);
+  const maxLng = Math.max(...lngs);
+
+  // 한 곳에서만 찍었으면 폭이 0이라 나눌 수 없다. 그럴 땐 가운데 둔다.
+  const ratio = (value: number, min: number, max: number) =>
+    max - min < 1e-9 ? 0.5 : PAD + ((value - min) / (max - min)) * (1 - PAD * 2);
+
+  return located.map((item, index) => ({
+    key: `${item.type}-${item.entryId ?? index}`,
+    entryId: item.entryId,
+    title:
+      item.type === 'PLACE'
+        ? item.placeName ?? '방문 장소'
+        : item.comment ?? '사진',
+    subtitle: item.type === 'PLACE' ? item.address ?? '' : '내가 찍은 사진',
+    date: item.date,
+    x: ratio(item.longitude as number, minLng, maxLng),
+    // 위도는 클수록 북쪽이라 화면에서는 위로 간다
+    y: 1 - ratio(item.latitude as number, minLat, maxLat),
+  }));
+}
 
 const GRID_ROWS = [70, 140, 210, 280, 350, 420, 490];
 const GRID_COLS = [60, 130, 200, 270, 340];
@@ -14,9 +71,8 @@ const GRID_COLS = [60, 130, 200, 270, 340];
 interface Props {
   tripCardId: number;
   onBack?: () => void;
-  /** 촬영 위치를 눌러 그 장소의 사진을 본다 (D3) */
-  onOpenSpot?: (spot: PhotoSpot) => void;
-  /** 해설 카메라. 피그마에는 없지만 카메라로 들어갈 입구가 여기밖에 없다 */
+  /** 촬영 위치를 눌러 그 사진을 본다 (D3) */
+  onOpenSpot?: (spot: { tripCardId: number; entryId: number | null }) => void;
 }
 
 const RecordMapView: React.FC<Props> = ({
@@ -26,9 +82,43 @@ const RecordMapView: React.FC<Props> = ({
 }) => {
   const insets = useSafeAreaInsets();
   const [mode, setMode] = useState<'map' | 'list'>('map');
+  const [timeline, setTimeline] = useState<TimelineItem[]>([]);
+  const [card, setCard] = useState<TripCardSummary | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const trip = sampleTripCardOf(tripCardId);
-  const spots = sampleSpotsOf(tripCardId);
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      setLoading(true);
+      Promise.all([
+        getTripCard(tripCardId),
+        getTripCards().catch(() => [] as TripCardSummary[]),
+      ])
+        .then(([detail, cards]) => {
+          if (!alive) {
+            return;
+          }
+          setTimeline(detail.timeline ?? []);
+          setCard(cards.find(item => item.cardId === tripCardId) ?? null);
+        })
+        .catch(() => {
+          if (alive) {
+            setTimeline([]);
+          }
+        })
+        .finally(() => {
+          if (alive) {
+            setLoading(false);
+          }
+        });
+      return () => {
+        alive = false;
+      };
+    }, [tripCardId]),
+  );
+
+  const spots = useMemo(() => toSpots(timeline), [timeline]);
+  const place = card ? `${card.countryName} · ${card.cityName}` : '여행';
 
 
   const list = (
@@ -51,28 +141,30 @@ const RecordMapView: React.FC<Props> = ({
         contentContainerStyle={s.list}
         showsVerticalScrollIndicator={false}
       >
-        {spots.length === 0 ? (
+        {loading ? (
+          <ActivityIndicator style={s.empty} />
+        ) : spots.length === 0 ? (
           <View style={s.empty}>
-            <Text style={s.emptyText}>아직 남긴 사진이 없어요</Text>
+            <Text style={s.emptyText}>위치가 담긴 사진이 없어요</Text>
             <Text style={s.emptyDesc}>
-              해설 카메라로 찍으면 여기에 위치가 표시돼요.
+              위치 정보를 켜고 찍은 사진은 여기에 표시돼요.
             </Text>
           </View>
         ) : (
           spots.map(spot => (
             <TouchableOpacity
-              key={spot.tripCardPlaceId}
+              key={spot.key}
               style={s.row}
               activeOpacity={0.85}
-              onPress={() => onOpenSpot?.(spot)}
+              onPress={() => onOpenSpot?.({ tripCardId, entryId: spot.entryId })}
             >
               <View style={s.thumb}>
                 <Text style={s.thumbIcon}>📍</Text>
               </View>
               <View style={s.rowBody}>
-                <Text style={s.rowTitle}>{spot.placeName}</Text>
+                <Text style={s.rowTitle}>{spot.title}</Text>
                 <Text style={s.rowMeta}>
-                  사진 {spot.photoCount}장 · {formatShortDate(spot.visitedDate)}
+                  {spot.subtitle} · {formatShortDate(spot.date)}
                 </Text>
               </View>
               <Text style={s.chevron}>›</Text>
@@ -95,9 +187,7 @@ const RecordMapView: React.FC<Props> = ({
             <Text style={s.circleBtnText}>‹</Text>
           </TouchableOpacity>
           <View style={s.placePill}>
-            <Text style={s.placePillText}>
-              {trip.countryName} · {trip.cityName}
-            </Text>
+            <Text style={s.placePillText}>{place}</Text>
           </View>
         </View>
         <View style={[s.sheet, s.sheetFull]}>{list}</View>
@@ -122,17 +212,17 @@ const RecordMapView: React.FC<Props> = ({
         ))}
         <View style={s.landmass} />
 
-        {spots.map(spot => (
+        {spots.map((spot, i) => (
           <TouchableOpacity
-            key={spot.tripCardPlaceId}
+            key={spot.key}
             style={[
               s.pin,
               { left: `${spot.x * 100}%`, top: `${spot.y * 100}%` },
             ]}
             activeOpacity={0.85}
-            onPress={() => onOpenSpot?.(spot)}
+            onPress={() => onOpenSpot?.({ tripCardId, entryId: spot.entryId })}
           >
-            <Text style={s.pinText}>{spot.photoCount}</Text>
+            <Text style={s.pinText}>{i + 1}</Text>
           </TouchableOpacity>
         ))}
 
@@ -145,9 +235,7 @@ const RecordMapView: React.FC<Props> = ({
             <Text style={s.circleBtnText}>‹</Text>
           </TouchableOpacity>
           <View style={s.placePill}>
-            <Text style={s.placePillText}>
-              {trip.countryName} · {trip.cityName}
-            </Text>
+            <Text style={s.placePillText}>{place}</Text>
           </View>
           <View style={s.topBarSpacer} />
         </View>

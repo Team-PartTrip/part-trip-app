@@ -82,7 +82,7 @@ export type RootStackParamList = {
   RecordMap: { tripCardId: number };
   PhotoDetail: {
     tripCardId: number;
-    tripCardPlaceId?: number;
+    /** 여행카드 타임라인의 사진 식별자(entryId) */
     photoId?: number;
   };
   CommentEdit: { photoId: number; mode: 'create' | 'edit' };
@@ -459,7 +459,7 @@ function App() {
                     onOpenSpot={spot =>
                       navigation.navigate('PhotoDetail', {
                         tripCardId: spot.tripCardId,
-                        tripCardPlaceId: spot.tripCardPlaceId,
+                        photoId: spot.entryId ?? undefined,
                       })
                     }
                   />
@@ -469,18 +469,17 @@ function App() {
                 {({ navigation, route }) => (
                   <PhotoDetailView
                     tripCardId={route.params.tripCardId}
-                    tripCardPlaceId={route.params.tripCardPlaceId}
                     photoId={route.params.photoId}
                     onBack={() => navigation.goBack()}
                     onWriteComment={photo =>
                       navigation.navigate('CommentEdit', {
-                        photoId: photo.photoId,
+                        photoId: photo.entryId ?? 0,
                         mode: 'create',
                       })
                     }
                     onEditComment={photo =>
                       navigation.navigate('CommentEdit', {
-                        photoId: photo.photoId,
+                        photoId: photo.entryId ?? 0,
                         mode: 'edit',
                       })
                     }
