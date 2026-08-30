@@ -108,6 +108,9 @@ const RecordMapView: React.FC<Props> = ({
         .catch(() => {
           if (alive) {
             setTimeline([]);
+            // tripCardId 가 바뀔 수 있는 화면이다. card 를 남기면 실패한
+            // 화면이 이전 여행의 이름을 계속 보여준다.
+            setCard(null);
             setFailed(true);
           }
         })
@@ -156,7 +159,9 @@ const RecordMapView: React.FC<Props> = ({
                 : '위치가 담긴 사진이 없어요'}
             </Text>
             <Text style={s.emptyDesc}>
-              위치 정보를 켜고 찍은 사진은 여기에 표시돼요.
+              {failed
+                ? '잠시 후 다시 시도해주세요.'
+                : '위치 정보를 켜고 찍은 사진은 여기에 표시돼요.'}
             </Text>
           </View>
         ) : (

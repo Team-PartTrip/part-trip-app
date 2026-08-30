@@ -40,15 +40,22 @@ const ProfileEditView: React.FC<Props> = ({
   const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
+    let alive = true;
     // 여행 타입 목록은 없어도 화면이 뜨게 둔다. 그때는 칩만 안 보인다.
     Promise.all([getMyProfile(), getTravelThemes().catch(() => [])])
       .then(([p, list]) => {
+        if (!alive) {
+          return;
+        }
         setNickname(p.nickName);
         setImgUrl(p.imgUrl);
         setThemeId(p.themeId);
         setThemes(list);
       })
       .catch(() => {
+        if (!alive) {
+          return;
+        }
         // 프로필을 못 읽으면 닉네임이 빈 문자열로 남는다. 그대로 저장하면
         // 서버의 닉네임을 빈 값으로 덮어쓴다. 저장을 막고 이유를 알린다.
         setLoadFailed(true);
@@ -57,7 +64,10 @@ const ProfileEditView: React.FC<Props> = ({
           '프로필을 불러오지 못했어요. 화면을 다시 열어주세요.',
         );
       })
-      .finally(() => setLoading(false));
+      .finally(() => alive && setLoading(false));
+    return () => {
+      alive = false;
+    };
   }, []);
 
   const handleChangePhoto = async () => {

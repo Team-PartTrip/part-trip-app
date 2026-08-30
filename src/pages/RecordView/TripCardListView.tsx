@@ -52,7 +52,10 @@ const TripCardListView: React.FC<Props> = ({
       let alive = true;
       getTripCards()
         .then(list => alive && setCards(list))
-        .catch(() => alive && (setCards([]), setFailed(true)))
+        .catch(
+          () =>
+            alive && (setCards([]), setIndex(0), setFailed(true)),
+        )
         .finally(() => alive && setLoading(false));
       return () => {
         alive = false;
@@ -99,7 +102,11 @@ const TripCardListView: React.FC<Props> = ({
               ? '여행카드를 불러오지 못했어요'
               : '아직 만들어진 여행카드가 없어요'}
           </Text>
-          <Text style={s.emptyDesc}>여행을 시작하면 카드가 만들어져요.</Text>
+          <Text style={s.emptyDesc}>
+            {failed
+              ? '잠시 후 다시 시도해주세요.'
+              : '여행을 시작하면 카드가 만들어져요.'}
+          </Text>
         </View>
       ) : (
         <>

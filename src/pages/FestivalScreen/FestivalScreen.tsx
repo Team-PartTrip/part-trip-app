@@ -43,6 +43,9 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
   // 조회 실패와 일정 없음은 다르다. 같은 문구를 쓰면 서버가 죽어도
   // 그 달에 축제가 없는 것처럼 보인다.
   const [failed, setFailed] = useState(false);
+  // getDday 실패는 getFestivals 와 다른 요청이다. dday 만 null 로
+  // 남기면 "일정 없음" 으로 보인다.
+  const [ddayFailed, setDdayFailed] = useState(false);
 
   const year = cursor.getFullYear();
   const monthIndex = cursor.getMonth();
@@ -63,6 +66,7 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
         setCursor(new Date(y, m - 1, 1));
       } catch {
         setDday(null);
+        setDdayFailed(true);
       }
     })();
   }, []);
@@ -153,6 +157,8 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
           <Text style={s.subtitle}>
             {dday
               ? `${dday.countryName} · ${year}년 ${monthIndex + 1}월 기준`
+              : ddayFailed
+              ? '여행 일정을 불러오지 못했어요'
               : '등록된 여행 일정이 없어요'}
           </Text>
         </SafeAreaView>
@@ -258,10 +264,12 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
         ) : visible.length === 0 ? (
           <View style={s.empty}>
             <Text style={s.emptyText}>
-              {failed ? '축제 정보를 불러오지 못했어요' : '보여줄 일정이 없어요'}
+              {failed || ddayFailed
+                ? '정보를 불러오지 못했어요'
+                : '보여줄 일정이 없어요'}
             </Text>
             <Text style={s.emptyDesc}>
-              {failed
+              {failed || ddayFailed
                 ? '잠시 후 다시 시도해주세요.'
                 : dday
                 ? '다른 날짜나 카테고리를 골라보세요.'

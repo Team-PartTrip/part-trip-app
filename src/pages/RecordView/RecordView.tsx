@@ -102,7 +102,9 @@ const RecordView: React.FC<Props> = ({
                 : '이 연도에 남긴 기록이 없어요'}
             </Text>
             <Text style={s.emptyDesc}>
-              여행을 시작하면 기록이 여기에 쌓여요.
+              {failed
+                ? '잠시 후 다시 시도해주세요.'
+                : '여행을 시작하면 기록이 여기에 쌓여요.'}
             </Text>
           </View>
         ) : (
