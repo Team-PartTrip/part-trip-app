@@ -40,6 +40,9 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
   const [cursor, setCursor] = useState(() => new Date());
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  // 조회 실패와 일정 없음은 다르다. 같은 문구를 쓰면 서버가 죽어도
+  // 그 달에 축제가 없는 것처럼 보인다.
+  const [failed, setFailed] = useState(false);
 
   const year = cursor.getFullYear();
   const monthIndex = cursor.getMonth();
@@ -70,12 +73,13 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
       return;
     }
     setLoading(true);
+    setFailed(false);
     // 달을 빨리 넘기면 앞선 요청이 뒤늦게 끝나 지금 달의 목록을 덮어쓴다.
     // 화면을 떠난 요청의 결과는 버린다.
     let alive = true;
     getFestivals(dday.countryName, { year, month: monthIndex + 1 })
       .then(list => alive && setEvents(list))
-      .catch(() => alive && setEvents([]))
+      .catch(() => alive && (setEvents([]), setFailed(true)))
       .finally(() => alive && setLoading(false));
     return () => {
       alive = false;
@@ -253,9 +257,13 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
           <ActivityIndicator style={s.loader} />
         ) : visible.length === 0 ? (
           <View style={s.empty}>
-            <Text style={s.emptyText}>보여줄 일정이 없어요</Text>
+            <Text style={s.emptyText}>
+              {failed ? '축제 정보를 불러오지 못했어요' : '보여줄 일정이 없어요'}
+            </Text>
             <Text style={s.emptyDesc}>
-              {dday
+              {failed
+                ? '잠시 후 다시 시도해주세요.'
+                : dday
                 ? '다른 날짜나 카테고리를 골라보세요.'
                 : '여행 일정을 등록하면 축제·이벤트를 알려드려요.'}
             </Text>

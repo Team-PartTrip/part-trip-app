@@ -85,11 +85,15 @@ const RecordMapView: React.FC<Props> = ({
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
   const [card, setCard] = useState<TripCardSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  // 조회 실패와 데이터 없음은 다르다. 같은 문구를 쓰면 서버가 죽어도
+  // 기록이 없는 것처럼 보인다.
+  const [failed, setFailed] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       let alive = true;
       setLoading(true);
+      setFailed(false);
       Promise.all([
         getTripCard(tripCardId),
         getTripCards().catch(() => [] as TripCardSummary[]),
@@ -104,6 +108,7 @@ const RecordMapView: React.FC<Props> = ({
         .catch(() => {
           if (alive) {
             setTimeline([]);
+            setFailed(true);
           }
         })
         .finally(() => {
@@ -145,7 +150,11 @@ const RecordMapView: React.FC<Props> = ({
           <ActivityIndicator style={s.empty} />
         ) : spots.length === 0 ? (
           <View style={s.empty}>
-            <Text style={s.emptyText}>위치가 담긴 사진이 없어요</Text>
+            <Text style={s.emptyText}>
+              {failed
+                ? '기록을 불러오지 못했어요'
+                : '위치가 담긴 사진이 없어요'}
+            </Text>
             <Text style={s.emptyDesc}>
               위치 정보를 켜고 찍은 사진은 여기에 표시돼요.
             </Text>

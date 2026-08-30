@@ -53,12 +53,16 @@ const MainView: React.FC<MainViewProps> = ({
   const [dday, setDday] = useState<DdayInfo | null>(null);
   const [places, setPlaces] = useState<TourPlace[]>([]);
   const [unread, setUnread] = useState(0);
+  // 조회가 실패한 것과 일정이 없는 것은 다르다. 같은 화면을 보여주면
+  // 서버가 죽어도 "쉬는 중" 으로 읽힌다.
+  const [failed, setFailed] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       let alive = true;
       (async () => {
         setLoading(true);
+        setFailed(false);
         try {
           const [d, count] = await Promise.all([
             getDday(),
@@ -83,6 +87,7 @@ const MainView: React.FC<MainViewProps> = ({
         } catch {
           if (alive) {
             setDday(null);
+            setFailed(true);
           }
         } finally {
           if (alive) {
@@ -112,7 +117,9 @@ const MainView: React.FC<MainViewProps> = ({
         <View style={s.empty}>
           {/* 여행지 · 기간은 플래너(Func-005)에서만 정한다 */}
           <Text style={s.emptyText}>
-            쉬는 중{'\n'}플래너에서 여행을 만들면 D-day 를 보여드려요
+            {failed
+              ? '여행 정보를 불러오지 못했어요\n잠시 후 다시 시도해주세요'
+              : '쉬는 중\n플래너에서 여행을 만들면 D-day 를 보여드려요'}
           </Text>
         </View>
       </SafeAreaView>

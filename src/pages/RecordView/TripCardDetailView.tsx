@@ -47,12 +47,16 @@ const TripCardDetailView: React.FC<Props> = ({
   const [entries, setEntries] = useState<TimelineItem[]>([]);
   const [card, setCard] = useState<TripCardSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  // 조회 실패와 데이터 없음은 다르다. 같은 문구를 쓰면 서버가 죽어도
+  // 기록이 없는 것처럼 보인다.
+  const [failed, setFailed] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       let alive = true;
       (async () => {
         setLoading(true);
+        setFailed(false);
         try {
           // 상세 응답에는 나라·도시가 없어서 목록에서 가져온다 (명세서 API-003-03)
           const [detail, list] = await Promise.all([
@@ -68,6 +72,7 @@ const TripCardDetailView: React.FC<Props> = ({
           if (alive) {
             setEntries([]);
             setCard(null);
+            setFailed(true);
           }
         } finally {
           if (alive) {
@@ -103,9 +108,15 @@ const TripCardDetailView: React.FC<Props> = ({
           <ActivityIndicator style={s.loading} />
         ) : entries.length === 0 ? (
           <View style={s.empty}>
-            <Text style={s.emptyText}>카드에 담긴 기록이 없어요</Text>
+            <Text style={s.emptyText}>
+              {failed
+                ? '기록을 불러오지 못했어요'
+                : '카드에 담긴 기록이 없어요'}
+            </Text>
             <Text style={s.emptyDesc}>
-              사진을 추가하면 여기에 시간순으로 쌓여요.
+              {failed
+                ? '잠시 후 다시 시도해주세요.'
+                : '사진을 추가하면 여기에 시간순으로 쌓여요.'}
             </Text>
           </View>
         ) : (

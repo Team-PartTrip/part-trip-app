@@ -37,6 +37,7 @@ const ProfileEditView: React.FC<Props> = ({
   const [saving, setSaving] = useState(false);
   const [themes, setThemes] = useState<TravelTheme[]>([]);
   const [themeId, setThemeId] = useState<number | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
     // 여행 타입 목록은 없어도 화면이 뜨게 둔다. 그때는 칩만 안 보인다.
@@ -47,7 +48,15 @@ const ProfileEditView: React.FC<Props> = ({
         setThemeId(p.themeId);
         setThemes(list);
       })
-      .catch(() => {})
+      .catch(() => {
+        // 프로필을 못 읽으면 닉네임이 빈 문자열로 남는다. 그대로 저장하면
+        // 서버의 닉네임을 빈 값으로 덮어쓴다. 저장을 막고 이유를 알린다.
+        setLoadFailed(true);
+        Alert.alert(
+          '불러오기 실패',
+          '프로필을 불러오지 못했어요. 화면을 다시 열어주세요.',
+        );
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -84,6 +93,11 @@ const ProfileEditView: React.FC<Props> = ({
   };
 
   const handleConfirm = async () => {
+    if (loadFailed) {
+      // 못 읽은 값을 저장하면 서버 쪽을 빈 값으로 덮어쓴다
+      Alert.alert('저장할 수 없어요', '프로필을 먼저 불러와야 해요.');
+      return;
+    }
     if (!nickname.trim()) {
       Alert.alert('알림', '닉네임을 입력해주세요.');
       return;
@@ -197,7 +211,7 @@ const ProfileEditView: React.FC<Props> = ({
             style={s.confirmBtn}
             activeOpacity={0.85}
             onPress={handleConfirm}
-            disabled={saving || uploading}
+            disabled={saving || uploading || loadFailed}
           >
             {saving ? (
               <ActivityIndicator color="#fff" />
