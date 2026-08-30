@@ -230,7 +230,6 @@ function App() {
               <Stack.Screen name="SignUp">
                 {({ navigation }) => (
                   <SignUpView
-                    onBack={() => navigation.goBack()}
                     onNext={data =>
                       navigation.navigate('ConfirmEmail', {
                         mode: 'signup',

@@ -40,12 +40,11 @@ function isValidPassword(password: string): boolean {
 }
 
 interface SignUpViewProps {
-  onBack?: () => void;
   /** 아이디/비밀번호 입력 완료 시 다음(이메일 인증) 단계로 데이터 전달 */
   onNext?: (data: SignUpData) => void;
 }
 
-const SignUpView: React.FC<SignUpViewProps> = ({ onBack, onNext }) => {
+const SignUpView: React.FC<SignUpViewProps> = ({ onNext }) => {
   const [id, setId]                     = useState('');
   const [password, setPassword]         = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

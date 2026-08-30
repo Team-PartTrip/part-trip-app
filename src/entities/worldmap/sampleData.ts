@@ -143,12 +143,6 @@ export function sampleRecordsOf(countryInfoId: number): CountryTripRecord[] {
   return RECORDS_BY_COUNTRY[countryInfoId] ?? [];
 }
 
-export function sampleCountryOf(
-  countryInfoId: number,
-): VisitedCountry | undefined {
-  return COUNTRIES.find(c => c.countryInfoId === countryInfoId);
-}
-
 /** COUNTRY_ACQUIRED 알림에서 E3 로 넘길 값을 만든다 */
 export function sampleAcquiredParamsOf(
   countryInfoId: number | null,
