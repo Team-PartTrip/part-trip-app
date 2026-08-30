@@ -371,3 +371,19 @@ export function getConfirmedPlaces(plannerId: number): Promise<PlannerFinal> {
     { method: 'GET' },
   );
 }
+
+/** 인기 여행지 한 줄 (API-008-11). 서버는 이모지를 들고 있지 않다 */
+export interface PopularCityResponse {
+  cityName: string;
+  countryName: string;
+  /** 이 도시로 만들어진 여행 계획 수 */
+  planCount: number;
+}
+
+/** 인기 여행지 (API-008-11) — 여행 계획이 많이 만들어진 도시 순 */
+export function getPopularCities(limit = 8): Promise<PopularCityResponse[]> {
+  return authRequest<PopularCityResponse[]>(
+    `/api/main/popular-cities?limit=${limit}`,
+    { method: 'GET' },
+  );
+}
