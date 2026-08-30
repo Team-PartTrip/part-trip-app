@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -10,8 +10,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { planDestinationStyles as s } from './PlanDestinationView.styles';
 import WizardHeader from './WizardHeader';
-import { saveTravelPlan } from '../../entities/planner/api';
-import { POPULAR_CITIES } from '../../entities/planner/sampleData';
+import { getPopularCities, saveTravelPlan } from '../../entities/planner/api';
+import { emojiOf, FALLBACK_CITIES } from '../../entities/planner/sampleData';
 import {
   formatNights,
   PlanDraft,
@@ -41,6 +41,8 @@ interface Props {
 const PlanDestinationView: React.FC<Props> = ({ draft, onBack, onNext }) => {
   const [query, setQuery] = useState('');
   const [city, setCity] = useState<PopularCity | null>(null);
+  // 서버가 계획 수로 뽑아준 인기 여행지. 조회 전·실패 시에는 기본 목록을 쓴다.
+  const [popular, setPopular] = useState<PopularCity[]>(FALLBACK_CITIES);
   // 피그마에는 달 이동 화살표가 없지만, 한 달에 갇히면 기간을 못 고른다
   const [cursor, setCursor] = useState(() => new Date());
   const [startDate, setStartDate] = useState('');
@@ -49,17 +51,39 @@ const PlanDestinationView: React.FC<Props> = ({ draft, onBack, onNext }) => {
   const year = cursor.getFullYear();
   const monthIndex = cursor.getMonth();
 
+  useEffect(() => {
+    let alive = true;
+    getPopularCities()
+      .then(list => {
+        // 계획이 아직 하나도 없으면 서버가 빈 목록을 준다.
+        // 그때 빈 화면을 보여주지 않으려고 기본 목록을 그대로 둔다.
+        if (alive && list.length > 0) {
+          setPopular(
+            list.map(item => ({
+              cityName: item.cityName,
+              countryName: item.countryName,
+              emoji: emojiOf(item.cityName),
+            })),
+          );
+        }
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   const cities = useMemo(() => {
     const keyword = query.trim();
     // 검색 전에는 피그마처럼 인기 여행지 네 곳만, 검색하면 전체에서 찾는다
     if (!keyword) {
-      return POPULAR_CITIES.slice(0, 4);
+      return popular.slice(0, 4);
     }
-    return POPULAR_CITIES.filter(
+    return popular.filter(
       item =>
         item.cityName.includes(keyword) || item.countryName.includes(keyword),
     );
-  }, [query]);
+  }, [query, popular]);
 
   // 1일이 무슨 요일인지에 맞춰 앞을 빈 칸으로 채운 뒤 주 단위로 자른다
   const weeks = useMemo(() => {
