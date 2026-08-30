@@ -364,6 +364,26 @@ export interface PlannerFinal {
   places: ConfirmedPlace[];
 }
 
+export interface PlannerConfirmed {
+  plannerId: number;
+  confirmedSchedule: ConfirmedPlace[];
+  /** 확정과 함께 만들어진 여행 카드. 기록 탭이 이걸로 채워진다 */
+  tripCardId: number | null;
+}
+
+/**
+ * 일정 확정 (API-005-09).
+ *
+ * 열린 투표를 모두 마감·확정하고 여행 카드를 만든다.
+ * 방장만 부를 수 있고, 담긴 장소가 하나도 없으면 서버가 거부한다.
+ */
+export function confirmPlanner(plannerId: number): Promise<PlannerConfirmed> {
+  return authRequest<PlannerConfirmed>(
+    `/api/planners/${plannerId}/confirm`,
+    { method: 'POST' },
+  );
+}
+
 /** 확정된 장소 목록 (C8) */
 export function getConfirmedPlaces(plannerId: number): Promise<PlannerFinal> {
   return authRequest<PlannerFinal>(
