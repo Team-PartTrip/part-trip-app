@@ -19,11 +19,13 @@ import colors from '../../shared/tokens/colors';
 interface ResetPasswordProps {
   /** 비밀번호를 변경할 (인증 완료된) 이메일 */
   email: string;
+  onBack?: () => void;
   onConfirm?: () => void;
 }
 
 const ResetPassword: React.FC<ResetPasswordProps> = ({
   email,
+  onBack,
   onConfirm,
 }) => {
   const [password, setPassword] = useState('');
@@ -53,6 +55,15 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <TouchableOpacity
+        style={styles.backBtn}
+        hitSlop={12}
+        accessibilityRole="button"
+        accessibilityLabel="뒤로 가기"
+        onPress={onBack}
+      >
+        <Text style={styles.back}>‹</Text>
+      </TouchableOpacity>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}

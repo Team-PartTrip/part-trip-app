@@ -102,6 +102,15 @@ const SignUpView: React.FC<SignUpViewProps> = ({ onBack, onNext }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <TouchableOpacity
+        style={styles.backBtn}
+        hitSlop={12}
+        accessibilityRole="button"
+        accessibilityLabel="뒤로 가기"
+        onPress={onBack}
+      >
+        <Text style={styles.back}>‹</Text>
+      </TouchableOpacity>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}

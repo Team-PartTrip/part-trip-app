@@ -152,7 +152,7 @@ export function formatNights(startDate: string, endDate: string): string {
 }
 
 /** endDate - startDate (일). 로컬 타임존 영향을 안 받게 UTC 로 계산한다 */
-export function diffDays(startDate: string, endDate: string): number {
+function diffDays(startDate: string, endDate: string): number {
   const start = Date.parse(`${startDate}T00:00:00Z`);
   const end = Date.parse(`${endDate}T00:00:00Z`);
   return Math.round((end - start) / 86_400_000);
