@@ -11,7 +11,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { placeVoteStyles as s } from './PlaceVoteView.styles';
 import colors from '../../shared/tokens/colors';
-import { castBallot, getVotes, VoteStatusInfo } from '../../entities/planner/api';
+import {
+  castBallot,
+  confirmPlanner,
+  getVotes,
+  VoteStatusInfo,
+} from '../../entities/planner/api';
 import {
   CATEGORIES,
   CATEGORY_EMOJI,
@@ -53,6 +58,7 @@ const PlaceVoteView: React.FC<Props> = ({
   );
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [confirming, setConfirming] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -131,13 +137,29 @@ const PlaceVoteView: React.FC<Props> = ({
     }
   };
 
-  const goNext = () => {
+  const goNext = async () => {
     const index = CATEGORIES.indexOf(active);
     if (index < CATEGORIES.length - 1) {
       setCurrent(CATEGORIES[index + 1]);
       return;
     }
-    onDone?.();
+    if (confirming) {
+      return;
+    }
+    // 마지막 카테고리의 "투표 마치기" 가 일정 확정이다.
+    // 확정을 해야 투표가 마감되고 여행 카드가 만들어진다.
+    // 예전에는 화면만 넘겨서, 다음 화면이 늘 "확정된 일정이 없어요" 였다.
+    setConfirming(true);
+    try {
+      await confirmPlanner(planId);
+      onDone?.();
+    } catch (e: any) {
+      // 방장이 아니거나 담긴 장소가 없으면 서버가 거부한다.
+      // 그때 다음 화면으로 넘기면 빈 화면만 보게 되므로 여기 남는다.
+      Alert.alert('확정 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
+    } finally {
+      setConfirming(false);
+    }
   };
 
   return (
@@ -253,13 +275,18 @@ const PlaceVoteView: React.FC<Props> = ({
         <TouchableOpacity
           style={s.primaryBtn}
           activeOpacity={0.85}
+          disabled={confirming}
           onPress={goNext}
         >
-          <Text style={s.primaryText}>
-            {active === CATEGORIES[CATEGORIES.length - 1]
-              ? '투표 마치기'
-              : '다음 카테고리'}
-          </Text>
+          {confirming ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={s.primaryText}>
+              {active === CATEGORIES[CATEGORIES.length - 1]
+                ? '투표 마치고 일정 확정'
+                : '다음 카테고리'}
+            </Text>
+          )}
         </TouchableOpacity>
       </SafeAreaView>
     </View>

@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { planCartStyles as s } from './PlanCartView.styles';
 import {
+  confirmPlanner,
   deleteVoteOption,
   drawRandomPlace,
   getVotes,
@@ -148,14 +149,26 @@ const PlanCartView: React.FC<Props> = ({ plannerId, onBack, onConfirm }) => {
   const actionable =
     !busy && (mode === 'random' ? items.length > 0 : canConfirm);
 
-  const press = () => {
+  const press = async () => {
     if (mode === 'random' && !drawn) {
       if (items.length > 0) {
         draw();
       }
       return;
     }
-    onConfirm?.();
+    // "선택 확정하기" 가 일정 확정이다. 확정을 해야 투표가 마감되고
+    // 여행 카드가 만들어진다. 예전에는 화면만 넘겨서 다음 화면이
+    // 늘 "확정된 일정이 없어요" 였다.
+    setBusy(true);
+    try {
+      await confirmPlanner(plannerId);
+      onConfirm?.();
+    } catch (e: any) {
+      // 방장이 아니거나 담긴 장소가 없으면 서버가 거부한다
+      Alert.alert('확정 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
