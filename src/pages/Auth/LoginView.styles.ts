@@ -12,6 +12,19 @@ export const loginStyles = StyleSheet.create({
   flex: {
     flex: 1,
   },
+  // 회원가입 화면의 뒤로가기. 이 스택은 headerShown 이 false 라
+  // 화면이 직접 그려주지 않으면 나갈 방법이 없다.
+  backBtn: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    alignSelf: 'flex-start',
+  },
+  back: {
+    fontSize: 24,
+    lineHeight: 28,
+    fontWeight: '700',
+    color: colors.text,
+  },
   container: {
     flexGrow: 1,
     justifyContent: 'center',
