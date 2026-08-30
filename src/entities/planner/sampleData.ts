@@ -36,14 +36,15 @@ export function emojiOf(cityName: string): string {
   return CITY_EMOJI[cityName] ?? DEFAULT_EMOJI;
 }
 
-/** 서버가 빈 목록을 주거나 조회가 실패했을 때 보여줄 기본 여행지 */
+/**
+ * 서버 조회가 실패했을 때 보여줄 기본 여행지.
+ *
+ * 장소(tour_place)가 있는 도시만 넣는다. 없는 도시를 넣으면 고른 뒤
+ * 바로 다음 화면인 장소 담기가 빈 채로 떠서, 고를 수 있는데 쓸 수 없는
+ * 목적지가 된다. 서버 목록도 같은 기준으로 온다.
+ */
 export const FALLBACK_CITIES: PopularCity[] = [
   { cityName: '오사카', countryName: '일본', emoji: '🏯' },
   { cityName: '방콕', countryName: '태국', emoji: '🛕' },
   { cityName: '다낭', countryName: '베트남', emoji: '🏖️' },
-  { cityName: '타이베이', countryName: '대만', emoji: '🏙️' },
-  { cityName: '도쿄', countryName: '일본', emoji: '🗼' },
-  { cityName: '후쿠오카', countryName: '일본', emoji: '🍜' },
-  { cityName: '제주', countryName: '한국', emoji: '🍊' },
-  { cityName: '파리', countryName: '프랑스', emoji: '🥐' },
 ];
