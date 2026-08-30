@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StatusBar, useColorScheme, View } from 'react-native';
+import { Alert, StatusBar, useColorScheme, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import {
   NavigationContainer,
@@ -620,8 +620,15 @@ function App() {
                   <CountryRecordView
                     country={route.params.country}
                     onBack={() => navigation.goBack()}
-                    onOpenRecord={id =>
-                      navigation.navigate('RecordEdit', { id: String(id) })
+                    // 기록 수정(Func-003-01)은 보류다. RecordEditView 는 아직
+                    // 서버와 안 이어져 있어서, 열면 하드코딩된 글이 뜨고
+                    // "완료" 를 눌러도 저장 없이 성공 화면으로 넘어간다.
+                    // API 가 생길 때까지 진입을 막는다.
+                    onOpenRecord={() =>
+                      Alert.alert(
+                        '준비 중',
+                        '기록 수정 화면은 아직 준비 중이에요.',
+                      )
                     }
                   />
                 )}

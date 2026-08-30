@@ -28,13 +28,16 @@ const RecordView: React.FC<Props> = ({
   const [year, setYear] = useState('전체');
   const [all, setAll] = useState<TripCardSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  // 조회 실패와 데이터 없음은 다르다. 같은 문구를 쓰면 서버가 죽어도
+  // 기록이 없는 것처럼 보인다.
+  const [failed, setFailed] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       let alive = true;
       getTripCards()
         .then(list => alive && setAll(list))
-        .catch(() => alive && setAll([]))
+        .catch(() => alive && (setAll([]), setFailed(true)))
         .finally(() => alive && setLoading(false));
       return () => {
         alive = false;
@@ -93,9 +96,15 @@ const RecordView: React.FC<Props> = ({
           <ActivityIndicator style={s.loading} />
         ) : cards.length === 0 ? (
           <View style={s.empty}>
-            <Text style={s.emptyText}>이 연도에 남긴 기록이 없어요</Text>
+            <Text style={s.emptyText}>
+              {failed
+                ? '기록을 불러오지 못했어요'
+                : '이 연도에 남긴 기록이 없어요'}
+            </Text>
             <Text style={s.emptyDesc}>
-              여행을 시작하면 기록이 여기에 쌓여요.
+              {failed
+                ? '잠시 후 다시 시도해주세요.'
+                : '여행을 시작하면 기록이 여기에 쌓여요.'}
             </Text>
           </View>
         ) : (
