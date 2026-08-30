@@ -36,6 +36,7 @@ function formatRemaining(seconds: number): string {
 
 interface ConfirmEmailProps {
   mode?: ConfirmEmailMode;
+  onBack?: () => void;
   /** 회원가입 화면에서 입력한 아이디/비밀번호 (signup 모드에서 사용) */
   signupData?: SignUpData;
   /** 인증 완료 시 호출. resetPassword 모드에서는 인증된 이메일을 넘겨줌 */
@@ -44,6 +45,7 @@ interface ConfirmEmailProps {
 
 const ConfirmEmail: React.FC<ConfirmEmailProps> = ({
   mode = 'signup',
+  onBack,
   signupData,
   onConfirm,
 }) => {
@@ -155,6 +157,15 @@ const ConfirmEmail: React.FC<ConfirmEmailProps> = ({
 
   return (
     <SafeAreaView style={shared.safeArea}>
+      <TouchableOpacity
+        style={shared.backBtn}
+        hitSlop={12}
+        accessibilityRole="button"
+        accessibilityLabel="뒤로 가기"
+        onPress={onBack}
+      >
+        <Text style={shared.back}>‹</Text>
+      </TouchableOpacity>
       <KeyboardAvoidingView
         style={shared.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}

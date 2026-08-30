@@ -247,6 +247,7 @@ function App() {
                   return (
                     <ConfirmEmail
                       mode={mode}
+                      onBack={() => navigation.goBack()}
                       signupData={route.params?.signupData}
                       onConfirm={email =>
                         mode === 'signup'
@@ -265,6 +266,7 @@ function App() {
                 {({ navigation, route }) => (
                   <ResetPassword
                     email={route.params?.email ?? ''}
+                    onBack={() => navigation.goBack()}
                     onConfirm={async () => {
                       await clearTokens();
                       navigation.reset({
