@@ -3,6 +3,7 @@ import {
   clearTokens,
   getAccessToken,
   getRefreshToken,
+  getSessionGeneration,
   saveTokens,
 } from './tokenStorage';
 
@@ -32,6 +33,9 @@ async function refreshAccessToken(): Promise<string | null> {
     return refreshing;
   }
   refreshing = (async () => {
+    // 갱신이 오가는 동안 사용자가 로그아웃하고 다시 로그인할 수 있다.
+    // 그때 이 응답을 저장하면 새 세션의 토큰을 옛 것으로 덮어쓴다.
+    const generation = getSessionGeneration();
     try {
       const refreshToken = await getRefreshToken();
       if (!refreshToken) {
@@ -42,6 +46,10 @@ async function refreshAccessToken(): Promise<string | null> {
         accessToken: string;
         refreshToken: string;
       }>('/api/auth/refresh', { body: { refreshToken } });
+      if (getSessionGeneration() !== generation) {
+        // 그 사이 세션이 바뀌었다. 덮어쓰지 않고 지금 토큰으로 재시도한다.
+        return getAccessToken();
+      }
       await saveTokens(tokens);
       return tokens.accessToken;
     } catch {
@@ -63,6 +71,7 @@ export async function authRequest<T = unknown>(
   options: { method?: string; body?: unknown } = {},
 ): Promise<T> {
   const token = await getAccessToken();
+  const generation = getSessionGeneration();
   try {
     return await request<T>(path, { ...options, token });
   } catch (e) {
@@ -72,8 +81,11 @@ export async function authRequest<T = unknown>(
     }
     const fresh = await refreshAccessToken();
     if (!fresh) {
-      await clearTokens();
-      onSessionExpired?.();
+      // 그 사이 다른 세션이 시작됐다면 그 사람을 쫓아내면 안 된다.
+      if (getSessionGeneration() === generation) {
+        await clearTokens();
+        onSessionExpired?.();
+      }
       throw new ApiError(401, '로그인이 만료되었어요. 다시 로그인해주세요.');
     }
     return request<T>(path, { ...options, token: fresh });

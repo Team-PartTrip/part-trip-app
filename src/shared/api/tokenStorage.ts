@@ -5,6 +5,15 @@ const ACCESS_KEY = 'parttrip.accessToken';
 const REFRESH_KEY = 'parttrip.refreshToken';
 const PROVIDER_KEY = 'parttrip.provider';
 
+// 로그인·로그아웃·토큰 갱신마다 올라간다.
+// 오래 걸린 요청이 끝났을 때 그 사이 세션이 바뀌었는지 알아보는 데 쓴다.
+// 안 보면, 갱신 응답이 뒤늦게 도착해 새로 로그인한 사람의 토큰을 덮어쓴다.
+let sessionGeneration = 0;
+
+export function getSessionGeneration(): number {
+  return sessionGeneration;
+}
+
 /** 로그인 제공자 저장 ('EMAIL' | 'GOOGLE') */
 export async function saveProvider(
   provider: 'EMAIL' | 'GOOGLE',
@@ -19,6 +28,7 @@ export async function getProvider(): Promise<string | null> {
 
 /** 로그인 성공 시 토큰 저장 */
 export async function saveTokens(tokens: TokenResponse): Promise<void> {
+  sessionGeneration += 1;
   await AsyncStorage.setMany({
     [ACCESS_KEY]: tokens.accessToken,
     [REFRESH_KEY]: tokens.refreshToken,
@@ -35,6 +45,7 @@ export async function getRefreshToken(): Promise<string | null> {
 
 /** 로그아웃 시 토큰 제거 */
 export async function clearTokens(): Promise<void> {
+  sessionGeneration += 1;
   await AsyncStorage.removeMany([ACCESS_KEY, REFRESH_KEY, PROVIDER_KEY]);
 }
 
