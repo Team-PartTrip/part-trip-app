@@ -14,7 +14,8 @@ export const mainStyles = StyleSheet.create({
     marginTop: 60,
   },
   scrollContent: {
-    paddingBottom: 32,
+    // 탭바가 화면 위에 떠 있다. 32 로는 마지막 카드가 탭바에 가린다.
+    paddingBottom: 96,
   },
 
   // ── 파란 헤더 ──
@@ -144,28 +145,41 @@ export const mainStyles = StyleSheet.create({
   },
 
   // ── 이번 주 추천 ──
-  placeRow: {
+  placeList: {
     marginTop: 8,
-    flexDirection: 'row',
-    gap: 12,
+    gap: 10,
   },
   placeCard: {
-    flex: 1,
-    height: 72,
-    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 10,
+    borderRadius: 14,
     backgroundColor: colors.white,
-    overflow: 'hidden',
   },
   placeThumb: {
-    height: 44,
+    width: 64,
+    height: 64,
+    borderRadius: 10,
     backgroundColor: colors.tint,
   },
+  placeInfo: {
+    flex: 1,
+    gap: 4,
+  },
   placeName: {
-    marginTop: 6,
-    marginHorizontal: 8,
-    fontSize: 11,
-    fontWeight: '500',
+    fontSize: 14,
+    fontWeight: '600',
     color: colors.text,
+  },
+  placeSub: {
+    fontSize: 12,
+    color: colors.textTertiary,
+  },
+  placeRating: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textSecondary,
   },
 
   // ── 추천 장소가 없을 때 ──

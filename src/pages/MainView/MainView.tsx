@@ -198,8 +198,8 @@ const MainView: React.FC<MainViewProps> = ({
               </Text>
             </View>
           ) : (
-            <View style={s.placeRow}>
-              {places.slice(0, 3).map((p, i) => (
+            <View style={s.placeList}>
+              {places.slice(0, 4).map((p, i) => (
                 <View key={`${p.placeName}-${i}`} style={s.placeCard}>
                   {p.imageUrl ? (
                     <Image
@@ -209,9 +209,21 @@ const MainView: React.FC<MainViewProps> = ({
                   ) : (
                     <View style={s.placeThumb} />
                   )}
-                  <Text style={s.placeName} numberOfLines={1}>
-                    {p.placeName}
-                  </Text>
+                  <View style={s.placeInfo}>
+                    <Text style={s.placeName} numberOfLines={1}>
+                      {p.placeName}
+                    </Text>
+                    {/* 카테고리·주소는 없는 장소가 많다. 없으면 줄 자체를 빼서
+                        빈 칸이 남지 않게 한다. */}
+                    {!!(p.category || p.address) && (
+                      <Text style={s.placeSub} numberOfLines={1}>
+                        {[p.category, p.address].filter(Boolean).join(' · ')}
+                      </Text>
+                    )}
+                  </View>
+                  {p.rating !== null && (
+                    <Text style={s.placeRating}>★ {p.rating.toFixed(1)}</Text>
+                  )}
                 </View>
               ))}
             </View>
