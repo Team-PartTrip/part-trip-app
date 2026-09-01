@@ -137,7 +137,14 @@ const MainView: React.FC<MainViewProps> = ({
       >
         <SafeAreaView edges={['top']} style={s.header}>
           <View style={s.headerTop}>
-            <Text style={s.brand}>PartTrip</Text>
+            {/* 헤더가 파란 배경이라 흰색 로고를 쓴다 */}
+            <Image
+              source={require('../../shared/assets/images/logo-white.png')}
+              style={s.brand}
+              resizeMode="contain"
+              accessibilityRole="image"
+              accessibilityLabel="PartTrip"
+            />
             <View style={s.headerActions}>
               <TouchableOpacity
                 style={s.circleBtn}

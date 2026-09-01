@@ -31,9 +31,8 @@ export const mainStyles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   brand: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.white,
+    width: 110,
+    height: 26,
   },
   headerActions: {
     flexDirection: 'row',
