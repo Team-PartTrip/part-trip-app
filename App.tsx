@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, StatusBar, useColorScheme, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import {
@@ -7,6 +7,7 @@ import {
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+import { setSessionExpiredHandler } from './src/shared/api/http';
 import colors from './src/shared/tokens/colors';
 import AppHeader from './src/shared/ui/AppHeader';
 import TabBar, { TabKey } from './src/widgets/bottom-tab-bar/TabBar';
@@ -183,6 +184,16 @@ function App() {
     routeName && TAB_BY_ROUTE[routeName] ? TAB_BY_ROUTE[routeName] : '';
 
   const handleRouteChange = () => setRouteName(navRef.getCurrentRoute()?.name);
+
+  // 토큰 갱신까지 실패하면 로그인 화면으로 되돌린다. 그대로 두면 모든
+  // 화면이 계속 401 을 받아 앱을 껐다 켜는 수밖에 없다.
+  useEffect(() => {
+    setSessionExpiredHandler(() => {
+      if (navRef.isReady()) {
+        navRef.reset({ index: 0, routes: [{ name: 'Login' }] });
+      }
+    });
+  }, [navRef]);
 
   return (
     <SafeAreaProvider>
