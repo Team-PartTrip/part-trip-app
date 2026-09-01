@@ -397,6 +397,7 @@ function App() {
                         category,
                       })
                     }
+                    onDeleted={() => navigation.navigate('Planner')}
                   />
                 )}
               </Stack.Screen>

@@ -73,17 +73,6 @@ export const plannerStyles = StyleSheet.create({
   cardMeta: { fontSize: 11, fontWeight: '500', color: colors.textTertiary },
   // 카드 touchable 밖에 있는 형제라서 위치를 직접 잡는다.
   // cardBody padding 20 + footer 높이를 감안해 화살표 왼쪽에 놓는다.
-  cardDeleteBtn: {
-    position: 'absolute',
-    right: 44,
-    bottom: 18,
-  },
-  // 되돌릴 수 없는 동작이라 위험한 색으로 둔다
-  cardDelete: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.danger,
-  },
   chevron: { fontSize: 18, fontWeight: '600', color: colors.textTertiary },
 
   loading: {

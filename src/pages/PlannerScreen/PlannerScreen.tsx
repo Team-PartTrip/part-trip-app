@@ -5,7 +5,6 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -13,7 +12,6 @@ import { plannerStyles as s } from './PlannerScreen.styles';
 import MemberAvatar from './MemberAvatar';
 import colors from '../../shared/tokens/colors';
 import {
-  deletePlanner,
   getPlanners,
   getPlannerMembers,
   PlannerListItem,
@@ -93,9 +91,6 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
   // 삭제가 끝나기 전에 다시 누르면 같은 DELETE 가 두 번 나간다.
   // 두 번째는 서버가 거부해서, 첫 번째가 성공했는데도 실패 알림이 뜬다.
   //
-  // 하나만 담으면 안 된다. A 를 지우는 중에 B 를 지우기 시작하면 값이 B 로
-  // 바뀌고, 뒤늦게 끝난 A 가 그 값을 비워 B 버튼이 다시 눌린다.
-  const [deletingIds, setDeletingIds] = useState<Set<number>>(new Set());
 
   useFocusEffect(
     useCallback(() => {
@@ -130,38 +125,6 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
       };
     }, []),
   );
-
-  // 되돌릴 수 없어서 한 번 묻는다. 서버는 그룹장만 받아준다(API-005-12).
-  const confirmDelete = (plannerId: number, title: string) =>
-    Alert.alert(
-      '플래너 삭제',
-      `"${title}" 을(를) 삭제할까요?\n투표와 멤버도 함께 사라져요. 되돌릴 수 없어요.`,
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '삭제',
-          style: 'destructive',
-          onPress: async () => {
-            setDeletingIds(prev => new Set(prev).add(plannerId));
-            try {
-              await deletePlanner(plannerId);
-              // 목록을 다시 부르지 않고 지운 것만 뺀다
-              setRows(prev =>
-                (prev ?? []).filter(row => row.plannerId !== plannerId),
-              );
-            } catch (e: any) {
-              Alert.alert('삭제 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
-            } finally {
-              setDeletingIds(prev => {
-                const next = new Set(prev);
-                next.delete(plannerId);
-                return next;
-              });
-            }
-          },
-        },
-      ],
-    );
 
   const plans = (rows ?? []).filter(plan => matches(plan, filter));
 
@@ -265,25 +228,6 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
                   </View>
                 </TouchableOpacity>
 
-                {/* 삭제는 그룹장만 할 수 있다. 멤버에게 보여주면 눌러도
-                    서버가 거부하는 버튼이 된다.
-                    카드 touchable 밖에 두고 footer 위에 겹쳐 놓는다. */}
-                {plan.role === 'OWNER' && (
-                  <TouchableOpacity
-                    style={s.cardDeleteBtn}
-                    hitSlop={10}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${plan.title} 삭제`}
-                    disabled={deletingIds.has(plan.plannerId)}
-                    onPress={() => confirmDelete(plan.plannerId, plan.title)}
-                  >
-                    {deletingIds.has(plan.plannerId) ? (
-                      <ActivityIndicator size="small" color={colors.danger} />
-                    ) : (
-                      <Text style={s.cardDelete}>삭제</Text>
-                    )}
-                  </TouchableOpacity>
-                )}
               </View>
             );
           })

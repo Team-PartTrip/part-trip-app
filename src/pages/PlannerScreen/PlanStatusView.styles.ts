@@ -4,7 +4,8 @@ import colors from '../../shared/tokens/colors';
 // 피그마 C7 · Func-008-05 투표중 진행된 계획 내용 조회하기
 export const planStatusStyles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
-  content: { paddingBottom: 32 },
+  // 탭바가 화면 위에 떠 있다. 32 로는 삭제 버튼이 탭바에 가린다.
+  content: { paddingBottom: 96 },
 
   loading: {
     marginTop: 60,
@@ -101,5 +102,24 @@ export const planStatusStyles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 16,
     color: colors.textMuted,
+  },
+
+  // 되돌릴 수 없는 동작이라 화면 맨 아래에 따로 둔다
+  deleteBtn: {
+    alignSelf: 'center',
+    marginTop: 32,
+    paddingVertical: 12,
+    paddingHorizontal: 28,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: colors.danger,
+    minWidth: 140,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.danger,
   },
 });
