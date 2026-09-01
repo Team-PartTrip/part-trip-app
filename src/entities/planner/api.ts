@@ -384,6 +384,16 @@ export function confirmPlanner(plannerId: number): Promise<PlannerConfirmed> {
   );
 }
 
+/**
+ * 플래너 삭제 (API-005-12).
+ *
+ * 그룹장만 부를 수 있다. 투표·멤버·초대까지 함께 지워진다.
+ * 확정으로 만들어진 여행 카드는 남고 플래너와의 연결만 끊긴다.
+ */
+export function deletePlanner(plannerId: number): Promise<void> {
+  return authRequest<void>(`/api/planners/${plannerId}`, { method: 'DELETE' });
+}
+
 /** 확정된 장소 목록 (C8) */
 export function getConfirmedPlaces(plannerId: number): Promise<PlannerFinal> {
   return authRequest<PlannerFinal>(
