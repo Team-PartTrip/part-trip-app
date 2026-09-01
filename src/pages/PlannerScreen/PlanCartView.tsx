@@ -18,13 +18,19 @@ import {
   drawRandomPlace,
   getVotes,
 } from '../../entities/planner/api';
-import { CATEGORY_EMOJI, CATEGORY_LABEL, PlaceCategory } from '../../entities/planner/types';
+import {
+  CATEGORY_EMOJI,
+  CATEGORY_LABEL,
+  PlaceCategory,
+  VoteStatus,
+} from '../../entities/planner/types';
 
 type Mode = 'manual' | 'random';
 
 /** 장바구니 한 줄. 서버에서는 카테고리 투표의 후보 하나다 */
 interface CartItem {
   voteId: number;
+  voteStatus: VoteStatus;
   optionId: number;
   tourPlaceId: number | null;
   placeName: string;
@@ -55,6 +61,7 @@ const PlanCartView: React.FC<Props> = ({ plannerId, onBack, onConfirm }) => {
       const flat = votes.flatMap(vote =>
         vote.options.map(option => ({
           voteId: vote.voteId,
+          voteStatus: vote.status,
           optionId: option.optionId,
           tourPlaceId: option.tourPlaceId,
           placeName: option.placeName,
@@ -176,6 +183,13 @@ const PlanCartView: React.FC<Props> = ({ plannerId, onBack, onConfirm }) => {
       // toggle 이 카테고리마다 하나만 남기므로 그대로 보내면 된다.
       const picks = mode === 'random' ? (drawn ? [drawn] : []) : chosen;
       for (const item of picks) {
+        // 중간에 실패하면 앞쪽 투표만 확정된 채로 남는다. 서버에는 확정을
+        // 되돌릴 수단이 없고, 확정된 투표에 다시 보내면 "마감된 투표만
+        // 확정할 수 있습니다" 로 막혀 재시도조차 안 된다. 그래서 이미 확정된
+        // 것은 건너뛰어 같은 버튼을 다시 눌러 이어갈 수 있게 한다.
+        if (item.voteStatus === 'CONFIRMED') {
+          continue;
+        }
         // 확정은 마감된 투표만 된다. 이미 마감돼 있으면 그대로 넘어간다.
         await closeVote(plannerId, item.voteId).catch(() => {});
         await confirmVote(plannerId, item.voteId, item.optionId);

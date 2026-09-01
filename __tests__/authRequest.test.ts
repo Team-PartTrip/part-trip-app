@@ -267,7 +267,11 @@ test('먼저 끝난 옛 세대의 갱신이 진행 중인 새 세대의 갱신�
 
   // C 는 B 와 같은 세대다. 진행 중인 B 의 갱신을 같이 기다려야 한다.
   const c = authRequest('/api/c');
-  await Promise.resolve();
+  // C 가 진행 중인 B 의 갱신에 도달할 때까지 마이크로태스크를 모두 비운다.
+  // 한 틱만 흘리면 C 가 아직 도착 전일 수 있어 테스트가 엉뚱하게 실패한다.
+  await new Promise<void>(res => {
+    setImmediate(res);
+  });
   releaseB({ accessToken: 'b-new', refreshToken: 'r-b' });
 
   await expect(b).resolves.toEqual({ ok: true });
