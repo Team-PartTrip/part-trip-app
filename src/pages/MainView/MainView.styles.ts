@@ -75,13 +75,13 @@ export const mainStyles = StyleSheet.create({
     marginTop: 10,
     fontSize: 32,
     fontWeight: '700',
-    color: colors.white,
+    color: colors.textOnPrimary,
   },
   tripTitle: {
     marginTop: 14,
     fontSize: 18,
     fontWeight: '600',
-    color: colors.white,
+    color: colors.textOnPrimary,
   },
   tripMeta: {
     marginTop: 6,
