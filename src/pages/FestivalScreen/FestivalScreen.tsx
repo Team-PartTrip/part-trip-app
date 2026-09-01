@@ -307,11 +307,9 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
           ))}
         </View>
 
-        {!!dday && !!range && (
+        {!!dday && (
           <Text style={s.tripRange}>
             여행 기간 {formatTripRange(dday.startDate, dday.endDate)}
-            {'\n'}
-            보여주는 범위 {formatTripRange(range.from, range.to)}
           </Text>
         )}
 
