@@ -5,6 +5,7 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -12,6 +13,7 @@ import { plannerStyles as s } from './PlannerScreen.styles';
 import MemberAvatar from './MemberAvatar';
 import colors from '../../shared/tokens/colors';
 import {
+  deletePlanner,
   getPlanners,
   getPlannerMembers,
   PlannerListItem,
@@ -123,6 +125,31 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
     }, []),
   );
 
+  // 되돌릴 수 없어서 한 번 묻는다. 서버는 그룹장만 받아준다(API-005-12).
+  const confirmDelete = (plannerId: number, title: string) =>
+    Alert.alert(
+      '플래너 삭제',
+      `"${title}" 을(를) 삭제할까요?\n투표와 멤버도 함께 사라져요. 되돌릴 수 없어요.`,
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '삭제',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deletePlanner(plannerId);
+              // 목록을 다시 부르지 않고 지운 것만 뺀다
+              setRows(prev =>
+                (prev ?? []).filter(row => row.plannerId !== plannerId),
+              );
+            } catch (e: any) {
+              Alert.alert('삭제 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
+            }
+          },
+        },
+      ],
+    );
+
   const plans = (rows ?? []).filter(plan => matches(plan, filter));
 
   return (
@@ -217,6 +244,18 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
 
                   <View style={s.cardFooter}>
                     <Text style={s.cardMeta}>{metaOf(plan)}</Text>
+                    {/* 삭제는 그룹장만 할 수 있다. 멤버에게 보여주면
+                        눌러도 서버가 거부하는 버튼이 된다. */}
+                    {plan.role === 'OWNER' && (
+                      <TouchableOpacity
+                        hitSlop={10}
+                        accessibilityRole="button"
+                        accessibilityLabel={`${plan.title} 삭제`}
+                        onPress={() => confirmDelete(plan.plannerId, plan.title)}
+                      >
+                        <Text style={s.cardDelete}>삭제</Text>
+                      </TouchableOpacity>
+                    )}
                     <Text style={s.chevron}>›</Text>
                   </View>
                 </View>
