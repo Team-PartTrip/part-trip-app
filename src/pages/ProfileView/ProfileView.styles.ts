@@ -17,7 +17,7 @@ export const profileStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  headerTitle: { fontSize: 24, fontWeight: '700', color: colors.white },
+  headerTitle: { fontSize: 24, fontWeight: '700', color: colors.textOnPrimary },
   headerCircle: {
     width: 36,
     height: 36,
@@ -43,7 +43,7 @@ export const profileStyles = StyleSheet.create({
   avatarImage: { width: '100%', height: '100%' },
   avatarInitial: { fontSize: 24, fontWeight: '700', color: colors.primary },
   profileInfo: { flex: 1, marginLeft: 16, paddingTop: 6 },
-  nickname: { fontSize: 18, fontWeight: '600', color: colors.white },
+  nickname: { fontSize: 18, fontWeight: '600', color: colors.textOnPrimary },
   handle: { marginTop: 10, fontSize: 12, color: colors.onPrimaryMuted },
   editBtn: {
     height: 34,
@@ -104,7 +104,7 @@ export const profileStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  moreBtnText: { fontSize: 11, fontWeight: '500', color: colors.white },
+  moreBtnText: { fontSize: 11, fontWeight: '500', color: colors.textOnPrimary },
 
   settingsRow: {
     marginTop: 8,

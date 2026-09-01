@@ -31,7 +31,7 @@ export const notificationListStyles = StyleSheet.create({
   },
   chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   chipText: { fontSize: 11, fontWeight: '500', color: colors.textSecondary },
-  chipTextActive: { color: colors.white },
+  chipTextActive: { color: colors.textOnPrimary },
 
   bucket: {
     marginTop: 22,
@@ -62,7 +62,7 @@ export const notificationListStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  badgeText: { fontSize: 11, fontWeight: '500', color: colors.white },
+  badgeText: { fontSize: 11, fontWeight: '500', color: colors.textOnPrimary },
   cardBody: { flex: 1 },
   cardTitle: { fontSize: 15, color: colors.text },
   cardTitleRead: { color: colors.textSecondary },
