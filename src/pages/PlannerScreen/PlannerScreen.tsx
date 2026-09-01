@@ -90,6 +90,9 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
   const [rows, setRows] = useState<PlannerRow[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
+  // 삭제가 끝나기 전에 다시 누르면 같은 DELETE 가 두 번 나간다.
+  // 두 번째는 서버가 거부해서, 첫 번째가 성공했는데도 실패 알림이 뜬다.
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -136,6 +139,7 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
           text: '삭제',
           style: 'destructive',
           onPress: async () => {
+            setDeletingId(plannerId);
             try {
               await deletePlanner(plannerId);
               // 목록을 다시 부르지 않고 지운 것만 뺀다
@@ -144,6 +148,8 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
               );
             } catch (e: any) {
               Alert.alert('삭제 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
+            } finally {
+              setDeletingId(null);
             }
           },
         },
@@ -209,14 +215,17 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
           plans.map(plan => {
             const tone = toneOf(plan.status);
             return (
-              <TouchableOpacity
-                key={plan.plannerId}
-                style={s.card}
-                activeOpacity={0.85}
-                onPress={() => onOpenPlan?.(plan.plannerId, plan.status)}
-              >
-                <View style={[s.cardStripe, { backgroundColor: tone }]} />
-                <View style={s.cardBody}>
+              // 카드 안에 삭제 버튼을 넣으면 touchable 이 겹쳐서
+              // 보이스오버·토크백이 삭제를 따로 못 짚는다. 형제로 둔다.
+              <View key={plan.plannerId} style={s.card}>
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${plan.title} 열기`}
+                  onPress={() => onOpenPlan?.(plan.plannerId, plan.status)}
+                >
+                  <View style={[s.cardStripe, { backgroundColor: tone }]} />
+                  <View style={s.cardBody}>
                   <Text style={s.cardTitle}>{plan.title}</Text>
                   <Text style={s.cardDate}>
                     {plan.startDate && plan.endDate
@@ -242,24 +251,33 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
                     </View>
                   </View>
 
-                  <View style={s.cardFooter}>
-                    <Text style={s.cardMeta}>{metaOf(plan)}</Text>
-                    {/* 삭제는 그룹장만 할 수 있다. 멤버에게 보여주면
-                        눌러도 서버가 거부하는 버튼이 된다. */}
-                    {plan.role === 'OWNER' && (
-                      <TouchableOpacity
-                        hitSlop={10}
-                        accessibilityRole="button"
-                        accessibilityLabel={`${plan.title} 삭제`}
-                        onPress={() => confirmDelete(plan.plannerId, plan.title)}
-                      >
-                        <Text style={s.cardDelete}>삭제</Text>
-                      </TouchableOpacity>
-                    )}
-                    <Text style={s.chevron}>›</Text>
+                    <View style={s.cardFooter}>
+                      <Text style={s.cardMeta}>{metaOf(plan)}</Text>
+                      <Text style={s.chevron}>›</Text>
+                    </View>
                   </View>
-                </View>
-              </TouchableOpacity>
+                </TouchableOpacity>
+
+                {/* 삭제는 그룹장만 할 수 있다. 멤버에게 보여주면 눌러도
+                    서버가 거부하는 버튼이 된다.
+                    카드 touchable 밖에 두고 footer 위에 겹쳐 놓는다. */}
+                {plan.role === 'OWNER' && (
+                  <TouchableOpacity
+                    style={s.cardDeleteBtn}
+                    hitSlop={10}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${plan.title} 삭제`}
+                    disabled={deletingId === plan.plannerId}
+                    onPress={() => confirmDelete(plan.plannerId, plan.title)}
+                  >
+                    {deletingId === plan.plannerId ? (
+                      <ActivityIndicator size="small" color={colors.danger} />
+                    ) : (
+                      <Text style={s.cardDelete}>삭제</Text>
+                    )}
+                  </TouchableOpacity>
+                )}
+              </View>
             );
           })
         )}
