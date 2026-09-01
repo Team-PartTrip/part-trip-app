@@ -1,26 +1,5 @@
 import { authRequest } from '../../shared/api/http';
 
-export interface CountryInfo {
-  countryInfoId: number;
-  countryName: string;
-  cityName: string;
-  imageUrl: string;
-  summary: string;
-}
-
-/** 여행지(국가/도시) 전체 목록 조회 (여행지 선택 화면에서 사용) */
-export function getCountries(): Promise<CountryInfo[]> {
-  return authRequest<CountryInfo[]>('/api/main/countries', { method: 'GET' });
-}
-
-/** 국가 상세 정보 조회 */
-export function getCountryInfo(countryName: string): Promise<CountryInfo> {
-  return authRequest<CountryInfo>(
-    `/api/main/country-info?countryName=${encodeURIComponent(countryName)}`,
-    { method: 'GET' },
-  );
-}
-
 /**
  * 등록된 여행 일정이 없으면 서버가 에러 대신
  * 모든 값이 null 이고 dday 만 "쉬는 중" 인 응답을 내려준다.

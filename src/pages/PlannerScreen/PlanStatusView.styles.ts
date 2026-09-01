@@ -96,13 +96,6 @@ export const planStatusStyles = StyleSheet.create({
   },
   rowPillText: { fontSize: 11, fontWeight: '500' },
 
-  note: {
-    marginTop: 12,
-    paddingHorizontal: 24,
-    fontSize: 11,
-    lineHeight: 16,
-    color: colors.textMuted,
-  },
 
   // 되돌릴 수 없는 동작이라 화면 맨 아래에 따로 둔다
   deleteBtn: {

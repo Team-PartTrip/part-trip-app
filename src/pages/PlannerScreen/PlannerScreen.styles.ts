@@ -88,10 +88,4 @@ export const plannerStyles = StyleSheet.create({
   emptyText: { fontSize: 15, fontWeight: '600', color: colors.text },
   emptyDesc: { fontSize: 12, color: colors.textMuted },
 
-  note: {
-    paddingHorizontal: 24,
-    fontSize: 11,
-    lineHeight: 16,
-    color: colors.textMuted,
-  },
 });

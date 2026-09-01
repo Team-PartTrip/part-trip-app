@@ -63,8 +63,6 @@ export const placeVoteStyles = StyleSheet.create({
   name: { fontSize: 15, fontWeight: '600', color: colors.text },
   countRow: { marginTop: 6, flexDirection: 'row', alignItems: 'center', gap: 8 },
   count: { fontSize: 12, color: colors.textSecondary },
-  voters: { flexDirection: 'row' },
-  voterOverlap: { marginLeft: -2 },
 
   voteBtn: {
     height: 30,

@@ -46,11 +46,6 @@ export const mainStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  circleIcon: {
-    width: 16,
-    height: 16,
-    tintColor: colors.primary,
-  },
   // 알림(🔔) — 쓸 만한 아이콘 이미지가 없어 이모지로 둔다
   circleEmoji: {
     fontSize: 15,

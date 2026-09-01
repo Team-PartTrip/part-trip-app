@@ -20,11 +20,6 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   removeMany: jest.fn().mockResolvedValue(undefined),
 }));
 
-jest.mock('@react-native-community/geolocation', () => ({
-  getCurrentPosition: jest.fn(),
-  requestAuthorization: jest.fn(),
-}));
-
 jest.mock('react-native-image-picker', () => ({
   launchImageLibrary: jest.fn().mockResolvedValue({ didCancel: true }),
   launchCamera: jest.fn().mockResolvedValue({ didCancel: true }),

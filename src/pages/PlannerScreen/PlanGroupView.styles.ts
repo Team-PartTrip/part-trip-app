@@ -108,7 +108,6 @@ export const planGroupStyles = StyleSheet.create({
   memberBody: { flex: 1, marginLeft: 12 },
   memberName: { fontSize: 15, fontWeight: '600', color: colors.text },
   memberSub: { marginTop: 2, fontSize: 12 },
-  memberRemove: { fontSize: 14, color: colors.textTertiary, paddingLeft: 8 },
 
   inviteBtn: {
     height: 56,

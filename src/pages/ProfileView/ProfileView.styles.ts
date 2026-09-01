@@ -26,7 +26,6 @@ export const profileStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerCircleIcon: { width: 18, height: 18, tintColor: colors.primary },
   // 알림(🔔) — 쓸 만한 아이콘 이미지가 없어 이모지로 둔다
   headerCircleEmoji: { fontSize: 17 },
 
@@ -88,7 +87,6 @@ export const profileStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  mapCellFlag: { fontSize: 22 },
   mapFooter: {
     marginTop: 18,
     flexDirection: 'row',

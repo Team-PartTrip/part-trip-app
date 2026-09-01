@@ -101,7 +101,6 @@ export const planDestinationStyles = StyleSheet.create({
   dayPillMid: { borderRadius: 0, backgroundColor: colors.tint },
   dayText: { fontSize: 12, color: colors.text },
   dayTextEdge: { color: colors.textOnPrimary },
-  dayTextOff: { color: colors.calMuted },
 
   summary: {
     marginTop: 16,

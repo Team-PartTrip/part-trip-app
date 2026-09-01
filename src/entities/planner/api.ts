@@ -178,45 +178,6 @@ export function getVotes(plannerId: number): Promise<VoteStatusInfo[]> {
   });
 }
 
-/** 투표 하나의 현황 (C5) */
-export function getVote(
-  plannerId: number,
-  voteId: number,
-): Promise<VoteStatusInfo> {
-  return authRequest<VoteStatusInfo>(
-    `/api/planners/${plannerId}/votes/${voteId}`,
-    { method: 'GET' },
-  );
-}
-
-export interface CreateVotePayload {
-  category: PlaceCategory;
-  /** ISO-8601. 생략하면 마감 없는 투표가 된다 */
-  deadline?: string;
-}
-
-export interface VoteCreated {
-  voteId: number;
-  plannerId: number;
-  planId: number;
-  category: PlaceCategory;
-  categoryLabel: string;
-  status: VoteStatus;
-  deadline: string | null;
-  createdAt: string;
-}
-
-/** 카테고리 투표 만들기 */
-export function createVote(
-  plannerId: number,
-  payload: CreateVotePayload,
-): Promise<VoteCreated> {
-  return authRequest<VoteCreated>(`/api/planners/${plannerId}/votes`, {
-    method: 'POST',
-    body: payload,
-  });
-}
-
 export interface VoteBallot {
   voteRecordId: number;
   voteId: number;
@@ -280,18 +241,6 @@ export function confirmVote(
   return authRequest<VoteConfirmed>(
     `/api/planners/${plannerId}/votes/${voteId}/confirm`,
     { method: 'POST', body: { optionId } },
-  );
-}
-
-/** 후보 하나 직접 추가. tourPlaceId 가 있으면 관광지 이름을 우선한다 */
-export function addVoteOption(
-  plannerId: number,
-  voteId: number,
-  payload: { tourPlaceId?: number; placeName?: string },
-): Promise<VoteOptionStatus> {
-  return authRequest<VoteOptionStatus>(
-    `/api/planners/${plannerId}/votes/${voteId}/options`,
-    { method: 'POST', body: payload },
   );
 }
 

@@ -22,7 +22,6 @@ export const profileEditStyles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  avatarEmoji: { fontSize: 78 },
   changePhoto: { marginTop: 10 },
   changePhotoText: { color: colors.primary, fontSize: 13, fontWeight: '700' },
   title: {
@@ -54,20 +53,6 @@ export const profileEditStyles = StyleSheet.create({
   },
 
 
-  linkRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: colors.cardBg,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  linkText: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
-  linkArrow: { fontSize: 20, color: colors.textMuted },
 
   confirmBtn: {
     marginTop: 28,
