@@ -39,41 +39,52 @@ let refreshingGeneration = -1;
  * 그걸 null 로 뭉치면 지하철에서 한 번 끊긴 것으로 로그아웃된다.
  */
 async function refreshAccessToken(): Promise<string | null> {
-  if (refreshing && refreshingGeneration === getSessionGeneration()) {
+  const generation = getSessionGeneration();
+  if (refreshing && refreshingGeneration === generation) {
     return refreshing;
   }
-  refreshingGeneration = getSessionGeneration();
-  refreshing = (async () => {
-    // 갱신이 오가는 동안 사용자가 로그아웃하고 다시 로그인할 수 있다.
-    // 그때 이 응답을 저장하면 새 세션의 토큰을 옛 것으로 덮어쓴다.
-    const generation = getSessionGeneration();
-    try {
-      const refreshToken = await getRefreshToken();
-      if (!refreshToken) {
-        return null;
-      }
-      // entities 를 끌어오면 shared 가 상위 계층을 참조하게 되어 여기서 직접 부른다
-      const tokens = await request<{
-        accessToken: string;
-        refreshToken: string;
-      }>('/api/auth/refresh', { body: { refreshToken } });
-      if (getSessionGeneration() !== generation) {
-        // 그 사이 세션이 바뀌었다. 새 세션의 토큰을 덮어쓰지 않는다.
-        return null;
-      }
-      await saveTokens(tokens, { newSession: false });
-      return tokens.accessToken;
-    } catch (e) {
-      // 서버가 리프레시 토큰을 거부한 것만 세션의 끝이다.
-      if (e instanceof ApiError && (e.status === 401 || e.status === 403)) {
-        return null;
-      }
-      throw e;
-    } finally {
+  const mine = doRefresh(generation);
+  refreshing = mine;
+  refreshingGeneration = generation;
+  // 옛 세대의 갱신이 늦게 끝나면서 새 세대의 것을 지우면, 같은 세대의 다음
+  // 요청이 진행 중인 갱신을 놔두고 하나 더 띄운다. 서버가 리프레시 토큰을
+  // 회전시키면 그 두 번째가 401 을 받아 새 세션을 끊는다.
+  const release = () => {
+    if (refreshing === mine) {
       refreshing = null;
+      refreshingGeneration = -1;
     }
-  })();
-  return refreshing;
+  };
+  mine.then(release, release);
+  return mine;
+}
+
+/** 갱신 한 번. 공유·해제는 refreshAccessToken 이 맡는다 */
+async function doRefresh(generation: number): Promise<string | null> {
+  try {
+    const refreshToken = await getRefreshToken();
+    if (!refreshToken) {
+      return null;
+    }
+    // entities 를 끌어오면 shared 가 상위 계층을 참조하게 되어 여기서 직접 부른다
+    const tokens = await request<{
+      accessToken: string;
+      refreshToken: string;
+    }>('/api/auth/refresh', { body: { refreshToken } });
+    // 갱신이 오가는 사이 사용자가 로그아웃하고 다시 로그인할 수 있다.
+    // 그때 이 응답을 저장하면 새 세션의 토큰을 옛 것으로 덮어쓴다.
+    if (getSessionGeneration() !== generation) {
+      return null;
+    }
+    await saveTokens(tokens, { newSession: false });
+    return tokens.accessToken;
+  } catch (e) {
+    // 서버가 리프레시 토큰을 거부한 것만 세션의 끝이다.
+    if (e instanceof ApiError && (e.status === 401 || e.status === 403)) {
+      return null;
+    }
+    throw e;
+  }
 }
 
 /**

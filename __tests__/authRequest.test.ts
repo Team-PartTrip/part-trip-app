@@ -224,3 +224,54 @@ test('다른 세션이 시작한 갱신을 재사용해 새 세션을 쫓아내�
   expect(refreshCount).toBe(2); // B 가 A 의 갱신을 재사용하지 않았다
   expect(mockClearTokens).not.toHaveBeenCalled();
 });
+
+test('먼저 끝난 옛 세대의 갱신이 진행 중인 새 세대의 갱신을 지우지 않는다', async () => {
+  // A(세대 0)가 아직 진행 중일 때 B(세대 1)가 자기 갱신을 시작한다.
+  // 그 뒤 A 가 끝나며 뒷정리로 B 의 자리를 지우면, 같은 세대의 C 가 갱신을
+  // 하나 더 띄운다. 서버가 리프레시 토큰을 회전시키면 그 두 번째가 401 을
+  // 받아 방금 로그인한 세션이 끊긴다.
+  let releaseA: (v: any) => void = () => {};
+  let releaseB: (v: any) => void = () => {};
+  const started: (() => void)[] = [];
+  const startedAt = (n: number) =>
+    new Promise<void>(res => (started[n] = res));
+  const aRefreshing = startedAt(1);
+  const bRefreshing = startedAt(2);
+  let refreshCount = 0;
+
+  mockRequest.mockImplementation((path: string) => {
+    if (path === '/api/auth/refresh') {
+      refreshCount += 1;
+      started[refreshCount]?.();
+      if (refreshCount === 1) {
+        return new Promise(res => (releaseA = res));
+      }
+      return new Promise(res => (releaseB = res));
+    }
+    return mockAccess === 'b-new'
+      ? Promise.resolve({ ok: true })
+      : unauthorized();
+  });
+
+  const a = authRequest('/api/a').catch((e: unknown) => e);
+  await aRefreshing;
+
+  mockGeneration = 1; // 재로그인
+
+  const b = authRequest('/api/b');
+  await bRefreshing; // B 가 자기 갱신을 시작해 자리를 차지했다
+
+  // 이제 A 가 끝난다. 이 뒷정리가 B 의 자리를 지우면 안 된다.
+  releaseA({ accessToken: 'a-new', refreshToken: 'r-a' });
+  await a;
+
+  // C 는 B 와 같은 세대다. 진행 중인 B 의 갱신을 같이 기다려야 한다.
+  const c = authRequest('/api/c');
+  await Promise.resolve();
+  releaseB({ accessToken: 'b-new', refreshToken: 'r-b' });
+
+  await expect(b).resolves.toEqual({ ok: true });
+  await expect(c).resolves.toEqual({ ok: true });
+  expect(refreshCount).toBe(2); // C 가 세 번째 갱신을 띄우지 않았다
+  expect(mockClearTokens).not.toHaveBeenCalled();
+});

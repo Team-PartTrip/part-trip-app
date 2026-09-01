@@ -54,6 +54,8 @@ const TripCardListView: React.FC<Props> = ({
       // 정상으로 빈 목록을 받아도 오류 문구가 그대로 남는다.
       setLoading(true);
       setFailed(false);
+      // 새 목록이 이전보다 짧으면 index 가 범위 밖에 남아 공유가 안 된다
+      setIndex(0);
       getTripCards()
         .then(list => alive && setCards(list))
         .catch(

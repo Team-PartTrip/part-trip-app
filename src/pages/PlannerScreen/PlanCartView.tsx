@@ -103,12 +103,19 @@ const PlanCartView: React.FC<Props> = ({ plannerId, onBack, onConfirm }) => {
     }
   };
 
-  const toggle = (optionId: number) =>
-    setChosenIds(prev =>
-      prev.includes(optionId)
-        ? prev.filter(id => id !== optionId)
-        : [...prev, optionId],
-    );
+  // 서버는 카테고리(투표)마다 한 곳만 확정한다. 그래서 같은 카테고리에서
+  // 다른 곳을 고르면 앞의 선택을 바꾼다. 둘 다 켜두면 화면에는 둘이 보이는데
+  // 확정에는 하나만 들어간다.
+  const toggle = (item: CartItem) =>
+    setChosenIds(prev => {
+      if (prev.includes(item.optionId)) {
+        return prev.filter(id => id !== item.optionId);
+      }
+      const sameVote = items
+        .filter(row => row.voteId === item.voteId)
+        .map(row => row.optionId);
+      return [...prev.filter(id => !sameVote.includes(id)), item.optionId];
+    });
 
   // 뽑기는 서버가 한다. 어느 후보가 뽑혔는지는 관광지 id 로 맞춰본다.
   const draw = async () => {
@@ -166,17 +173,12 @@ const PlanCartView: React.FC<Props> = ({ plannerId, onBack, onConfirm }) => {
       // 고른 것을 먼저 확정한다. 서버는 카테고리(투표)마다 한 곳만 확정하고,
       // 아무도 투표하지 않은 장바구니에서는 모든 후보가 0표 동점이다. 그래서
       // 이걸 건너뛰면 고른 것이 버려지거나 "동점 투표가 있습니다" 로 거부된다.
+      // toggle 이 카테고리마다 하나만 남기므로 그대로 보내면 된다.
       const picks = mode === 'random' ? (drawn ? [drawn] : []) : chosen;
-      const pickByVote = new Map<number, number>();
-      picks.forEach(item => {
-        if (!pickByVote.has(item.voteId)) {
-          pickByVote.set(item.voteId, item.optionId);
-        }
-      });
-      for (const [voteId, optionId] of pickByVote) {
+      for (const item of picks) {
         // 확정은 마감된 투표만 된다. 이미 마감돼 있으면 그대로 넘어간다.
-        await closeVote(plannerId, voteId).catch(() => {});
-        await confirmVote(plannerId, voteId, optionId);
+        await closeVote(plannerId, item.voteId).catch(() => {});
+        await confirmVote(plannerId, item.voteId, item.optionId);
       }
       await confirmPlanner(plannerId);
       onConfirm?.();
@@ -254,7 +256,7 @@ const PlanCartView: React.FC<Props> = ({ plannerId, onBack, onConfirm }) => {
                 style={[s.row, on && s.rowOn]}
                 activeOpacity={0.85}
                 disabled={mode === 'random'}
-                onPress={() => toggle(item.optionId)}
+                onPress={() => toggle(item)}
               >
                 <View style={s.thumb}>
                   <Text style={s.thumbEmoji}>
