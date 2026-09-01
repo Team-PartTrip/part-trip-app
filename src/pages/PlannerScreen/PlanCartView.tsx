@@ -49,7 +49,9 @@ const PlanCartView: React.FC<Props> = ({ plannerId, onBack, onConfirm }) => {
   const [failed, setFailed] = useState(false);
   const [mode, setMode] = useState<Mode>('manual');
   const [chosenIds, setChosenIds] = useState<number[]>([]);
-  const [drawn, setDrawn] = useState<CartItem | null>(null);
+  // 뽑힌 장소는 id 로만 들고, 실체는 items 에서 찾아 쓴다. 객체를 따로
+  // 담아두면 items 만 갱신됐을 때 둘이 어긋난다.
+  const [drawnId, setDrawnId] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
 
   // 담은 목록은 카테고리별 투표의 후보로 저장돼 있다. 그래서 투표 현황을 펼쳐서 쓴다.
@@ -102,7 +104,7 @@ const PlanCartView: React.FC<Props> = ({ plannerId, onBack, onConfirm }) => {
       await deleteVoteOption(plannerId, item.voteId, item.optionId);
       setItems(prev => prev.filter(row => row.optionId !== item.optionId));
       setChosenIds(prev => prev.filter(id => id !== item.optionId));
-      setDrawn(prev => (prev?.optionId === item.optionId ? null : prev));
+      setDrawnId(prev => (prev === item.optionId ? null : prev));
     } catch (e: any) {
       Alert.alert('빼기 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
     } finally {
@@ -137,7 +139,7 @@ const PlanCartView: React.FC<Props> = ({ plannerId, onBack, onConfirm }) => {
         items.find(item => item.placeName === picked.placeName) ??
         null;
       if (matched) {
-        setDrawn(matched);
+        setDrawnId(matched.optionId);
         setChosenIds([matched.optionId]);
       } else {
         Alert.alert('뽑기 결과', picked.placeName);
@@ -152,10 +154,11 @@ const PlanCartView: React.FC<Props> = ({ plannerId, onBack, onConfirm }) => {
   const switchMode = (next: Mode) => {
     setMode(next);
     setChosenIds([]);
-    setDrawn(null);
+    setDrawnId(null);
   };
 
   const chosen = items.filter(item => chosenIds.includes(item.optionId));
+  const drawn = items.find(item => item.optionId === drawnId) ?? null;
   // 랜덤 모드에서는 뽑기 전까지 확정할 게 없다
   const canConfirm = mode === 'random' ? !!drawn : chosen.length > 0;
   const buttonLabel =
