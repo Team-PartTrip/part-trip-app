@@ -169,3 +169,58 @@ test('갱신이 실패해도 다른 세션이 시작됐으면 쫓아내지 않�
   expect(mockClearTokens).not.toHaveBeenCalled();
   expect(onExpired).not.toHaveBeenCalled();
 });
+
+test('네트워크 오류로 갱신이 실패하면 토큰을 지우지 않는다', async () => {
+  let expired = false;
+  setSessionExpiredHandler(() => {
+    expired = true;
+  });
+  mockRequest
+    .mockImplementationOnce(unauthorized)
+    .mockImplementationOnce(() => Promise.reject(new TypeError('Network request failed')));
+
+  await expect(authRequest('/api/x')).rejects.toThrow('Network request failed');
+  expect(mockClearTokens).not.toHaveBeenCalled();
+  expect(expired).toBe(false);
+});
+
+test('다른 세션이 시작한 갱신을 재사용해 새 세션을 쫓아내지 않는다', async () => {
+  // A(세대 0)가 갱신을 시작한다. 그 응답이 오기 전에 사용자가 재로그인해
+  // 세대가 1 이 된다. 그때 들어온 B 가 A 의 갱신을 같이 기다리면, A 의
+  // null(=세션이 바뀌어 저장 생략)을 자기 갱신 실패로 읽고 새 세션을 끊는다.
+  let releaseA: (v: any) => void = () => {};
+  let aRefreshStarted: () => void = () => {};
+  const aRefreshing = new Promise<void>(res => (aRefreshStarted = res));
+  let refreshCount = 0;
+
+  mockRequest.mockImplementation((path: string) => {
+    if (path === '/api/auth/refresh') {
+      refreshCount += 1;
+      if (refreshCount === 1) {
+        aRefreshStarted();
+        return new Promise(res => (releaseA = res));
+      }
+      return Promise.resolve({ accessToken: 'b-new', refreshToken: 'refresh-b' });
+    }
+    if (path === '/api/a') {
+      return unauthorized();
+    }
+    // B 는 처음 한 번만 401, 갱신 뒤에는 성공한다
+    return mockAccess === 'b-new'
+      ? Promise.resolve({ ok: 'b' })
+      : unauthorized();
+  });
+
+  const a = authRequest('/api/a').catch((e: unknown) => e);
+  await aRefreshing;
+
+  mockGeneration = 1; // 재로그인
+
+  const b = authRequest('/api/b');
+  releaseA({ accessToken: 'a-new', refreshToken: 'refresh-a' });
+
+  await expect(b).resolves.toEqual({ ok: 'b' });
+  await a;
+  expect(refreshCount).toBe(2); // B 가 A 의 갱신을 재사용하지 않았다
+  expect(mockClearTokens).not.toHaveBeenCalled();
+});

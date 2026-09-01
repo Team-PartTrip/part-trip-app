@@ -27,11 +27,22 @@ export function setSessionExpiredHandler(handler: SessionExpiredHandler): void {
 // 여러 요청이 동시에 401 을 받아도 갱신은 한 번만 나가게 공유한다.
 // 각자 갱신하면 서버가 리프레시 토큰을 회전시킬 때 서로를 무효화한다.
 let refreshing: Promise<string | null> | null = null;
+// 그 갱신이 어느 세션에서 시작됐는지. 다른 세션이 시작한 것을 같이 기다리면
+// 그쪽의 null(=세션이 바뀌어 저장을 건너뜀)을 이쪽의 "갱신 실패" 로 읽는다.
+let refreshingGeneration = -1;
 
+/**
+ * 액세스 토큰 갱신.
+ *
+ * null 은 "리프레시 토큰이 거부됐다" 는 뜻만 갖는다.
+ * 네트워크·서버 오류는 잠시 후 다시 되는 것이라 그대로 던진다.
+ * 그걸 null 로 뭉치면 지하철에서 한 번 끊긴 것으로 로그아웃된다.
+ */
 async function refreshAccessToken(): Promise<string | null> {
-  if (refreshing) {
+  if (refreshing && refreshingGeneration === getSessionGeneration()) {
     return refreshing;
   }
+  refreshingGeneration = getSessionGeneration();
   refreshing = (async () => {
     // 갱신이 오가는 동안 사용자가 로그아웃하고 다시 로그인할 수 있다.
     // 그때 이 응답을 저장하면 새 세션의 토큰을 옛 것으로 덮어쓴다.
@@ -52,8 +63,12 @@ async function refreshAccessToken(): Promise<string | null> {
       }
       await saveTokens(tokens, { newSession: false });
       return tokens.accessToken;
-    } catch {
-      return null;
+    } catch (e) {
+      // 서버가 리프레시 토큰을 거부한 것만 세션의 끝이다.
+      if (e instanceof ApiError && (e.status === 401 || e.status === 403)) {
+        return null;
+      }
+      throw e;
     } finally {
       refreshing = null;
     }
@@ -79,6 +94,8 @@ export async function authRequest<T = unknown>(
     if (!(e instanceof ApiError) || e.status !== 401) {
       throw e;
     }
+    // 갱신 자체가 네트워크·서버 오류로 실패하면 그대로 올라간다.
+    // 토큰은 아직 멀쩡하므로 지우지 않는다.
     const fresh = await refreshAccessToken();
 
     // 갱신을 기다리는 사이 다른 세션이 시작됐을 수 있다. 그때는

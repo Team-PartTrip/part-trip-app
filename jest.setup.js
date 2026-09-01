@@ -15,7 +15,9 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   getItem: jest.fn().mockResolvedValue(null),
   setItem: jest.fn().mockResolvedValue(undefined),
   removeItem: jest.fn().mockResolvedValue(undefined),
-  multiRemove: jest.fn().mockResolvedValue(undefined),
+  // tokenStorage 가 쓰는 배치 API (async-storage 3.x)
+  setMany: jest.fn().mockResolvedValue(undefined),
+  removeMany: jest.fn().mockResolvedValue(undefined),
 }));
 
 jest.mock('@react-native-community/geolocation', () => ({

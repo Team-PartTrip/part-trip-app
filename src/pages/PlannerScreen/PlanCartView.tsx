@@ -11,7 +11,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { planCartStyles as s } from './PlanCartView.styles';
 import {
+  closeVote,
   confirmPlanner,
+  confirmVote,
   deleteVoteOption,
   drawRandomPlace,
   getVotes,
@@ -161,6 +163,21 @@ const PlanCartView: React.FC<Props> = ({ plannerId, onBack, onConfirm }) => {
     // 늘 "확정된 일정이 없어요" 였다.
     setBusy(true);
     try {
+      // 고른 것을 먼저 확정한다. 서버는 카테고리(투표)마다 한 곳만 확정하고,
+      // 아무도 투표하지 않은 장바구니에서는 모든 후보가 0표 동점이다. 그래서
+      // 이걸 건너뛰면 고른 것이 버려지거나 "동점 투표가 있습니다" 로 거부된다.
+      const picks = mode === 'random' ? (drawn ? [drawn] : []) : chosen;
+      const pickByVote = new Map<number, number>();
+      picks.forEach(item => {
+        if (!pickByVote.has(item.voteId)) {
+          pickByVote.set(item.voteId, item.optionId);
+        }
+      });
+      for (const [voteId, optionId] of pickByVote) {
+        // 확정은 마감된 투표만 된다. 이미 마감돼 있으면 그대로 넘어간다.
+        await closeVote(plannerId, voteId).catch(() => {});
+        await confirmVote(plannerId, voteId, optionId);
+      }
       await confirmPlanner(plannerId);
       onConfirm?.();
     } catch (e: any) {

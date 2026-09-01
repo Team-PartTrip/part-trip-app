@@ -50,6 +50,10 @@ const TripCardListView: React.FC<Props> = ({
   useFocusEffect(
     useCallback(() => {
       let alive = true;
+      // 다시 들어올 때마다 초기화한다. 안 그러면 한 번 실패한 뒤로는
+      // 정상으로 빈 목록을 받아도 오류 문구가 그대로 남는다.
+      setLoading(true);
+      setFailed(false);
       getTripCards()
         .then(list => alive && setCards(list))
         .catch(

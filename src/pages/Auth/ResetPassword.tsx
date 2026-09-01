@@ -60,6 +60,9 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({
         hitSlop={12}
         accessibilityRole="button"
         accessibilityLabel="뒤로 가기"
+        // 요청이 끝나기 전에 나가면, 화면이 닫힌 뒤에 결과가 돌아와
+        // 이전 화면 위로 다음 화면이 열린다.
+        disabled={loading}
         onPress={onBack}
       >
         <Text style={styles.back}>‹</Text>
