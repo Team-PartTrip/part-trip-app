@@ -184,6 +184,23 @@ test('네트워크 오류로 갱신이 실패하면 토큰을 지우지 않는�
   expect(expired).toBe(false);
 });
 
+test('리프레시 토큰이 거부되면(400) 세션을 끝낸다', async () => {
+  // 서버는 만료·미등록 리프레시 토큰을 IllegalArgumentException 으로 던지고
+  // GlobalExceptionHandler 가 400 으로 내보낸다. 이걸 일시적 오류로 보면
+  // 만료된 세션이 정리되지 않아 앱이 계속 실패한다.
+  const onExpired = jest.fn();
+  setSessionExpiredHandler(onExpired);
+  mockRequest
+    .mockImplementationOnce(unauthorized)
+    .mockImplementationOnce(() =>
+      Promise.reject(new ApiError(400, 'Refresh Token이 만료되었습니다.')),
+    );
+
+  await expect(authRequest('/api/x')).rejects.toThrow('로그인이 만료');
+  expect(mockClearTokens).toHaveBeenCalledTimes(1);
+  expect(onExpired).toHaveBeenCalledTimes(1);
+});
+
 test('다른 세션이 시작한 갱신을 재사용해 새 세션을 쫓아내지 않는다', async () => {
   // A(세대 0)가 갱신을 시작한다. 그 응답이 오기 전에 사용자가 재로그인해
   // 세대가 1 이 된다. 그때 들어온 B 가 A 의 갱신을 같이 기다리면, A 의

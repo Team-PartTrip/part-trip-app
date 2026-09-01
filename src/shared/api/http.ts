@@ -80,7 +80,16 @@ async function doRefresh(generation: number): Promise<string | null> {
     return tokens.accessToken;
   } catch (e) {
     // 서버가 리프레시 토큰을 거부한 것만 세션의 끝이다.
-    if (e instanceof ApiError && (e.status === 401 || e.status === 403)) {
+    //
+    // 400 도 넣는다. LoginService.refresh 는 만료·미등록 토큰을
+    // IllegalArgumentException 으로 던지고, GlobalExceptionHandler 가 그걸
+    // 400 으로 내보낸다. 여기서 400 을 "잠시 후 되는 오류" 로 보면 만료된
+    // 세션이 영영 정리되지 않아 모든 화면이 계속 실패한다.
+    // 본문 없이 보내는 경우는 위에서 걸러서, 이 호출의 400 은 토큰 거부뿐이다.
+    if (
+      e instanceof ApiError &&
+      (e.status === 400 || e.status === 401 || e.status === 403)
+    ) {
       return null;
     }
     throw e;
