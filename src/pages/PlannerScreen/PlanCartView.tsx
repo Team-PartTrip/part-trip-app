@@ -193,6 +193,16 @@ const PlanCartView: React.FC<Props> = ({ plannerId, onBack, onConfirm }) => {
         // 확정은 마감된 투표만 된다. 이미 마감돼 있으면 그대로 넘어간다.
         await closeVote(plannerId, item.voteId).catch(() => {});
         await confirmVote(plannerId, item.voteId, item.optionId);
+        // 화면의 상태도 같이 올린다. 안 그러면 다시 들어오기 전까지 items 는
+        // 옛 상태라, 실패 후 그 자리에서 다시 눌렀을 때 방금 확정한 투표를
+        // 또 보내고 거부당한다.
+        setItems(prev =>
+          prev.map(row =>
+            row.voteId === item.voteId
+              ? { ...row, voteStatus: 'CONFIRMED' as VoteStatus }
+              : row,
+          ),
+        );
       }
       await confirmPlanner(plannerId);
       onConfirm?.();
