@@ -47,10 +47,10 @@ async function refreshAccessToken(): Promise<string | null> {
         refreshToken: string;
       }>('/api/auth/refresh', { body: { refreshToken } });
       if (getSessionGeneration() !== generation) {
-        // 그 사이 세션이 바뀌었다. 덮어쓰지 않고 지금 토큰으로 재시도한다.
-        return getAccessToken();
+        // 그 사이 세션이 바뀌었다. 새 세션의 토큰을 덮어쓰지 않는다.
+        return null;
       }
-      await saveTokens(tokens);
+      await saveTokens(tokens, { newSession: false });
       return tokens.accessToken;
     } catch {
       return null;
@@ -80,12 +80,18 @@ export async function authRequest<T = unknown>(
       throw e;
     }
     const fresh = await refreshAccessToken();
+
+    // 갱신을 기다리는 사이 다른 세션이 시작됐을 수 있다. 그때는
+    //  - 새 세션의 토큰으로 재시도하면 남의 계정으로 요청이 나간다
+    //  - 토큰을 지우거나 화면을 옮기면 그 사람을 쫓아낸다
+    // 그래서 이 요청만 실패시키고 끝낸다.
+    if (getSessionGeneration() !== generation) {
+      throw new ApiError(401, '로그인 정보가 바뀌었어요. 다시 시도해주세요.');
+    }
+
     if (!fresh) {
-      // 그 사이 다른 세션이 시작됐다면 그 사람을 쫓아내면 안 된다.
-      if (getSessionGeneration() === generation) {
-        await clearTokens();
-        onSessionExpired?.();
-      }
+      await clearTokens();
+      onSessionExpired?.();
       throw new ApiError(401, '로그인이 만료되었어요. 다시 로그인해주세요.');
     }
     return request<T>(path, { ...options, token: fresh });

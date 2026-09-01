@@ -17,9 +17,12 @@ jest.mock('../src/shared/api/tokenStorage', () => ({
   getAccessToken: () => Promise.resolve(mockAccess),
   getRefreshToken: () => Promise.resolve(mockRefreshToken),
   getSessionGeneration: () => mockGeneration,
-  saveTokens: (t: any) => {
-    mockSaveTokens(t);
-    mockGeneration += 1;
+  saveTokens: (t: any, o: any = {}) => {
+    mockSaveTokens(t, o);
+    // 로그인만 세션이 바뀐 것이다. 갱신은 같은 세션이라 올리지 않는다.
+    if (o.newSession !== false) {
+      mockGeneration += 1;
+    }
     mockAccess = t.accessToken;
     return Promise.resolve();
   },
@@ -139,12 +142,14 @@ test('갱신 중에 다른 세션이 로그인하면 그 토큰을 덮어쓰지 
     )
     .mockImplementationOnce(() => Promise.resolve({ ok: true }));
 
-  await expect(authRequest('/api/x')).resolves.toEqual({ ok: true });
+  await expect(authRequest('/api/x')).rejects.toMatchObject({ status: 401 });
 
   // 옛 응답을 저장하면 새 세션이 망가진다
   expect(mockSaveTokens).not.toHaveBeenCalled();
-  // 재시도는 지금 세션의 토큰으로 나가야 한다
-  expect(mockRequest.mock.calls[2][1].token).toBe('other-session');
+  // 새 세션 토큰으로 재시도하면 남의 계정으로 요청이 나간다
+  expect(mockRequest).toHaveBeenCalledTimes(2);
+  // 그 사람을 쫓아내서도 안 된다
+  expect(mockClearTokens).not.toHaveBeenCalled();
 });
 
 test('갱신이 실패해도 다른 세션이 시작됐으면 쫓아내지 않는다', async () => {
