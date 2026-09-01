@@ -37,8 +37,10 @@ let refreshingGeneration = -1;
  * null 은 "리프레시 토큰이 거부됐다" 는 뜻만 갖는다.
  * 네트워크·서버 오류는 잠시 후 다시 되는 것이라 그대로 던진다.
  * 그걸 null 로 뭉치면 지하철에서 한 번 끊긴 것으로 로그아웃된다.
+ *
+ * 파일 업로드(multipart)는 authRequest 를 못 써서 이걸 직접 부른다.
  */
-async function refreshAccessToken(): Promise<string | null> {
+export async function refreshAccessToken(): Promise<string | null> {
   const generation = getSessionGeneration();
   if (refreshing && refreshingGeneration === generation) {
     return refreshing;
