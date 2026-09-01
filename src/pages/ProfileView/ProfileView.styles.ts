@@ -44,17 +44,6 @@ export const profileStyles = StyleSheet.create({
   avatarInitial: { fontSize: 24, fontWeight: '700', color: colors.primary },
   profileInfo: { flex: 1, marginLeft: 16, paddingTop: 6 },
   nickname: { fontSize: 18, fontWeight: '600', color: colors.white },
-  themeBadge: {
-    alignSelf: 'flex-start',
-    marginTop: 8,
-    height: 26,
-    paddingHorizontal: 12,
-    borderRadius: 13,
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  themeBadgeText: { fontSize: 11, fontWeight: '500', color: colors.white },
   handle: { marginTop: 10, fontSize: 12, color: colors.onPrimaryMuted },
   editBtn: {
     height: 34,
@@ -129,5 +118,4 @@ export const profileStyles = StyleSheet.create({
   },
   settingsRowText: { fontSize: 15, color: colors.text },
   settingsRowDanger: { color: colors.badge },
-  settingsRowChevron: { fontSize: 15, fontWeight: '600', color: colors.textTertiary },
 });

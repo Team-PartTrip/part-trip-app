@@ -120,11 +120,6 @@ const ProfileView: React.FC<Props> = ({
 
             <View style={s.profileInfo}>
               <Text style={s.nickname}>{profile?.nickName ?? '...'}</Text>
-              {!!profile?.themeName && (
-                <View style={s.themeBadge}>
-                  <Text style={s.themeBadgeText}>{profile.themeName}</Text>
-                </View>
-              )}
               <Text style={s.handle}>@{profile?.userId ?? ''}</Text>
             </View>
 
@@ -180,20 +175,7 @@ const ProfileView: React.FC<Props> = ({
         <View style={s.section}>
           <Text style={s.sectionTitle}>설정</Text>
 
-          <TouchableOpacity style={s.settingsRow} activeOpacity={0.85} onPress={onEdit}>
-            <Text style={s.settingsRowText}>여행 타입 수정</Text>
-            <Text style={s.settingsRowChevron}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={s.settingsRow}
-            activeOpacity={0.85}
-            onPress={() => notReady('계정 · 보안')}
-          >
-            <Text style={s.settingsRowText}>계정 · 보안</Text>
-            <Text style={s.settingsRowChevron}>›</Text>
-          </TouchableOpacity>
-
+          {/* 여행 타입 · 계정 보안은 뺐다. 프로필 수정은 위 버튼으로 간다 */}
           <TouchableOpacity style={s.settingsRow} activeOpacity={0.85} onPress={handleLogout}>
             <Text style={[s.settingsRowText, s.settingsRowDanger]}>로그아웃</Text>
           </TouchableOpacity>

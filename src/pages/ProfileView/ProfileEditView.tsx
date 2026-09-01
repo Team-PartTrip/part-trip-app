@@ -13,12 +13,7 @@ import {
 } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { profileEditStyles as s } from './ProfileEditView.styles';
-import {
-  getMyProfile,
-  getTravelThemes,
-  TravelTheme,
-  updateProfile,
-} from '../../entities/profile/api';
+import { getMyProfile, updateProfile } from '../../entities/profile/api';
 import { uploadImage, toImageUrl } from '../../shared/api/image';
 
 const DEFAULT_AVATAR = require('../../shared/assets/images/profile-character.jpg');
@@ -35,22 +30,17 @@ const ProfileEditView: React.FC<Props> = ({
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [themes, setThemes] = useState<TravelTheme[]>([]);
-  const [themeId, setThemeId] = useState<number | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
     let alive = true;
-    // 여행 타입 목록은 없어도 화면이 뜨게 둔다. 그때는 칩만 안 보인다.
-    Promise.all([getMyProfile(), getTravelThemes().catch(() => [])])
-      .then(([p, list]) => {
+    getMyProfile()
+      .then(p => {
         if (!alive) {
           return;
         }
         setNickname(p.nickName);
         setImgUrl(p.imgUrl);
-        setThemeId(p.themeId);
-        setThemes(list);
       })
       .catch(() => {
         if (!alive) {
@@ -114,7 +104,7 @@ const ProfileEditView: React.FC<Props> = ({
     }
     try {
       setSaving(true);
-      await updateProfile({ nickName: nickname.trim(), imgUrl, themeId });
+      await updateProfile({ nickName: nickname.trim(), imgUrl });
       onConfirm?.();
     } catch (e: any) {
       Alert.alert('저장 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
@@ -184,37 +174,6 @@ const ProfileEditView: React.FC<Props> = ({
               placeholderTextColor="#aab4be"
             />
 
-            {/* 여행 타입 (Func-007-01) */}
-            {themes.length > 0 && (
-              <>
-                <Text style={s.label}>여행 타입</Text>
-                <View style={s.themeRow}>
-                  {themes.map(theme => {
-                    const on = theme.themeId === themeId;
-                    return (
-                      <TouchableOpacity
-                        key={theme.themeId}
-                        style={[s.themeChip, on && s.themeChipOn]}
-                        activeOpacity={0.85}
-                        // 다시 누르면 선택을 푼다. 서버는 null 을 받는다.
-                        onPress={() => setThemeId(on ? null : theme.themeId)}
-                      >
-                        <Text
-                          style={[s.themeChipText, on && s.themeChipTextOn]}
-                        >
-                          {theme.themeName}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-                {!!themes.find(t => t.themeId === themeId)?.description && (
-                  <Text style={s.themeDesc}>
-                    {themes.find(t => t.themeId === themeId)?.description}
-                  </Text>
-                )}
-              </>
-            )}
           </View>
 
           <TouchableOpacity
