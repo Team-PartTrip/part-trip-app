@@ -1,4 +1,4 @@
-import { Appearance } from 'react-native';
+import { Appearance, DynamicColorIOS, Platform } from 'react-native';
 
 export type AppColors = {
   primary: string;
@@ -177,8 +177,22 @@ export const darkColors: AppColors = {
   night: '#17191f', // 사진 뷰어 · 여행카드 배경 (두 모드 공통)
 };
 
-// 앱 실행 시점의 시스템 테마로 팔레트 선택
+const dynamicColors = (): AppColors => {
+  const merged = {} as Record<string, unknown>;
+  (Object.keys(lightColors) as (keyof AppColors)[]).forEach(key => {
+    merged[key] = DynamicColorIOS({
+      light: lightColors[key],
+      dark: darkColors[key],
+    });
+  });
+  return merged as unknown as AppColors;
+};
+
 const colors: AppColors =
-  Appearance.getColorScheme() === 'dark' ? darkColors : lightColors;
+  Platform.OS === 'ios'
+    ? dynamicColors()
+    : Appearance.getColorScheme() === 'dark'
+    ? darkColors
+    : lightColors;
 
 export default colors;
