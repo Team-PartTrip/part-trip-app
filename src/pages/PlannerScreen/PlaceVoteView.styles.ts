@@ -24,8 +24,10 @@ export const placeVoteStyles = StyleSheet.create({
   statusText: { fontSize: 11, fontWeight: '500', color: colors.textOnPrimary },
   subtitle: { marginTop: 8, fontSize: 12, color: colors.textSecondary },
 
-  // 칩 줄이 남은 높이를 다 먹지 않도록 세로로는 내용만큼만 차지시킨다
-  chipScroll: { flexGrow: 0 },
+  // 칩 줄이 남은 높이를 다 먹지 않게 하고, 가로 ScrollView 가 세로 높이를
+  // 스스로 못 잡아 칩 아래가 잘리는 것도 막는다.
+  // 칩 32 + 위아래 여백 16 = 64 로 고정한다.
+  chipScroll: { flexGrow: 0, flexShrink: 0, height: 64 },
   chipRow: { paddingHorizontal: 24, paddingVertical: 16, gap: 8 },
   chip: {
     height: 32,
