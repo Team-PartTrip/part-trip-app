@@ -6,14 +6,17 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { placeVoteStyles as s } from './PlaceVoteView.styles';
 import colors from '../../shared/tokens/colors';
 import {
+  addVoteOption,
   castBallot,
   confirmPlanner,
+  createVote,
   getVotes,
   VoteStatusInfo,
 } from '../../entities/planner/api';
@@ -59,6 +62,9 @@ const PlaceVoteView: React.FC<Props> = ({
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  // 관광지 목록에 없는 곳을 직접 후보로 넣을 때 쓴다 (API-005-27)
+  const [newPlace, setNewPlace] = useState('');
+  const [adding, setAdding] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -137,6 +143,30 @@ const PlaceVoteView: React.FC<Props> = ({
     }
   };
 
+  /**
+   * 이름만으로 후보를 넣는다.
+   *
+   * 장바구니에 담긴 장소가 없는 카테고리는 투표 자체가 없어서, 먼저 만든다.
+   * 투표 만들기는 그룹장만 되므로 멤버는 서버 문구를 그대로 보게 된다.
+   */
+  const addPlace = async () => {
+    const name = newPlace.trim();
+    if (!name || adding) {
+      return;
+    }
+    setAdding(true);
+    try {
+      const voteId = vote?.voteId ?? (await createVote(planId, active)).voteId;
+      await addVoteOption(planId, voteId, name);
+      setNewPlace('');
+      setVotes(await getVotes(planId));
+    } catch (e: any) {
+      Alert.alert('추가 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
+    } finally {
+      setAdding(false);
+    }
+  };
+
   const goNext = async () => {
     const index = CATEGORIES.indexOf(active);
     if (index < CATEGORIES.length - 1) {
@@ -207,13 +237,43 @@ const PlaceVoteView: React.FC<Props> = ({
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
       >
+        {/* 관광지 목록에 없는 곳도 후보로 올릴 수 있어야 한다.
+            마감된 투표에는 서버가 안 받으므로 아예 감춘다. */}
+        {!loading && !closed && (
+          <View style={s.addRow}>
+            <TextInput
+              style={s.addInput}
+              placeholder="가고 싶은 곳을 직접 입력"
+              placeholderTextColor={colors.placeholder}
+              value={newPlace}
+              onChangeText={setNewPlace}
+              maxLength={255}
+              returnKeyType="done"
+              onSubmitEditing={addPlace}
+              editable={!adding}
+            />
+            <TouchableOpacity
+              style={[s.addBtn, !newPlace.trim() && s.addBtnOff]}
+              activeOpacity={0.85}
+              disabled={adding || !newPlace.trim()}
+              onPress={addPlace}
+            >
+              {adding ? (
+                <ActivityIndicator size="small" color={colors.primary} />
+              ) : (
+                <Text style={s.addBtnText}>추가</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
+
         {loading ? (
           <ActivityIndicator style={s.loading} />
         ) : options.length === 0 ? (
           <View style={s.empty}>
             <Text style={s.emptyText}>아직 담긴 후보가 없어요</Text>
             <Text style={s.emptyDesc}>
-              장소 둘러보기에서 후보를 담으면 투표를 시작할 수 있어요.
+              장소 둘러보기에서 담거나, 위에 직접 입력해 후보를 올릴 수 있어요.
             </Text>
           </View>
         ) : (

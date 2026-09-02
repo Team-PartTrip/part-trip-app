@@ -257,6 +257,59 @@ export function deleteVoteOption(
   );
 }
 
+export interface VoteOptionAdded {
+  optionId: number;
+  voteId: number;
+  tourPlaceId: number | null;
+  placeName: string;
+  addedByUserId: string;
+  createdAt: string;
+}
+
+/**
+ * 투표 후보 직접 추가 (API-005-27).
+ *
+ * tourPlaceId 없이 이름만 보내면 관광지 목록에 없는 곳도 후보가 된다.
+ * 멤버 누구나 부를 수 있고, 열린 투표에만 넣을 수 있다.
+ */
+export function addVoteOption(
+  plannerId: number,
+  voteId: number,
+  placeName: string,
+): Promise<VoteOptionAdded> {
+  return authRequest<VoteOptionAdded>(
+    `/api/planners/${plannerId}/votes/${voteId}/options`,
+    { method: 'POST', body: { placeName } },
+  );
+}
+
+export interface VoteCreated {
+  voteId: number;
+  plannerId: number;
+  planId: number;
+  category: PlaceCategory;
+  categoryLabel: string;
+  status: VoteStatus;
+  deadline: string | null;
+  createdAt: string;
+}
+
+/**
+ * 카테고리 투표 만들기 (API-005-26).
+ *
+ * 장바구니에 담긴 장소가 없는 카테고리는 투표 자체가 없다.
+ * 거기에 후보를 넣으려면 투표를 먼저 만들어야 한다. 그룹장만 부를 수 있다.
+ */
+export function createVote(
+  plannerId: number,
+  category: PlaceCategory,
+): Promise<VoteCreated> {
+  return authRequest<VoteCreated>(`/api/planners/${plannerId}/votes`, {
+    method: 'POST',
+    body: { category },
+  });
+}
+
 /**
  * 멤버 내보내기 (API-005-22).
  *

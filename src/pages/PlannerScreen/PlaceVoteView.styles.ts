@@ -43,6 +43,32 @@ export const placeVoteStyles = StyleSheet.create({
 
   content: { paddingHorizontal: 24, paddingBottom: 24, gap: 14 },
 
+  // 직접 후보 추가 (API-005-27). 목록 맨 위에 둔다
+  addRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  addInput: {
+    flex: 1,
+    height: 44,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    fontSize: 14,
+    color: colors.text,
+    backgroundColor: colors.white,
+  },
+  addBtn: {
+    width: 64,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: colors.tint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addBtnOff: { opacity: 0.5 },
+  addBtnText: { fontSize: 14, fontWeight: '600', color: colors.primary },
+
   card: {
     padding: 12,
     borderRadius: 14,
