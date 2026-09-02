@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { planGroupStyles as s } from './PlanGroupView.styles';
@@ -25,7 +26,7 @@ const MAX_HEADCOUNT = 10;
 /** 만들고 나서 필요한 것만 담는다 */
 interface CreatedPlanner {
   plannerId: number;
-  inviteCode: string;
+  inviteLink: string;
 }
 
 interface Props {
@@ -119,7 +120,7 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
         });
         const made = {
           plannerId: created.plannerId,
-          inviteCode: created.inviteCode,
+          inviteLink: created.inviteLink,
         };
         setPlanner(made);
         setMembers(await getPlannerMembers(created.plannerId).catch(() => []));
@@ -141,10 +142,19 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
     if (!made) {
       return;
     }
-    Alert.alert(
-      '초대 코드',
-      `${made.inviteCode}\n\n이 코드를 전달하면 참여할 수 있어요.`,
-    );
+    // 서버가 링크를 안 준 경우까지 공유 시트를 띄우면 빈 내용이 나간다
+    if (!made.inviteLink) {
+      Alert.alert('알림', '초대 링크를 받지 못했어요. 잠시 후 다시 시도해주세요.');
+      return;
+    }
+    try {
+      await Share.share({
+        message: `PartTrip 여행 계획에 초대합니다.\n${made.inviteLink}`,
+      });
+    } catch {
+      // 공유 시트를 못 띄우면 링크라도 보여준다
+      Alert.alert('초대 링크', made.inviteLink);
+    }
   };
 
   const next = async () => {

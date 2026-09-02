@@ -31,7 +31,8 @@ export function getPlanners(): Promise<PlannerListItem[]> {
 }
 
 export interface PlannerDetail extends PlannerListItem {
-  inviteCode: string;
+  /** 초대 링크. 서버가 코드가 아니라 링크로 내려준다(server f248378) */
+  inviteLink: string;
 }
 
 /** 플래너 상세 (C7 헤더) */
@@ -61,8 +62,8 @@ export interface PlannerCreated {
   endDate: string | null;
   countryName: string | null;
   cityName: string | null;
-  /** 다른 멤버가 참여할 때 쓰는 코드 */
-  inviteCode: string;
+  /** 다른 멤버가 참여할 때 여는 초대 링크 */
+  inviteLink: string;
 }
 
 /** 플래너(여행 그룹) 만들기 (C2) */
