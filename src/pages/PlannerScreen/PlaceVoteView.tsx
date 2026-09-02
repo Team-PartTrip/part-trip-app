@@ -288,7 +288,7 @@ const PlaceVoteView: React.FC<Props> = ({
         </View>
         <Text style={s.subtitle}>
           {vote?.votedMemberCount ?? 0} / {eligible}명 참여 ·{' '}
-          {formatDeadline(vote?.deadline ?? null)} 마감
+          {formatDeadline(vote?.deadline ?? null)}
         </Text>
       </SafeAreaView>
 

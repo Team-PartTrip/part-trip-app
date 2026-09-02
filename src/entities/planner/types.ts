@@ -177,13 +177,17 @@ export function today(): string {
 }
 
 /** 마감 시각을 "오늘 21:00" / "08.26 21:00" 로 */
+// '마감' 을 여기서 붙인다. 부르는 쪽에서 붙이면 마감이 없을 때
+// '마감 미정 마감' 이 된다.
 export function formatDeadline(deadline: string | null): string {
   if (!deadline) {
     return '마감 미정';
   }
   const [date, time = ''] = deadline.split('T');
   const hhmm = time.slice(0, 5);
-  return date === today() ? `오늘 ${hhmm}` : `${formatShortDate(date)} ${hhmm}`;
+  return date === today()
+    ? `오늘 ${hhmm} 마감`
+    : `${formatShortDate(date)} ${hhmm} 마감`;
 }
 
 /** 아바타에 넣을 한 글자 */
