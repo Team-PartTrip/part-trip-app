@@ -204,7 +204,7 @@ const PlanDestinationView: React.FC<Props> = ({ draft, onBack, onNext }) => {
           <Text style={s.searchIcon}>🔍</Text>
           <TextInput
             style={s.searchInput}
-            placeholder="나라 이름으로 검색 (예: 프랑스)"
+            placeholder="도시 또는 나라 검색"
             placeholderTextColor="#5d6f83"
             value={query}
             onChangeText={setQuery}
@@ -215,9 +215,7 @@ const PlanDestinationView: React.FC<Props> = ({ draft, onBack, onNext }) => {
         <Text style={s.label}>인기 여행지</Text>
         {cities.length === 0 ? (
           <Text style={s.cityEmpty}>
-            {searching
-              ? '찾는 중…'
-              : '검색 결과가 없어요. 나라 이름으로 찾아보세요.'}
+            {searching ? '찾는 중…' : '검색 결과가 없어요.'}
           </Text>
         ) : (
           <View style={s.cityGrid}>

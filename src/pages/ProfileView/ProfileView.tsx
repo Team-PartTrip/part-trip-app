@@ -9,6 +9,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
+import { CountryShapeSvg } from '../WorldMapView/WorldMapSvg';
+import {
+  getWorldMap,
+  VisitedCountryResponse,
+} from '../../entities/worldmap/api';
 import { profileStyles as s } from './ProfileView.styles';
 import {
   getMyProfile,
@@ -22,6 +27,8 @@ import { toImageUrl } from '../../shared/api/image';
 
 // 세계지도 미리보기 칸 수 (피그마 E1 은 6칸)
 const MAP_CELLS = 6;
+// mapCell 스타일의 width·height 와 같아야 한다
+const MAP_CELL_SIZE = 46;
 
 interface Props {
   onEdit?: () => void;
@@ -39,6 +46,7 @@ const ProfileView: React.FC<Props> = ({
 }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [stats, setStats] = useState<ProfileStats | null>(null);
+  const [visited, setVisited] = useState<VisitedCountryResponse[]>([]);
 
   useFocusEffect(
     useCallback(() => {
@@ -49,6 +57,10 @@ const ProfileView: React.FC<Props> = ({
       getProfileStats()
         .then(setStats)
         .catch(() => setStats(null));
+      // 미리보기 칸에 채울 나라들
+      getWorldMap()
+        .then(map => setVisited(map.visited))
+        .catch(() => setVisited([]));
     }, []),
   );
 
@@ -149,9 +161,21 @@ const ProfileView: React.FC<Props> = ({
           <Text style={s.sectionTitle}>내 세계지도</Text>
           <View style={s.mapCard}>
             <View style={s.mapGrid}>
-              {Array.from({ length: MAP_CELLS }).map((_, i) => (
-                <View key={i} style={s.mapCell} />
-              ))}
+              {/* 획득한 나라를 앞에서부터 채우고, 남는 칸은 비워 둔다.
+                  칸이 다 비어 있으면 지도가 고장 난 것처럼 보인다. */}
+              {Array.from({ length: MAP_CELLS }).map((_, i) => {
+                const country = visited[i];
+                return (
+                  <View key={i} style={s.mapCell}>
+                    {country ? (
+                      <CountryShapeSvg
+                        countryCode={country.countryCode}
+                        size={MAP_CELL_SIZE}
+                      />
+                    ) : null}
+                  </View>
+                );
+              })}
             </View>
             <View style={s.mapFooter}>
               <Text style={s.mapSummary}>

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import Svg, { Path } from 'react-native-svg';
-import { geoNaturalEarth1, geoPath } from 'd3-geo';
+import { geoMercator, geoNaturalEarth1, geoPath } from 'd3-geo';
 import { feature } from 'topojson-client';
 import worldAtlas from 'world-atlas/countries-110m.json';
 import colors from '../../shared/tokens/colors';
@@ -91,5 +91,50 @@ const WorldMapSvg: React.FC<Props> = ({ visitedCodes, width }) => {
     </Svg>
   );
 };
+
+/**
+ * 한 나라만 칸에 꽉 차게 그린다 (마이페이지 미리보기).
+ *
+ * 전체 지도에서 잘라 쓰면 나라마다 크기가 제각각이라 러시아는 칸을 넘고
+ * 일본은 점이 된다. 그 나라만 따로 투영해서 칸에 맞춘다.
+ */
+export function CountryShapeSvg({
+  countryCode,
+  size,
+}: {
+  countryCode: string;
+  size: number;
+}) {
+  const d = useMemo(() => {
+    const numeric = NUMERIC_BY_ALPHA2[countryCode?.toUpperCase()];
+    if (!numeric) {
+      return null;
+    }
+    const collection: any = feature(
+      worldAtlas as any,
+      (worldAtlas as any).objects.countries,
+    );
+    const target = collection.features.find(
+      (f: any) => f.id != null && String(f.id) === numeric,
+    );
+    if (!target) {
+      return null;
+    }
+    // 칸을 꽉 채우면 테두리가 잘린다. 조금 여유를 둔다
+    const padded = size * 0.82;
+    const projection = geoMercator().fitSize([padded, padded], target);
+    return geoPath(projection)(target) ?? null;
+  }, [countryCode, size]);
+
+  if (!d) {
+    return null;
+  }
+  const padded = size * 0.82;
+  return (
+    <Svg width={padded} height={padded}>
+      <Path d={d} fill={colors.primary} />
+    </Svg>
+  );
+}
 
 export default WorldMapSvg;
