@@ -185,7 +185,7 @@ const ProfileEditView: React.FC<Props> = ({
             {saving ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={s.confirmText}>Confirm</Text>
+              <Text style={s.confirmText}>저장하기</Text>
             )}
           </TouchableOpacity>
         </ScrollView>
