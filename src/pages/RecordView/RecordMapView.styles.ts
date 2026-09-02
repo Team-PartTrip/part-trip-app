@@ -89,6 +89,8 @@ export const recordMapStyles = StyleSheet.create({
   sheetFull: { flex: 1, borderTopLeftRadius: 0, borderTopRightRadius: 0 },
   // 지도 모드에서 아래에 걸쳐 두는 높이 (피그마 D1)
   sheetPeek: { height: 354 },
+  // 손잡이를 넉넉히 감싸 끌기 쉽게 한다
+  handleArea: { paddingTop: 4, paddingBottom: 12, alignItems: 'center' },
   handle: {
     alignSelf: 'center',
     width: 48,

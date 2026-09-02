@@ -1,12 +1,15 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Animated,
+  Dimensions,
+  PanResponder,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { recordMapStyles as s } from './RecordMapView.styles';
 import {
@@ -15,21 +18,19 @@ import {
   TimelineItem,
   TripCardSummary,
 } from '../../entities/record/api';
+import CountryTripMap from './CountryTripMap';
 import { formatShortDate } from '../../entities/record/types';
 
-/** 지도에 찍을 한 지점. 지도 SDK 가 없어서 위·경도를 0~1 비율로 바꿔 쓴다 */
+/** 지도에 찍을 한 지점. 위·경도는 지도와 같은 투영을 태워야 해서 그대로 둔다 */
 interface Spot {
   key: string;
   entryId: number | null;
   title: string;
   subtitle: string;
   date: string;
-  x: number;
-  y: number;
+  latitude: number;
+  longitude: number;
 }
-
-// 핀이 화면 가장자리에 붙지 않도록 남기는 여백
-const PAD = 0.12;
 
 /** 좌표가 있는 타임라인 항목을 지도 위 비율 좌표로 바꾼다 */
 function toSpots(timeline: TimelineItem[]): Spot[] {
@@ -39,17 +40,6 @@ function toSpots(timeline: TimelineItem[]): Spot[] {
   if (located.length === 0) {
     return [];
   }
-  const lats = located.map(item => item.latitude as number);
-  const lngs = located.map(item => item.longitude as number);
-  const minLat = Math.min(...lats);
-  const maxLat = Math.max(...lats);
-  const minLng = Math.min(...lngs);
-  const maxLng = Math.max(...lngs);
-
-  // 한 곳에서만 찍었으면 폭이 0이라 나눌 수 없다. 그럴 땐 가운데 둔다.
-  const ratio = (value: number, min: number, max: number) =>
-    max - min < 1e-9 ? 0.5 : PAD + ((value - min) / (max - min)) * (1 - PAD * 2);
-
   return located.map((item, index) => ({
     key: `${item.type}-${item.entryId ?? index}`,
     entryId: item.entryId,
@@ -59,14 +49,11 @@ function toSpots(timeline: TimelineItem[]): Spot[] {
         : item.comment ?? '사진',
     subtitle: item.type === 'PLACE' ? item.address ?? '' : '내가 찍은 사진',
     date: item.date,
-    x: ratio(item.longitude as number, minLng, maxLng),
-    // 위도는 클수록 북쪽이라 화면에서는 위로 간다
-    y: 1 - ratio(item.latitude as number, minLat, maxLat),
+    latitude: item.latitude as number,
+    longitude: item.longitude as number,
   }));
 }
 
-const GRID_ROWS = [70, 140, 210, 280, 350, 420, 490];
-const GRID_COLS = [60, 130, 200, 270, 340];
 
 interface Props {
   tripCardId: number;
@@ -81,8 +68,11 @@ const RecordMapView: React.FC<Props> = ({
   onOpenSpot,
 }) => {
   const insets = useSafeAreaInsets();
-  const [mode, setMode] = useState<'map' | 'list'>('map');
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
+  // 지도를 그리려면 실제 픽셀 크기를 알아야 한다. 화면마다 다르다.
+  const [mapSize, setMapSize] = useState<{ width: number; height: number } | null>(
+    null,
+  );
   const [card, setCard] = useState<TripCardSummary | null>(null);
   const [loading, setLoading] = useState(true);
   // 조회 실패와 데이터 없음은 다르다. 같은 문구를 쓰면 서버가 죽어도
@@ -125,6 +115,55 @@ const RecordMapView: React.FC<Props> = ({
     }, [tripCardId]),
   );
 
+  // ── 아래에서 끌어올리는 목록 ──
+  //
+  // 예전에는 '지도 / 목록' 을 눌러 화면을 통째로 바꿨다. 손잡이를 위아래로
+  // 끌어 목록을 펼치고 접는 편이 지도를 보면서 쓰기 좋다.
+  const SHEET_PEEK = 354;
+  const SHEET_FULL = Dimensions.get('window').height - 120;
+  // 위로 끌수록 값이 작아진다(높이가 커진다)
+  const sheetHeight = useRef(new Animated.Value(SHEET_PEEK)).current;
+  const startHeight = useRef(SHEET_PEEK);
+
+  const settle = (height: number, velocity: number) => {
+    // 빠르게 튕기면 그 방향으로, 아니면 가까운 쪽으로 붙인다
+    const middle = (SHEET_PEEK + SHEET_FULL) / 2;
+    const toFull =
+      velocity < -0.5 ? true : velocity > 0.5 ? false : height > middle;
+    const target = toFull ? SHEET_FULL : SHEET_PEEK;
+    startHeight.current = target;
+    Animated.spring(sheetHeight, {
+      toValue: target,
+      useNativeDriver: false,
+      bounciness: 0,
+    }).start();
+  };
+
+  const drag = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 4,
+      onPanResponderMove: (_, g) => {
+        const next = Math.min(
+          SHEET_FULL,
+          Math.max(SHEET_PEEK, startHeight.current - g.dy),
+        );
+        sheetHeight.setValue(next);
+      },
+      onPanResponderRelease: (_, g) => {
+        const next = Math.min(
+          SHEET_FULL,
+          Math.max(SHEET_PEEK, startHeight.current - g.dy),
+        );
+        settle(next, g.vy);
+      },
+    }),
+  ).current;
+
+  const onMapLayout = (e: any) => {
+    const { width, height } = e.nativeEvent.layout;
+    setMapSize({ width, height });
+  };
+
   const spots = useMemo(() => toSpots(timeline), [timeline]);
   const place = card ? `${card.countryName} · ${card.cityName}` : '여행';
 
@@ -132,17 +171,7 @@ const RecordMapView: React.FC<Props> = ({
   const list = (
     <>
       <View style={s.sheetHead}>
-        <Text style={s.sheetTitle}>촬영 위치 {spots.length}곳</Text>
-        <TouchableOpacity hitSlop={8} onPress={() => setMode('map')}>
-          <Text style={[s.toggle, mode === 'map' ? s.toggleOn : s.toggleOff]}>
-            지도
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity hitSlop={8} onPress={() => setMode('list')}>
-          <Text style={[s.toggle, mode === 'list' ? s.toggleOn : s.toggleOff]}>
-            목록
-          </Text>
-        </TouchableOpacity>
+        <Text style={s.sheetTitle}>방문 장소 {spots.length}곳</Text>
       </View>
 
       <ScrollView
@@ -189,56 +218,28 @@ const RecordMapView: React.FC<Props> = ({
     </>
   );
 
-  if (mode === 'list') {
-    return (
-      <SafeAreaView edges={['top']} style={s.safeArea}>
-        <View style={s.listHeader}>
-          <TouchableOpacity
-            style={s.circleBtn}
-            activeOpacity={0.8}
-            onPress={onBack}
-          >
-            <Text style={s.circleBtnText}>‹</Text>
-          </TouchableOpacity>
-          <View style={s.placePill}>
-            <Text style={s.placePillText}>{place}</Text>
-          </View>
-        </View>
-        <View style={[s.sheet, s.sheetFull]}>{list}</View>
-      </SafeAreaView>
-    );
-  }
-
   return (
     <View style={s.safeArea}>
-      <View style={s.map}>
-        {GRID_ROWS.map(top => (
-          <View
-            key={`r${top}`}
-            style={[s.gridLine, s.gridRow, { top }]}
+      <View style={s.map} onLayout={onMapLayout}>
+        {mapSize ? (
+          <CountryTripMap
+            countryName={card?.countryName}
+            points={spots.map((spot, i) => ({
+              key: spot.key,
+              latitude: spot.latitude,
+              longitude: spot.longitude,
+              index: i,
+            }))}
+            width={mapSize.width}
+            height={mapSize.height}
+            onPressPoint={key => {
+              const spot = spots.find(item => item.key === key);
+              if (spot) {
+                onOpenSpot?.({ tripCardId, entryId: spot.entryId });
+              }
+            }}
           />
-        ))}
-        {GRID_COLS.map(left => (
-          <View
-            key={`c${left}`}
-            style={[s.gridLine, s.gridCol, { left }]}
-          />
-        ))}
-        <View style={s.landmass} />
-
-        {spots.map((spot, i) => (
-          <TouchableOpacity
-            key={spot.key}
-            style={[
-              s.pin,
-              { left: `${spot.x * 100}%`, top: `${spot.y * 100}%` },
-            ]}
-            activeOpacity={0.85}
-            onPress={() => onOpenSpot?.({ tripCardId, entryId: spot.entryId })}
-          >
-            <Text style={s.pinText}>{i + 1}</Text>
-          </TouchableOpacity>
-        ))}
+        ) : null}
 
         <View style={[s.topBar, { top: insets.top + 8 }]}>
           <TouchableOpacity
@@ -255,10 +256,13 @@ const RecordMapView: React.FC<Props> = ({
         </View>
       </View>
 
-      <View style={[s.sheet, s.sheetPeek]}>
-        <View style={s.handle} />
+      <Animated.View style={[s.sheet, { height: sheetHeight }]}>
+        {/* 손잡이만 끌리게 한다. 목록 안에서 끌면 스크롤과 싸운다 */}
+        <View {...drag.panHandlers} style={s.handleArea}>
+          <View style={s.handle} />
+        </View>
         {list}
-      </View>
+      </Animated.View>
     </View>
   );
 };
