@@ -196,13 +196,18 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
     }
   };
 
-  const next = async () => {
-    const made = await ensurePlanner();
-    if (!made) {
+  const next = () => {
+    if (!title.trim()) {
+      Alert.alert('알림', '여행 제목을 입력해주세요.');
       return;
     }
+    // 여기서 만들지 않는다. 여행지도 기간도 안 정하고 나가면 "기간 미정"
+    // 플래너가 목록에 남는다. 장소를 실제로 담을 때(투표 시작) 만든다.
+    // 초대하기를 먼저 눌렀다면 이미 만들어져 있고, 그 id 를 그대로 넘긴다.
     onNext?.({
-      plannerId: made.plannerId,
+      plannerId: planner?.plannerId ?? null,
+      title: title.trim(),
+      isSolo: !together,
       headcount: finalHeadcount,
       countryName: '',
       cityName: '',

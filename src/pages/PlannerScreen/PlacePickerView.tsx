@@ -10,7 +10,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { placePickerStyles as s } from './PlacePickerView.styles';
 import { getTourPlaces, TourPlace as ServerPlace } from '../../entities/main/api';
-import { addCartPlaces } from '../../entities/planner/api';
+import {
+  addCartPlaces,
+  createPlanner,
+  saveTravelPlan,
+} from '../../entities/planner/api';
 import {
   CATEGORIES,
   CATEGORY_EMOJI,
@@ -24,9 +28,10 @@ interface Props {
   draft: PlanDraft;
   onBack?: () => void;
   /** 담은 장소를 장바구니(C6)로 넘긴다 */
-  onOpenCart?: () => void;
+  /** 담기가 끝나면 실제로 쓸 plannerId 를 넘긴다 */
+  onOpenCart?: (plannerId: number) => void;
   /** 담은 장소로 카테고리별 투표(C5)를 연다 */
-  onStartVote?: () => void;
+  onStartVote?: (plannerId: number) => void;
 }
 
 const PlacePickerView: React.FC<Props> = ({
@@ -81,23 +86,48 @@ const PlacePickerView: React.FC<Props> = ({
 
   // 담기와 동시에 서버가 카테고리별 투표를 만들어준다.
   // 그래서 장바구니로 가든 투표로 가든 먼저 담아두어야 다음 화면에 내용이 있다.
+  /**
+   * 담기 = 이 여행이 실제로 시작되는 지점이다.
+   *
+   * 여기까지 와야 플래너를 만든다. 앞 화면에서 만들면 여행지도 안 정하고
+   * 나간 사람의 "기간 미정" 플래너가 목록에 쌓인다. 초대하기를 먼저 눌렀다면
+   * 이미 만들어져 있으므로 그 id 를 쓴다.
+   *
+   * 만들자마자 여행지·기간을 저장한다. 그래야 서버가 카테고리별 투표를
+   * 만들 수 있다.
+   */
   const commit = useCallback(
-    async (next?: () => void) => {
+    async (next?: (plannerId: number) => void) => {
       if (picked.length === 0 || sending) {
         return;
       }
       try {
         setSending(true);
-        await addCartPlaces(draft.plannerId, picked);
+        let plannerId = draft.plannerId;
+        if (plannerId == null) {
+          const created = await createPlanner({
+            title: draft.title,
+            memberCount: draft.headcount,
+            isSolo: draft.isSolo,
+          });
+          plannerId = created.plannerId;
+        }
+        await saveTravelPlan(plannerId, {
+          countryName: draft.countryName,
+          cityName: draft.cityName,
+          startDate: draft.startDate,
+          endDate: draft.endDate,
+        });
+        await addCartPlaces(plannerId, picked);
         setPicked([]);
-        next?.();
+        next?.(plannerId);
       } catch (e: any) {
         Alert.alert('담기 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
       } finally {
         setSending(false);
       }
     },
-    [draft.plannerId, picked, sending],
+    [draft, picked, sending],
   );
 
   return (

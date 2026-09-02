@@ -5,12 +5,11 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { planDestinationStyles as s } from './PlanDestinationView.styles';
 import WizardHeader from './WizardHeader';
-import { getPopularCities, saveTravelPlan } from '../../entities/planner/api';
+import { getPopularCities } from '../../entities/planner/api';
 import { emojiOf, FALLBACK_CITIES } from '../../entities/planner/sampleData';
 import {
   formatNights,
@@ -117,27 +116,14 @@ const PlanDestinationView: React.FC<Props> = ({ draft, onBack, onNext }) => {
 
   const ready = !!city && !!startDate && !!endDate;
 
-  const [saving, setSaving] = useState(false);
 
-  const next = async () => {
-    if (!ready || !city || saving) {
+  // 여기서 서버에 저장하지 않는다. 아직 플래너가 없을 수도 있고,
+  // 저장해두면 장소를 안 담고 나갔을 때 빈 플래너가 목록에 남는다.
+  // 여행지·기간은 장소를 담을 때(PlacePickerView) 함께 저장한다.
+  const next = () => {
+    if (!ready || !city) {
       return;
     }
-    try {
-      setSaving(true);
-      // 여행지·기간이 정해져야 카테고리별 투표를 만들 수 있다
-      await saveTravelPlan(draft.plannerId, {
-        countryName: city.countryName,
-        cityName: city.cityName,
-        startDate,
-        endDate,
-      });
-    } catch (e: any) {
-      Alert.alert('저장 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
-      setSaving(false);
-      return;
-    }
-    setSaving(false);
     onNext?.({
       ...draft,
       countryName: city.countryName,
@@ -270,10 +256,10 @@ const PlanDestinationView: React.FC<Props> = ({ draft, onBack, onNext }) => {
         <TouchableOpacity
           style={[s.primaryBtn, !ready && s.primaryBtnOff]}
           activeOpacity={0.85}
-          disabled={!ready || saving}
+          disabled={!ready}
           onPress={next}
         >
-          <Text style={s.primaryText}>{saving ? '저장 중…' : '다음'}</Text>
+          <Text style={s.primaryText}>다음</Text>
         </TouchableOpacity>
       </SafeAreaView>
     </View>
