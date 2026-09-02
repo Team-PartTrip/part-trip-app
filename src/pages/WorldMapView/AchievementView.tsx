@@ -1,8 +1,16 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { achievementStyles as s } from './AchievementView.styles';
-import { sampleSummary } from '../../entities/worldmap/sampleData';
+import { getSummary } from '../../entities/worldmap/api';
+import type { WorldMapSummary } from '../../entities/worldmap/types';
 
 /**
  * 도넛 진행률.
@@ -51,14 +59,49 @@ interface Props {
 }
 
 const AchievementView: React.FC<Props> = ({ onBack }) => {
-  const { visitedCount, totalCount, continents, countries } = sampleSummary;
-  const percent = Math.round((visitedCount / totalCount) * 1000) / 10;
+  const [summary, setSummary] = useState<WorldMapSummary | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // 올해 처음 밟은 나라 수
-  const thisYear = `${new Date().getFullYear()}`;
-  const gainedThisYear = countries.filter(c =>
-    c.firstVisitedAt.startsWith(thisYear),
-  ).length;
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      (async () => {
+        setLoading(true);
+        try {
+          const data = await getSummary();
+          if (alive) {
+            setSummary(data);
+          }
+        } catch {
+          if (alive) {
+            setSummary(null);
+          }
+        } finally {
+          if (alive) {
+            setLoading(false);
+          }
+        }
+      })();
+      return () => {
+        alive = false;
+      };
+    }, []),
+  );
+
+  const visitedCount = summary?.visitedCount ?? 0;
+  const totalCount = summary?.totalCount ?? 0;
+  const continents = summary?.continents ?? [];
+  // 0 으로 나누면 NaN% 가 화면에 그대로 찍힌다
+  const percent =
+    totalCount > 0 ? Math.round((visitedCount / totalCount) * 1000) / 10 : 0;
+
+  if (loading) {
+    return (
+      <View style={s.safeArea}>
+        <ActivityIndicator style={s.loading} />
+      </View>
+    );
+  }
 
   // 다음 목표는 10개국 단위로 올린다 (5개국 → 10개국 → 20개국 …)
   const goal = visitedCount < 10 ? 10 : Math.ceil((visitedCount + 1) / 10) * 10;
@@ -82,9 +125,6 @@ const AchievementView: React.FC<Props> = ({ onBack }) => {
           <View style={s.summaryBody}>
             <Text style={s.summaryEyebrow}>전 세계 {totalCount}개국 중</Text>
             <Text style={s.summaryPercent}>{percent}% 달성</Text>
-            <Text style={s.summaryThisYear}>
-              올해 +{gainedThisYear}개국
-            </Text>
             <View style={s.goalPill}>
               <Text style={s.goalPillText}>다음 목표 {goal}개국</Text>
             </View>
@@ -111,9 +151,6 @@ const AchievementView: React.FC<Props> = ({ onBack }) => {
           ))}
         </View>
 
-        <Text style={s.note}>
-          세계지도 API 연동 전이라 예시 데이터로 보여주고 있어요.
-        </Text>
       </ScrollView>
     </View>
   );
