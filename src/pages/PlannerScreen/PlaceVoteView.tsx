@@ -18,6 +18,7 @@ import {
   castBallot,
   confirmPlanner,
   createVote,
+  getPlanner,
   getVotes,
   VoteSelection,
   VoteStatusInfo,
@@ -214,7 +215,30 @@ const PlaceVoteView: React.FC<Props> = ({
     if (confirming) {
       return;
     }
-    // 동점인 채로 보내면 서버가 거부한다. 먼저 그룹장에게 물어본다.
+
+    // 확정은 그룹장만 된다. 동점을 먼저 물으면, 멤버는 다 골라놓고 나서야
+    // "그룹장이 아닙니다" 를 보게 된다. 그래서 묻기 전에 먼저 확인한다.
+    // 이 화면은 역할을 모르므로 확정을 누른 이때만 받아온다.
+    setConfirming(true);
+    let isOwner: boolean;
+    try {
+      isOwner = (await getPlanner(planId)).role === 'OWNER';
+    } catch (e: any) {
+      Alert.alert('확정 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
+      setConfirming(false);
+      return;
+    }
+    setConfirming(false);
+
+    if (!isOwner) {
+      Alert.alert(
+        '확정할 수 없어요',
+        '일정 확정은 그룹장만 할 수 있어요. 그룹장에게 요청해주세요.',
+      );
+      return;
+    }
+
+    // 동점인 채로 보내면 서버가 거부한다. 그룹장에게 물어본다.
     const ties = votes.filter(
       v => v.status !== 'CONFIRMED' && tiedOptions(v).length > 0,
     );
