@@ -5,10 +5,11 @@ import type { NotificationType } from '../../entities/notification/api';
 const META: Record<NotificationType, { badge: string; color: string }> = {
   VOTE_PARTICIPATED: { badge: '투표', color: colors.accent },
   VOTE_DEADLINE: { badge: '플래너', color: colors.primary },
-  PHOTO_ORGANIZED: { badge: '기록', color: colors.success },
+  VOTE_REMINDER: { badge: '투표', color: colors.accent },
+  GROUP_INVITED: { badge: '그룹', color: colors.primary },
+  GROUP_INVITE_ACCEPTED: { badge: '그룹', color: colors.success },
   COUNTRY_ACQUIRED: { badge: '국가', color: colors.primary },
   TRIP_CARD_CREATED: { badge: '여행카드', color: colors.accent },
-  GROUP_INVITE_ACCEPTED: { badge: '그룹', color: colors.success },
 };
 
 export function metaOf(type: NotificationType) {

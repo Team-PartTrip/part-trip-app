@@ -15,6 +15,7 @@ import {
   deletePlanner,
   getPlanner,
   getVotes,
+  remindVotes,
   PlannerDetail,
   VoteStatusInfo,
 } from '../../entities/planner/api';
@@ -94,6 +95,7 @@ const PlanStatusView: React.FC<Props> = ({
   onDeleted,
 }) => {
   const [deleting, setDeleting] = useState(false);
+  const [reminding, setReminding] = useState(false);
   const [plan, setPlan] = useState<PlannerDetail | null>(null);
   const [votes, setVotes] = useState<VoteStatusInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -152,6 +154,23 @@ const PlanStatusView: React.FC<Props> = ({
         },
       ],
     );
+
+  // 누를 때마다 팀원 전원에게 알림이 나간다. 요청이 끝날 때까지 잠근다.
+  const handleRemind = async () => {
+    setReminding(true);
+    try {
+      const result = await remindVotes(planId);
+      // 전원이 투표를 마쳤으면 notifiedCount 가 0 이다. 서버 문구를 그대로 쓴다.
+      Alert.alert('투표 독촉', result.message);
+    } catch (e: any) {
+      Alert.alert('보내지 못했어요', e?.message ?? '잠시 후 다시 시도해주세요.');
+    } finally {
+      setReminding(false);
+    }
+  };
+
+  // 서버는 열린 투표가 하나도 없으면 독촉을 거부한다(VoteReminderService)
+  const hasOpenVote = votes.some(vote => vote.status === 'OPEN');
 
   const rows = CATEGORIES.map(category =>
     buildRow(
@@ -281,8 +300,30 @@ const PlanStatusView: React.FC<Props> = ({
           ))}
         </View>
 
-        {/* 삭제는 그룹장만 할 수 있다. 멤버에게 보여주면 눌러도 서버가
+        {/* 독촉·삭제는 그룹장만 할 수 있다. 멤버에게 보여주면 눌러도 서버가
             거부하는 버튼이 된다. */}
+        {plan?.role === 'OWNER' && (
+          <TouchableOpacity
+            style={[s.remindBtn, !hasOpenVote && s.remindBtnDisabled]}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel="투표 독촉하기"
+            // 열린 투표가 없으면 서버가 거부한다. 미리 막는다.
+            disabled={reminding || !hasOpenVote}
+            onPress={handleRemind}
+          >
+            {reminding ? (
+              <ActivityIndicator size="small" color={colors.primary} />
+            ) : (
+              <Text
+                style={[s.remindText, !hasOpenVote && s.remindTextDisabled]}
+              >
+                {hasOpenVote ? '투표 독촉하기' : '진행 중인 투표가 없어요'}
+              </Text>
+            )}
+          </TouchableOpacity>
+        )}
+
         {plan?.role === 'OWNER' && (
           <TouchableOpacity
             style={s.deleteBtn}

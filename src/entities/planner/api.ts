@@ -256,6 +256,39 @@ export function deleteVoteOption(
   );
 }
 
+/**
+ * 멤버 내보내기 (API-005-22).
+ *
+ * 그룹장만 부를 수 있고, 그룹장 자신은 뺄 수 없다.
+ */
+export function removePlannerMember(
+  plannerId: number,
+  memberUserId: string,
+): Promise<void> {
+  return authRequest<void>(
+    `/api/planners/${plannerId}/members/${encodeURIComponent(memberUserId)}`,
+    { method: 'DELETE' },
+  );
+}
+
+export interface VoteReminder {
+  /** 알림을 받은 사람 수. 전원이 투표를 마쳤으면 0 */
+  notifiedCount: number;
+  message: string;
+}
+
+/**
+ * 투표 독촉 알림 (API-005-29).
+ *
+ * 열린 투표에 아직 참여하지 않은 멤버에게만 알림이 간다.
+ * 그룹장만 부를 수 있고, 열린 투표가 없으면 서버가 거부한다.
+ */
+export function remindVotes(plannerId: number): Promise<VoteReminder> {
+  return authRequest<VoteReminder>(`/api/planners/${plannerId}/votes/remind`, {
+    method: 'POST',
+  });
+}
+
 // ── 장바구니 (C4 · C6) ────────────────────────────────────
 
 /**

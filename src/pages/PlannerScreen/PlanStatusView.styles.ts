@@ -98,9 +98,33 @@ export const planStatusStyles = StyleSheet.create({
 
 
   // 되돌릴 수 없는 동작이라 화면 맨 아래에 따로 둔다
-  deleteBtn: {
+  // 독촉은 삭제 위에 놓는다. 파괴적인 버튼이 항상 맨 아래여야 잘못 누르지 않는다.
+  remindBtn: {
     alignSelf: 'center',
     marginTop: 32,
+    paddingVertical: 12,
+    paddingHorizontal: 28,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    minWidth: 140,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  remindBtnDisabled: {
+    borderColor: colors.textTertiary,
+  },
+  remindText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  remindTextDisabled: {
+    color: colors.textTertiary,
+  },
+  deleteBtn: {
+    alignSelf: 'center',
+    marginTop: 16,
     paddingVertical: 12,
     paddingHorizontal: 28,
     borderRadius: 22,
