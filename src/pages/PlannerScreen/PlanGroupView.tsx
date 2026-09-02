@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -22,6 +22,11 @@ import {
 import { PlanDraft } from '../../entities/planner/types';
 
 const MAX_HEADCOUNT = 10;
+
+// 멤버 목록을 다시 받는 간격.
+// 초대 링크를 보낸 뒤 방장은 이 화면에 그대로 머무른다. 화면을 다시 열 일이
+// 없어서 focus 로는 갱신되지 않는다. 그래서 여기서 주기적으로 물어본다.
+const MEMBER_POLL_MS = 4000;
 
 /** 만들고 나서 필요한 것만 담는다 */
 interface CreatedPlanner {
@@ -57,6 +62,41 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
   const locked = planner !== null || busy;
   // 참여한 사람보다 적게 줄일 수 없고, 아무도 없어도 나 한 명은 남는다
   const minHeadcount = Math.max(1, members.length);
+
+  // 플래너를 만든 뒤부터 멤버가 다 모일 때까지 목록을 다시 받는다
+  useEffect(() => {
+    if (!planner) {
+      return;
+    }
+    let alive = true;
+    let timer: ReturnType<typeof setInterval> | null = null;
+
+    const stop = () => {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+    };
+
+    const load = async () => {
+      const list = await getPlannerMembers(planner.plannerId).catch(() => null);
+      if (!alive || !list) {
+        return;
+      }
+      setMembers(list);
+      // 다 모이면 더 물어볼 이유가 없다
+      if (list.length >= finalHeadcount) {
+        stop();
+      }
+    };
+
+    load();
+    timer = setInterval(load, MEMBER_POLL_MS);
+    return () => {
+      alive = false;
+      stop();
+    };
+  }, [planner, finalHeadcount]);
 
   // 되돌릴 수 없어서 한 번 묻는다. 서버는 그룹장만 받아준다(API-005-22).
   const confirmRemove = (member: PlannerMember) =>
@@ -123,7 +163,6 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
           inviteLink: created.inviteLink,
         };
         setPlanner(made);
-        setMembers(await getPlannerMembers(created.plannerId).catch(() => []));
         return made;
       } catch (e: any) {
         Alert.alert('생성 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
@@ -250,7 +289,7 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
             <Text style={s.label}>함께할 사람</Text>
             {members.length === 0 ? (
               <Text style={s.memberEmpty}>
-                초대 코드를 전달하면 여기에 참여한 사람이 보여요.
+                초대 링크를 전달하면 참여한 사람이 여기에 나타나요.
               </Text>
             ) : (
               members.map((member, i) => (
