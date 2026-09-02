@@ -15,6 +15,7 @@ import colors from '../../shared/tokens/colors';
 import {
   createPlanner,
   getPlannerMembers,
+  removePlannerMember,
   PlannerMember,
 } from '../../entities/planner/api';
 import { PlanDraft } from '../../entities/planner/types';
@@ -41,6 +42,8 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
   const [members, setMembers] = useState<PlannerMember[]>([]);
   const [planner, setPlanner] = useState<CreatedPlanner | null>(null);
   const [busy, setBusy] = useState(false);
+  // 내보내는 중인 멤버. 연타로 같은 요청이 두 번 나가는 것을 막는다.
+  const [removing, setRemoving] = useState<string | null>(null);
   // 만드는 중인 요청. 초대하기와 다음을 연달아 누르면 둘 다 여기로 들어온다.
   const creating = useRef<Promise<CreatedPlanner | null> | null>(null);
 
@@ -53,6 +56,39 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
   const locked = planner !== null || busy;
   // 참여한 사람보다 적게 줄일 수 없고, 아무도 없어도 나 한 명은 남는다
   const minHeadcount = Math.max(1, members.length);
+
+  // 되돌릴 수 없어서 한 번 묻는다. 서버는 그룹장만 받아준다(API-005-22).
+  const confirmRemove = (member: PlannerMember) =>
+    Alert.alert(
+      '멤버 내보내기',
+      `${member.nickName}님을 내보낼까요?\n다시 들어오려면 초대가 필요해요.`,
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '내보내기',
+          style: 'destructive',
+          onPress: async () => {
+            if (!planner) {
+              return;
+            }
+            setRemoving(member.userId);
+            try {
+              await removePlannerMember(planner.plannerId, member.userId);
+              setMembers(prev =>
+                prev.filter(m => m.userId !== member.userId),
+              );
+            } catch (e: any) {
+              Alert.alert(
+                '내보내지 못했어요',
+                e?.message ?? '잠시 후 다시 시도해주세요.',
+              );
+            } finally {
+              setRemoving(null);
+            }
+          },
+        },
+      ],
+    );
 
   /**
    * 플래너를 아직 안 만들었으면 만든다.
@@ -220,6 +256,22 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
                       {member.role === 'OWNER' ? '방장' : '참여 완료'}
                     </Text>
                   </View>
+                  {/* 이 화면을 보는 사람이 방장이다(직접 만들었다).
+                      방장 줄에는 안 보인다 = 자기 자신은 뺄 수 없다. */}
+                  {member.role !== 'OWNER' && (
+                    <TouchableOpacity
+                      style={s.memberRemove}
+                      hitSlop={8}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${member.nickName} 내보내기`}
+                      disabled={removing !== null}
+                      onPress={() => confirmRemove(member)}
+                    >
+                      <Text style={s.memberRemoveText}>
+                        {removing === member.userId ? '…' : '내보내기'}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               ))
             )}

@@ -108,6 +108,15 @@ export const planGroupStyles = StyleSheet.create({
   memberBody: { flex: 1, marginLeft: 12 },
   memberName: { fontSize: 15, fontWeight: '600', color: colors.text },
   memberSub: { marginTop: 2, fontSize: 12 },
+  // 방장이 잘못 들어온 사람을 뺄 때 쓴다 (API-005-22)
+  memberRemove: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.danger,
+  },
+  memberRemoveText: { fontSize: 12, fontWeight: '600', color: colors.danger },
 
   inviteBtn: {
     height: 56,
