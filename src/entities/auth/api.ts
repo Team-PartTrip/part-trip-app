@@ -10,12 +10,8 @@ export interface SignUpPayload {
   userId: string;
   userPwd: string;
   userMail: string;
-  /** 숫자만. 서버가 @NotBlank 로 필수 검증한다 */
-  phoneNumber: string;
   /** 가입 구분 (기본 'EMAIL') */
   signUpDivision?: string;
-  /** 국가 코드 (기본 'KR') */
-  myCountry?: string;
 }
 
 /** 로그인 → accessToken / refreshToken 발급 */
@@ -58,7 +54,6 @@ export function startSignUp(payload: SignUpPayload): Promise<string> {
   return request<string>('/api/auth/signup', {
     body: {
       signUpDivision: 'EMAIL',
-      myCountry: 'KR',
       ...payload,
     },
   });

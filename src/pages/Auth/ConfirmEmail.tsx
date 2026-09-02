@@ -130,7 +130,6 @@ const ConfirmEmail: React.FC<ConfirmEmailProps> = ({
           userId: signupData.userId,
           userPwd: signupData.userPwd,
           userMail: email.trim(),
-          phoneNumber: signupData.phoneNumber,
         });
       }
       setSent(true);

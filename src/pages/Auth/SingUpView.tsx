@@ -14,13 +14,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { checkUserIdAvailable } from '../../entities/auth/api';
 import { loginStyles as styles } from './LoginView.styles';
-import PhoneInput from '../../shared/ui/PhoneInput';
 import colors from '../../shared/tokens/colors';
 
 export interface SignUpData {
   userId: string;
   userPwd: string;
-  phoneNumber: string;
 }
 
 const ID_RE = /^[a-z0-9]{6,20}$/;
@@ -49,7 +47,6 @@ const SignUpView: React.FC<SignUpViewProps> = ({ onBack, onNext }) => {
   const [id, setId]                     = useState('');
   const [password, setPassword]         = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [phone, setPhone]               = useState('');
   const [checking, setChecking]         = useState(false);
 
   const handleNext = async () => {
@@ -67,14 +64,6 @@ const SignUpView: React.FC<SignUpViewProps> = ({ onBack, onNext }) => {
     }
     if (password !== confirmPassword) {
       Alert.alert('알림', '비밀번호가 일치하지 않습니다.');
-      return;
-    }
-    if (!phone.trim()) {
-      Alert.alert('알림', '전화번호를 입력해주세요.');
-      return;
-    }
-    if (phone.length < 10) {
-      Alert.alert('알림', '전화번호를 정확히 입력해주세요.');
       return;
     }
 
@@ -97,7 +86,7 @@ const SignUpView: React.FC<SignUpViewProps> = ({ onBack, onNext }) => {
     }
 
     // 실제 회원가입(/signup) 호출은 이메일 인증 단계에서 이메일과 함께 진행
-    onNext?.({ userId: id.trim(), userPwd: password, phoneNumber: phone });
+    onNext?.({ userId: id.trim(), userPwd: password });
   };
 
   return (
@@ -166,9 +155,6 @@ const SignUpView: React.FC<SignUpViewProps> = ({ onBack, onNext }) => {
               secureTextEntry
             />
 
-            <View style={styles.field}>
-              <PhoneInput onChange={(number) => setPhone(number)} />
-            </View>
           </View>
 
           {/* 버튼 영역 */}
