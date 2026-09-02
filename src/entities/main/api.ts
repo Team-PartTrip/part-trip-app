@@ -74,6 +74,32 @@ export function getTourPlaces(
 
 
 
+export interface CountryInfo {
+  /** DB 에 있는 여행지면 id 가 있고, ISO 목록에서만 온 나라는 null */
+  countryInfoId: number | null;
+  countryName: string;
+  /** 그 나라의 대표 도시(수도). ISO 에서만 온 나라는 null */
+  cityName: string | null;
+  imageUrl: string | null;
+  summary: string | null;
+}
+
+/**
+ * 나라 · 도시 검색 (API-002-03).
+ *
+ * 인기 여행지(popular-cities)는 관광지 데이터가 있는 도시만 준다. 지금은
+ * 다섯 곳뿐이라 그 안에서 거르면 "파리" 를 쳐도 아무것도 안 나온다.
+ * 이 API 는 DB 의 여행지 247곳에 ISO 전체 국가를 얹어서 찾아준다.
+ *
+ * 검색어를 주면 20개까지만 온다.
+ */
+export function getCountries(keyword: string): Promise<CountryInfo[]> {
+  return authRequest<CountryInfo[]>(
+    `/api/main/countries?keyword=${encodeURIComponent(keyword)}`,
+    { method: 'GET' },
+  );
+}
+
 export interface Festival {
   title: string;
   category: string;

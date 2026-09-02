@@ -10,6 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { planDestinationStyles as s } from './PlanDestinationView.styles';
 import WizardHeader from './WizardHeader';
 import { getPopularCities } from '../../entities/planner/api';
+import { getCountries } from '../../entities/main/api';
 import { emojiOf, FALLBACK_CITIES } from '../../entities/planner/sampleData';
 import {
   formatNights,
@@ -18,6 +19,9 @@ import {
 } from '../../entities/planner/types';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+
+// 글자를 칠 때마다 서버를 부르지 않도록 기다리는 시간
+const SEARCH_DELAY_MS = 300;
 
 /** 2026, 7(=8월) → "2026-08-23" */
 function toIso(year: number, monthIndex: number, day: number): string {
@@ -42,6 +46,9 @@ const PlanDestinationView: React.FC<Props> = ({ draft, onBack, onNext }) => {
   const [city, setCity] = useState<PopularCity | null>(null);
   // 서버가 계획 수로 뽑아준 인기 여행지. 조회 전·실패 시에는 기본 목록을 쓴다.
   const [popular, setPopular] = useState<PopularCity[]>(FALLBACK_CITIES);
+  // 검색 결과. null 이면 아직 안 찾아본 것이다
+  const [found, setFound] = useState<PopularCity[] | null>(null);
+  const [searching, setSearching] = useState(false);
   // 피그마에는 달 이동 화살표가 없지만, 한 달에 갇히면 기간을 못 고른다
   const [cursor, setCursor] = useState(() => new Date());
   const [startDate, setStartDate] = useState('');
@@ -72,17 +79,68 @@ const PlanDestinationView: React.FC<Props> = ({ draft, onBack, onNext }) => {
     };
   }, []);
 
+  /**
+   * 검색은 서버에 묻는다.
+   *
+   * 인기 여행지는 관광지 데이터가 있는 도시만이라 지금 다섯 곳뿐이다.
+   * 그 안에서 거르면 "파리" 를 쳐도 아무것도 안 나왔다.
+   * 글자를 칠 때마다 부르지 않도록 잠깐 기다렸다 보낸다.
+   */
+  useEffect(() => {
+    const keyword = query.trim();
+    if (!keyword) {
+      setFound(null);
+      return;
+    }
+    let alive = true;
+    setSearching(true);
+    const timer = setTimeout(() => {
+      getCountries(keyword)
+        .then(list => {
+          if (!alive) {
+            return;
+          }
+          setFound(
+            list.map(item => ({
+              // 나라만 있고 도시가 없으면 나라 이름을 도시 자리에 쓴다
+              cityName: item.cityName ?? item.countryName,
+              countryName: item.countryName,
+              emoji: emojiOf(item.cityName ?? item.countryName),
+            })),
+          );
+        })
+        .catch(() => {
+          if (alive) {
+            setFound([]);
+          }
+        })
+        .then(() => {
+          if (alive) {
+            setSearching(false);
+          }
+        });
+    }, SEARCH_DELAY_MS);
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+      setSearching(false);
+    };
+  }, [query]);
+
   const cities = useMemo(() => {
     const keyword = query.trim();
-    // 검색 전에는 피그마처럼 인기 여행지 네 곳만, 검색하면 전체에서 찾는다
+    // 검색 전에는 피그마처럼 인기 여행지 네 곳만 보여준다
     if (!keyword) {
       return popular.slice(0, 4);
     }
-    return popular.filter(
+    // 관광지가 있는 도시(오사카 등)를 위로 올린다. 거기는 담을 장소가 있다
+    const hits = popular.filter(
       item =>
         item.cityName.includes(keyword) || item.countryName.includes(keyword),
     );
-  }, [query, popular]);
+    const names = new Set(hits.map(h => h.cityName));
+    return [...hits, ...(found ?? []).filter(f => !names.has(f.cityName))];
+  }, [query, popular, found]);
 
   // 1일이 무슨 요일인지에 맞춰 앞을 빈 칸으로 채운 뒤 주 단위로 자른다
   const weeks = useMemo(() => {
@@ -146,7 +204,7 @@ const PlanDestinationView: React.FC<Props> = ({ draft, onBack, onNext }) => {
           <Text style={s.searchIcon}>🔍</Text>
           <TextInput
             style={s.searchInput}
-            placeholder="도시 또는 나라 검색"
+            placeholder="나라 이름으로 검색 (예: 프랑스)"
             placeholderTextColor="#5d6f83"
             value={query}
             onChangeText={setQuery}
@@ -156,7 +214,11 @@ const PlanDestinationView: React.FC<Props> = ({ draft, onBack, onNext }) => {
 
         <Text style={s.label}>인기 여행지</Text>
         {cities.length === 0 ? (
-          <Text style={s.cityEmpty}>검색 결과가 없어요.</Text>
+          <Text style={s.cityEmpty}>
+            {searching
+              ? '찾는 중…'
+              : '검색 결과가 없어요. 나라 이름으로 찾아보세요.'}
+          </Text>
         ) : (
           <View style={s.cityGrid}>
             {cities.map(item => {
