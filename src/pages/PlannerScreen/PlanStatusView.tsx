@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -97,6 +97,8 @@ const PlanStatusView: React.FC<Props> = ({
 }) => {
   const [deleting, setDeleting] = useState(false);
   const [reminding, setReminding] = useState(false);
+  // 버튼 disabled 는 렌더 값이라 연타를 다 막지 못한다. 잠금은 ref 로 건다.
+  const remindingRef = useRef(false);
   const [plan, setPlan] = useState<PlannerDetail | null>(null);
   const [votes, setVotes] = useState<VoteStatusInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -164,6 +166,10 @@ const PlanStatusView: React.FC<Props> = ({
 
   // 누를 때마다 팀원 전원에게 알림이 나간다. 요청이 끝날 때까지 잠근다.
   const handleRemind = async () => {
+    if (remindingRef.current) {
+      return;
+    }
+    remindingRef.current = true;
     setReminding(true);
     try {
       const result = await remindVotes(planId);
@@ -175,6 +181,7 @@ const PlanStatusView: React.FC<Props> = ({
         e?.message ?? '잠시 후 다시 시도해주세요.',
       );
     } finally {
+      remindingRef.current = false;
       setReminding(false);
     }
   };

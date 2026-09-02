@@ -1,4 +1,6 @@
-import { ApiError } from '../src/shared/api/client';
+// 모듈을 테스트마다 새로 부르므로 ApiError 도 그때 같이 받아온다.
+// 예전 인스턴스를 쓰면 http.ts 안의 instanceof 가 어긋난다.
+let ApiError: typeof import('../src/shared/api/client').ApiError;
 
 // request 와 tokenStorage 를 대신 세운다. 네트워크와 저장소 없이
 // 401 → 갱신 → 재시도 흐름만 본다.
@@ -33,13 +35,16 @@ jest.mock('../src/shared/api/tokenStorage', () => ({
   },
 }));
 
-// mock 이 걸린 뒤에 불러와야 한다
-const {
-  authRequest,
-  setSessionExpiredHandler,
-} = require('../src/shared/api/http');
+// http.ts 는 진행 중인 갱신을 모듈 변수로 들고 있다. mockGeneration 만
+// 되돌리면 갱신이 안 끝난 테스트 뒤에 옛 프로미스를 그대로 물려받는다.
+// 테스트마다 모듈을 새로 불러 그 상태까지 초기화한다.
+let authRequest: any;
+let setSessionExpiredHandler: any;
 
 beforeEach(() => {
+  jest.resetModules();
+  ({ ApiError } = require('../src/shared/api/client'));
+  ({ authRequest, setSessionExpiredHandler } = require('../src/shared/api/http'));
   mockRequest.mockReset();
   mockSaveTokens.mockReset();
   mockClearTokens.mockReset();

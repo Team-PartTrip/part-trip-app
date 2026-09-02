@@ -66,6 +66,8 @@ const ConfirmEmail: React.FC<ConfirmEmailProps> = ({
     if (value.trim() !== email.trim()) {
       setSent(false);
       setCooldown(0);
+      // 앞 주소로 받은 번호가 남아 있으면 새 주소 인증이 실패한다
+      setCode('');
     }
     setEmail(value);
   };

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -119,6 +119,8 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
   const [joinOpen, setJoinOpen] = useState(false);
   const [joinInput, setJoinInput] = useState('');
   const [joining, setJoining] = useState(false);
+  // 잠금은 ref 로 건다. state 는 화면이 다시 그려져야 바뀐다.
+  const joiningRef = useRef(false);
   useFocusEffect(
     useCallback(() => {
       let alive = true;
@@ -157,9 +159,10 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
   // 여기서 다시 쓰면 서버가 거절한 진짜 이유를 덮어버린다.
   const join = async () => {
     const code = extractInviteCode(joinInput);
-    if (!code || joining) {
+    if (!code || joiningRef.current) {
       return;
     }
+    joiningRef.current = true;
     setJoining(true);
     try {
       const joined = await joinPlanner(code);
@@ -169,6 +172,7 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
     } catch (e: any) {
       Alert.alert('참여 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
     } finally {
+      joiningRef.current = false;
       setJoining(false);
     }
   };

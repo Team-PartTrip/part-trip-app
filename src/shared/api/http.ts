@@ -78,7 +78,8 @@ async function doRefresh(generation: number): Promise<string | null> {
     if (getSessionGeneration() !== generation) {
       return null;
     }
-    await saveTokens(tokens, { newSession: false });
+    // 저장 차례가 올 때 다시 확인하도록 세대를 함께 넘긴다
+    await saveTokens(tokens, { newSession: false, generation });
     return tokens.accessToken;
   } catch (e) {
     // 서버가 리프레시 토큰을 거부한 것만 세션의 끝이다.
@@ -107,8 +108,13 @@ export async function authRequest<T = unknown>(
   path: string,
   options: { method?: string; body?: unknown } = {},
 ): Promise<T> {
-  const token = await getAccessToken();
+  // 세대를 먼저 잡는다. 읽고 나서 잡으면 조회를 기다리는 사이 바뀐
+  // 세션을 못 알아채고, 그 토큰을 그대로 보낸다.
   const generation = getSessionGeneration();
+  const token = await getAccessToken();
+  if (getSessionGeneration() !== generation) {
+    throw new ApiError(401, '로그인 정보가 바뀌었어요. 다시 시도해주세요.');
+  }
   try {
     return await request<T>(path, { ...options, token });
   } catch (e) {

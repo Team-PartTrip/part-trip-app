@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -53,6 +53,12 @@ const PlanCartView: React.FC<Props> = ({ plannerId, onBack, onConfirm }) => {
   // 담아두면 items 만 갱신됐을 때 둘이 어긋난다.
   const [drawnId, setDrawnId] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
+  /**
+   * 실제 잠금은 ref 다. state 는 화면이 다시 그려져야 바뀌어서,
+   * 연달아 누른 두 번째 터치도 첫 번째와 같은 값을 본다.
+   * 담기·뽑기·빼기가 같은 잠금을 나눠 쓴다.
+   */
+  const busyRef = useRef(false);
 
   // 담은 목록은 카테고리별 투표의 후보로 저장돼 있다. 그래서 투표 현황을 펼쳐서 쓴다.
   const load = useCallback(async (alive: () => boolean) => {
@@ -96,10 +102,11 @@ const PlanCartView: React.FC<Props> = ({ plannerId, onBack, onConfirm }) => {
   );
 
   const remove = async (item: CartItem) => {
-    if (busy) {
+    if (busyRef.current) {
       return;
     }
     try {
+      busyRef.current = true;
       setBusy(true);
       await deleteVoteOption(plannerId, item.voteId, item.optionId);
       setItems(prev => prev.filter(row => row.optionId !== item.optionId));
@@ -108,6 +115,7 @@ const PlanCartView: React.FC<Props> = ({ plannerId, onBack, onConfirm }) => {
     } catch (e: any) {
       Alert.alert('빼기 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
     } finally {
+      busyRef.current = false;
       setBusy(false);
     }
   };
@@ -128,10 +136,11 @@ const PlanCartView: React.FC<Props> = ({ plannerId, onBack, onConfirm }) => {
 
   // 뽑기는 서버가 한다. 어느 후보가 뽑혔는지는 관광지 id 로 맞춰본다.
   const draw = async () => {
-    if (busy) {
+    if (busyRef.current) {
       return;
     }
     try {
+      busyRef.current = true;
       setBusy(true);
       const picked = await drawRandomPlace(plannerId);
       const matched =
@@ -147,6 +156,7 @@ const PlanCartView: React.FC<Props> = ({ plannerId, onBack, onConfirm }) => {
     } catch (e: any) {
       Alert.alert('뽑기 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
     } finally {
+      busyRef.current = false;
       setBusy(false);
     }
   };
@@ -169,6 +179,9 @@ const PlanCartView: React.FC<Props> = ({ plannerId, onBack, onConfirm }) => {
     !busy && (mode === 'random' ? items.length > 0 : canConfirm);
 
   const press = async () => {
+    if (busyRef.current) {
+      return;
+    }
     if (mode === 'random' && !drawn) {
       if (items.length > 0) {
         draw();
@@ -178,6 +191,7 @@ const PlanCartView: React.FC<Props> = ({ plannerId, onBack, onConfirm }) => {
     // "선택 확정하기" 가 일정 확정이다. 확정을 해야 투표가 마감되고
     // 여행 카드가 만들어진다. 예전에는 화면만 넘겨서 다음 화면이
     // 늘 "확정된 일정이 없어요" 였다.
+    busyRef.current = true;
     setBusy(true);
     try {
       // 고른 것을 먼저 확정한다. 서버는 카테고리(투표)마다 한 곳만 확정하고,
@@ -215,6 +229,7 @@ const PlanCartView: React.FC<Props> = ({ plannerId, onBack, onConfirm }) => {
       // 방장이 아니거나 담긴 장소가 없으면 서버가 거부한다
       Alert.alert('확정 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
     } finally {
+      busyRef.current = false;
       setBusy(false);
     }
   };

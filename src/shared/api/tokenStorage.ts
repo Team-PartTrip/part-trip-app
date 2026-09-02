@@ -16,6 +16,25 @@ export function getSessionGeneration(): number {
   return sessionGeneration;
 }
 
+/**
+ * 저장과 삭제를 한 줄로 세운다.
+ *
+ * setMany 와 removeMany 는 각각 별개의 네이티브 작업이라 호출 순서가
+ * 끝나는 순서를 보장하지 않는다. 로그아웃 도중 저장이 늦게 끝나면
+ * 지워진 자리에 토큰이 되살아난다.
+ */
+let writeQueue: Promise<unknown> = Promise.resolve();
+
+function serialize<T>(job: () => Promise<T>): Promise<T> {
+  const run = writeQueue.then(job, job);
+  // 앞 작업이 실패해도 뒤가 막히면 안 된다
+  writeQueue = run.then(
+    () => undefined,
+    () => undefined,
+  );
+  return run;
+}
+
 /** 로그인 제공자 저장 ('EMAIL' | 'GOOGLE') */
 export async function saveProvider(
   provider: 'EMAIL' | 'GOOGLE',
@@ -31,14 +50,24 @@ export async function saveProvider(
  */
 export async function saveTokens(
   tokens: TokenResponse,
-  options: { newSession?: boolean } = {},
+  options: { newSession?: boolean; generation?: number } = {},
 ): Promise<void> {
-  if (options.newSession !== false) {
-    sessionGeneration += 1;
-  }
-  await AsyncStorage.setMany({
-    [ACCESS_KEY]: tokens.accessToken,
-    [REFRESH_KEY]: tokens.refreshToken,
+  const newSession = options.newSession !== false;
+  await serialize(async () => {
+    if (newSession) {
+      sessionGeneration += 1;
+    } else if (
+      options.generation !== undefined &&
+      options.generation !== sessionGeneration
+    ) {
+      // 갱신 결과인데 기다리는 사이 세션이 바뀌었다. 지금 쓰는 사람의
+      // 토큰을 옛 것으로 덮지 않는다.
+      return;
+    }
+    await AsyncStorage.setMany({
+      [ACCESS_KEY]: tokens.accessToken,
+      [REFRESH_KEY]: tokens.refreshToken,
+    });
   });
 }
 
@@ -52,6 +81,8 @@ export async function getRefreshToken(): Promise<string | null> {
 
 /** 로그아웃 시 토큰 제거 */
 export async function clearTokens(): Promise<void> {
-  sessionGeneration += 1;
-  await AsyncStorage.removeMany([ACCESS_KEY, REFRESH_KEY, PROVIDER_KEY]);
+  await serialize(async () => {
+    sessionGeneration += 1;
+    await AsyncStorage.removeMany([ACCESS_KEY, REFRESH_KEY, PROVIDER_KEY]);
+  });
 }

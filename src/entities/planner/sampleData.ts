@@ -43,8 +43,10 @@ export function emojiOf(cityName: string): string {
  * 바로 다음 화면인 장소 담기가 빈 채로 떠서, 고를 수 있는데 쓸 수 없는
  * 목적지가 된다. 서버 목록도 같은 기준으로 온다.
  */
+// 이모지는 emojiOf 한 곳에서만 가져온다. 여기 따로 적어두면 CITY_EMOJI 를
+// 고쳤을 때 기본 목록과 서버 목록의 이모지가 달라진다.
 export const FALLBACK_CITIES: PopularCity[] = [
-  { cityName: '오사카', countryName: '일본', emoji: '🏯' },
-  { cityName: '방콕', countryName: '태국', emoji: '🛕' },
-  { cityName: '다낭', countryName: '베트남', emoji: '🏖️' },
-];
+  { cityName: '오사카', countryName: '일본' },
+  { cityName: '방콕', countryName: '태국' },
+  { cityName: '다낭', countryName: '베트남' },
+].map(city => ({ ...city, emoji: emojiOf(city.cityName) }));
