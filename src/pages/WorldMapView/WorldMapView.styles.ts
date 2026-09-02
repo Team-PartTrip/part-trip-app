@@ -44,16 +44,6 @@ export const worldMapStyles = StyleSheet.create({
     backgroundColor: colors.surfaceAlt,
     overflow: 'hidden',
   },
-  landmass: {
-    position: 'absolute',
-    borderRadius: 18,
-  },
-  landmassVisited: {
-    backgroundColor: colors.primary,
-  },
-  landmassIdle: {
-    backgroundColor: colors.border,
-  },
 
   // ── 범례 ──
   legend: {

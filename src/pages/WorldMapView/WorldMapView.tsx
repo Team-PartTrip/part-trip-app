@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { worldMapStyles as s } from './WorldMapView.styles';
+import WorldMapSvg from './WorldMapSvg';
 import { getSummary } from '../../entities/worldmap/api';
 import {
   flagOf,
@@ -19,29 +20,6 @@ import {
 
 // 피그마 E2 의 지도 일러스트. 402pt 프레임 안의 좌표를 그대로 적고,
 // 실제 화면 폭에 맞춰 비율로 늘린다. (퍼센트 + aspectRatio 로 짜면
-// 칸이 자리만 차지하고 안 그려지는 문제가 있어 픽셀로 계산한다)
-const FRAME_WIDTH = 402;
-const MAP_HEIGHT = 420;
-
-interface Landmass {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  /** 방문한 대륙 덩어리는 파랗게 칠한다 */
-  visited: boolean;
-}
-
-const LANDMASSES: Landmass[] = [
-  { x: 40, y: 42, w: 90, h: 70, visited: false },
-  { x: 140, y: 22, w: 120, h: 90, visited: true },
-  { x: 268, y: 60, w: 90, h: 60, visited: true },
-  { x: 60, y: 142, w: 110, h: 80, visited: false },
-  { x: 186, y: 154, w: 120, h: 86, visited: true },
-  { x: 300, y: 162, w: 70, h: 64, visited: true },
-  { x: 92, y: 260, w: 120, h: 70, visited: false },
-  { x: 232, y: 254, w: 120, h: 76, visited: true },
-];
 
 interface Props {
   onBack?: () => void;
@@ -88,7 +66,6 @@ const WorldMapView: React.FC<Props> = ({
 
   const visitedCount = summary?.visitedCount ?? 0;
   const countries = summary?.countries ?? [];
-  const scale = Dimensions.get('window').width / FRAME_WIDTH;
 
   if (loading) {
     return (
@@ -113,22 +90,11 @@ const WorldMapView: React.FC<Props> = ({
           </View>
         </SafeAreaView>
 
-        <View style={[s.map, { height: MAP_HEIGHT * scale }]}>
-          {LANDMASSES.map((land, i) => (
-            <View
-              key={i}
-              style={[
-                s.landmass,
-                land.visited ? s.landmassVisited : s.landmassIdle,
-                {
-                  left: land.x * scale,
-                  top: land.y * scale,
-                  width: land.w * scale,
-                  height: land.h * scale,
-                },
-              ]}
-            />
-          ))}
+        <View style={s.map}>
+          <WorldMapSvg
+            visitedCodes={countries.map(c => c.countryCode)}
+            width={Dimensions.get('window').width - 48}
+          />
         </View>
 
         <View style={s.legend}>

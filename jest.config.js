@@ -10,7 +10,9 @@ module.exports = {
   //
   // @react-native[^/]* 로 스코프 전체를 잡는다. 라이브러리를 하나 더 깔 때마다
   // 여기에 이름을 덧붙이지 않으려는 것이다.
+  //
+  // 세계지도가 쓰는 d3-* 와 topojson-client 도 ESM 으로만 배포된다.
   transformIgnorePatterns: [
-    'node_modules/(?!((jest-)?react-native|@react-native[^/]*|@react-navigation|react-native-.*)/)',
+    'node_modules/(?!((jest-)?react-native|@react-native[^/]*|@react-navigation|react-native-.*|d3-.*|topojson-client|internmap|delaunator|robust-predicates)/)',
   ],
 };
