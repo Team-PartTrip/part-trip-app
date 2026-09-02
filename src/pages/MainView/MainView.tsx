@@ -5,6 +5,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  ImageBackground,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,6 +19,21 @@ import {
 } from '../../entities/main/api';
 import { getUnreadCount } from '../../entities/notification/api';
 import { toImageUrl } from '../../shared/api/image';
+import { BellIcon, CalendarIcon } from '../../shared/ui/icons';
+import colors from '../../shared/tokens/colors';
+
+/**
+ * 상단에 깔 여행지 대표 사진.
+ *
+ * 나라별 이미지를 따로 두지 않는다. 추천 목록을 이미 받아오므로 그 중
+ * 명소 사진을 쓴다. 명소에 사진이 없으면 아무 장소나 쓰고, 그것도 없으면
+ * null 을 돌려 지금처럼 파란 배경만 남긴다.
+ */
+function heroImageOf(places: TourPlace[]): string | null {
+  const withImage = places.filter(place => place.imageUrl);
+  const picked = withImage.find(place => place.category === '명소') ?? withImage[0];
+  return picked?.imageUrl ? toImageUrl(picked.imageUrl) : null;
+}
 
 // "2026-08-23" + "2026-08-27" → "2026.08.23 – 08.27"
 // 해가 바뀌면 끝 날짜에도 연도를 남긴다 → "2026.06.10 – 2027.03.27"
@@ -101,6 +117,8 @@ const MainView: React.FC<MainViewProps> = ({
     }, []),
   );
 
+  const hero = heroImageOf(places);
+
   if (loading) {
     return (
       <View style={s.safeArea}>
@@ -135,7 +153,14 @@ const MainView: React.FC<MainViewProps> = ({
         contentContainerStyle={s.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <SafeAreaView edges={['top']} style={s.header}>
+        <ImageBackground
+          source={hero ? { uri: hero } : undefined}
+          style={s.headerImage}
+          imageStyle={s.headerImageInner}
+        >
+          {/* 사진 위에서도 흰 글씨가 읽히게 어둡게 덮는다 */}
+          {!!hero && <View style={s.headerScrim} />}
+          <SafeAreaView edges={['top']} style={s.header}>
           <View style={s.headerTop}>
             {/* 헤더가 파란 배경이라 흰색 로고를 쓴다 */}
             <Image
@@ -152,7 +177,7 @@ const MainView: React.FC<MainViewProps> = ({
                 disabled={!onOpenNotifications}
                 onPress={onOpenNotifications}
               >
-                <Text style={s.circleEmoji}>🔔</Text>
+                <BellIcon size={17} color={colors.primary as string} />
                 {unread > 0 && <View style={s.badge} />}
               </TouchableOpacity>
             </View>
@@ -170,7 +195,8 @@ const MainView: React.FC<MainViewProps> = ({
               {dday.headcount ? ` · ${dday.headcount}명` : ''}
             </Text>
           </View>
-        </SafeAreaView>
+          </SafeAreaView>
+        </ImageBackground>
 
         {/* 축제 · 이벤트 캘린더 (Func-002-03) — 메인에서 들어갈 유일한 입구 */}
         <TouchableOpacity
@@ -180,7 +206,7 @@ const MainView: React.FC<MainViewProps> = ({
           onPress={onOpenEvents}
         >
           <View style={s.eventIcon}>
-            <Text style={s.eventEmoji}>🎉</Text>
+            <CalendarIcon size={22} color={colors.primary as string} />
           </View>
           <View style={s.eventBody}>
             <Text style={s.eventTitle}>축제 · 이벤트 캘린더</Text>

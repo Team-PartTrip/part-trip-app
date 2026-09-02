@@ -54,6 +54,14 @@ const PlacePickerView: React.FC<Props> = ({
   const [sending, setSending] = useState(false);
   const plannerIdRef = useRef(draft.plannerId);
 
+  /**
+   * 둘 이하면 투표가 의미가 없다. 장바구니에서 직접 고르거나 랜덤으로 뽑는다.
+   *
+   * 장바구니 화면은 원래 이 경우를 위해 만들었는데 들어가는 길이 작은 링크
+   * 하나뿐이라 아무도 못 봤다. 인원에 따라 큰 버튼이 가리키는 곳을 바꾼다.
+   */
+  const smallGroup = draft.isSolo || draft.headcount <= 2;
+
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -179,10 +187,10 @@ const PlacePickerView: React.FC<Props> = ({
         <TouchableOpacity
           hitSlop={8}
           disabled={picked.length === 0 || sending}
-          onPress={() => commit(onOpenCart)}
+          onPress={() => commit(smallGroup ? onStartVote : onOpenCart)}
         >
           <Text style={[s.cartLink, picked.length === 0 && s.cartLinkOff]}>
-            투표 후보로 넘기기
+            {smallGroup ? '투표로 정하기' : '장바구니에서 정하기'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -254,10 +262,14 @@ const PlacePickerView: React.FC<Props> = ({
           ]}
           activeOpacity={0.85}
           disabled={picked.length === 0 || sending}
-          onPress={() => commit(onStartVote)}
+          onPress={() => commit(smallGroup ? onOpenCart : onStartVote)}
         >
           <Text style={s.primaryText}>
-            {sending ? '담는 중…' : '투표 시작하기'}
+            {sending
+              ? '담는 중…'
+              : smallGroup
+              ? '장바구니에서 정하기'
+              : '투표 시작하기'}
           </Text>
         </TouchableOpacity>
       </SafeAreaView>

@@ -19,8 +19,24 @@ export const mainStyles = StyleSheet.create({
   },
 
   // ── 파란 헤더 ──
-  header: {
+  // 사진이 없을 때 파란 배경이 남게 색은 여기 그대로 둔다
+  headerImage: {
     backgroundColor: colors.primary,
+  },
+  // 사진이 위쪽 여백까지 꽉 차게. 아래는 카드가 덮으므로 모서리를 두지 않는다
+  headerImageInner: {
+    resizeMode: 'cover',
+  },
+  // 사진 위 글씨가 읽히게 덮는 막. 사진이 있을 때만 깐다
+  headerScrim: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    backgroundColor: 'rgba(13, 74, 132, 0.62)',
+  },
+  header: {
     paddingHorizontal: 24,
     paddingTop: 12,
     paddingBottom: 28,
@@ -45,10 +61,6 @@ export const mainStyles = StyleSheet.create({
     backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  // 알림(🔔) — 쓸 만한 아이콘 이미지가 없어 이모지로 둔다
-  circleEmoji: {
-    fontSize: 15,
   },
   // 안읽은 알림 표시. 원 오른쪽 위에 겹친다.
   badge: {
@@ -114,9 +126,6 @@ export const mainStyles = StyleSheet.create({
     backgroundColor: colors.tint,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  eventEmoji: {
-    fontSize: 20,
   },
   // 제목/보조문구가 남는 폭을 다 먹어야 화살표가 오른쪽 끝에 붙는다
   eventBody: {
