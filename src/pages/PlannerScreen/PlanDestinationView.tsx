@@ -35,6 +35,13 @@ function labelOf(date: string, omitMonth: boolean): string {
   return omitMonth ? `${day}일` : `${month}월 ${day}일`;
 }
 
+// 지난 날짜로는 여행을 잡을 수 없다. 화면을 켠 날 기준으로 한 번만 구한다.
+const TODAY = toIso(
+  new Date().getFullYear(),
+  new Date().getMonth(),
+  new Date().getDate(),
+);
+
 interface Props {
   draft: PlanDraft;
   onBack?: () => void;
@@ -160,6 +167,9 @@ const PlanDestinationView: React.FC<Props> = ({ draft, onBack, onNext }) => {
 
   const pickDay = (day: number) => {
     const date = toIso(year, monthIndex, day);
+    if (date < TODAY) {
+      return;
+    }
     // 시작만 정해진 상태에서 뒷날짜를 누르면 기간이 되고, 그 밖에는 새로 시작한다
     if (startDate && !endDate && date > startDate) {
       setEndDate(date);
@@ -278,11 +288,13 @@ const PlanDestinationView: React.FC<Props> = ({ draft, onBack, onNext }) => {
                 const isEdge = date === startDate || date === endDate;
                 const isMid =
                   !!endDate && date > startDate && date < endDate;
+                const isPast = date < TODAY;
                 return (
                   <TouchableOpacity
                     key={dayIndex}
                     style={s.calCell}
                     activeOpacity={0.7}
+                    disabled={isPast}
                     onPress={() => pickDay(day)}
                   >
                     <View
@@ -292,7 +304,13 @@ const PlanDestinationView: React.FC<Props> = ({ draft, onBack, onNext }) => {
                         isEdge && s.dayPillEdge,
                       ]}
                     >
-                      <Text style={[s.dayText, isEdge && s.dayTextEdge]}>
+                      <Text
+                        style={[
+                          s.dayText,
+                          isPast && s.dayTextPast,
+                          isEdge && s.dayTextEdge,
+                        ]}
+                      >
                         {day}
                       </Text>
                     </View>

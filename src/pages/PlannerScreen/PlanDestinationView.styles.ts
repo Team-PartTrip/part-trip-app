@@ -101,6 +101,8 @@ export const planDestinationStyles = StyleSheet.create({
   dayPillMid: { borderRadius: 0, backgroundColor: colors.tint },
   dayText: { fontSize: 12, color: colors.text },
   dayTextEdge: { color: colors.textOnPrimary },
+  // 누를 수 없다는 걸 눌러보기 전에 알 수 있게
+  dayTextPast: { color: colors.placeholder },
 
   summary: {
     marginTop: 16,
