@@ -1,8 +1,7 @@
 // 세계지도(Func-009) 타입.
 //
-// 서버 API 는 아직 없다(이슈 #67). 필드 이름은 서버의
-// VisitedCountryEntity / CountryInfoEntity 를 그대로 따라가서,
-// 나중에 엔드포인트가 생기면 화면 수정 없이 붙일 수 있게 했다.
+// 서버 worldmap DTO 에 맞춰둔다. 서버가 안 주는 값을 여기 적어두면
+// 화면이 있는 것처럼 쓰게 되므로 넣지 않는다.
 
 export type ContinentCode = 'AS' | 'EU' | 'NA' | 'SA' | 'OC' | 'AF';
 
@@ -15,18 +14,16 @@ export interface Continent {
   total: number;
 }
 
+/**
+ * 지도에 채워진 국가.
+ *
+ * 서버 WorldMapResponseDto.visited 가 이름과 코드만 준다. 방문 횟수·도시·
+ * 여행 목록은 국가를 열 때 getCountryHistory 로 따로 받는다.
+ */
 export interface VisitedCountry {
-  countryInfoId: number;
-  countryName: string;
-  /** 영문 국가명. E3 가 "일본 (Japan)" 처럼 같이 보여준다 */
-  countryNameEn: string;
   /** ISO 3166-1 alpha-2. 서버 CountryCodeMapper 가 쓰는 코드와 같다 */
   countryCode: string;
-  continent: ContinentCode;
-  /** YYYY-MM-DD */
-  firstVisitedAt: string;
-  lastVisitedAt: string | null;
-  visitCount: number;
+  countryName: string;
 }
 
 export interface WorldMapSummary {

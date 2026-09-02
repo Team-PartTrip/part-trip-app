@@ -178,4 +178,5 @@ export const achievementStyles = StyleSheet.create({
     color: colors.noteText,
     textAlign: 'center',
   },
+  loading: { marginTop: 60 },
 });

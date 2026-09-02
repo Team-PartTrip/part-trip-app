@@ -1,15 +1,21 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { worldMapStyles as s } from './WorldMapView.styles';
-import { sampleSummary } from '../../entities/worldmap/sampleData';
-import { flagOf, VisitedCountry } from '../../entities/worldmap/types';
+import { getSummary } from '../../entities/worldmap/api';
+import {
+  flagOf,
+  VisitedCountry,
+  WorldMapSummary,
+} from '../../entities/worldmap/types';
 
 // 피그마 E2 의 지도 일러스트. 402pt 프레임 안의 좌표를 그대로 적고,
 // 실제 화면 폭에 맞춰 비율로 늘린다. (퍼센트 + aspectRatio 로 짜면
@@ -48,8 +54,49 @@ const WorldMapView: React.FC<Props> = ({
   onOpenCountry,
   onOpenAchievement,
 }) => {
-  const { visitedCount, countries } = sampleSummary;
+  const [summary, setSummary] = useState<WorldMapSummary | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      (async () => {
+        setLoading(true);
+        setFailed(false);
+        try {
+          const data = await getSummary();
+          if (alive) {
+            setSummary(data);
+          }
+        } catch {
+          if (alive) {
+            setSummary(null);
+            setFailed(true);
+          }
+        } finally {
+          if (alive) {
+            setLoading(false);
+          }
+        }
+      })();
+      return () => {
+        alive = false;
+      };
+    }, []),
+  );
+
+  const visitedCount = summary?.visitedCount ?? 0;
+  const countries = summary?.countries ?? [];
   const scale = Dimensions.get('window').width / FRAME_WIDTH;
+
+  if (loading) {
+    return (
+      <View style={s.safeArea}>
+        <ActivityIndicator style={s.loading} />
+      </View>
+    );
+  }
 
   return (
     <View style={s.safeArea}>
@@ -106,13 +153,19 @@ const WorldMapView: React.FC<Props> = ({
 
           {countries.length === 0 ? (
             <View style={s.empty}>
-              <Text style={s.emptyText}>아직 획득한 국가가 없어요</Text>
-              <Text style={s.emptyDesc}>여행 기록을 남기면 국가가 채워져요.</Text>
+              <Text style={s.emptyText}>
+                {failed ? '지도를 불러오지 못했어요' : '아직 획득한 국가가 없어요'}
+              </Text>
+              <Text style={s.emptyDesc}>
+                {failed
+                  ? '잠시 후 다시 시도해주세요.'
+                  : '여행 기록을 남기면 국가가 채워져요.'}
+              </Text>
             </View>
           ) : (
             countries.map(c => (
               <TouchableOpacity
-                key={c.countryInfoId}
+                key={c.countryCode}
                 style={s.countryRow}
                 activeOpacity={0.85}
                 onPress={() => onOpenCountry?.(c)}
@@ -122,7 +175,8 @@ const WorldMapView: React.FC<Props> = ({
                 </View>
                 <View style={s.countryBody}>
                   <Text style={s.countryName}>{c.countryName}</Text>
-                  <Text style={s.countryMeta}>{c.visitCount}회 방문</Text>
+                  {/* 방문 횟수는 목록에 안 온다. 국가를 열면 받아온다 */}
+                  <Text style={s.countryMeta}>{c.countryCode}</Text>
                 </View>
                 <Text style={s.chevron}>›</Text>
               </TouchableOpacity>
@@ -130,9 +184,6 @@ const WorldMapView: React.FC<Props> = ({
           )}
         </View>
 
-        <Text style={s.note}>
-          세계지도 API 연동 전이라 예시 데이터로 보여주고 있어요.
-        </Text>
       </ScrollView>
     </View>
   );
