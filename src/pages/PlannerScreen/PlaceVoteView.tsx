@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -87,7 +87,17 @@ const PlaceVoteView: React.FC<Props> = ({
   const [adding, setAdding] = useState(false);
   // 동점이라 그룹장이 골라줘야 하는 투표들. 앞에서부터 하나씩 묻는다
   const [tieQueue, setTieQueue] = useState<VoteStatusInfo[]>([]);
-  const [picked, setPicked] = useState<VoteSelection[]>([]);
+  /**
+   * 남은 동점과 지금까지 고른 것은 ref 가 정본이다.
+   *
+   * state 만 쓰면 화면이 다시 그려지기 전까지 두 번째 터치도 첫 번째와
+   * 같은 값을 본다. 마지막 동점에서 빠르게 두 번 누르면 확정 요청이
+   * 두 번 나가고, 두 번째는 이미 확정된 플래너를 건드린다.
+   */
+  const tieQueueRef = useRef<VoteStatusInfo[]>([]);
+  const pickedRef = useRef<VoteSelection[]>([]);
+  /** 요청이 나가는 동안 다시 못 누르게 막는다. state 는 한 박자 늦다 */
+  const busyRef = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -206,6 +216,10 @@ const PlaceVoteView: React.FC<Props> = ({
   // 확정을 해야 투표가 마감되고 여행 카드가 만들어진다.
   // 예전에는 화면만 넘겨서, 다음 화면이 늘 "확정된 일정이 없어요" 였다.
   const sendConfirm = async (selections: VoteSelection[]) => {
+    if (busyRef.current) {
+      return;
+    }
+    busyRef.current = true;
     setConfirming(true);
     try {
       await confirmPlanner(planId, selections);
@@ -215,6 +229,7 @@ const PlaceVoteView: React.FC<Props> = ({
       // 그때 다음 화면으로 넘기면 빈 화면만 보게 되므로 여기 남는다.
       Alert.alert('확정 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
     } finally {
+      busyRef.current = false;
       setConfirming(false);
     }
   };
@@ -225,7 +240,7 @@ const PlaceVoteView: React.FC<Props> = ({
       setCurrent(CATEGORIES[index + 1]);
       return;
     }
-    if (confirming) {
+    if (busyRef.current) {
       return;
     }
 
@@ -256,7 +271,8 @@ const PlaceVoteView: React.FC<Props> = ({
       v => v.status !== 'CONFIRMED' && tiedOptions(v).length > 0,
     );
     if (ties.length > 0) {
-      setPicked([]);
+      pickedRef.current = [];
+      tieQueueRef.current = ties;
       setTieQueue(ties);
       return;
     }
@@ -265,9 +281,18 @@ const PlaceVoteView: React.FC<Props> = ({
 
   /** 동점 하나를 정하고 다음 동점으로 넘어간다. 다 정하면 확정을 보낸다 */
   const pickTie = async (voteId: number, optionId: number) => {
-    const next = [...picked, { voteId, optionId }];
-    const rest = tieQueue.slice(1);
-    setPicked(next);
+    if (busyRef.current) {
+      return;
+    }
+    const queue = tieQueueRef.current;
+    // 이미 지나간 동점의 버튼이면 무시한다 (연타로 들어온 두 번째 터치)
+    if (queue[0]?.voteId !== voteId) {
+      return;
+    }
+    const next = [...pickedRef.current, { voteId, optionId }];
+    const rest = queue.slice(1);
+    pickedRef.current = next;
+    tieQueueRef.current = rest;
     setTieQueue(rest);
     if (rest.length === 0) {
       await sendConfirm(next);
@@ -454,7 +479,12 @@ const PlaceVoteView: React.FC<Props> = ({
               style={s.tieCancel}
               activeOpacity={0.85}
               disabled={confirming}
-              onPress={() => setTieQueue([])}
+              // 정본인 ref 도 같이 비워야 다시 열었을 때 앞의 선택이 안 섞인다
+              onPress={() => {
+                tieQueueRef.current = [];
+                pickedRef.current = [];
+                setTieQueue([]);
+              }}
             >
               <Text style={s.tieCancelText}>취소</Text>
             </TouchableOpacity>
