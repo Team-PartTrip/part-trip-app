@@ -177,7 +177,7 @@ const MainView: React.FC<MainViewProps> = ({
                 disabled={!onOpenNotifications}
                 onPress={onOpenNotifications}
               >
-                <BellIcon size={17} color={colors.primary as string} />
+                <BellIcon size={17} color={colors.primary} />
                 {unread > 0 && <View style={s.badge} />}
               </TouchableOpacity>
             </View>
@@ -206,7 +206,7 @@ const MainView: React.FC<MainViewProps> = ({
           onPress={onOpenEvents}
         >
           <View style={s.eventIcon}>
-            <CalendarIcon size={22} color={colors.primary as string} />
+            <CalendarIcon size={22} color={colors.primary} />
           </View>
           <View style={s.eventBody}>
             <Text style={s.eventTitle}>축제 · 이벤트 캘린더</Text>

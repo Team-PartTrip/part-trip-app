@@ -1,5 +1,6 @@
 import React from 'react';
 import Svg, { Path } from 'react-native-svg';
+import type { ColorValue } from 'react-native';
 
 /**
  * 홈 화면에서 쓰는 선 아이콘.
@@ -11,7 +12,8 @@ import Svg, { Path } from 'react-native-svg';
 
 interface IconProps {
   size?: number;
-  color?: string;
+  /** 토큰 색을 그대로 넘길 수 있게 ColorValue 로 받는다 */
+  color?: ColorValue;
 }
 
 /** 알림 종 */
@@ -61,6 +63,28 @@ export const CalendarIcon: React.FC<IconProps> = ({
       stroke={color}
       strokeWidth={2.2}
       strokeLinecap="round"
+    />
+  </Svg>
+);
+
+/** 여행카드 — 카드 두 장이 겹친 모양 */
+export const CardIcon: React.FC<IconProps> = ({
+  size = 20,
+  color = '#ffffff',
+}) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M8.5 7.5A1.5 1.5 0 0 1 10 6h9a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 19 18h-9a1.5 1.5 0 0 1-1.5-1.5v-9Z"
+      stroke={color}
+      strokeWidth={1.8}
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M5.5 15.5A1.5 1.5 0 0 1 4 14V6a1.5 1.5 0 0 1 1.5-1.5H14"
+      stroke={color}
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
     />
   </Svg>
 );

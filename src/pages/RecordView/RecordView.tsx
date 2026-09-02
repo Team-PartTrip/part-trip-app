@@ -11,6 +11,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import { recordStyles as s } from './RecordView.styles';
 import { getTripCards, TripCardSummary } from '../../entities/record/api';
 import { formatTripRange, today } from '../../entities/record/types';
+import { CardIcon } from '../../shared/ui/icons';
+import colors from '../../shared/tokens/colors';
 
 /** 카드 위쪽 사진 띠 — 실제 썸네일이 붙기 전까지 옅어지는 네 칸으로 둔다 */
 const STRIP_OPACITY = [1, 0.88, 0.76, 0.64];
@@ -71,7 +73,7 @@ const RecordView: React.FC<Props> = ({
             activeOpacity={0.8}
             onPress={onOpenTripCards}
           >
-            <Text style={s.headerBtnIcon}>🎴</Text>
+            <CardIcon size={18} color={colors.text} />
           </TouchableOpacity>
         </View>
 

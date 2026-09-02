@@ -279,6 +279,17 @@ const PlaceVoteView: React.FC<Props> = ({
     await sendConfirm([]);
   };
 
+  /**
+   * 동점 고르기를 접는다. 정본인 ref 도 같이 비워야 다시 열었을 때
+   * 앞의 선택이 섞이지 않는다. 취소 버튼과 안드로이드 뒤로가기가
+   * 같은 자리를 지나게 한다.
+   */
+  const closeTie = () => {
+    tieQueueRef.current = [];
+    pickedRef.current = [];
+    setTieQueue([]);
+  };
+
   /** 동점 하나를 정하고 다음 동점으로 넘어간다. 다 정하면 확정을 보낸다 */
   const pickTie = async (voteId: number, optionId: number) => {
     if (busyRef.current) {
@@ -445,7 +456,7 @@ const PlaceVoteView: React.FC<Props> = ({
         visible={tieQueue.length > 0}
         transparent
         animationType="fade"
-        onRequestClose={() => setTieQueue([])}
+        onRequestClose={closeTie}
       >
         <View style={s.tieBack}>
           <View style={s.tieCard}>
@@ -479,12 +490,7 @@ const PlaceVoteView: React.FC<Props> = ({
               style={s.tieCancel}
               activeOpacity={0.85}
               disabled={confirming}
-              // 정본인 ref 도 같이 비워야 다시 열었을 때 앞의 선택이 안 섞인다
-              onPress={() => {
-                tieQueueRef.current = [];
-                pickedRef.current = [];
-                setTieQueue([]);
-              }}
+              onPress={closeTie}
             >
               <Text style={s.tieCancelText}>취소</Text>
             </TouchableOpacity>
