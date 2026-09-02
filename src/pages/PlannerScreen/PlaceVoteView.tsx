@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Alert,
   TextInput,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -18,6 +19,7 @@ import {
   confirmPlanner,
   createVote,
   getVotes,
+  VoteSelection,
   VoteStatusInfo,
 } from '../../entities/planner/api';
 import {
@@ -38,6 +40,22 @@ function statusMeta(status: VoteStatus): { text: string; color: string } {
     default:
       return { text: '마감', color: colors.textTertiary };
   }
+}
+
+/**
+ * 공동 1위 후보들. 하나뿐이면 동점이 아니다.
+ *
+ * 서버는 마감할 때 같은 계산을 하고, 동점인데 고른 것이 없으면 확정을
+ * 거부한다(PlannerConfirmService). 그래서 보내기 전에 여기서 먼저 묻는다.
+ * 아무도 투표하지 않은 카테고리는 후보가 모두 0표라 늘 동점이 된다.
+ */
+function tiedOptions(vote: VoteStatusInfo) {
+  if (vote.options.length === 0) {
+    return [];
+  }
+  const top = vote.options.reduce((max, o) => Math.max(max, o.voteCount), 0);
+  const leaders = vote.options.filter(o => o.voteCount === top);
+  return leaders.length > 1 ? leaders : [];
 }
 
 interface Props {
@@ -65,6 +83,9 @@ const PlaceVoteView: React.FC<Props> = ({
   // 관광지 목록에 없는 곳을 직접 후보로 넣을 때 쓴다 (API-005-27)
   const [newPlace, setNewPlace] = useState('');
   const [adding, setAdding] = useState(false);
+  // 동점이라 그룹장이 골라줘야 하는 투표들. 앞에서부터 하나씩 묻는다
+  const [tieQueue, setTieQueue] = useState<VoteStatusInfo[]>([]);
+  const [picked, setPicked] = useState<VoteSelection[]>([]);
 
   useFocusEffect(
     useCallback(() => {
@@ -167,6 +188,23 @@ const PlaceVoteView: React.FC<Props> = ({
     }
   };
 
+  // 마지막 카테고리의 "투표 마치기" 가 일정 확정이다.
+  // 확정을 해야 투표가 마감되고 여행 카드가 만들어진다.
+  // 예전에는 화면만 넘겨서, 다음 화면이 늘 "확정된 일정이 없어요" 였다.
+  const sendConfirm = async (selections: VoteSelection[]) => {
+    setConfirming(true);
+    try {
+      await confirmPlanner(planId, selections);
+      onDone?.();
+    } catch (e: any) {
+      // 방장이 아니거나 담긴 장소가 없으면 서버가 거부한다.
+      // 그때 다음 화면으로 넘기면 빈 화면만 보게 되므로 여기 남는다.
+      Alert.alert('확정 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
+    } finally {
+      setConfirming(false);
+    }
+  };
+
   const goNext = async () => {
     const index = CATEGORIES.indexOf(active);
     if (index < CATEGORIES.length - 1) {
@@ -176,19 +214,26 @@ const PlaceVoteView: React.FC<Props> = ({
     if (confirming) {
       return;
     }
-    // 마지막 카테고리의 "투표 마치기" 가 일정 확정이다.
-    // 확정을 해야 투표가 마감되고 여행 카드가 만들어진다.
-    // 예전에는 화면만 넘겨서, 다음 화면이 늘 "확정된 일정이 없어요" 였다.
-    setConfirming(true);
-    try {
-      await confirmPlanner(planId);
-      onDone?.();
-    } catch (e: any) {
-      // 방장이 아니거나 담긴 장소가 없으면 서버가 거부한다.
-      // 그때 다음 화면으로 넘기면 빈 화면만 보게 되므로 여기 남는다.
-      Alert.alert('확정 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
-    } finally {
-      setConfirming(false);
+    // 동점인 채로 보내면 서버가 거부한다. 먼저 그룹장에게 물어본다.
+    const ties = votes.filter(
+      v => v.status !== 'CONFIRMED' && tiedOptions(v).length > 0,
+    );
+    if (ties.length > 0) {
+      setPicked([]);
+      setTieQueue(ties);
+      return;
+    }
+    await sendConfirm([]);
+  };
+
+  /** 동점 하나를 정하고 다음 동점으로 넘어간다. 다 정하면 확정을 보낸다 */
+  const pickTie = async (voteId: number, optionId: number) => {
+    const next = [...picked, { voteId, optionId }];
+    const rest = tieQueue.slice(1);
+    setPicked(next);
+    setTieQueue(rest);
+    if (rest.length === 0) {
+      await sendConfirm(next);
     }
   };
 
@@ -330,6 +375,53 @@ const PlaceVoteView: React.FC<Props> = ({
           })
         )}
       </ScrollView>
+
+      {/* 동점이라 그룹장이 골라야 하는 투표. 큐 앞에서부터 하나씩 묻는다 */}
+      <Modal
+        visible={tieQueue.length > 0}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setTieQueue([])}
+      >
+        <View style={s.tieBack}>
+          <View style={s.tieCard}>
+            <Text style={s.tieTitle}>
+              {tieQueue[0]?.categoryLabel} 투표가 동점이에요
+            </Text>
+            <Text style={s.tieDesc}>
+              {tieQueue.length > 1
+                ? `어디로 할지 골라주세요. 남은 동점 ${tieQueue.length}개`
+                : '어디로 할지 골라주세요.'}
+            </Text>
+
+            <ScrollView style={s.tieList}>
+              {(tieQueue[0] ? tiedOptions(tieQueue[0]) : []).map(option => (
+                <TouchableOpacity
+                  key={option.optionId}
+                  style={s.tieOption}
+                  activeOpacity={0.85}
+                  disabled={confirming}
+                  onPress={() => pickTie(tieQueue[0].voteId, option.optionId)}
+                >
+                  <Text style={s.tieOptionName} numberOfLines={1}>
+                    {option.placeName}
+                  </Text>
+                  <Text style={s.tieOptionCount}>{option.voteCount}표</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            <TouchableOpacity
+              style={s.tieCancel}
+              activeOpacity={0.85}
+              disabled={confirming}
+              onPress={() => setTieQueue([])}
+            >
+              <Text style={s.tieCancelText}>취소</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       <SafeAreaView edges={['bottom']} style={s.footer}>
         <TouchableOpacity

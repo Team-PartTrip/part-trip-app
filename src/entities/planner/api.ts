@@ -413,10 +413,23 @@ export interface PlannerConfirmed {
  * 열린 투표를 모두 마감·확정하고 여행 카드를 만든다.
  * 방장만 부를 수 있고, 담긴 장소가 하나도 없으면 서버가 거부한다.
  */
-export function confirmPlanner(plannerId: number): Promise<PlannerConfirmed> {
+export interface VoteSelection {
+  voteId: number;
+  optionId: number;
+}
+
+export function confirmPlanner(
+  plannerId: number,
+  selections?: VoteSelection[],
+): Promise<PlannerConfirmed> {
   return authRequest<PlannerConfirmed>(
     `/api/planners/${plannerId}/confirm`,
-    { method: 'POST' },
+    {
+      method: 'POST',
+      // 지정하지 않은 투표는 서버가 득표순으로 확정한다.
+      // 빈 배열을 보내면 안 되는 것은 아니지만, 본문을 생략하는 쪽이 맞다.
+      body: selections && selections.length > 0 ? { selections } : undefined,
+    },
   );
 }
 

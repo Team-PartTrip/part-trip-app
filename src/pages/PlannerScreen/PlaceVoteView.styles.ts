@@ -143,4 +143,47 @@ export const placeVoteStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   primaryText: { fontSize: 16, fontWeight: '600', color: colors.textOnPrimary },
+
+  // ── 동점 후보 고르기 ──
+  tieBack: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+  },
+  tieCard: {
+    width: '100%',
+    borderRadius: 16,
+    backgroundColor: colors.white,
+    padding: 20,
+    gap: 8,
+  },
+  tieTitle: { fontSize: 17, fontWeight: '700', color: colors.text },
+  tieDesc: { fontSize: 12, color: colors.textSub },
+  // 후보가 많아도 카드가 화면을 넘지 않게 한다
+  tieList: { marginTop: 6, maxHeight: 260 },
+  tieOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    height: 48,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 8,
+  },
+  tieOptionName: { flex: 1, fontSize: 14, fontWeight: '600', color: colors.text },
+  tieOptionCount: { fontSize: 12, color: colors.textSecondary },
+  tieCancel: {
+    height: 44,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tieCancelText: { fontSize: 14, fontWeight: '600', color: colors.textSub },
 });
