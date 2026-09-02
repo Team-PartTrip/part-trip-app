@@ -9,6 +9,7 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
+import type { ColorValue } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { plannerStyles as s } from './PlannerScreen.styles';
@@ -64,7 +65,7 @@ interface PlannerRow extends PlannerListItem {
 }
 
 /** 상단 띠 · 상태 배지 색. 모집 중은 파랑, 투표/여행 중은 주황, 확정은 초록 */
-function toneOf(status: GroupStatus): string {
+function toneOf(status: GroupStatus): ColorValue {
   switch (status) {
     case 'PLANNING':
       return colors.primary;
@@ -257,30 +258,30 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
                 >
                   <View style={[s.cardStripe, { backgroundColor: tone }]} />
                   <View style={s.cardBody}>
-                  <Text style={s.cardTitle}>{plan.title}</Text>
-                  <Text style={s.cardDate}>
-                    {plan.startDate && plan.endDate
-                      ? formatRange(plan.startDate, plan.endDate)
-                      : '여행지 · 기간 미정'}
-                  </Text>
+                    <Text style={s.cardTitle}>{plan.title}</Text>
+                    <Text style={s.cardDate}>
+                      {plan.startDate && plan.endDate
+                        ? formatRange(plan.startDate, plan.endDate)
+                        : '여행지 · 기간 미정'}
+                    </Text>
 
-                  <View style={s.cardMiddle}>
-                    <View style={s.statusPill}>
-                      <Text style={[s.statusText, { color: tone }]}>
-                        {planStatusLabel(plan.status)}
-                      </Text>
+                    <View style={s.cardMiddle}>
+                      <View style={s.statusPill}>
+                        <Text style={[s.statusText, { color: tone }]}>
+                          {planStatusLabel(plan.status)}
+                        </Text>
+                      </View>
+                      <View style={s.avatars}>
+                        {plan.members.map((member, i) => (
+                          <MemberAvatar
+                            key={member.userId}
+                            nickname={member.nickName}
+                            index={i}
+                            style={i > 0 && s.avatarOverlap}
+                          />
+                        ))}
+                      </View>
                     </View>
-                    <View style={s.avatars}>
-                      {plan.members.map((member, i) => (
-                        <MemberAvatar
-                          key={member.userId}
-                          nickname={member.nickName}
-                          index={i}
-                          style={i > 0 && s.avatarOverlap}
-                        />
-                      ))}
-                    </View>
-                  </View>
 
                     <View style={s.cardFooter}>
                       <Text style={s.cardMeta}>{metaOf(plan)}</Text>
@@ -288,7 +289,6 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
                     </View>
                   </View>
                 </TouchableOpacity>
-
               </View>
             );
           })
@@ -335,7 +335,10 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
                 onPress={join}
               >
                 {joining ? (
-                  <ActivityIndicator size="small" color={colors.textOnPrimary} />
+                  <ActivityIndicator
+                    size="small"
+                    color={colors.textOnPrimary}
+                  />
                 ) : (
                   <Text style={s.modalOkText}>참여하기</Text>
                 )}

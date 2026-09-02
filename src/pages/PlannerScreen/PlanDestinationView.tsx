@@ -35,12 +35,10 @@ function labelOf(date: string, omitMonth: boolean): string {
   return omitMonth ? `${day}일` : `${month}월 ${day}일`;
 }
 
-// 지난 날짜로는 여행을 잡을 수 없다. 화면을 켠 날 기준으로 한 번만 구한다.
-const TODAY = toIso(
-  new Date().getFullYear(),
-  new Date().getMonth(),
-  new Date().getDate(),
-);
+function todayIso(): string {
+  const now = new Date();
+  return toIso(now.getFullYear(), now.getMonth(), now.getDate());
+}
 
 interface Props {
   draft: PlanDraft;
@@ -60,6 +58,7 @@ const PlanDestinationView: React.FC<Props> = ({ draft, onBack, onNext }) => {
   const [cursor, setCursor] = useState(() => new Date());
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [today, setToday] = useState(todayIso);
 
   const year = cursor.getFullYear();
   const monthIndex = cursor.getMonth();
@@ -86,6 +85,20 @@ const PlanDestinationView: React.FC<Props> = ({ draft, onBack, onNext }) => {
     };
   }, []);
 
+  useEffect(() => {
+    const now = new Date();
+    const nextMidnight = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + 1,
+    );
+    const timer = setTimeout(
+      () => setToday(todayIso()),
+      nextMidnight.getTime() - now.getTime(),
+    );
+    return () => clearTimeout(timer);
+  }, [today]);
+
   /**
    * 검색은 서버에 묻는다.
    *
@@ -101,6 +114,7 @@ const PlanDestinationView: React.FC<Props> = ({ draft, onBack, onNext }) => {
     }
     let alive = true;
     setSearching(true);
+    setFound(null);
     const timer = setTimeout(() => {
       getCountries(keyword)
         .then(list => {
@@ -167,7 +181,11 @@ const PlanDestinationView: React.FC<Props> = ({ draft, onBack, onNext }) => {
 
   const pickDay = (day: number) => {
     const date = toIso(year, monthIndex, day);
-    if (date < TODAY) {
+    const currentToday = todayIso();
+    if (currentToday !== today) {
+      setToday(currentToday);
+    }
+    if (date < currentToday) {
       return;
     }
     // 시작만 정해진 상태에서 뒷날짜를 누르면 기간이 되고, 그 밖에는 새로 시작한다
@@ -183,7 +201,6 @@ const PlanDestinationView: React.FC<Props> = ({ draft, onBack, onNext }) => {
     setCursor(new Date(year, monthIndex + step, 1));
 
   const ready = !!city && !!startDate && !!endDate;
-
 
   // 여기서 서버에 저장하지 않는다. 아직 플래너가 없을 수도 있고,
   // 저장해두면 장소를 안 담고 나갔을 때 빈 플래너가 목록에 남는다.
@@ -286,9 +303,8 @@ const PlanDestinationView: React.FC<Props> = ({ draft, onBack, onNext }) => {
                 }
                 const date = toIso(year, monthIndex, day);
                 const isEdge = date === startDate || date === endDate;
-                const isMid =
-                  !!endDate && date > startDate && date < endDate;
-                const isPast = date < TODAY;
+                const isMid = !!endDate && date > startDate && date < endDate;
+                const isPast = date < today;
                 return (
                   <TouchableOpacity
                     key={dayIndex}

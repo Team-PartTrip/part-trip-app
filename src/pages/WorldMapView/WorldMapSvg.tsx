@@ -20,6 +20,7 @@ interface CountryShape {
   /** 지도 데이터의 국가 id. 분쟁 지역 등 id 가 없는 도형도 있다 */
   id: string | null;
   d: string;
+  feature: any;
 }
 
 /**
@@ -46,6 +47,7 @@ const SHAPES: CountryShape[] = (() => {
     .map((f: any) => ({
       id: f.id == null ? null : String(f.id),
       d: toPath(f) ?? '',
+      feature: f,
     }))
     .filter((shape: CountryShape) => shape.d.length > 0);
 })();
@@ -73,7 +75,11 @@ const WorldMapSvg: React.FC<Props> = ({ visitedCodes, width }) => {
   const height = (width * BASE_HEIGHT) / BASE_WIDTH;
 
   return (
-    <Svg width={width} height={height} viewBox={`0 0 ${BASE_WIDTH} ${BASE_HEIGHT}`}>
+    <Svg
+      width={width}
+      height={height}
+      viewBox={`0 0 ${BASE_WIDTH} ${BASE_HEIGHT}`}
+    >
       {SHAPES.map((shape, i) => {
         const visited = shape.id != null && visitedIds.has(shape.id);
         return (
@@ -110,13 +116,7 @@ export function CountryShapeSvg({
     if (!numeric) {
       return null;
     }
-    const collection: any = feature(
-      worldAtlas as any,
-      (worldAtlas as any).objects.countries,
-    );
-    const target = collection.features.find(
-      (f: any) => f.id != null && String(f.id) === numeric,
-    );
+    const target = SHAPES.find(shape => shape.id === numeric)?.feature;
     if (!target) {
       return null;
     }

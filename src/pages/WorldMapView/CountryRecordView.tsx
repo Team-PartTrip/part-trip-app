@@ -25,7 +25,7 @@ const STRIP_CELLS = 4;
 interface Props {
   country: VisitedCountry;
   onBack?: () => void;
-  onOpenRecord?: (recordId: number) => void;
+  onOpenRecord?: (tripCardId: number) => void;
 }
 
 const CountryRecordView: React.FC<Props> = ({
@@ -133,7 +133,9 @@ const CountryRecordView: React.FC<Props> = ({
           {records.length === 0 ? (
             <View style={s.empty}>
               <Text style={s.emptyText}>
-                {failed ? '기록을 불러오지 못했어요' : '아직 남긴 기록이 없어요'}
+                {failed
+                  ? '기록을 불러오지 못했어요'
+                  : '아직 남긴 기록이 없어요'}
               </Text>
               <Text style={s.emptyDesc}>
                 {failed
@@ -143,40 +145,39 @@ const CountryRecordView: React.FC<Props> = ({
             </View>
           ) : (
             records.map(r => (
-                <TouchableOpacity
-                  key={r.tripCardId}
-                  style={s.card}
-                  activeOpacity={0.85}
-                  onPress={() => onOpenRecord?.(r.tripCardId)}
-                >
-                  {/* 사진 URL 이 없어서 지금은 빈 칸으로 자리만 잡는다 */}
-                  <View style={s.strip}>
-                    {Array.from({ length: STRIP_CELLS }, (_, i) => (
-                      <View
-                        key={i}
-                        style={[
-                          s.stripCell,
-                          i === 0 && s.stripFirst,
-                          i === STRIP_CELLS - 1 && s.stripLast,
-                        ]}
-                       />
-                    ))}
-                  </View>
+              <TouchableOpacity
+                key={r.tripCardId}
+                style={s.card}
+                activeOpacity={0.85}
+                onPress={() => onOpenRecord?.(r.tripCardId)}
+              >
+                {/* 사진 URL 이 없어서 지금은 빈 칸으로 자리만 잡는다 */}
+                <View style={s.strip}>
+                  {Array.from({ length: STRIP_CELLS }, (_, i) => (
+                    <View
+                      key={i}
+                      style={[
+                        s.stripCell,
+                        i === 0 && s.stripFirst,
+                        i === STRIP_CELLS - 1 && s.stripLast,
+                      ]}
+                    />
+                  ))}
+                </View>
 
-                  <View style={s.cardFoot}>
-                    {/* 서버가 제목을 주지 않아 도시 이름을 쓴다 */}
-                    <Text style={s.cardTitle} numberOfLines={1}>
-                      {r.cityName}
-                    </Text>
-                    <Text style={s.cardMeta}>
-                      {formatDateRange(r.startDate, r.endDate)}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
+                <View style={s.cardFoot}>
+                  {/* 서버가 제목을 주지 않아 도시 이름을 쓴다 */}
+                  <Text style={s.cardTitle} numberOfLines={1}>
+                    {r.cityName}
+                  </Text>
+                  <Text style={s.cardMeta}>
+                    {formatDateRange(r.startDate, r.endDate)}
+                  </Text>
+                </View>
+              </TouchableOpacity>
             ))
           )}
         </View>
-
       </ScrollView>
     </View>
   );

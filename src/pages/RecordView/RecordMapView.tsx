@@ -54,7 +54,6 @@ function toSpots(timeline: TimelineItem[]): Spot[] {
   }));
 }
 
-
 interface Props {
   tripCardId: number;
   onBack?: () => void;
@@ -62,17 +61,14 @@ interface Props {
   onOpenSpot?: (spot: { tripCardId: number; entryId: number | null }) => void;
 }
 
-const RecordMapView: React.FC<Props> = ({
-  tripCardId,
-  onBack,
-  onOpenSpot,
-}) => {
+const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
   const insets = useSafeAreaInsets();
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
   // 지도를 그리려면 실제 픽셀 크기를 알아야 한다. 화면마다 다르다.
-  const [mapSize, setMapSize] = useState<{ width: number; height: number } | null>(
-    null,
-  );
+  const [mapSize, setMapSize] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
   const [card, setCard] = useState<TripCardSummary | null>(null);
   const [loading, setLoading] = useState(true);
   // 조회 실패와 데이터 없음은 다르다. 같은 문구를 쓰면 서버가 죽어도
@@ -84,10 +80,7 @@ const RecordMapView: React.FC<Props> = ({
       let alive = true;
       setLoading(true);
       setFailed(false);
-      Promise.all([
-        getTripCard(tripCardId),
-        getTripCards().catch(() => [] as TripCardSummary[]),
-      ])
+      Promise.all([getTripCard(tripCardId), getTripCards()])
         .then(([detail, cards]) => {
           if (!alive) {
             return;
@@ -156,6 +149,13 @@ const RecordMapView: React.FC<Props> = ({
         );
         settle(next, g.vy);
       },
+      onPanResponderTerminate: (_, g) => {
+        const next = Math.min(
+          SHEET_FULL,
+          Math.max(SHEET_PEEK, startHeight.current - g.dy),
+        );
+        settle(next, g.vy);
+      },
     }),
   ).current;
 
@@ -166,7 +166,6 @@ const RecordMapView: React.FC<Props> = ({
 
   const spots = useMemo(() => toSpots(timeline), [timeline]);
   const place = card ? `${card.countryName} · ${card.cityName}` : '여행';
-
 
   const list = (
     <>
@@ -199,7 +198,9 @@ const RecordMapView: React.FC<Props> = ({
               key={spot.key}
               style={s.row}
               activeOpacity={0.85}
-              onPress={() => onOpenSpot?.({ tripCardId, entryId: spot.entryId })}
+              onPress={() =>
+                onOpenSpot?.({ tripCardId, entryId: spot.entryId })
+              }
             >
               <View style={s.thumb}>
                 <Text style={s.thumbIcon}>📍</Text>

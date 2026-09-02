@@ -9,6 +9,7 @@ import {
   TextInput,
   Modal,
 } from 'react-native';
+import type { ColorValue } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { placeVoteStyles as s } from './PlaceVoteView.styles';
@@ -32,7 +33,7 @@ import {
   VoteStatus,
 } from '../../entities/planner/types';
 
-function statusMeta(status: VoteStatus): { text: string; color: string } {
+function statusMeta(status: VoteStatus): { text: string; color: ColorValue } {
   switch (status) {
     case 'OPEN':
       return { text: '진행 중', color: colors.accent };
@@ -142,7 +143,8 @@ const PlaceVoteView: React.FC<Props> = ({
   const meta = statusMeta(closed && status === 'OPEN' ? 'CLOSED' : status);
   const eligible = vote?.eligibleMemberCount ?? 0;
 
-  const myOptionId = options.find(option => option.selectedByMe)?.optionId ?? null;
+  const myOptionId =
+    options.find(option => option.selectedByMe)?.optionId ?? null;
   const topCount = options.reduce(
     (max, option) => Math.max(max, option.voteCount),
     0,
@@ -386,7 +388,9 @@ const PlaceVoteView: React.FC<Props> = ({
                     style={[
                       s.fill,
                       {
-                        width: `${eligible > 0 ? (count / eligible) * 100 : 0}%`,
+                        width: `${
+                          eligible > 0 ? (count / eligible) * 100 : 0
+                        }%`,
                         backgroundColor: leading
                           ? colors.primary
                           : colors.textTertiary,

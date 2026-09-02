@@ -4,8 +4,8 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
-  Dimensions,
   ActivityIndicator,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -32,6 +32,7 @@ const WorldMapView: React.FC<Props> = ({
   onOpenCountry,
   onOpenAchievement,
 }) => {
+  const { width } = useWindowDimensions();
   const [summary, setSummary] = useState<WorldMapSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
@@ -93,7 +94,7 @@ const WorldMapView: React.FC<Props> = ({
         <View style={s.map}>
           <WorldMapSvg
             visitedCodes={countries.map(c => c.countryCode)}
-            width={Dimensions.get('window').width - 48}
+            width={width - 48}
           />
         </View>
 
@@ -120,7 +121,9 @@ const WorldMapView: React.FC<Props> = ({
           {countries.length === 0 ? (
             <View style={s.empty}>
               <Text style={s.emptyText}>
-                {failed ? '지도를 불러오지 못했어요' : '아직 획득한 국가가 없어요'}
+                {failed
+                  ? '지도를 불러오지 못했어요'
+                  : '아직 획득한 국가가 없어요'}
               </Text>
               <Text style={s.emptyDesc}>
                 {failed
@@ -149,7 +152,6 @@ const WorldMapView: React.FC<Props> = ({
             ))
           )}
         </View>
-
       </ScrollView>
     </View>
   );

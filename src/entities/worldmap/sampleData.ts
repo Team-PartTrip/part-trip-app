@@ -7,21 +7,7 @@
 
 import { CountryAcquiredParams } from './types';
 
-interface SampleCountry {
-  countryInfoId: number;
-  countryName: string;
-  countryNameEn: string;
-  countryCode: string;
-  continentName: string;
-  continentVisited: number;
-  continentTotal: number;
-  acquiredAt: string;
-  cityName: string;
-  visitCount: number;
-  order: number;
-}
-
-const COUNTRIES: SampleCountry[] = [
+const COUNTRIES: CountryAcquiredParams[] = [
   {
     countryInfoId: 1,
     countryName: '일본',

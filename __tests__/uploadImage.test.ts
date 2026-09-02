@@ -1,8 +1,10 @@
 import { ApiError } from '../src/shared/api/client';
 
 jest.mock('@env', () => ({ BASE_URL: 'http://test' }), { virtual: true });
+let mockGeneration = 0;
 jest.mock('../src/shared/api/tokenStorage', () => ({
   getAccessToken: () => Promise.resolve('token'),
+  getSessionGeneration: () => mockGeneration,
 }));
 const mockRefresh = jest.fn();
 jest.mock('../src/shared/api/http', () => ({
@@ -20,6 +22,11 @@ function respond(body: string, ok = true, status = 200) {
 }
 
 const upload = () => uploadImage('file:///a.jpg', 'a.jpg', 'image/jpeg');
+
+beforeEach(() => {
+  mockGeneration = 0;
+  mockRefresh.mockReset();
+});
 
 // 서버(ProfileController)는 ResponseEntity<String> 이라 경로를 평문으로 준다.
 // 예전에는 data.url 을 읽어 늘 undefined 였고, 사진을 골라도 아무 일이 없었다.
@@ -54,7 +61,11 @@ test('401 이면 토큰을 갱신하고 한 번 다시 올린다', async () => {
   mockRefresh.mockResolvedValueOnce('new-token');
   const fetchMock = jest
     .fn()
-    .mockResolvedValueOnce({ ok: false, status: 401, text: () => Promise.resolve('') })
+    .mockResolvedValueOnce({
+      ok: false,
+      status: 401,
+      text: () => Promise.resolve(''),
+    })
     .mockResolvedValueOnce({
       ok: true,
       status: 200,
@@ -64,16 +75,40 @@ test('401 이면 토큰을 갱신하고 한 번 다시 올린다', async () => {
 
   await expect(upload()).resolves.toBe('/uploads/profile/abc.jpg');
   expect(fetchMock).toHaveBeenCalledTimes(2);
-  expect(fetchMock.mock.calls[1][1].headers.Authorization).toBe('Bearer new-token');
+  expect(fetchMock.mock.calls[1][1].headers.Authorization).toBe(
+    'Bearer new-token',
+  );
 });
 
 test('갱신이 실패하면 다시 올리지 않는다', async () => {
   mockRefresh.mockResolvedValueOnce(null);
   const fetchMock = jest
     .fn()
-    .mockResolvedValue({ ok: false, status: 401, text: () => Promise.resolve('만료') });
+    .mockResolvedValue({
+      ok: false,
+      status: 401,
+      text: () => Promise.resolve('만료'),
+    });
   (globalThis as any).fetch = fetchMock;
 
   await expect(upload()).rejects.toBeInstanceOf(ApiError);
+  expect(fetchMock).toHaveBeenCalledTimes(1);
+});
+
+test('갱신 중 세션이 바뀌면 새 토큰으로 다시 올리지 않는다', async () => {
+  mockRefresh.mockImplementationOnce(async () => {
+    mockGeneration += 1;
+    return 'other-session-token';
+  });
+  const fetchMock = jest
+    .fn()
+    .mockResolvedValue({
+      ok: false,
+      status: 401,
+      text: () => Promise.resolve(''),
+    });
+  (globalThis as any).fetch = fetchMock;
+
+  await expect(upload()).rejects.toMatchObject({ status: 401 });
   expect(fetchMock).toHaveBeenCalledTimes(1);
 });

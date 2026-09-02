@@ -1,7 +1,7 @@
 import { BASE_URL } from '@env';
 import { ApiError } from './client';
 import { refreshAccessToken } from './http';
-import { getAccessToken } from './tokenStorage';
+import { getAccessToken, getSessionGeneration } from './tokenStorage';
 
 /** 로컬 파일(uri)을 서버에 업로드하고, 서버가 반환한 상대경로(/images/xxx.jpg)를 반환 */
 export async function uploadImage(
@@ -9,6 +9,7 @@ export async function uploadImage(
   fileName: string,
   mimeType: string,
 ): Promise<string> {
+  const generation = getSessionGeneration();
   const send = async (token: string | null): Promise<Response> => {
     const formData = new FormData();
     // React Native의 fetch/FormData는 이 형태의 객체를 파일로 인식한다
@@ -39,6 +40,9 @@ export async function uploadImage(
   // 안 하면 토큰이 만료된 뒤로는 사진만 계속 올라가지 않는다.
   if (res.status === 401) {
     const fresh = await refreshAccessToken();
+    if (getSessionGeneration() !== generation) {
+      throw new ApiError(401, '로그인 정보가 바뀌었어요. 다시 시도해주세요.');
+    }
     if (fresh) {
       res = await send(fresh);
     }

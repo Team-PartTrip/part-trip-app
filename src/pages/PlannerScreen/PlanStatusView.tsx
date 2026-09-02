@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import type { ColorValue } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { planStatusStyles as s } from './PlanStatusView.styles';
@@ -33,7 +34,7 @@ interface CategoryRow {
   category: PlaceCategory;
   state: RowState;
   sub: string;
-  color: string;
+  color: ColorValue;
   /** 진행 막대 비율 0 ~ 1 */
   ratio: number;
   pill: string;
@@ -134,7 +135,9 @@ const PlanStatusView: React.FC<Props> = ({
   const confirmDelete = () =>
     Alert.alert(
       '플래너 삭제',
-      `"${plan?.title ?? ''}" 을(를) 삭제할까요?\n투표와 멤버도 함께 사라져요. 되돌릴 수 없어요.`,
+      `"${
+        plan?.title ?? ''
+      }" 을(를) 삭제할까요?\n투표와 멤버도 함께 사라져요. 되돌릴 수 없어요.`,
       [
         { text: '취소', style: 'cancel' },
         {
@@ -147,7 +150,10 @@ const PlanStatusView: React.FC<Props> = ({
               // 지운 플래너를 계속 보여줄 수 없다. 목록으로 보낸다.
               onDeleted?.();
             } catch (e: any) {
-              Alert.alert('삭제 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
+              Alert.alert(
+                '삭제 실패',
+                e?.message ?? '잠시 후 다시 시도해주세요.',
+              );
               setDeleting(false);
             }
           },
@@ -163,7 +169,10 @@ const PlanStatusView: React.FC<Props> = ({
       // 전원이 투표를 마쳤으면 notifiedCount 가 0 이다. 서버 문구를 그대로 쓴다.
       Alert.alert('투표 독촉', result.message);
     } catch (e: any) {
-      Alert.alert('보내지 못했어요', e?.message ?? '잠시 후 다시 시도해주세요.');
+      Alert.alert(
+        '보내지 못했어요',
+        e?.message ?? '잠시 후 다시 시도해주세요.',
+      );
     } finally {
       setReminding(false);
     }

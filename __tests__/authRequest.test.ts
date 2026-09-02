@@ -34,7 +34,10 @@ jest.mock('../src/shared/api/tokenStorage', () => ({
 }));
 
 // mock 이 걸린 뒤에 불러와야 한다
-const { authRequest, setSessionExpiredHandler } = require('../src/shared/api/http');
+const {
+  authRequest,
+  setSessionExpiredHandler,
+} = require('../src/shared/api/http');
 
 beforeEach(() => {
   mockRequest.mockReset();
@@ -125,7 +128,6 @@ test('동시에 401 을 받아도 갱신은 한 번만 나간다', async () => {
   expect(refreshCalls).toBe(1);
 });
 
-
 test('갱신 중에 다른 세션이 로그인하면 그 토큰을 덮어쓰지 않는다', async () => {
   mockRequest
     .mockImplementationOnce(unauthorized)
@@ -177,7 +179,9 @@ test('네트워크 오류로 갱신이 실패하면 토큰을 지우지 않는�
   });
   mockRequest
     .mockImplementationOnce(unauthorized)
-    .mockImplementationOnce(() => Promise.reject(new TypeError('Network request failed')));
+    .mockImplementationOnce(() =>
+      Promise.reject(new TypeError('Network request failed')),
+    );
 
   await expect(authRequest('/api/x')).rejects.toThrow('Network request failed');
   expect(mockClearTokens).not.toHaveBeenCalled();
@@ -207,7 +211,9 @@ test('다른 세션이 시작한 갱신을 재사용해 새 세션을 쫓아내�
   // null(=세션이 바뀌어 저장 생략)을 자기 갱신 실패로 읽고 새 세션을 끊는다.
   let releaseA: (v: any) => void = () => {};
   let aRefreshStarted: () => void = () => {};
+  let bRefreshStarted: () => void = () => {};
   const aRefreshing = new Promise<void>(res => (aRefreshStarted = res));
+  const bRefreshing = new Promise<void>(res => (bRefreshStarted = res));
   let refreshCount = 0;
 
   mockRequest.mockImplementation((path: string) => {
@@ -217,7 +223,11 @@ test('다른 세션이 시작한 갱신을 재사용해 새 세션을 쫓아내�
         aRefreshStarted();
         return new Promise(res => (releaseA = res));
       }
-      return Promise.resolve({ accessToken: 'b-new', refreshToken: 'refresh-b' });
+      bRefreshStarted();
+      return Promise.resolve({
+        accessToken: 'b-new',
+        refreshToken: 'refresh-b',
+      });
     }
     if (path === '/api/a') {
       return unauthorized();
@@ -234,6 +244,7 @@ test('다른 세션이 시작한 갱신을 재사용해 새 세션을 쫓아내�
   mockGeneration = 1; // 재로그인
 
   const b = authRequest('/api/b');
+  await bRefreshing;
   releaseA({ accessToken: 'a-new', refreshToken: 'refresh-a' });
 
   await expect(b).resolves.toEqual({ ok: 'b' });
@@ -250,8 +261,7 @@ test('먼저 끝난 옛 세대의 갱신이 진행 중인 새 세대의 갱신�
   let releaseA: (v: any) => void = () => {};
   let releaseB: (v: any) => void = () => {};
   const started: (() => void)[] = [];
-  const startedAt = (n: number) =>
-    new Promise<void>(res => (started[n] = res));
+  const startedAt = (n: number) => new Promise<void>(res => (started[n] = res));
   const aRefreshing = startedAt(1);
   const bRefreshing = startedAt(2);
   let refreshCount = 0;

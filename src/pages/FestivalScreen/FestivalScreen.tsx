@@ -8,11 +8,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { festivalStyles as s } from './FestivalScreen.styles';
-import { getDday, getFestivals, DdayInfo, Festival } from '../../entities/main/api';
 import {
-  formatShortDate,
-  formatTripRange,
-} from '../../entities/record/types';
+  getDday,
+  getFestivals,
+  DdayInfo,
+  Festival,
+} from '../../entities/main/api';
+import { formatShortDate, formatTripRange } from '../../entities/record/types';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -112,6 +114,14 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
       to: shiftIso(dday.endDate, WINDOW_DAYS),
     };
   }, [dday]);
+
+  useEffect(() => {
+    setSelectedDate(current =>
+      current && (!range || current < range.from || current > range.to)
+        ? null
+        : current,
+    );
+  }, [range]);
 
   useEffect(() => {
     if (!dday || !range) {
@@ -275,15 +285,16 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
                 }
                 const date = toIso(year, monthIndex, day);
                 const inTrip =
-                  !!dday &&
-                  date >= dday.startDate &&
-                  date <= dday.endDate;
+                  !!dday && date >= dday.startDate && date <= dday.endDate;
                 const on = date === selectedDate;
+                const outsideRange =
+                  !range || date < range.from || date > range.to;
                 return (
                   <TouchableOpacity
                     key={dayIndex}
                     style={s.calCell}
                     activeOpacity={0.7}
+                    disabled={outsideRange}
                     onPress={() => setSelectedDate(on ? null : date)}
                   >
                     <View

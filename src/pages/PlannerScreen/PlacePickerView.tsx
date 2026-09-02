@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { placePickerStyles as s } from './PlacePickerView.styles';
-import { getTourPlaces, TourPlace as ServerPlace } from '../../entities/main/api';
+import {
+  getTourPlaces,
+  TourPlace as ServerPlace,
+} from '../../entities/main/api';
 import {
   addCartPlaces,
   createPlanner,
@@ -46,6 +49,7 @@ const PlacePickerView: React.FC<Props> = ({
   const [failed, setFailed] = useState(false);
   const [picked, setPicked] = useState<number[]>([]);
   const [sending, setSending] = useState(false);
+  const plannerIdRef = useRef(draft.plannerId);
 
   useEffect(() => {
     let alive = true;
@@ -103,7 +107,7 @@ const PlacePickerView: React.FC<Props> = ({
       }
       try {
         setSending(true);
-        let plannerId = draft.plannerId;
+        let plannerId = plannerIdRef.current;
         if (plannerId == null) {
           const created = await createPlanner({
             title: draft.title,
@@ -111,6 +115,7 @@ const PlacePickerView: React.FC<Props> = ({
             isSolo: draft.isSolo,
           });
           plannerId = created.plannerId;
+          plannerIdRef.current = plannerId;
         }
         await saveTravelPlan(plannerId, {
           countryName: draft.countryName,
@@ -212,7 +217,9 @@ const PlacePickerView: React.FC<Props> = ({
                   {/* 평점·주소가 없는 장소가 많아 있는 것만 붙인다 */}
                   <Text style={s.meta} numberOfLines={1}>
                     {[
-                      place.rating != null ? `★ ${place.rating.toFixed(1)}` : null,
+                      place.rating != null
+                        ? `★ ${place.rating.toFixed(1)}`
+                        : null,
                       place.address,
                     ]
                       .filter(Boolean)
@@ -237,7 +244,10 @@ const PlacePickerView: React.FC<Props> = ({
 
       <SafeAreaView edges={['bottom']} style={s.footer}>
         <TouchableOpacity
-          style={[s.primaryBtn, (picked.length === 0 || sending) && s.primaryBtnOff]}
+          style={[
+            s.primaryBtn,
+            (picked.length === 0 || sending) && s.primaryBtnOff,
+          ]}
           activeOpacity={0.85}
           disabled={picked.length === 0 || sending}
           onPress={() => commit(onStartVote)}

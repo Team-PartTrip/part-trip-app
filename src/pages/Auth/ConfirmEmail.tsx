@@ -62,6 +62,14 @@ const ConfirmEmail: React.FC<ConfirmEmailProps> = ({
   const [cooldown, setCooldown] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const handleEmailChange = (value: string) => {
+    if (value.trim() !== email.trim()) {
+      setSent(false);
+      setCooldown(0);
+    }
+    setEmail(value);
+  };
+
   // 인증번호를 보낼 때마다 남은 시간과 재전송 잠금을 다시 센다
   useEffect(() => {
     if (!sent) {
@@ -71,8 +79,8 @@ const ConfirmEmail: React.FC<ConfirmEmailProps> = ({
     setCooldown(RESEND_COOLDOWN_SECONDS);
     timerRef.current = setInterval(() => {
       // 잠금(60초)이 유효시간(180초)보다 짧아 항상 먼저 끝난다
-      setCooldown((prev) => (prev > 0 ? prev - 1 : 0));
-      setRemaining((prev) => {
+      setCooldown(prev => (prev > 0 ? prev - 1 : 0));
+      setRemaining(prev => {
         if (prev <= 1) {
           if (timerRef.current) {
             clearInterval(timerRef.current);
@@ -220,7 +228,7 @@ const ConfirmEmail: React.FC<ConfirmEmailProps> = ({
                 }
                 placeholderTextColor={colors.placeholder}
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={handleEmailChange}
                 autoCapitalize="none"
                 keyboardType="email-address"
               />
@@ -235,7 +243,11 @@ const ConfirmEmail: React.FC<ConfirmEmailProps> = ({
               >
                 <Text style={styles.sendBtnText}>
                   {/* 버튼 폭이 85 라 잠금 중에는 남은 초만 넣는다 */}
-                  {cooldown > 0 ? `${cooldown}초` : sent ? '재전송' : '인증 요청'}
+                  {cooldown > 0
+                    ? `${cooldown}초`
+                    : sent
+                    ? '재전송'
+                    : '인증 요청'}
                 </Text>
               </TouchableOpacity>
             </View>

@@ -1,8 +1,9 @@
 import colors from '../../shared/tokens/colors';
 import type { NotificationType } from '../../entities/notification/api';
+import type { ColorValue } from 'react-native';
 
 // 알림 종류마다 목록 왼쪽 배지의 문구와 색이 다르다 (피그마 E6)
-const META: Record<NotificationType, { badge: string; color: string }> = {
+const META: Record<NotificationType, { badge: string; color: ColorValue }> = {
   VOTE_PARTICIPATED: { badge: '투표', color: colors.accent },
   VOTE_DEADLINE: { badge: '플래너', color: colors.primary },
   VOTE_REMINDER: { badge: '투표', color: colors.accent },

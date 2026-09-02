@@ -1,50 +1,51 @@
 import { Appearance, DynamicColorIOS, Platform } from 'react-native';
+import type { ColorValue } from 'react-native';
 
 export type AppColors = {
-  primary: string;
-  primaryDark: string;
-  accent: string;
-  success: string;
-  badge: string;
-  onPrimaryMuted: string;
-  onPrimaryTrack: string;
-  white: string;
-  background: string;
-  cardBg: string;
-  text: string;
-  textPrimary: string;
-  textSub: string;
-  textSecondary: string;
-  textTertiary: string;
-  textMuted: string;
-  textOnPrimary: string;
-  noteText: string;
-  eventMeta: string;
-  forgotText: string;
-  border: string;
-  borderLight: string;
-  inputBg: string;
-  placeholder: string;
-  red: string;
-  redAccent: string;
-  danger: string;
-  dangerBg: string;
-  teal: string;
-  google: string;
-  tint: string;
-  tintStrong: string;
-  surface: string;
-  surfaceAlt: string;
-  track: string;
-  profileBg: string;
-  tagRedBg: string;
-  chevron: string;
-  calMuted: string;
-  tabInactive: string;
-  bannerBg: string;
-  bannerOverlay: string;
-  eventThumbBg: string;
-  night: string;
+  primary: ColorValue;
+  primaryDark: ColorValue;
+  accent: ColorValue;
+  success: ColorValue;
+  badge: ColorValue;
+  onPrimaryMuted: ColorValue;
+  onPrimaryTrack: ColorValue;
+  white: ColorValue;
+  background: ColorValue;
+  cardBg: ColorValue;
+  text: ColorValue;
+  textPrimary: ColorValue;
+  textSub: ColorValue;
+  textSecondary: ColorValue;
+  textTertiary: ColorValue;
+  textMuted: ColorValue;
+  textOnPrimary: ColorValue;
+  noteText: ColorValue;
+  eventMeta: ColorValue;
+  forgotText: ColorValue;
+  border: ColorValue;
+  borderLight: ColorValue;
+  inputBg: ColorValue;
+  placeholder: ColorValue;
+  red: ColorValue;
+  redAccent: ColorValue;
+  danger: ColorValue;
+  dangerBg: ColorValue;
+  teal: ColorValue;
+  google: ColorValue;
+  tint: ColorValue;
+  tintStrong: ColorValue;
+  surface: ColorValue;
+  surfaceAlt: ColorValue;
+  track: ColorValue;
+  profileBg: ColorValue;
+  tagRedBg: ColorValue;
+  chevron: ColorValue;
+  calMuted: ColorValue;
+  tabInactive: ColorValue;
+  bannerBg: ColorValue;
+  bannerOverlay: ColorValue;
+  eventThumbBg: ColorValue;
+  night: ColorValue;
 };
 
 // ── 라이트 모드 ──────────────────────────────────────────────
@@ -178,14 +179,14 @@ export const darkColors: AppColors = {
 };
 
 const dynamicColors = (): AppColors => {
-  const merged = {} as Record<string, unknown>;
+  const merged = { ...lightColors };
   (Object.keys(lightColors) as (keyof AppColors)[]).forEach(key => {
     merged[key] = DynamicColorIOS({
       light: lightColors[key],
       dark: darkColors[key],
     });
   });
-  return merged as unknown as AppColors;
+  return merged;
 };
 
 const colors: AppColors =
