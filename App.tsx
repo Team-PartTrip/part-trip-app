@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, StatusBar, useColorScheme, View } from 'react-native';
+import { StatusBar, useColorScheme, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import {
   NavigationContainer,
@@ -433,7 +433,7 @@ function App() {
                           sampleAcquiredParamsOf(linkId),
                         );
                       } else if (linkType === 'VOTE' || linkType === 'GROUP') {
-                        // 플래너 화면은 아직 준비 중 안내만 띄운다
+                        // 어느 플래너인지까지는 아직 못 가려서 목록으로 보낸다
                         navigation.navigate('Planner');
                       } else if (linkType === 'WORLD_MAP') {
                         navigation.navigate('WorldMap');
@@ -629,15 +629,11 @@ function App() {
                   <CountryRecordView
                     country={route.params.country}
                     onBack={() => navigation.goBack()}
-                    // 기록 수정(Func-003-01)은 보류다. RecordEditView 는 아직
-                    // 서버와 안 이어져 있어서, 열면 하드코딩된 글이 뜨고
-                    // "완료" 를 눌러도 저장 없이 성공 화면으로 넘어간다.
-                    // API 가 생길 때까지 진입을 막는다.
-                    onOpenRecord={() =>
-                      Alert.alert(
-                        '준비 중',
-                        '기록 수정 화면은 아직 준비 중이에요.',
-                      )
+                    // 목록이 주는 것은 여행 카드 id 다. 기록 수정(RecordEditView)
+                    // 이 아니라 여행 카드 상세로 보낸다. 예전에는 여기서 수정
+                    // 화면으로 가려다 서버 연동이 없어 막아뒀었다.
+                    onOpenRecord={tripCardId =>
+                      navigation.navigate('TripCardDetail', { tripCardId })
                     }
                   />
                 )}
