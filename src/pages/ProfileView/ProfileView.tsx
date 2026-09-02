@@ -50,6 +50,7 @@ const ProfileView: React.FC<Props> = ({
 
   useFocusEffect(
     useCallback(() => {
+      let alive = true;
       getMyProfile()
         .then(setProfile)
         .catch(() => setProfile(null));
@@ -59,8 +60,19 @@ const ProfileView: React.FC<Props> = ({
         .catch(() => setStats(null));
       // 미리보기 칸에 채울 나라들
       getWorldMap()
-        .then(map => setVisited(map.visited))
-        .catch(() => setVisited([]));
+        .then(map => {
+          if (alive) {
+            setVisited(map.visited);
+          }
+        })
+        .catch(() => {
+          if (alive) {
+            setVisited([]);
+          }
+        });
+      return () => {
+        alive = false;
+      };
     }, []),
   );
 

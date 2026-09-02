@@ -2,8 +2,9 @@ import { ApiError } from '../src/shared/api/client';
 
 jest.mock('@env', () => ({ BASE_URL: 'http://test' }), { virtual: true });
 let mockGeneration = 0;
+const mockGetAccessToken = jest.fn(() => Promise.resolve('token'));
 jest.mock('../src/shared/api/tokenStorage', () => ({
-  getAccessToken: () => Promise.resolve('token'),
+  getAccessToken: () => mockGetAccessToken(),
   getSessionGeneration: () => mockGeneration,
 }));
 const mockRefresh = jest.fn();
@@ -25,6 +26,8 @@ const upload = () => uploadImage('file:///a.jpg', 'a.jpg', 'image/jpeg');
 
 beforeEach(() => {
   mockGeneration = 0;
+  mockGetAccessToken.mockReset();
+  mockGetAccessToken.mockResolvedValue('token');
   mockRefresh.mockReset();
 });
 
@@ -111,4 +114,16 @@ test('갱신 중 세션이 바뀌면 새 토큰으로 다시 올리지 않는다
 
   await expect(upload()).rejects.toMatchObject({ status: 401 });
   expect(fetchMock).toHaveBeenCalledTimes(1);
+});
+
+test('토큰을 읽는 중 세션이 바뀌면 업로드를 시작하지 않는다', async () => {
+  mockGetAccessToken.mockImplementationOnce(async () => {
+    mockGeneration += 1;
+    return 'other-session-token';
+  });
+  const fetchMock = jest.fn();
+  (globalThis as any).fetch = fetchMock;
+
+  await expect(upload()).rejects.toMatchObject({ status: 401 });
+  expect(fetchMock).not.toHaveBeenCalled();
 });

@@ -1,4 +1,10 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   View,
   Text,
@@ -6,8 +12,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Animated,
-  Dimensions,
   PanResponder,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -63,6 +69,7 @@ interface Props {
 
 const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
   const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
   // 지도를 그리려면 실제 픽셀 크기를 알아야 한다. 화면마다 다르다.
   const [mapSize, setMapSize] = useState<{
@@ -113,58 +120,90 @@ const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
   // 예전에는 '지도 / 목록' 을 눌러 화면을 통째로 바꿨다. 손잡이를 위아래로
   // 끌어 목록을 펼치고 접는 편이 지도를 보면서 쓰기 좋다.
   const SHEET_PEEK = 354;
-  const SHEET_FULL = Dimensions.get('window').height - 120;
+  const SHEET_FULL = Math.max(0, windowHeight - 120);
+  const SHEET_COLLAPSED = Math.min(SHEET_PEEK, SHEET_FULL);
   // 위로 끌수록 값이 작아진다(높이가 커진다)
-  const sheetHeight = useRef(new Animated.Value(SHEET_PEEK)).current;
-  const startHeight = useRef(SHEET_PEEK);
+  const sheetHeight = useRef(new Animated.Value(SHEET_COLLAPSED)).current;
+  const startHeight = useRef(SHEET_COLLAPSED);
 
-  const settle = (height: number, velocity: number) => {
-    // 빠르게 튕기면 그 방향으로, 아니면 가까운 쪽으로 붙인다
-    const middle = (SHEET_PEEK + SHEET_FULL) / 2;
-    const toFull =
-      velocity < -0.5 ? true : velocity > 0.5 ? false : height > middle;
-    const target = toFull ? SHEET_FULL : SHEET_PEEK;
-    startHeight.current = target;
-    Animated.spring(sheetHeight, {
-      toValue: target,
-      useNativeDriver: false,
-      bounciness: 0,
-    }).start();
-  };
+  const clampSheetHeight = useCallback(
+    (height: number) =>
+      Math.min(SHEET_FULL, Math.max(SHEET_COLLAPSED, height)),
+    [SHEET_COLLAPSED, SHEET_FULL],
+  );
 
-  const drag = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 4,
-      onPanResponderMove: (_, g) => {
-        const next = Math.min(
-          SHEET_FULL,
-          Math.max(SHEET_PEEK, startHeight.current - g.dy),
-        );
-        sheetHeight.setValue(next);
-      },
-      onPanResponderRelease: (_, g) => {
-        const next = Math.min(
-          SHEET_FULL,
-          Math.max(SHEET_PEEK, startHeight.current - g.dy),
-        );
-        settle(next, g.vy);
-      },
-      onPanResponderTerminate: (_, g) => {
-        const next = Math.min(
-          SHEET_FULL,
-          Math.max(SHEET_PEEK, startHeight.current - g.dy),
-        );
-        settle(next, g.vy);
-      },
-    }),
-  ).current;
+  useEffect(() => {
+    sheetHeight.stopAnimation(current => {
+      const next = clampSheetHeight(current);
+      startHeight.current = next;
+      sheetHeight.setValue(next);
+    });
+  }, [clampSheetHeight, sheetHeight]);
+
+  const settle = useCallback(
+    (height: number, velocity: number) => {
+      // 빠르게 튕기면 그 방향으로, 아니면 가까운 쪽으로 붙인다
+      const middle = (SHEET_COLLAPSED + SHEET_FULL) / 2;
+      const toFull =
+        velocity < -0.5 ? true : velocity > 0.5 ? false : height > middle;
+      const target = toFull ? SHEET_FULL : SHEET_COLLAPSED;
+      startHeight.current = target;
+      Animated.spring(sheetHeight, {
+        toValue: target,
+        useNativeDriver: false,
+        bounciness: 0,
+      }).start();
+    },
+    [SHEET_COLLAPSED, SHEET_FULL, sheetHeight],
+  );
+
+  const drag = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 4,
+        onPanResponderGrant: () => {
+          sheetHeight.stopAnimation(current => {
+            const next = clampSheetHeight(current);
+            startHeight.current = next;
+            sheetHeight.setValue(next);
+          });
+        },
+        onPanResponderMove: (_, g) => {
+          const next = clampSheetHeight(startHeight.current - g.dy);
+          sheetHeight.setValue(next);
+        },
+        onPanResponderRelease: (_, g) => {
+          const next = clampSheetHeight(startHeight.current - g.dy);
+          settle(next, g.vy);
+        },
+        onPanResponderTerminate: (_, g) => {
+          const next = clampSheetHeight(startHeight.current - g.dy);
+          settle(next, g.vy);
+        },
+      }),
+    [clampSheetHeight, settle, sheetHeight],
+  );
 
   const onMapLayout = (e: any) => {
     const { width, height } = e.nativeEvent.layout;
-    setMapSize({ width, height });
+    setMapSize(prev =>
+      prev?.width === width && prev?.height === height
+        ? prev
+        : { width, height },
+    );
   };
 
   const spots = useMemo(() => toSpots(timeline), [timeline]);
+  const points = useMemo(
+    () =>
+      spots.map((spot, index) => ({
+        key: spot.key,
+        latitude: spot.latitude,
+        longitude: spot.longitude,
+        index,
+      })),
+    [spots],
+  );
   const place = card ? `${card.countryName} · ${card.cityName}` : '여행';
 
   const list = (
@@ -225,12 +264,7 @@ const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
         {mapSize ? (
           <CountryTripMap
             countryName={card?.countryName}
-            points={spots.map((spot, i) => ({
-              key: spot.key,
-              latitude: spot.latitude,
-              longitude: spot.longitude,
-              index: i,
-            }))}
+            points={points}
             width={mapSize.width}
             height={mapSize.height}
             onPressPoint={key => {

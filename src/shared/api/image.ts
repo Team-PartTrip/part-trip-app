@@ -35,7 +35,11 @@ export async function uploadImage(
     }
   };
 
-  let res = await send(await getAccessToken());
+  const token = await getAccessToken();
+  if (getSessionGeneration() !== generation) {
+    throw new ApiError(401, '로그인 정보가 바뀌었어요. 다시 시도해주세요.');
+  }
+  let res = await send(token);
   // multipart 라 authRequest 를 못 쓴다. 그래서 갱신도 여기서 한 번 한다.
   // 안 하면 토큰이 만료된 뒤로는 사진만 계속 올라가지 않는다.
   if (res.status === 401) {

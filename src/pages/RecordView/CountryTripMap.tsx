@@ -7,6 +7,10 @@ import colors from '../../shared/tokens/colors';
 import { ALPHA2_BY_KOREAN } from '../../entities/worldmap/countryCodeByName';
 import { NUMERIC_BY_ALPHA2 } from '../../entities/worldmap/countryNumericCode';
 
+const COUNTRY_FEATURES = (
+  feature(worldAtlas as any, (worldAtlas as any).objects.countries) as any
+).features;
+
 /**
  * 여행한 나라 지도와 그 위에 찍은 방문 장소.
  *
@@ -47,11 +51,7 @@ const CountryTripMap: React.FC<Props> = ({
     if (!numeric) {
       return null;
     }
-    const collection: any = feature(
-      worldAtlas as any,
-      (worldAtlas as any).objects.countries,
-    );
-    const target = collection.features.find(
+    const target = COUNTRY_FEATURES.find(
       (f: any) => f.id != null && String(f.id) === numeric,
     );
     if (!target) {

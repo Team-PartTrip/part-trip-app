@@ -343,6 +343,11 @@ function App() {
                   <PlacePickerView
                     draft={route.params.draft}
                     onBack={() => navigation.goBack()}
+                    onPlannerCreated={plannerId =>
+                      navigation.setParams({
+                        draft: { ...route.params.draft, plannerId },
+                      })
+                    }
                     // 플래너는 담을 때 만들어진다. 그때 받은 id 를 쓴다
                     onOpenCart={plannerId =>
                       navigation.navigate('PlanCart', { plannerId })

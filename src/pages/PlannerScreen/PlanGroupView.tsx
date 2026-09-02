@@ -52,6 +52,7 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
   const [removing, setRemoving] = useState<string | null>(null);
   // 만드는 중인 요청. 초대하기와 다음을 연달아 누르면 둘 다 여기로 들어온다.
   const creating = useRef<Promise<CreatedPlanner | null> | null>(null);
+  const membersRef = useRef<PlannerMember[]>([]);
 
   // 혼자 여행이면 인원은 나 한 명으로 고정된다
   const finalHeadcount = together ? headcount : 1;
@@ -63,38 +64,34 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
   // 참여한 사람보다 적게 줄일 수 없고, 아무도 없어도 나 한 명은 남는다
   const minHeadcount = Math.max(1, members.length);
 
+  useEffect(() => {
+    membersRef.current = members;
+  }, [members]);
+
   // 플래너를 만든 뒤부터 멤버가 다 모일 때까지 목록을 다시 받는다
   useEffect(() => {
     if (!planner) {
       return;
     }
     let alive = true;
-    let timer: ReturnType<typeof setInterval> | null = null;
-
-    const stop = () => {
-      if (timer) {
-        clearInterval(timer);
-        timer = null;
-      }
-    };
-
     const load = async () => {
+      // 다 모인 동안에도 타이머는 유지한다. 멤버를 내보내 정원이 생기면
+      // membersRef 가 갱신되어 다음 주기부터 자동으로 다시 조회한다.
+      if (membersRef.current.length >= finalHeadcount) {
+        return;
+      }
       const list = await getPlannerMembers(planner.plannerId).catch(() => null);
       if (!alive || !list) {
         return;
       }
       setMembers(list);
-      // 다 모이면 더 물어볼 이유가 없다
-      if (list.length >= finalHeadcount) {
-        stop();
-      }
     };
 
     load();
-    timer = setInterval(load, MEMBER_POLL_MS);
+    const timer = setInterval(load, MEMBER_POLL_MS);
     return () => {
       alive = false;
-      stop();
+      clearInterval(timer);
     };
   }, [planner, finalHeadcount]);
 

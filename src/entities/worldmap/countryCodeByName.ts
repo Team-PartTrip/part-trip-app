@@ -26,6 +26,7 @@ export const ALPHA2_BY_KOREAN: Record<string, string> = {
   '니제르': 'NE',
   '니카라과': 'NI',
   '대한민국': 'KR',
+  '한국': 'KR',
   '덴마크': 'DK',
   '도미니카 공화국': 'DO',
   '독일': 'DE',

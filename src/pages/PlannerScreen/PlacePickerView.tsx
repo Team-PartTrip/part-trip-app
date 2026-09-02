@@ -35,6 +35,8 @@ interface Props {
   onOpenCart?: (plannerId: number) => void;
   /** 담은 장소로 카테고리별 투표(C5)를 연다 */
   onStartVote?: (plannerId: number) => void;
+  /** 새 플래너가 만들어지면 상위 draft 에 id 를 보존한다 */
+  onPlannerCreated?: (plannerId: number) => void;
 }
 
 const PlacePickerView: React.FC<Props> = ({
@@ -42,6 +44,7 @@ const PlacePickerView: React.FC<Props> = ({
   onBack,
   onOpenCart,
   onStartVote,
+  onPlannerCreated,
 }) => {
   const [category, setCategory] = useState<PlaceCategory>('RESTAURANT');
   const [places, setPlaces] = useState<ServerPlace[]>([]);
@@ -116,6 +119,7 @@ const PlacePickerView: React.FC<Props> = ({
           });
           plannerId = created.plannerId;
           plannerIdRef.current = plannerId;
+          onPlannerCreated?.(plannerId);
         }
         await saveTravelPlan(plannerId, {
           countryName: draft.countryName,
@@ -132,7 +136,7 @@ const PlacePickerView: React.FC<Props> = ({
         setSending(false);
       }
     },
-    [draft, picked, sending],
+    [draft, onPlannerCreated, picked, sending],
   );
 
   return (

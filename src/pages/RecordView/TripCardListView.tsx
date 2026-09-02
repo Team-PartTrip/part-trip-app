@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -46,6 +46,7 @@ const TripCardListView: React.FC<Props> = ({
   // 기록이 없는 것처럼 보인다.
   const [failed, setFailed] = useState(false);
   const [index, setIndex] = useState(0);
+  const scrollRef = useRef<ScrollView>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -56,6 +57,7 @@ const TripCardListView: React.FC<Props> = ({
       setFailed(false);
       // 새 목록이 이전보다 짧으면 index 가 범위 밖에 남아 공유가 안 된다
       setIndex(0);
+      scrollRef.current?.scrollTo({ x: 0, animated: false });
       getTripCards()
         .then(list => alive && setCards(list))
         .catch(
@@ -117,6 +119,7 @@ const TripCardListView: React.FC<Props> = ({
       ) : (
         <>
           <ScrollView
+            ref={scrollRef}
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}

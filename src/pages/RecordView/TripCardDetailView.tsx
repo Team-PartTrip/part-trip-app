@@ -59,15 +59,20 @@ const TripCardDetailView: React.FC<Props> = ({
         setFailed(false);
         try {
           // 상세 응답에는 나라·도시가 없어서 목록에서 가져온다 (명세서 API-003-03)
+          let listFailed = false;
           const [detail, list] = await Promise.all([
             getTripCard(tripCardId),
-            getTripCards().catch(() => [] as TripCardSummary[]),
+            getTripCards().catch(() => {
+              listFailed = true;
+              return [] as TripCardSummary[];
+            }),
           ]);
           if (!alive) {
             return;
           }
           setEntries(detail.timeline ?? []);
           setCard(list.find(item => item.cardId === tripCardId) ?? null);
+          setFailed(listFailed);
         } catch {
           if (alive) {
             setEntries([]);

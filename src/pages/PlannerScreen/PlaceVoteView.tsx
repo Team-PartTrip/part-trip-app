@@ -171,7 +171,7 @@ const PlaceVoteView: React.FC<Props> = ({
    * 이름만으로 후보를 넣는다.
    *
    * 장바구니에 담긴 장소가 없는 카테고리는 투표 자체가 없어서, 먼저 만든다.
-   * 투표 만들기는 그룹장만 되므로 멤버는 서버 문구를 그대로 보게 된다.
+   * 투표 만들기는 그룹장만 되므로 멤버에게는 그룹장에게 요청하도록 안내한다.
    */
   const addPlace = async () => {
     const name = newPlace.trim();
@@ -180,7 +180,18 @@ const PlaceVoteView: React.FC<Props> = ({
     }
     setAdding(true);
     try {
-      const voteId = vote?.voteId ?? (await createVote(planId, active)).voteId;
+      let voteId = vote?.voteId;
+      if (voteId == null) {
+        const planner = await getPlanner(planId);
+        if (planner.role !== 'OWNER') {
+          Alert.alert(
+            '후보를 추가할 수 없어요',
+            '이 카테고리의 투표를 먼저 만들어야 해요. 그룹장에게 요청해주세요.',
+          );
+          return;
+        }
+        voteId = (await createVote(planId, active)).voteId;
+      }
       await addVoteOption(planId, voteId, name);
       setNewPlace('');
       setVotes(await getVotes(planId));

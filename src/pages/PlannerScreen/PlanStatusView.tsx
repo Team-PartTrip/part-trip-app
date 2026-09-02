@@ -86,7 +86,7 @@ interface Props {
   onBack?: () => void;
   onOpenVote?: (category: PlaceCategory, voteId?: number) => void;
   /** 삭제가 끝나면 목록으로 돌려보낸다. 이 화면은 이미 사라진 플래너를 본다 */
-  onDeleted?: () => void;
+  onDeleted: () => void;
 }
 
 const PlanStatusView: React.FC<Props> = ({
@@ -148,12 +148,13 @@ const PlanStatusView: React.FC<Props> = ({
             try {
               await deletePlanner(planId);
               // 지운 플래너를 계속 보여줄 수 없다. 목록으로 보낸다.
-              onDeleted?.();
+              onDeleted();
             } catch (e: any) {
               Alert.alert(
                 '삭제 실패',
                 e?.message ?? '잠시 후 다시 시도해주세요.',
               );
+            } finally {
               setDeleting(false);
             }
           },
@@ -179,7 +180,9 @@ const PlanStatusView: React.FC<Props> = ({
   };
 
   // 서버는 열린 투표가 하나도 없으면 독촉을 거부한다(VoteReminderService)
-  const hasOpenVote = votes.some(vote => vote.status === 'OPEN');
+  const hasOpenVote = votes.some(
+    vote => vote.status === 'OPEN' && !vote.deadlinePassed,
+  );
 
   const rows = CATEGORIES.map(category =>
     buildRow(

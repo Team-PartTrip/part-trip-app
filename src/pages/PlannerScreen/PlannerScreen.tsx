@@ -119,10 +119,6 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
   const [joinOpen, setJoinOpen] = useState(false);
   const [joinInput, setJoinInput] = useState('');
   const [joining, setJoining] = useState(false);
-  // 삭제가 끝나기 전에 다시 누르면 같은 DELETE 가 두 번 나간다.
-  // 두 번째는 서버가 거부해서, 첫 번째가 성공했는데도 실패 알림이 뜬다.
-  //
-
   useFocusEffect(
     useCallback(() => {
       let alive = true;
