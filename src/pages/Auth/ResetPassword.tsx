@@ -19,12 +19,15 @@ import colors from '../../shared/tokens/colors';
 interface ResetPasswordProps {
   /** 비밀번호를 변경할 (인증 완료된) 이메일 */
   email: string;
+  /** 인증을 마칠 때 받은 일회용 토큰 */
+  resetToken: string;
   onBack?: () => void;
   onConfirm?: () => void;
 }
 
 const ResetPassword: React.FC<ResetPasswordProps> = ({
   email,
+  resetToken,
   onBack,
   onConfirm,
 }) => {
@@ -43,7 +46,7 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({
     }
     try {
       setLoading(true);
-      await resetPasswordApi(email, password, confirmPassword);
+      await resetPasswordApi(email, password, confirmPassword, resetToken);
       Alert.alert('완료', '비밀번호가 변경되었습니다. 다시 로그인해주세요.');
       onConfirm?.();
     } catch (e: any) {

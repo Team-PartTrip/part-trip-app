@@ -176,6 +176,11 @@ const MainView: React.FC<MainViewProps> = ({
                 activeOpacity={0.85}
                 disabled={!onOpenNotifications}
                 onPress={onOpenNotifications}
+                // 아이콘만 있는 버튼이라 읽어줄 글자가 없다
+                accessibilityRole="button"
+                accessibilityLabel={
+                  unread > 0 ? `알림 ${unread}건` : '알림'
+                }
               >
                 <BellIcon size={17} color={colors.primary} />
                 {unread > 0 && <View style={s.badge} />}

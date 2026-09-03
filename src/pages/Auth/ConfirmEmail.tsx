@@ -43,8 +43,11 @@ interface ConfirmEmailProps {
   onBack?: () => void;
   /** 회원가입 화면에서 입력한 아이디/비밀번호 (signup 모드에서 사용) */
   signupData?: SignUpData;
-  /** 인증 완료 시 호출. resetPassword 모드에서는 인증된 이메일을 넘겨줌 */
-  onConfirm?: (email?: string) => void;
+  /**
+   * 인증 완료 시 호출. resetPassword 모드에서는 인증된 이메일과
+   * 재설정에 쓸 일회용 토큰을 함께 넘겨준다.
+   */
+  onConfirm?: (email?: string, resetToken?: string) => void;
 }
 
 const ConfirmEmail: React.FC<ConfirmEmailProps> = ({
@@ -161,8 +164,11 @@ const ConfirmEmail: React.FC<ConfirmEmailProps> = ({
     if (mode !== 'signup') {
       try {
         setLoading(true);
-        await verifyPasswordResetCode(email.trim(), code.trim());
-        onConfirm?.(email.trim());
+        const { resetToken } = await verifyPasswordResetCode(
+          email.trim(),
+          code.trim(),
+        );
+        onConfirm?.(email.trim(), resetToken);
       } catch (e: any) {
         Alert.alert('인증 실패', e?.message ?? '인증에 실패했습니다.');
       } finally {

@@ -11,9 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { planCartStyles as s } from './PlanCartView.styles';
 import {
-  closeVote,
   confirmPlanner,
-  confirmVote,
   deleteVoteOption,
   drawRandomPlace,
   getVotes,
@@ -169,8 +167,30 @@ const PlanCartView: React.FC<Props> = ({ plannerId, onBack, onConfirm }) => {
 
   const chosen = items.filter(item => chosenIds.includes(item.optionId));
   const drawn = items.find(item => item.optionId === drawnId) ?? null;
+
+  /**
+   * 지금 고른 것들. 랜덤 모드는 뽑힌 하나가 곧 선택이다.
+   */
+  const picks = mode === 'random' ? (drawn ? [drawn] : []) : chosen;
+
+  /**
+   * 아직 고르지 않은 카테고리.
+   *
+   * 서버는 카테고리마다 한 곳을 확정한다. 장바구니는 아무도 투표하지 않아
+   * 모든 후보가 0표 동점이라, 안 고른 카테고리가 하나라도 있으면 확정이
+   * "동점이에요" 로 거부된다. 그래서 누르기 전에 먼저 막는다.
+   */
+  const pendingLabels = Array.from(
+    new Set(
+      items
+        .filter(item => !picks.some(pick => pick.voteId === item.voteId))
+        .map(item => CATEGORY_LABEL[item.category]),
+    ),
+  );
+
   // 랜덤 모드에서는 뽑기 전까지 확정할 게 없다
-  const canConfirm = mode === 'random' ? !!drawn : chosen.length > 0;
+  const canConfirm =
+    picks.length > 0 && pendingLabels.length === 0;
   const buttonLabel =
     mode === 'random' && !drawn ? '랜덤으로 뽑기' : '선택 확정하기';
   // 버튼이 지금 할 일이 있는지. 스타일과 비활성이 갈리면 꺼진 것처럼 보이는데
@@ -198,32 +218,15 @@ const PlanCartView: React.FC<Props> = ({ plannerId, onBack, onConfirm }) => {
       // 아무도 투표하지 않은 장바구니에서는 모든 후보가 0표 동점이다. 그래서
       // 이걸 건너뛰면 고른 것이 버려지거나 "동점 투표가 있습니다" 로 거부된다.
       // toggle 이 카테고리마다 하나만 남기므로 그대로 보내면 된다.
-      const picks = mode === 'random' ? (drawn ? [drawn] : []) : chosen;
-      for (const item of picks) {
-        // 중간에 실패하면 앞쪽 투표만 확정된 채로 남는다. 서버에는 확정을
-        // 되돌릴 수단이 없고, 확정된 투표에 다시 보내면 "마감된 투표만
-        // 확정할 수 있습니다" 로 막혀 재시도조차 안 된다. 그래서 이미 확정된
-        // 것은 건너뛰어 같은 버튼을 다시 눌러 이어갈 수 있게 한다.
-        if (item.voteStatus === 'CONFIRMED') {
-          continue;
-        }
-        // 확정은 마감된 투표만 된다. 이미 마감돼 있으면 그대로 넘어간다.
-        if (item.voteStatus === 'OPEN') {
-          await closeVote(plannerId, item.voteId);
-        }
-        await confirmVote(plannerId, item.voteId, item.optionId);
-        // 화면의 상태도 같이 올린다. 안 그러면 다시 들어오기 전까지 items 는
-        // 옛 상태라, 실패 후 그 자리에서 다시 눌렀을 때 방금 확정한 투표를
-        // 또 보내고 거부당한다.
-        setItems(prev =>
-          prev.map(row =>
-            row.voteId === item.voteId
-              ? { ...row, voteStatus: 'CONFIRMED' as VoteStatus }
-              : row,
-          ),
-        );
-      }
-      await confirmPlanner(plannerId);
+      // 고른 것을 확정 요청에 실어 한 번에 보낸다. 서버가 카테고리마다
+      // 마감하고 고른 곳으로 확정한다. 예전에는 여기서 마감·확정을 하나씩
+      // 돌렸는데, 중간에 실패하면 앞쪽만 확정된 채로 남았다.
+      await confirmPlanner(
+        plannerId,
+        picks
+          .filter(item => item.voteStatus !== 'CONFIRMED')
+          .map(item => ({ voteId: item.voteId, optionId: item.optionId })),
+      );
       onConfirm?.();
     } catch (e: any) {
       // 방장이 아니거나 담긴 장소가 없으면 서버가 거부한다
@@ -346,6 +349,11 @@ const PlanCartView: React.FC<Props> = ({ plannerId, onBack, onConfirm }) => {
       </ScrollView>
 
       <SafeAreaView edges={['bottom']} style={s.footer}>
+        {pendingLabels.length > 0 && (
+          <Text style={s.pending}>
+            {pendingLabels.join(' · ')} 도 골라주세요
+          </Text>
+        )}
         <TouchableOpacity
           style={[s.primaryBtn, !actionable && s.primaryBtnOff]}
           activeOpacity={0.85}

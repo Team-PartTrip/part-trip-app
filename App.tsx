@@ -66,7 +66,7 @@ export type RootStackParamList = {
     mode: 'signup' | 'resetPassword';
     signupData?: SignUpData;
   };
-  ResetPassword: { email: string };
+  ResetPassword: { email: string; resetToken: string };
   Main: undefined;
   Planner: undefined;
   PlanGroup: undefined;
@@ -260,11 +260,12 @@ function App() {
                       mode={mode}
                       onBack={() => navigation.goBack()}
                       signupData={route.params?.signupData}
-                      onConfirm={email =>
+                      onConfirm={(email, resetToken) =>
                         mode === 'signup'
                           ? navigation.navigate('Login')
                           : navigation.navigate('ResetPassword', {
                               email: email ?? '',
+                              resetToken: resetToken ?? '',
                             })
                       }
                     />
@@ -277,6 +278,7 @@ function App() {
                 {({ navigation, route }) => (
                   <ResetPassword
                     email={route.params?.email ?? ''}
+                    resetToken={route.params?.resetToken ?? ''}
                     onBack={() => navigation.goBack()}
                     onConfirm={async () => {
                       await clearTokens();
