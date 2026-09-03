@@ -387,6 +387,14 @@ export interface ConfirmedPlace {
   address: string | null;
   rating: number | null;
   voteCount: number;
+  /**
+   * 며칠차에 가는 곳인지 (YYYY-MM-DD).
+   *
+   * 서버가 카테고리마다 한 곳만 확정하던 동안에는 없던 값이다. 득표순으로
+   * 여러 곳을 확정하면서 날짜가 붙는다. 아직 안 주는 서버도 있어 optional
+   * 로 둔다 — 없으면 화면이 예전처럼 카테고리 순으로 그린다.
+   */
+  visitedDate?: string | null;
 }
 
 export interface PlannerFinal {

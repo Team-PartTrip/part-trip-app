@@ -8,7 +8,7 @@ jest.mock('../src/shared/api/tokenStorage', () => ({
   getSessionGeneration: () => mockGeneration,
 }));
 const mockRefresh = jest.fn();
-const mockExpireSession = jest.fn(() => Promise.resolve());
+const mockExpireSession = jest.fn((_generation: number) => Promise.resolve());
 jest.mock('../src/shared/api/http', () => ({
   refreshAccessToken: () => mockRefresh(),
   expireSession: (generation: number) => mockExpireSession(generation),

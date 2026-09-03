@@ -17,6 +17,8 @@ import LoginView from './src/pages/Auth/LoginView';
 import SignUpView, { SignUpData } from './src/pages/Auth/SingUpView';
 import ConfirmEmail from './src/pages/Auth/ConfirmEmail';
 import ResetPassword from './src/pages/Auth/ResetPassword';
+import PlaceDetailView from './src/pages/PlaceDetailView/PlaceDetailView';
+import type { TourPlace } from './src/entities/main/api';
 import MainView from './src/pages/MainView/MainView';
 import FestivalScreen from './src/pages/FestivalScreen/FestivalScreen';
 import ProfileView from './src/pages/ProfileView/ProfileView';
@@ -78,6 +80,7 @@ export type RootStackParamList = {
   PlanConfirm: { planId: number };
   Notifications: undefined;
   NotificationDetail: { notification: Notification };
+  PlaceDetail: { place: TourPlace };
   Festival: undefined;
   Record: undefined;
   RecordMap: { tripCardId: number };
@@ -146,6 +149,7 @@ const OWN_HEADER_ROUTES = [
   'Record',
   'RecordMap',
   'Festival',
+  'PlaceDetail',
   'TripCardDetail',
   'TripCardEdit',
   'Profile',
@@ -164,6 +168,11 @@ const TAB_BY_ROUTE: Record<string, TabKey> = {
   Main: 'home',
   // 축제·이벤트는 기능명세서 v3 에서 메인(Func-002-03) 소속으로 옮겨졌다
   Festival: 'home',
+  // 탭바가 보이는 화면은 빠짐없이 적는다. 빠지면 어느 탭도 켜지지 않아
+  // 사용자가 지금 어디에 있는지 알 수 없다.
+  PlaceDetail: 'home',
+  Notifications: 'home',
+  NotificationDetail: 'home',
   Planner: 'planner',
   PlanStatus: 'planner',
   Record: 'record',
@@ -171,6 +180,7 @@ const TAB_BY_ROUTE: Record<string, TabKey> = {
   TripCardDetail: 'record',
   TripCardEdit: 'record',
   Profile: 'profile',
+  ProfileEdit: 'profile',
 };
 
 function App() {
@@ -296,6 +306,9 @@ function App() {
                   <MainView
                     onOpenNotifications={() => navigation.navigate('Notifications')}
                     onOpenEvents={() => navigation.navigate('Festival')}
+                    onOpenPlace={place =>
+                      navigation.navigate('PlaceDetail', { place })
+                    }
                   />
                 )}
               </Stack.Screen>
@@ -448,6 +461,15 @@ function App() {
                         navigation.navigate('Record');
                       }
                     }}
+                  />
+                )}
+              </Stack.Screen>
+
+              <Stack.Screen name="PlaceDetail">
+                {({ navigation, route }) => (
+                  <PlaceDetailView
+                    place={route.params.place}
+                    onBack={() => navigation.goBack()}
                   />
                 )}
               </Stack.Screen>
