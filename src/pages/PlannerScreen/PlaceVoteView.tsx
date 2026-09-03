@@ -85,6 +85,7 @@ const PlaceVoteView: React.FC<Props> = ({
   // 관광지 목록에 없는 곳을 직접 후보로 넣을 때 쓴다 (API-005-27)
   const [newPlace, setNewPlace] = useState('');
   const [adding, setAdding] = useState(false);
+  const addingRef = useRef(false);
   // 동점이라 그룹장이 골라줘야 하는 투표들. 앞에서부터 하나씩 묻는다
   const [tieQueue, setTieQueue] = useState<VoteStatusInfo[]>([]);
   /**
@@ -185,9 +186,10 @@ const PlaceVoteView: React.FC<Props> = ({
    */
   const addPlace = async () => {
     const name = newPlace.trim();
-    if (!name || adding) {
+    if (!name || addingRef.current) {
       return;
     }
+    addingRef.current = true;
     setAdding(true);
     try {
       let voteId = vote?.voteId;
@@ -208,6 +210,7 @@ const PlaceVoteView: React.FC<Props> = ({
     } catch (e: any) {
       Alert.alert('추가 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
     } finally {
+      addingRef.current = false;
       setAdding(false);
     }
   };
@@ -243,6 +246,9 @@ const PlaceVoteView: React.FC<Props> = ({
     if (busyRef.current) {
       return;
     }
+    // 첫 await 앞에서 잠근다. 검사만 해두면 리렌더 전에 들어온 두 번째
+    // 터치도 같은 값을 보고 통과한다.
+    busyRef.current = true;
 
     // 확정은 그룹장만 된다. 동점을 먼저 물으면, 멤버는 다 골라놓고 나서야
     // "그룹장이 아닙니다" 를 보게 된다. 그래서 묻기 전에 먼저 확인한다.
@@ -253,9 +259,12 @@ const PlaceVoteView: React.FC<Props> = ({
       isOwner = (await getPlanner(planId)).role === 'OWNER';
     } catch (e: any) {
       Alert.alert('확정 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
+      busyRef.current = false;
       setConfirming(false);
       return;
     }
+    // sendConfirm 이 스스로 다시 잠그므로 여기서는 놓아준다
+    busyRef.current = false;
     setConfirming(false);
 
     if (!isOwner) {
