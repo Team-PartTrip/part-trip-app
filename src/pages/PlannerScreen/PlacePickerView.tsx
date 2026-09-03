@@ -53,6 +53,7 @@ const PlacePickerView: React.FC<Props> = ({
   const [picked, setPicked] = useState<number[]>([]);
   const [sending, setSending] = useState(false);
   const plannerIdRef = useRef(draft.plannerId);
+  const sendingRef = useRef(false);
 
   /**
    * 둘 이하면 투표가 의미가 없다. 장바구니에서 직접 고르거나 랜덤으로 뽑는다.
@@ -113,9 +114,12 @@ const PlacePickerView: React.FC<Props> = ({
    */
   const commit = useCallback(
     async (next?: (plannerId: number) => void) => {
-      if (picked.length === 0 || sending) {
+      if (picked.length === 0 || sendingRef.current) {
         return;
       }
+      // 잠금은 ref 로 건다. state 는 화면이 다시 그려져야 바뀌어서, 위 링크와
+      // 아래 버튼을 거의 동시에 누르면 둘 다 통과해 플래너가 두 개 만들어진다.
+      sendingRef.current = true;
       try {
         setSending(true);
         let plannerId = plannerIdRef.current;
@@ -141,6 +145,7 @@ const PlacePickerView: React.FC<Props> = ({
       } catch (e: any) {
         Alert.alert('담기 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
       } finally {
+        sendingRef.current = false;
         setSending(false);
       }
     },

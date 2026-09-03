@@ -146,8 +146,19 @@ const PlanCartView: React.FC<Props> = ({ plannerId, onBack, onConfirm }) => {
         items.find(item => item.placeName === picked.placeName) ??
         null;
       if (matched) {
+        // 뽑힌 카테고리의 앞 선택만 바꾸고 나머지는 남긴다. 서버 뽑기는
+        // 장바구니 전체에서 하나를 주므로, 카테고리를 다 채우려면 여러 번
+        // 눌러야 한다. 매번 덮어쓰면 영원히 하나만 남는다.
         setDrawnId(matched.optionId);
-        setChosenIds([matched.optionId]);
+        setChosenIds(prev => {
+          const sameVote = items
+            .filter(row => row.voteId === matched.voteId)
+            .map(row => row.optionId);
+          return [
+            ...prev.filter(id => !sameVote.includes(id)),
+            matched.optionId,
+          ];
+        });
       } else {
         Alert.alert('뽑기 결과', picked.placeName);
       }
@@ -171,7 +182,8 @@ const PlanCartView: React.FC<Props> = ({ plannerId, onBack, onConfirm }) => {
   /**
    * 지금 고른 것들. 랜덤 모드는 뽑힌 하나가 곧 선택이다.
    */
-  const picks = mode === 'random' ? (drawn ? [drawn] : []) : chosen;
+  // 랜덤도 고른 결과는 chosenIds 에 쌓인다. 두 모드가 같은 값을 본다.
+  const picks = chosen;
 
   /**
    * 아직 고르지 않은 카테고리.
@@ -192,17 +204,24 @@ const PlanCartView: React.FC<Props> = ({ plannerId, onBack, onConfirm }) => {
   const canConfirm =
     picks.length > 0 && pendingLabels.length === 0;
   const buttonLabel =
-    mode === 'random' && !drawn ? '랜덤으로 뽑기' : '선택 확정하기';
+    mode === 'random' && pendingLabels.length > 0
+      ? '랜덤으로 뽑기'
+      : '선택 확정하기';
   // 버튼이 지금 할 일이 있는지. 스타일과 비활성이 갈리면 꺼진 것처럼 보이는데
   // 눌리는 버튼이 된다(또는 그 반대). busy 까지 넣어 한 값으로 둘 다 결정한다.
+  // 랜덤 모드에서 아직 뽑을 게 남았으면 버튼은 '뽑기' 로 동작한다.
+  // 다 뽑았으면 직접 선택과 같은 조건으로 확정을 건다.
   const actionable =
-    !busy && (mode === 'random' ? items.length > 0 : canConfirm);
+    !busy &&
+    (mode === 'random' && pendingLabels.length > 0
+      ? items.length > 0
+      : canConfirm);
 
   const press = async () => {
     if (busyRef.current) {
       return;
     }
-    if (mode === 'random' && !drawn) {
+    if (mode === 'random' && pendingLabels.length > 0) {
       if (items.length > 0) {
         draw();
       }
