@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { planGroupStyles as s } from './PlanGroupView.styles';
@@ -15,16 +16,22 @@ import colors from '../../shared/tokens/colors';
 import {
   createPlanner,
   getPlannerMembers,
+  removePlannerMember,
   PlannerMember,
 } from '../../entities/planner/api';
 import { PlanDraft } from '../../entities/planner/types';
 
 const MAX_HEADCOUNT = 10;
 
+// 멤버 목록을 다시 받는 간격.
+// 초대 링크를 보낸 뒤 방장은 이 화면에 그대로 머무른다. 화면을 다시 열 일이
+// 없어서 focus 로는 갱신되지 않는다. 그래서 여기서 주기적으로 물어본다.
+const MEMBER_POLL_MS = 4000;
+
 /** 만들고 나서 필요한 것만 담는다 */
 interface CreatedPlanner {
   plannerId: number;
-  inviteCode: string;
+  inviteLink: string;
 }
 
 interface Props {
@@ -41,8 +48,11 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
   const [members, setMembers] = useState<PlannerMember[]>([]);
   const [planner, setPlanner] = useState<CreatedPlanner | null>(null);
   const [busy, setBusy] = useState(false);
+  // 내보내는 중인 멤버. 연타로 같은 요청이 두 번 나가는 것을 막는다.
+  const [removing, setRemoving] = useState<string | null>(null);
   // 만드는 중인 요청. 초대하기와 다음을 연달아 누르면 둘 다 여기로 들어온다.
   const creating = useRef<Promise<CreatedPlanner | null> | null>(null);
+  const membersRef = useRef<PlannerMember[]>([]);
 
   // 혼자 여행이면 인원은 나 한 명으로 고정된다
   const finalHeadcount = together ? headcount : 1;
@@ -53,6 +63,86 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
   const locked = planner !== null || busy;
   // 참여한 사람보다 적게 줄일 수 없고, 아무도 없어도 나 한 명은 남는다
   const minHeadcount = Math.max(1, members.length);
+
+  useEffect(() => {
+    membersRef.current = members;
+  }, [members]);
+
+  /**
+   * 멤버 목록의 세대.
+   *
+   * 내보내기 전에 시작한 조회가 삭제 뒤에 도착하면, 방금 내보낸 사람이
+   * 목록에 되살아난다. 그 목록이 정원을 채우면 다음 폴링도 건너뛰어
+   * 화면을 다시 열기 전까지 안 고쳐진다.
+   */
+  const membersGenerationRef = useRef(0);
+
+  // 플래너를 만든 뒤부터 멤버가 다 모일 때까지 목록을 다시 받는다
+  useEffect(() => {
+    if (!planner) {
+      return;
+    }
+    let alive = true;
+    const load = async () => {
+      // 다 모인 동안에도 타이머는 유지한다. 멤버를 내보내 정원이 생기면
+      // membersRef 가 갱신되어 다음 주기부터 자동으로 다시 조회한다.
+      if (membersRef.current.length >= finalHeadcount) {
+        return;
+      }
+      const generation = membersGenerationRef.current;
+      const list = await getPlannerMembers(planner.plannerId).catch(() => null);
+      if (!alive || !list) {
+        return;
+      }
+      // 기다리는 사이 멤버를 내보냈으면 이 응답은 이미 옛 것이다
+      if (membersGenerationRef.current !== generation) {
+        return;
+      }
+      setMembers(list);
+    };
+
+    load();
+    const timer = setInterval(load, MEMBER_POLL_MS);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+    };
+  }, [planner, finalHeadcount]);
+
+  // 되돌릴 수 없어서 한 번 묻는다. 서버는 그룹장만 받아준다(API-005-22).
+  const confirmRemove = (member: PlannerMember) =>
+    Alert.alert(
+      '멤버 내보내기',
+      `${member.nickName}님을 내보낼까요?\n다시 들어오려면 초대가 필요해요.`,
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '내보내기',
+          style: 'destructive',
+          onPress: async () => {
+            if (!planner) {
+              return;
+            }
+            setRemoving(member.userId);
+            try {
+              await removePlannerMember(planner.plannerId, member.userId);
+              // 진행 중인 조회의 결과를 버린다
+              membersGenerationRef.current += 1;
+              setMembers(prev =>
+                prev.filter(m => m.userId !== member.userId),
+              );
+            } catch (e: any) {
+              Alert.alert(
+                '내보내지 못했어요',
+                e?.message ?? '잠시 후 다시 시도해주세요.',
+              );
+            } finally {
+              setRemoving(null);
+            }
+          },
+        },
+      ],
+    );
 
   /**
    * 플래너를 아직 안 만들었으면 만든다.
@@ -83,10 +173,9 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
         });
         const made = {
           plannerId: created.plannerId,
-          inviteCode: created.inviteCode,
+          inviteLink: created.inviteLink,
         };
         setPlanner(made);
-        setMembers(await getPlannerMembers(created.plannerId).catch(() => []));
         return made;
       } catch (e: any) {
         Alert.alert('생성 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
@@ -105,19 +194,33 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
     if (!made) {
       return;
     }
-    Alert.alert(
-      '초대 코드',
-      `${made.inviteCode}\n\n이 코드를 전달하면 참여할 수 있어요.`,
-    );
-  };
-
-  const next = async () => {
-    const made = await ensurePlanner();
-    if (!made) {
+    // 서버가 링크를 안 준 경우까지 공유 시트를 띄우면 빈 내용이 나간다
+    if (!made.inviteLink) {
+      Alert.alert('알림', '초대 링크를 받지 못했어요. 잠시 후 다시 시도해주세요.');
       return;
     }
+    try {
+      await Share.share({
+        message: `PartTrip 여행 계획에 초대합니다.\n${made.inviteLink}`,
+      });
+    } catch {
+      // 공유 시트를 못 띄우면 링크라도 보여준다
+      Alert.alert('초대 링크', made.inviteLink);
+    }
+  };
+
+  const next = () => {
+    if (!title.trim()) {
+      Alert.alert('알림', '여행 제목을 입력해주세요.');
+      return;
+    }
+    // 여기서 만들지 않는다. 여행지도 기간도 안 정하고 나가면 "기간 미정"
+    // 플래너가 목록에 남는다. 장소를 실제로 담을 때(투표 시작) 만든다.
+    // 초대하기를 먼저 눌렀다면 이미 만들어져 있고, 그 id 를 그대로 넘긴다.
     onNext?.({
-      plannerId: made.plannerId,
+      plannerId: planner?.plannerId ?? null,
+      title: title.trim(),
+      isSolo: !together,
       headcount: finalHeadcount,
       countryName: '',
       cityName: '',
@@ -204,7 +307,7 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
             <Text style={s.label}>함께할 사람</Text>
             {members.length === 0 ? (
               <Text style={s.memberEmpty}>
-                초대 코드를 전달하면 여기에 참여한 사람이 보여요.
+                초대 링크를 전달하면 참여한 사람이 여기에 나타나요.
               </Text>
             ) : (
               members.map((member, i) => (
@@ -220,6 +323,22 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
                       {member.role === 'OWNER' ? '방장' : '참여 완료'}
                     </Text>
                   </View>
+                  {/* 이 화면을 보는 사람이 방장이다(직접 만들었다).
+                      방장 줄에는 안 보인다 = 자기 자신은 뺄 수 없다. */}
+                  {member.role !== 'OWNER' && (
+                    <TouchableOpacity
+                      style={s.memberRemove}
+                      hitSlop={8}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${member.nickName} 내보내기`}
+                      disabled={removing !== null}
+                      onPress={() => confirmRemove(member)}
+                    >
+                      <Text style={s.memberRemoveText}>
+                        {removing === member.userId ? '…' : '내보내기'}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               ))
             )}

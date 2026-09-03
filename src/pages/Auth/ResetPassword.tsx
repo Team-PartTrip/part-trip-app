@@ -19,11 +19,16 @@ import colors from '../../shared/tokens/colors';
 interface ResetPasswordProps {
   /** 비밀번호를 변경할 (인증 완료된) 이메일 */
   email: string;
+  /** 인증을 마칠 때 받은 일회용 토큰 */
+  resetToken: string;
+  onBack?: () => void;
   onConfirm?: () => void;
 }
 
 const ResetPassword: React.FC<ResetPasswordProps> = ({
   email,
+  resetToken,
+  onBack,
   onConfirm,
 }) => {
   const [password, setPassword] = useState('');
@@ -41,7 +46,7 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({
     }
     try {
       setLoading(true);
-      await resetPasswordApi(email, password, confirmPassword);
+      await resetPasswordApi(email, password, confirmPassword, resetToken);
       Alert.alert('완료', '비밀번호가 변경되었습니다. 다시 로그인해주세요.');
       onConfirm?.();
     } catch (e: any) {
@@ -53,6 +58,18 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <TouchableOpacity
+        style={styles.backBtn}
+        hitSlop={12}
+        accessibilityRole="button"
+        accessibilityLabel="뒤로 가기"
+        // 요청이 끝나기 전에 나가면, 화면이 닫힌 뒤에 결과가 돌아와
+        // 이전 화면 위로 다음 화면이 열린다.
+        disabled={loading}
+        onPress={onBack}
+      >
+        <Text style={styles.back}>‹</Text>
+      </TouchableOpacity>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}

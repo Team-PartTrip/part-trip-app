@@ -13,12 +13,7 @@ import {
 } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { profileEditStyles as s } from './ProfileEditView.styles';
-import {
-  getMyProfile,
-  getTravelThemes,
-  TravelTheme,
-  updateProfile,
-} from '../../entities/profile/api';
+import { getMyProfile, updateProfile } from '../../entities/profile/api';
 import { uploadImage, toImageUrl } from '../../shared/api/image';
 
 const DEFAULT_AVATAR = require('../../shared/assets/images/profile-character.jpg');
@@ -35,20 +30,34 @@ const ProfileEditView: React.FC<Props> = ({
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [themes, setThemes] = useState<TravelTheme[]>([]);
-  const [themeId, setThemeId] = useState<number | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
-    // 여행 타입 목록은 없어도 화면이 뜨게 둔다. 그때는 칩만 안 보인다.
-    Promise.all([getMyProfile(), getTravelThemes().catch(() => [])])
-      .then(([p, list]) => {
+    let alive = true;
+    getMyProfile()
+      .then(p => {
+        if (!alive) {
+          return;
+        }
         setNickname(p.nickName);
         setImgUrl(p.imgUrl);
-        setThemeId(p.themeId);
-        setThemes(list);
       })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      .catch(() => {
+        if (!alive) {
+          return;
+        }
+        // 프로필을 못 읽으면 닉네임이 빈 문자열로 남는다. 그대로 저장하면
+        // 서버의 닉네임을 빈 값으로 덮어쓴다. 저장을 막고 이유를 알린다.
+        setLoadFailed(true);
+        Alert.alert(
+          '불러오기 실패',
+          '프로필을 불러오지 못했어요. 화면을 다시 열어주세요.',
+        );
+      })
+      .finally(() => alive && setLoading(false));
+    return () => {
+      alive = false;
+    };
   }, []);
 
   const handleChangePhoto = async () => {
@@ -84,13 +93,18 @@ const ProfileEditView: React.FC<Props> = ({
   };
 
   const handleConfirm = async () => {
+    if (loadFailed) {
+      // 못 읽은 값을 저장하면 서버 쪽을 빈 값으로 덮어쓴다
+      Alert.alert('저장할 수 없어요', '프로필을 먼저 불러와야 해요.');
+      return;
+    }
     if (!nickname.trim()) {
       Alert.alert('알림', '닉네임을 입력해주세요.');
       return;
     }
     try {
       setSaving(true);
-      await updateProfile({ nickName: nickname.trim(), imgUrl, themeId });
+      await updateProfile({ nickName: nickname.trim(), imgUrl });
       onConfirm?.();
     } catch (e: any) {
       Alert.alert('저장 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
@@ -160,49 +174,18 @@ const ProfileEditView: React.FC<Props> = ({
               placeholderTextColor="#aab4be"
             />
 
-            {/* 여행 타입 (Func-007-01) */}
-            {themes.length > 0 && (
-              <>
-                <Text style={s.label}>여행 타입</Text>
-                <View style={s.themeRow}>
-                  {themes.map(theme => {
-                    const on = theme.themeId === themeId;
-                    return (
-                      <TouchableOpacity
-                        key={theme.themeId}
-                        style={[s.themeChip, on && s.themeChipOn]}
-                        activeOpacity={0.85}
-                        // 다시 누르면 선택을 푼다. 서버는 null 을 받는다.
-                        onPress={() => setThemeId(on ? null : theme.themeId)}
-                      >
-                        <Text
-                          style={[s.themeChipText, on && s.themeChipTextOn]}
-                        >
-                          {theme.themeName}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-                {!!themes.find(t => t.themeId === themeId)?.description && (
-                  <Text style={s.themeDesc}>
-                    {themes.find(t => t.themeId === themeId)?.description}
-                  </Text>
-                )}
-              </>
-            )}
           </View>
 
           <TouchableOpacity
             style={s.confirmBtn}
             activeOpacity={0.85}
             onPress={handleConfirm}
-            disabled={saving || uploading}
+            disabled={saving || uploading || loadFailed}
           >
             {saving ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={s.confirmText}>Confirm</Text>
+              <Text style={s.confirmText}>저장하기</Text>
             )}
           </TouchableOpacity>
         </ScrollView>

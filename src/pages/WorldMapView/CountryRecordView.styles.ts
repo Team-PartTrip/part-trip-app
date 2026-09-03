@@ -22,7 +22,7 @@ export const countryRecordStyles = StyleSheet.create({
   back: {
     fontSize: 28,
     lineHeight: 32,
-    color: colors.white,
+    color: colors.textOnPrimary,
   },
   countryRow: {
     marginTop: 12,
@@ -47,7 +47,7 @@ export const countryRecordStyles = StyleSheet.create({
   countryName: {
     fontSize: 24,
     fontWeight: '800',
-    color: colors.white,
+    color: colors.textOnPrimary,
   },
   countryMeta: {
     marginTop: 4,
@@ -66,7 +66,7 @@ export const countryRecordStyles = StyleSheet.create({
   statValue: {
     fontSize: 16,
     fontWeight: '700',
-    color: colors.white,
+    color: colors.textOnPrimary,
   },
   statLabel: {
     marginTop: 2,
@@ -179,4 +179,5 @@ export const countryRecordStyles = StyleSheet.create({
     color: colors.noteText,
     textAlign: 'center',
   },
+  loading: { marginTop: 60 },
 });

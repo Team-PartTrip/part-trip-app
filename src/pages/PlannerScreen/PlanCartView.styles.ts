@@ -136,6 +136,13 @@ export const planCartStyles = StyleSheet.create({
     paddingTop: 12,
     backgroundColor: colors.background,
   },
+  // 버튼이 왜 안 눌리는지 알려주는 줄
+  pending: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
   primaryBtn: {
     height: 54,
     borderRadius: 12,

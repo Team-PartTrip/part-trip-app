@@ -1,12 +1,14 @@
 import { authRequest } from '../../shared/api/http';
 
+// 서버 notification/enums/NotificationType 과 같은 순서로 둔다.
 export type NotificationType =
   | 'VOTE_PARTICIPATED'
   | 'VOTE_DEADLINE'
-  | 'PHOTO_ORGANIZED'
+  | 'VOTE_REMINDER'
+  | 'GROUP_INVITED'
+  | 'GROUP_INVITE_ACCEPTED'
   | 'COUNTRY_ACQUIRED'
-  | 'TRIP_CARD_CREATED'
-  | 'GROUP_INVITE_ACCEPTED';
+  | 'TRIP_CARD_CREATED';
 
 export type NotificationCategory = 'VOTE' | 'RECORD';
 

@@ -17,7 +17,7 @@ export const profileStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  headerTitle: { fontSize: 24, fontWeight: '700', color: colors.white },
+  headerTitle: { fontSize: 24, fontWeight: '700', color: colors.textOnPrimary },
   headerCircle: {
     width: 36,
     height: 36,
@@ -26,7 +26,6 @@ export const profileStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerCircleIcon: { width: 18, height: 18, tintColor: colors.primary },
   // 알림(🔔) — 쓸 만한 아이콘 이미지가 없어 이모지로 둔다
   headerCircleEmoji: { fontSize: 17 },
 
@@ -43,18 +42,7 @@ export const profileStyles = StyleSheet.create({
   avatarImage: { width: '100%', height: '100%' },
   avatarInitial: { fontSize: 24, fontWeight: '700', color: colors.primary },
   profileInfo: { flex: 1, marginLeft: 16, paddingTop: 6 },
-  nickname: { fontSize: 18, fontWeight: '600', color: colors.white },
-  themeBadge: {
-    alignSelf: 'flex-start',
-    marginTop: 8,
-    height: 26,
-    paddingHorizontal: 12,
-    borderRadius: 13,
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  themeBadgeText: { fontSize: 11, fontWeight: '500', color: colors.white },
+  nickname: { fontSize: 18, fontWeight: '600', color: colors.textOnPrimary },
   handle: { marginTop: 10, fontSize: 12, color: colors.onPrimaryMuted },
   editBtn: {
     height: 34,
@@ -99,7 +87,6 @@ export const profileStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  mapCellFlag: { fontSize: 22 },
   mapFooter: {
     marginTop: 18,
     flexDirection: 'row',
@@ -115,7 +102,7 @@ export const profileStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  moreBtnText: { fontSize: 11, fontWeight: '500', color: colors.white },
+  moreBtnText: { fontSize: 11, fontWeight: '500', color: colors.textOnPrimary },
 
   settingsRow: {
     marginTop: 8,
@@ -129,5 +116,4 @@ export const profileStyles = StyleSheet.create({
   },
   settingsRowText: { fontSize: 15, color: colors.text },
   settingsRowDanger: { color: colors.badge },
-  settingsRowChevron: { fontSize: 15, fontWeight: '600', color: colors.textTertiary },
 });

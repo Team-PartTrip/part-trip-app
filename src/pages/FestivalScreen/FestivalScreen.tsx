@@ -8,11 +8,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { festivalStyles as s } from './FestivalScreen.styles';
-import { getDday, getFestivals, DdayInfo, Festival } from '../../entities/main/api';
 import {
-  formatShortDate,
-  formatTripRange,
-} from '../../entities/record/types';
+  getDday,
+  getFestivals,
+  DdayInfo,
+  Festival,
+} from '../../entities/main/api';
+import { formatShortDate, formatTripRange } from '../../entities/record/types';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -28,6 +30,37 @@ function toIso(year: number, monthIndex: number, day: number): string {
   return `${year}-${month}-${`${day}`.padStart(2, '0')}`;
 }
 
+/** 여행 기간 앞뒤로 함께 보여줄 날수 */
+const WINDOW_DAYS = 7;
+
+/** YYYY-MM-DD 를 days 만큼 옮긴다. Date 가 달·해 넘김을 알아서 처리한다 */
+export function shiftIso(iso: string, days: number): string {
+  const [year, month, day] = iso.split('-').map(Number);
+  const moved = new Date(year, month - 1, day + days);
+  return toIso(moved.getFullYear(), moved.getMonth(), moved.getDate());
+}
+
+/** from~to 가 걸치는 달을 모두 센다. 서버가 달 단위로만 주기 때문이다 */
+export function monthsBetween(
+  from: string,
+  to: string,
+): { year: number; month: number }[] {
+  const [fromYear, fromMonth] = from.split('-').map(Number);
+  const [toYear, toMonth] = to.split('-').map(Number);
+  const months: { year: number; month: number }[] = [];
+  let year = fromYear;
+  let month = fromMonth;
+  while (year < toYear || (year === toYear && month <= toMonth)) {
+    months.push({ year, month });
+    month += 1;
+    if (month > 12) {
+      month = 1;
+      year += 1;
+    }
+  }
+  return months;
+}
+
 interface Props {
   onBack?: () => void;
 }
@@ -40,6 +73,12 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
   const [cursor, setCursor] = useState(() => new Date());
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  // 조회 실패와 일정 없음은 다르다. 같은 문구를 쓰면 서버가 죽어도
+  // 그 달에 축제가 없는 것처럼 보인다.
+  const [failed, setFailed] = useState(false);
+  // getDday 실패는 getFestivals 와 다른 요청이다. dday 만 null 로
+  // 남기면 "일정 없음" 으로 보인다.
+  const [ddayFailed, setDdayFailed] = useState(false);
 
   const year = cursor.getFullYear();
   const monthIndex = cursor.getMonth();
@@ -60,27 +99,66 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
         setCursor(new Date(y, m - 1, 1));
       } catch {
         setDday(null);
+        setDdayFailed(true);
       }
     })();
   }, []);
 
-  useEffect(() => {
+  // 보여줄 범위: 여행 기간 앞뒤 1주
+  const range = useMemo(() => {
     if (!dday) {
+      return null;
+    }
+    return {
+      from: shiftIso(dday.startDate, -WINDOW_DAYS),
+      to: shiftIso(dday.endDate, WINDOW_DAYS),
+    };
+  }, [dday]);
+
+  useEffect(() => {
+    setSelectedDate(current =>
+      current && (!range || current < range.from || current > range.to)
+        ? null
+        : current,
+    );
+  }, [range]);
+
+  useEffect(() => {
+    if (!dday || !range) {
       setLoading(false);
       return;
     }
     setLoading(true);
-    // 달을 빨리 넘기면 앞선 요청이 뒤늦게 끝나 지금 달의 목록을 덮어쓴다.
+    setFailed(false);
     // 화면을 떠난 요청의 결과는 버린다.
     let alive = true;
-    getFestivals(dday.countryName, { year, month: monthIndex + 1 })
-      .then(list => alive && setEvents(list))
-      .catch(() => alive && setEvents([]))
+    // 범위가 달을 걸치면 서버를 여러 번 부른다. 달 단위 조회만 있어서다.
+    // 보통 1~2번이다.
+    Promise.all(
+      monthsBetween(range.from, range.to).map(month =>
+        getFestivals(dday.countryName, month),
+      ),
+    )
+      .then(lists => {
+        if (!alive) {
+          return;
+        }
+        // 달 전체가 오므로 범위 밖은 여기서 버린다
+        setEvents(
+          lists
+            .flat()
+            .filter(
+              event =>
+                event.startDate >= range.from && event.startDate <= range.to,
+            ),
+        );
+      })
+      .catch(() => alive && (setEvents([]), setFailed(true)))
       .finally(() => alive && setLoading(false));
     return () => {
       alive = false;
     };
-  }, [dday, year, monthIndex]);
+  }, [dday, range]);
 
   const weeks = useMemo(() => {
     const leading = new Date(year, monthIndex, 1).getDay();
@@ -120,11 +198,23 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
     return list;
   }, [events, selectedDate, categories]);
 
-  // 고른 날짜와 카테고리는 이 달에만 있는 값이다.
-  // 그대로 두면 다음 달 목록이 통째로 비거나, 칩에 없는 필터가 남아 못 푼다.
+  // 달력은 범위가 걸친 달 안에서만 움직인다. 범위 밖으로 넘어가면
+  // 축제가 하나도 없는 빈 달이 나와 고장난 것처럼 보인다.
+  // 카테고리 칩은 범위 전체에서 뽑으므로 달을 옮겨도 그대로 둔다.
+  const monthSpan = useMemo(
+    () => (range ? monthsBetween(range.from, range.to) : []),
+    [range],
+  );
+  const monthKey = year * 12 + monthIndex;
+  const keyOf = (m: { year: number; month: number }) =>
+    m.year * 12 + (m.month - 1);
+  const canPrev = monthSpan.length > 0 && monthKey > keyOf(monthSpan[0]);
+  const canNext =
+    monthSpan.length > 0 && monthKey < keyOf(monthSpan[monthSpan.length - 1]);
+
   const changeMonth = (offset: number) => {
+    // 고른 날짜는 이 달에만 있는 값이라 옮길 때 푼다
     setSelectedDate(null);
-    setCategories([]);
     setCursor(new Date(year, monthIndex + offset, 1));
   };
 
@@ -148,7 +238,9 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
           <Text style={s.title}>축제 & 이벤트</Text>
           <Text style={s.subtitle}>
             {dday
-              ? `${dday.countryName} · ${year}년 ${monthIndex + 1}월 기준`
+              ? `${dday.countryName} · 여행 기간 앞뒤 1주`
+              : ddayFailed
+              ? '여행 일정을 불러오지 못했어요'
               : '등록된 여행 일정이 없어요'}
           </Text>
         </SafeAreaView>
@@ -160,15 +252,17 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
             </Text>
             <TouchableOpacity
               hitSlop={10}
+              disabled={!canPrev}
               onPress={() => changeMonth(-1)}
             >
-              <Text style={s.calArrow}>‹</Text>
+              <Text style={[s.calArrow, !canPrev && s.calArrowOff]}>‹</Text>
             </TouchableOpacity>
             <TouchableOpacity
               hitSlop={10}
+              disabled={!canNext}
               onPress={() => changeMonth(1)}
             >
-              <Text style={s.calArrow}>›</Text>
+              <Text style={[s.calArrow, !canNext && s.calArrowOff]}>›</Text>
             </TouchableOpacity>
           </View>
 
@@ -191,15 +285,16 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
                 }
                 const date = toIso(year, monthIndex, day);
                 const inTrip =
-                  !!dday &&
-                  date >= dday.startDate &&
-                  date <= dday.endDate;
+                  !!dday && date >= dday.startDate && date <= dday.endDate;
                 const on = date === selectedDate;
+                const outsideRange =
+                  !range || date < range.from || date > range.to;
                 return (
                   <TouchableOpacity
                     key={dayIndex}
                     style={s.calCell}
                     activeOpacity={0.7}
+                    disabled={outsideRange}
                     onPress={() => setSelectedDate(on ? null : date)}
                   >
                     <View
@@ -253,9 +348,15 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
           <ActivityIndicator style={s.loader} />
         ) : visible.length === 0 ? (
           <View style={s.empty}>
-            <Text style={s.emptyText}>보여줄 일정이 없어요</Text>
+            <Text style={s.emptyText}>
+              {failed || ddayFailed
+                ? '정보를 불러오지 못했어요'
+                : '보여줄 일정이 없어요'}
+            </Text>
             <Text style={s.emptyDesc}>
-              {dday
+              {failed || ddayFailed
+                ? '잠시 후 다시 시도해주세요.'
+                : dday
                 ? '다른 날짜나 카테고리를 골라보세요.'
                 : '여행 일정을 등록하면 축제·이벤트를 알려드려요.'}
             </Text>

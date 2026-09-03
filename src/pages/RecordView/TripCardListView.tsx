@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -42,14 +42,28 @@ const TripCardListView: React.FC<Props> = ({
 }) => {
   const [cards, setCards] = useState<TripCardSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  // 조회 실패와 데이터 없음은 다르다. 같은 문구를 쓰면 서버가 죽어도
+  // 기록이 없는 것처럼 보인다.
+  const [failed, setFailed] = useState(false);
   const [index, setIndex] = useState(0);
+  const scrollRef = useRef<ScrollView>(null);
 
   useFocusEffect(
     useCallback(() => {
       let alive = true;
+      // 다시 들어올 때마다 초기화한다. 안 그러면 한 번 실패한 뒤로는
+      // 정상으로 빈 목록을 받아도 오류 문구가 그대로 남는다.
+      setLoading(true);
+      setFailed(false);
+      // 새 목록이 이전보다 짧으면 index 가 범위 밖에 남아 공유가 안 된다
+      setIndex(0);
+      scrollRef.current?.scrollTo({ x: 0, animated: false });
       getTripCards()
         .then(list => alive && setCards(list))
-        .catch(() => alive && setCards([]))
+        .catch(
+          () =>
+            alive && (setCards([]), setIndex(0), setFailed(true)),
+        )
         .finally(() => alive && setLoading(false));
       return () => {
         alive = false;
@@ -91,12 +105,21 @@ const TripCardListView: React.FC<Props> = ({
         <ActivityIndicator style={s.loading} />
       ) : cards.length === 0 ? (
         <View style={s.empty}>
-          <Text style={s.emptyText}>아직 만들어진 여행카드가 없어요</Text>
-          <Text style={s.emptyDesc}>여행을 시작하면 카드가 만들어져요.</Text>
+          <Text style={s.emptyText}>
+            {failed
+              ? '여행카드를 불러오지 못했어요'
+              : '아직 만들어진 여행카드가 없어요'}
+          </Text>
+          <Text style={s.emptyDesc}>
+            {failed
+              ? '잠시 후 다시 시도해주세요.'
+              : '여행을 시작하면 카드가 만들어져요.'}
+          </Text>
         </View>
       ) : (
         <>
           <ScrollView
+            ref={scrollRef}
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}

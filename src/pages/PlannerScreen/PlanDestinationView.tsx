@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -10,8 +10,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { planDestinationStyles as s } from './PlanDestinationView.styles';
 import WizardHeader from './WizardHeader';
-import { saveTravelPlan } from '../../entities/planner/api';
-import { POPULAR_CITIES } from '../../entities/planner/sampleData';
+import { getPopularCities } from '../../entities/planner/api';
+import { getCountries } from '../../entities/main/api';
+import { emojiOf, FALLBACK_CITIES } from '../../entities/planner/sampleData';
 import {
   formatNights,
   PlanDraft,
@@ -19,6 +20,9 @@ import {
 } from '../../entities/planner/types';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+
+// 글자를 칠 때마다 서버를 부르지 않도록 기다리는 시간
+const SEARCH_DELAY_MS = 300;
 
 /** 2026, 7(=8월) → "2026-08-23" */
 function toIso(year: number, monthIndex: number, day: number): string {
@@ -32,6 +36,11 @@ function labelOf(date: string, omitMonth: boolean): string {
   return omitMonth ? `${day}일` : `${month}월 ${day}일`;
 }
 
+function todayIso(): string {
+  const now = new Date();
+  return toIso(now.getFullYear(), now.getMonth(), now.getDate());
+}
+
 interface Props {
   draft: PlanDraft;
   onBack?: () => void;
@@ -41,25 +50,119 @@ interface Props {
 const PlanDestinationView: React.FC<Props> = ({ draft, onBack, onNext }) => {
   const [query, setQuery] = useState('');
   const [city, setCity] = useState<PopularCity | null>(null);
+  // 서버가 계획 수로 뽑아준 인기 여행지. 조회 전·실패 시에는 기본 목록을 쓴다.
+  const [popular, setPopular] = useState<PopularCity[]>(FALLBACK_CITIES);
+  // 검색 결과. null 이면 아직 안 찾아본 것이다
+  const [found, setFound] = useState<PopularCity[] | null>(null);
+  const [searching, setSearching] = useState(false);
   // 피그마에는 달 이동 화살표가 없지만, 한 달에 갇히면 기간을 못 고른다
   const [cursor, setCursor] = useState(() => new Date());
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [today, setToday] = useState(todayIso);
 
   const year = cursor.getFullYear();
   const monthIndex = cursor.getMonth();
 
+  useEffect(() => {
+    let alive = true;
+    getPopularCities()
+      .then(list => {
+        // 계획이 아직 하나도 없으면 서버가 빈 목록을 준다.
+        // 그때 빈 화면을 보여주지 않으려고 기본 목록을 그대로 둔다.
+        if (alive && list.length > 0) {
+          setPopular(
+            list.map(item => ({
+              cityName: item.cityName,
+              countryName: item.countryName,
+              emoji: emojiOf(item.cityName),
+            })),
+          );
+        }
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const now = new Date();
+    const nextMidnight = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + 1,
+    );
+    const timer = setTimeout(
+      () => setToday(todayIso()),
+      nextMidnight.getTime() - now.getTime(),
+    );
+    return () => clearTimeout(timer);
+  }, [today]);
+
+  /**
+   * 검색은 서버에 묻는다.
+   *
+   * 인기 여행지는 관광지 데이터가 있는 도시만이라 지금 다섯 곳뿐이다.
+   * 그 안에서 거르면 "파리" 를 쳐도 아무것도 안 나왔다.
+   * 글자를 칠 때마다 부르지 않도록 잠깐 기다렸다 보낸다.
+   */
+  useEffect(() => {
+    const keyword = query.trim();
+    if (!keyword) {
+      setFound(null);
+      return;
+    }
+    let alive = true;
+    setSearching(true);
+    setFound(null);
+    const timer = setTimeout(() => {
+      getCountries(keyword)
+        .then(list => {
+          if (!alive) {
+            return;
+          }
+          setFound(
+            list.map(item => ({
+              // 나라만 있고 도시가 없으면 나라 이름을 도시 자리에 쓴다
+              cityName: item.cityName ?? item.countryName,
+              countryName: item.countryName,
+              emoji: emojiOf(item.cityName ?? item.countryName),
+            })),
+          );
+        })
+        .catch(() => {
+          if (alive) {
+            setFound([]);
+          }
+        })
+        .then(() => {
+          if (alive) {
+            setSearching(false);
+          }
+        });
+    }, SEARCH_DELAY_MS);
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+      setSearching(false);
+    };
+  }, [query]);
+
   const cities = useMemo(() => {
     const keyword = query.trim();
-    // 검색 전에는 피그마처럼 인기 여행지 네 곳만, 검색하면 전체에서 찾는다
+    // 검색 전에는 피그마처럼 인기 여행지 네 곳만 보여준다
     if (!keyword) {
-      return POPULAR_CITIES.slice(0, 4);
+      return popular.slice(0, 4);
     }
-    return POPULAR_CITIES.filter(
+    // 관광지가 있는 도시(오사카 등)를 위로 올린다. 거기는 담을 장소가 있다
+    const hits = popular.filter(
       item =>
         item.cityName.includes(keyword) || item.countryName.includes(keyword),
     );
-  }, [query]);
+    const names = new Set(hits.map(h => h.cityName));
+    return [...hits, ...(found ?? []).filter(f => !names.has(f.cityName))];
+  }, [query, popular, found]);
 
   // 1일이 무슨 요일인지에 맞춰 앞을 빈 칸으로 채운 뒤 주 단위로 자른다
   const weeks = useMemo(() => {
@@ -79,6 +182,13 @@ const PlanDestinationView: React.FC<Props> = ({ draft, onBack, onNext }) => {
 
   const pickDay = (day: number) => {
     const date = toIso(year, monthIndex, day);
+    const currentToday = todayIso();
+    if (currentToday !== today) {
+      setToday(currentToday);
+    }
+    if (date < currentToday) {
+      return;
+    }
     // 시작만 정해진 상태에서 뒷날짜를 누르면 기간이 되고, 그 밖에는 새로 시작한다
     if (startDate && !endDate && date > startDate) {
       setEndDate(date);
@@ -93,27 +203,23 @@ const PlanDestinationView: React.FC<Props> = ({ draft, onBack, onNext }) => {
 
   const ready = !!city && !!startDate && !!endDate;
 
-  const [saving, setSaving] = useState(false);
-
-  const next = async () => {
-    if (!ready || !city || saving) {
+  // 여기서 서버에 저장하지 않는다. 아직 플래너가 없을 수도 있고,
+  // 저장해두면 장소를 안 담고 나갔을 때 빈 플래너가 목록에 남는다.
+  // 여행지·기간은 장소를 담을 때(PlacePickerView) 함께 저장한다.
+  const next = () => {
+    if (!ready || !city) {
       return;
     }
-    try {
-      setSaving(true);
-      // 여행지·기간이 정해져야 카테고리별 투표를 만들 수 있다
-      await saveTravelPlan(draft.plannerId, {
-        countryName: city.countryName,
-        cityName: city.cityName,
-        startDate,
-        endDate,
-      });
-    } catch (e: any) {
-      Alert.alert('저장 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
-      setSaving(false);
+    // 자정 전에 오늘을 시작일로 골라두면 날이 바뀌어도 ready 는 그대로다.
+    // 그 상태로 다음을 누르면 지난 날짜가 넘어간다.
+    const currentToday = todayIso();
+    if (startDate < currentToday) {
+      setToday(currentToday);
+      setStartDate('');
+      setEndDate('');
+      Alert.alert('알림', '날짜가 바뀌었어요. 기간을 다시 골라주세요.');
       return;
     }
-    setSaving(false);
     onNext?.({
       ...draft,
       countryName: city.countryName,
@@ -146,7 +252,9 @@ const PlanDestinationView: React.FC<Props> = ({ draft, onBack, onNext }) => {
 
         <Text style={s.label}>인기 여행지</Text>
         {cities.length === 0 ? (
-          <Text style={s.cityEmpty}>검색 결과가 없어요.</Text>
+          <Text style={s.cityEmpty}>
+            {searching ? '찾는 중…' : '검색 결과가 없어요.'}
+          </Text>
         ) : (
           <View style={s.cityGrid}>
             {cities.map(item => {
@@ -206,13 +314,14 @@ const PlanDestinationView: React.FC<Props> = ({ draft, onBack, onNext }) => {
                 }
                 const date = toIso(year, monthIndex, day);
                 const isEdge = date === startDate || date === endDate;
-                const isMid =
-                  !!endDate && date > startDate && date < endDate;
+                const isMid = !!endDate && date > startDate && date < endDate;
+                const isPast = date < today;
                 return (
                   <TouchableOpacity
                     key={dayIndex}
                     style={s.calCell}
                     activeOpacity={0.7}
+                    disabled={isPast}
                     onPress={() => pickDay(day)}
                   >
                     <View
@@ -222,7 +331,13 @@ const PlanDestinationView: React.FC<Props> = ({ draft, onBack, onNext }) => {
                         isEdge && s.dayPillEdge,
                       ]}
                     >
-                      <Text style={[s.dayText, isEdge && s.dayTextEdge]}>
+                      <Text
+                        style={[
+                          s.dayText,
+                          isPast && s.dayTextPast,
+                          isEdge && s.dayTextEdge,
+                        ]}
+                      >
                         {day}
                       </Text>
                     </View>
@@ -246,10 +361,10 @@ const PlanDestinationView: React.FC<Props> = ({ draft, onBack, onNext }) => {
         <TouchableOpacity
           style={[s.primaryBtn, !ready && s.primaryBtnOff]}
           activeOpacity={0.85}
-          disabled={!ready || saving}
+          disabled={!ready}
           onPress={next}
         >
-          <Text style={s.primaryText}>{saving ? '저장 중…' : '다음'}</Text>
+          <Text style={s.primaryText}>다음</Text>
         </TouchableOpacity>
       </SafeAreaView>
     </View>

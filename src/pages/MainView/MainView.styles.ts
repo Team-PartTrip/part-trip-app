@@ -14,12 +14,29 @@ export const mainStyles = StyleSheet.create({
     marginTop: 60,
   },
   scrollContent: {
-    paddingBottom: 32,
+    // 탭바가 화면 위에 떠 있다. 32 로는 마지막 카드가 탭바에 가린다.
+    paddingBottom: 96,
   },
 
   // ── 파란 헤더 ──
-  header: {
+  // 사진이 없을 때 파란 배경이 남게 색은 여기 그대로 둔다
+  headerImage: {
     backgroundColor: colors.primary,
+  },
+  // 사진이 위쪽 여백까지 꽉 차게. 아래는 카드가 덮으므로 모서리를 두지 않는다
+  headerImageInner: {
+    resizeMode: 'cover',
+  },
+  // 사진 위 글씨가 읽히게 덮는 막. 사진이 있을 때만 깐다
+  headerScrim: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    backgroundColor: 'rgba(13, 74, 132, 0.62)',
+  },
+  header: {
     paddingHorizontal: 24,
     paddingTop: 12,
     paddingBottom: 28,
@@ -30,9 +47,8 @@ export const mainStyles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   brand: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.white,
+    width: 110,
+    height: 26,
   },
   headerActions: {
     flexDirection: 'row',
@@ -45,15 +61,6 @@ export const mainStyles = StyleSheet.create({
     backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  circleIcon: {
-    width: 16,
-    height: 16,
-    tintColor: colors.primary,
-  },
-  // 알림(🔔) — 쓸 만한 아이콘 이미지가 없어 이모지로 둔다
-  circleEmoji: {
-    fontSize: 15,
   },
   // 안읽은 알림 표시. 원 오른쪽 위에 겹친다.
   badge: {
@@ -75,13 +82,13 @@ export const mainStyles = StyleSheet.create({
     marginTop: 10,
     fontSize: 32,
     fontWeight: '700',
-    color: colors.white,
+    color: colors.textOnPrimary,
   },
   tripTitle: {
     marginTop: 14,
     fontSize: 18,
     fontWeight: '600',
-    color: colors.white,
+    color: colors.textOnPrimary,
   },
   tripMeta: {
     marginTop: 6,
@@ -120,9 +127,6 @@ export const mainStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  eventEmoji: {
-    fontSize: 20,
-  },
   // 제목/보조문구가 남는 폭을 다 먹어야 화살표가 오른쪽 끝에 붙는다
   eventBody: {
     flex: 1,
@@ -144,28 +148,41 @@ export const mainStyles = StyleSheet.create({
   },
 
   // ── 이번 주 추천 ──
-  placeRow: {
+  placeList: {
     marginTop: 8,
-    flexDirection: 'row',
-    gap: 12,
+    gap: 10,
   },
   placeCard: {
-    flex: 1,
-    height: 72,
-    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 10,
+    borderRadius: 14,
     backgroundColor: colors.white,
-    overflow: 'hidden',
   },
   placeThumb: {
-    height: 44,
+    width: 64,
+    height: 64,
+    borderRadius: 10,
     backgroundColor: colors.tint,
   },
+  placeInfo: {
+    flex: 1,
+    gap: 4,
+  },
   placeName: {
-    marginTop: 6,
-    marginHorizontal: 8,
-    fontSize: 11,
-    fontWeight: '500',
+    fontSize: 14,
+    fontWeight: '600',
     color: colors.text,
+  },
+  placeSub: {
+    fontSize: 12,
+    color: colors.textTertiary,
+  },
+  placeRating: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textSecondary,
   },
 
   // ── 추천 장소가 없을 때 ──

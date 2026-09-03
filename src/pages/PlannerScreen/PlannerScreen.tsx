@@ -1,11 +1,15 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Modal,
+  TextInput,
+  Alert,
 } from 'react-native';
+import type { ColorValue } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { plannerStyles as s } from './PlannerScreen.styles';
@@ -14,6 +18,7 @@ import colors from '../../shared/tokens/colors';
 import {
   getPlanners,
   getPlannerMembers,
+  joinPlanner,
   PlannerListItem,
   PlannerMember,
 } from '../../entities/planner/api';
@@ -32,13 +37,35 @@ const FILTERS: { key: FilterKey; label: string }[] = [
   { key: 'done', label: '완료' },
 ];
 
+/**
+ * 붙여넣은 값에서 초대 코드만 꺼낸다.
+ *
+ * 사람들이 주고받는 것은 코드가 아니라 링크다
+ * (http://.../planner/group?inviteCode=OSK-4821).
+ * 링크를 통째로 붙여넣어도 되게 해야 "코드만 골라 적으세요" 를 안 시킨다.
+ * 대소문자는 서버가 맞춰준다(PlannerMemberService.joinPlanner).
+ */
+export function extractInviteCode(input: string): string {
+  const text = input.trim();
+  const found = text.match(/[?&]inviteCode=([^&#\s]+)/i);
+  if (!found) {
+    return text;
+  }
+  try {
+    return decodeURIComponent(found[1]);
+  } catch {
+    // 잘못 인코딩된 링크라도 코드 자리는 그대로 써본다
+    return found[1];
+  }
+}
+
 /** 목록 한 줄 + 그 플래너의 멤버들 */
 interface PlannerRow extends PlannerListItem {
   members: PlannerMember[];
 }
 
 /** 상단 띠 · 상태 배지 색. 모집 중은 파랑, 투표/여행 중은 주황, 확정은 초록 */
-function toneOf(status: GroupStatus): string {
+function toneOf(status: GroupStatus): ColorValue {
   switch (status) {
     case 'PLANNING':
       return colors.primary;
@@ -88,7 +115,12 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
   const [rows, setRows] = useState<PlannerRow[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
-
+  // 초대 링크·코드로 참여하기 (API-005-13)
+  const [joinOpen, setJoinOpen] = useState(false);
+  const [joinInput, setJoinInput] = useState('');
+  const [joining, setJoining] = useState(false);
+  // 잠금은 ref 로 건다. state 는 화면이 다시 그려져야 바뀐다.
+  const joiningRef = useRef(false);
   useFocusEffect(
     useCallback(() => {
       let alive = true;
@@ -123,6 +155,28 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
     }, []),
   );
 
+  // 잘못된 코드 · 이미 참여 · 정원 초과는 모두 서버가 문구까지 준다.
+  // 여기서 다시 쓰면 서버가 거절한 진짜 이유를 덮어버린다.
+  const join = async () => {
+    const code = extractInviteCode(joinInput);
+    if (!code || joiningRef.current) {
+      return;
+    }
+    joiningRef.current = true;
+    setJoining(true);
+    try {
+      const joined = await joinPlanner(code);
+      setJoinOpen(false);
+      setJoinInput('');
+      onOpenPlan?.(joined.plannerId, joined.status);
+    } catch (e: any) {
+      Alert.alert('참여 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
+    } finally {
+      joiningRef.current = false;
+      setJoining(false);
+    }
+  };
+
   const plans = (rows ?? []).filter(plan => matches(plan, filter));
 
   return (
@@ -130,13 +184,24 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
       <SafeAreaView edges={['top']} style={s.header}>
         <View style={s.headerRow}>
           <Text style={s.pageTitle}>플래너</Text>
-          <TouchableOpacity
-            style={s.createBtn}
-            activeOpacity={0.85}
-            onPress={onCreate}
-          >
-            <Text style={s.createText}>+ 생성</Text>
-          </TouchableOpacity>
+          <View style={s.headerBtns}>
+            <TouchableOpacity
+              style={s.joinBtn}
+              activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityLabel="초대 코드로 참여하기"
+              onPress={() => setJoinOpen(true)}
+            >
+              <Text style={s.joinText}>참여하기</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={s.createBtn}
+              activeOpacity={0.85}
+              onPress={onCreate}
+            >
+              <Text style={s.createText}>+ 생성</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={s.filterRow}>
@@ -182,49 +247,112 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
           plans.map(plan => {
             const tone = toneOf(plan.status);
             return (
-              <TouchableOpacity
-                key={plan.plannerId}
-                style={s.card}
-                activeOpacity={0.85}
-                onPress={() => onOpenPlan?.(plan.plannerId, plan.status)}
-              >
-                <View style={[s.cardStripe, { backgroundColor: tone }]} />
-                <View style={s.cardBody}>
-                  <Text style={s.cardTitle}>{plan.title}</Text>
-                  <Text style={s.cardDate}>
-                    {plan.startDate && plan.endDate
-                      ? formatRange(plan.startDate, plan.endDate)
-                      : '여행지 · 기간 미정'}
-                  </Text>
+              // 카드 안에 삭제 버튼을 넣으면 touchable 이 겹쳐서
+              // 보이스오버·토크백이 삭제를 따로 못 짚는다. 형제로 둔다.
+              <View key={plan.plannerId} style={s.card}>
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${plan.title} 열기`}
+                  onPress={() => onOpenPlan?.(plan.plannerId, plan.status)}
+                >
+                  <View style={[s.cardStripe, { backgroundColor: tone }]} />
+                  <View style={s.cardBody}>
+                    <Text style={s.cardTitle}>{plan.title}</Text>
+                    <Text style={s.cardDate}>
+                      {plan.startDate && plan.endDate
+                        ? formatRange(plan.startDate, plan.endDate)
+                        : '여행지 · 기간 미정'}
+                    </Text>
 
-                  <View style={s.cardMiddle}>
-                    <View style={s.statusPill}>
-                      <Text style={[s.statusText, { color: tone }]}>
-                        {planStatusLabel(plan.status)}
-                      </Text>
+                    <View style={s.cardMiddle}>
+                      <View style={s.statusPill}>
+                        <Text style={[s.statusText, { color: tone }]}>
+                          {planStatusLabel(plan.status)}
+                        </Text>
+                      </View>
+                      <View style={s.avatars}>
+                        {plan.members.map((member, i) => (
+                          <MemberAvatar
+                            key={member.userId}
+                            nickname={member.nickName}
+                            index={i}
+                            style={i > 0 && s.avatarOverlap}
+                          />
+                        ))}
+                      </View>
                     </View>
-                    <View style={s.avatars}>
-                      {plan.members.map((member, i) => (
-                        <MemberAvatar
-                          key={member.userId}
-                          nickname={member.nickName}
-                          index={i}
-                          style={i > 0 && s.avatarOverlap}
-                        />
-                      ))}
+
+                    <View style={s.cardFooter}>
+                      <Text style={s.cardMeta}>{metaOf(plan)}</Text>
+                      <Text style={s.chevron}>›</Text>
                     </View>
                   </View>
-
-                  <View style={s.cardFooter}>
-                    <Text style={s.cardMeta}>{metaOf(plan)}</Text>
-                    <Text style={s.chevron}>›</Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
+                </TouchableOpacity>
+              </View>
             );
           })
         )}
       </ScrollView>
+
+      <Modal
+        visible={joinOpen}
+        transparent
+        animationType="fade"
+        // 참여 요청 중에는 안드로이드 뒤로가기로도 닫지 않는다. 닫고 나서
+        // 요청이 성공하면 플래너가 갑자기 열린다.
+        onRequestClose={() => {
+          if (!joining) {
+            setJoinOpen(false);
+          }
+        }}
+      >
+        <View style={s.modalBack}>
+          <View style={s.modalCard}>
+            <Text style={s.modalTitle}>초대로 참여하기</Text>
+            <Text style={s.modalDesc}>
+              받은 초대 링크를 그대로 붙여넣어도 돼요.
+            </Text>
+            <TextInput
+              style={s.modalInput}
+              placeholder="초대 코드 또는 링크"
+              placeholderTextColor={colors.placeholder}
+              value={joinInput}
+              onChangeText={setJoinInput}
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="done"
+              onSubmitEditing={join}
+              editable={!joining}
+            />
+            <View style={s.modalBtns}>
+              <TouchableOpacity
+                style={s.modalCancel}
+                activeOpacity={0.85}
+                disabled={joining}
+                onPress={() => setJoinOpen(false)}
+              >
+                <Text style={s.modalCancelText}>취소</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[s.modalOk, !joinInput.trim() && s.modalOkOff]}
+                activeOpacity={0.85}
+                disabled={joining || !joinInput.trim()}
+                onPress={join}
+              >
+                {joining ? (
+                  <ActivityIndicator
+                    size="small"
+                    color={colors.textOnPrimary}
+                  />
+                ) : (
+                  <Text style={s.modalOkText}>참여하기</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };

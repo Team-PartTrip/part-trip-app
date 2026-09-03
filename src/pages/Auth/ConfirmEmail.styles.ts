@@ -20,6 +20,10 @@ export const confirmEmailStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // 재전송 잠금 중. 눌리지 않는다는 것을 색으로 알린다
+  sendBtnDisabled: {
+    opacity: 0.5,
+  },
   sendBtnText: {
     fontSize: 12,
     fontWeight: '600',

@@ -24,8 +24,10 @@ export const placeVoteStyles = StyleSheet.create({
   statusText: { fontSize: 11, fontWeight: '500', color: colors.textOnPrimary },
   subtitle: { marginTop: 8, fontSize: 12, color: colors.textSecondary },
 
-  // 칩 줄이 남은 높이를 다 먹지 않도록 세로로는 내용만큼만 차지시킨다
-  chipScroll: { flexGrow: 0 },
+  // 칩 줄이 남은 높이를 다 먹지 않게 하고, 가로 ScrollView 가 세로 높이를
+  // 스스로 못 잡아 칩 아래가 잘리는 것도 막는다.
+  // 칩 32 + 위아래 여백 16 = 64 로 고정한다.
+  chipScroll: { flexGrow: 0, flexShrink: 0, height: 64 },
   chipRow: { paddingHorizontal: 24, paddingVertical: 16, gap: 8 },
   chip: {
     height: 32,
@@ -42,6 +44,32 @@ export const placeVoteStyles = StyleSheet.create({
   chipTextOn: { color: colors.textOnPrimary },
 
   content: { paddingHorizontal: 24, paddingBottom: 24, gap: 14 },
+
+  // 직접 후보 추가 (API-005-27). 목록 맨 위에 둔다
+  addRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  addInput: {
+    flex: 1,
+    height: 44,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    fontSize: 14,
+    color: colors.text,
+    backgroundColor: colors.white,
+  },
+  addBtn: {
+    width: 64,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: colors.tint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addBtnOff: { opacity: 0.5 },
+  addBtnText: { fontSize: 14, fontWeight: '600', color: colors.primary },
 
   card: {
     padding: 12,
@@ -63,8 +91,6 @@ export const placeVoteStyles = StyleSheet.create({
   name: { fontSize: 15, fontWeight: '600', color: colors.text },
   countRow: { marginTop: 6, flexDirection: 'row', alignItems: 'center', gap: 8 },
   count: { fontSize: 12, color: colors.textSecondary },
-  voters: { flexDirection: 'row' },
-  voterOverlap: { marginLeft: -2 },
 
   voteBtn: {
     height: 30,
@@ -117,4 +143,47 @@ export const placeVoteStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   primaryText: { fontSize: 16, fontWeight: '600', color: colors.textOnPrimary },
+
+  // ── 동점 후보 고르기 ──
+  tieBack: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+  },
+  tieCard: {
+    width: '100%',
+    borderRadius: 16,
+    backgroundColor: colors.white,
+    padding: 20,
+    gap: 8,
+  },
+  tieTitle: { fontSize: 17, fontWeight: '700', color: colors.text },
+  tieDesc: { fontSize: 12, color: colors.textSub },
+  // 후보가 많아도 카드가 화면을 넘지 않게 한다
+  tieList: { marginTop: 6, maxHeight: 260 },
+  tieOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    height: 48,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 8,
+  },
+  tieOptionName: { flex: 1, fontSize: 14, fontWeight: '600', color: colors.text },
+  tieOptionCount: { fontSize: 12, color: colors.textSecondary },
+  tieCancel: {
+    height: 44,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tieCancelText: { fontSize: 14, fontWeight: '600', color: colors.textSub },
 });

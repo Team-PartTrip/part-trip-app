@@ -40,7 +40,7 @@ export const countryAcquiredStyles = StyleSheet.create({
   badgeCode: {
     fontSize: 32,
     fontWeight: '800',
-    color: colors.white,
+    color: colors.textOnPrimary,
   },
   // 후광 오른쪽 위에 걸치는 NEW 리본
   newPill: {
@@ -57,7 +57,7 @@ export const countryAcquiredStyles = StyleSheet.create({
   newPillText: {
     fontSize: 12,
     fontWeight: '800',
-    color: colors.white,
+    color: colors.textOnPrimary,
   },
 
   headline: {

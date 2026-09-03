@@ -5,6 +5,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  ImageBackground,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,6 +19,21 @@ import {
 } from '../../entities/main/api';
 import { getUnreadCount } from '../../entities/notification/api';
 import { toImageUrl } from '../../shared/api/image';
+import { BellIcon, CalendarIcon } from '../../shared/ui/icons';
+import colors from '../../shared/tokens/colors';
+
+/**
+ * 상단에 깔 여행지 대표 사진.
+ *
+ * 나라별 이미지를 따로 두지 않는다. 추천 목록을 이미 받아오므로 그 중
+ * 명소 사진을 쓴다. 명소에 사진이 없으면 아무 장소나 쓰고, 그것도 없으면
+ * null 을 돌려 지금처럼 파란 배경만 남긴다.
+ */
+function heroImageOf(places: TourPlace[]): string | null {
+  const withImage = places.filter(place => place.imageUrl);
+  const picked = withImage.find(place => place.category === '명소') ?? withImage[0];
+  return picked?.imageUrl ? toImageUrl(picked.imageUrl) : null;
+}
 
 // "2026-08-23" + "2026-08-27" → "2026.08.23 – 08.27"
 // 해가 바뀌면 끝 날짜에도 연도를 남긴다 → "2026.06.10 – 2027.03.27"
@@ -53,12 +69,16 @@ const MainView: React.FC<MainViewProps> = ({
   const [dday, setDday] = useState<DdayInfo | null>(null);
   const [places, setPlaces] = useState<TourPlace[]>([]);
   const [unread, setUnread] = useState(0);
+  // 조회가 실패한 것과 일정이 없는 것은 다르다. 같은 화면을 보여주면
+  // 서버가 죽어도 "쉬는 중" 으로 읽힌다.
+  const [failed, setFailed] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       let alive = true;
       (async () => {
         setLoading(true);
+        setFailed(false);
         try {
           const [d, count] = await Promise.all([
             getDday(),
@@ -83,6 +103,7 @@ const MainView: React.FC<MainViewProps> = ({
         } catch {
           if (alive) {
             setDday(null);
+            setFailed(true);
           }
         } finally {
           if (alive) {
@@ -95,6 +116,8 @@ const MainView: React.FC<MainViewProps> = ({
       };
     }, []),
   );
+
+  const hero = heroImageOf(places);
 
   if (loading) {
     return (
@@ -112,7 +135,9 @@ const MainView: React.FC<MainViewProps> = ({
         <View style={s.empty}>
           {/* 여행지 · 기간은 플래너(Func-005)에서만 정한다 */}
           <Text style={s.emptyText}>
-            쉬는 중{'\n'}플래너에서 여행을 만들면 D-day 를 보여드려요
+            {failed
+              ? '여행 정보를 불러오지 못했어요\n잠시 후 다시 시도해주세요'
+              : '쉬는 중\n플래너에서 여행을 만들면 D-day 를 보여드려요'}
           </Text>
         </View>
       </SafeAreaView>
@@ -128,17 +153,36 @@ const MainView: React.FC<MainViewProps> = ({
         contentContainerStyle={s.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <SafeAreaView edges={['top']} style={s.header}>
+        <ImageBackground
+          source={hero ? { uri: hero } : undefined}
+          style={s.headerImage}
+          imageStyle={s.headerImageInner}
+        >
+          {/* 사진 위에서도 흰 글씨가 읽히게 어둡게 덮는다 */}
+          {!!hero && <View style={s.headerScrim} />}
+          <SafeAreaView edges={['top']} style={s.header}>
           <View style={s.headerTop}>
-            <Text style={s.brand}>PartTrip</Text>
+            {/* 헤더가 파란 배경이라 흰색 로고를 쓴다 */}
+            <Image
+              source={require('../../shared/assets/images/logo-white.png')}
+              style={s.brand}
+              resizeMode="contain"
+              accessibilityRole="image"
+              accessibilityLabel="PartTrip"
+            />
             <View style={s.headerActions}>
               <TouchableOpacity
                 style={s.circleBtn}
                 activeOpacity={0.85}
                 disabled={!onOpenNotifications}
                 onPress={onOpenNotifications}
+                // 아이콘만 있는 버튼이라 읽어줄 글자가 없다
+                accessibilityRole="button"
+                accessibilityLabel={
+                  unread > 0 ? `알림 ${unread}건` : '알림'
+                }
               >
-                <Text style={s.circleEmoji}>🔔</Text>
+                <BellIcon size={17} color={colors.primary} />
                 {unread > 0 && <View style={s.badge} />}
               </TouchableOpacity>
             </View>
@@ -156,7 +200,8 @@ const MainView: React.FC<MainViewProps> = ({
               {dday.headcount ? ` · ${dday.headcount}명` : ''}
             </Text>
           </View>
-        </SafeAreaView>
+          </SafeAreaView>
+        </ImageBackground>
 
         {/* 축제 · 이벤트 캘린더 (Func-002-03) — 메인에서 들어갈 유일한 입구 */}
         <TouchableOpacity
@@ -166,7 +211,7 @@ const MainView: React.FC<MainViewProps> = ({
           onPress={onOpenEvents}
         >
           <View style={s.eventIcon}>
-            <Text style={s.eventEmoji}>🎉</Text>
+            <CalendarIcon size={22} color={colors.primary} />
           </View>
           <View style={s.eventBody}>
             <Text style={s.eventTitle}>축제 · 이벤트 캘린더</Text>
@@ -191,8 +236,8 @@ const MainView: React.FC<MainViewProps> = ({
               </Text>
             </View>
           ) : (
-            <View style={s.placeRow}>
-              {places.slice(0, 3).map((p, i) => (
+            <View style={s.placeList}>
+              {places.slice(0, 4).map((p, i) => (
                 <View key={`${p.placeName}-${i}`} style={s.placeCard}>
                   {p.imageUrl ? (
                     <Image
@@ -202,9 +247,21 @@ const MainView: React.FC<MainViewProps> = ({
                   ) : (
                     <View style={s.placeThumb} />
                   )}
-                  <Text style={s.placeName} numberOfLines={1}>
-                    {p.placeName}
-                  </Text>
+                  <View style={s.placeInfo}>
+                    <Text style={s.placeName} numberOfLines={1}>
+                      {p.placeName}
+                    </Text>
+                    {/* 카테고리·주소는 없는 장소가 많다. 없으면 줄 자체를 빼서
+                        빈 칸이 남지 않게 한다. */}
+                    {!!(p.category || p.address) && (
+                      <Text style={s.placeSub} numberOfLines={1}>
+                        {[p.category, p.address].filter(Boolean).join(' · ')}
+                      </Text>
+                    )}
+                  </View>
+                  {p.rating !== null && (
+                    <Text style={s.placeRating}>★ {p.rating.toFixed(1)}</Text>
+                  )}
                 </View>
               ))}
             </View>

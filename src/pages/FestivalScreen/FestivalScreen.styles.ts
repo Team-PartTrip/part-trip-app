@@ -4,7 +4,8 @@ import colors from '../../shared/tokens/colors';
 // 피그마 D7 · Func-002-03 축제 & 이벤트 캘린더 (v3 에서 메인 소속)
 export const festivalStyles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
-  content: { paddingBottom: 32 },
+  // 탭바가 화면 위에 떠 있다. 32 로는 마지막 카드가 탭바에 가린다.
+  content: { paddingBottom: 96 },
 
   header: { paddingHorizontal: 24, paddingTop: 4 },
   back: { fontSize: 28, lineHeight: 32, color: colors.text },
@@ -26,6 +27,10 @@ export const festivalStyles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     color: colors.textTertiary,
+  },
+  // 범위 밖으로는 못 넘어간다. 눌리는 것처럼 보이지 않게 흐리게 둔다.
+  calArrowOff: {
+    opacity: 0.25,
   },
   calWeekRow: { flexDirection: 'row', marginTop: 16 },
   calWeek: { flexDirection: 'row', marginTop: 8 },

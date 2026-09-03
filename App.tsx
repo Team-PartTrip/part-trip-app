@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StatusBar, useColorScheme, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import {
@@ -7,6 +7,7 @@ import {
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+import { setSessionExpiredHandler } from './src/shared/api/http';
 import colors from './src/shared/tokens/colors';
 import AppHeader from './src/shared/ui/AppHeader';
 import TabBar, { TabKey } from './src/widgets/bottom-tab-bar/TabBar';
@@ -65,7 +66,7 @@ export type RootStackParamList = {
     mode: 'signup' | 'resetPassword';
     signupData?: SignUpData;
   };
-  ResetPassword: { email: string };
+  ResetPassword: { email: string; resetToken: string };
   Main: undefined;
   Planner: undefined;
   PlanGroup: undefined;
@@ -184,6 +185,16 @@ function App() {
 
   const handleRouteChange = () => setRouteName(navRef.getCurrentRoute()?.name);
 
+  // 토큰 갱신까지 실패하면 로그인 화면으로 되돌린다. 그대로 두면 모든
+  // 화면이 계속 401 을 받아 앱을 껐다 켜는 수밖에 없다.
+  useEffect(() => {
+    setSessionExpiredHandler(() => {
+      if (navRef.isReady()) {
+        navRef.reset({ index: 0, routes: [{ name: 'Login' }] });
+      }
+    });
+  }, [navRef]);
+
   return (
     <SafeAreaProvider>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
@@ -247,12 +258,14 @@ function App() {
                   return (
                     <ConfirmEmail
                       mode={mode}
+                      onBack={() => navigation.goBack()}
                       signupData={route.params?.signupData}
-                      onConfirm={email =>
+                      onConfirm={(email, resetToken) =>
                         mode === 'signup'
                           ? navigation.navigate('Login')
                           : navigation.navigate('ResetPassword', {
                               email: email ?? '',
+                              resetToken: resetToken ?? '',
                             })
                       }
                     />
@@ -265,6 +278,8 @@ function App() {
                 {({ navigation, route }) => (
                   <ResetPassword
                     email={route.params?.email ?? ''}
+                    resetToken={route.params?.resetToken ?? ''}
+                    onBack={() => navigation.goBack()}
                     onConfirm={async () => {
                       await clearTokens();
                       navigation.reset({
@@ -330,15 +345,17 @@ function App() {
                   <PlacePickerView
                     draft={route.params.draft}
                     onBack={() => navigation.goBack()}
-                    onOpenCart={() =>
-                      navigation.navigate('PlanCart', {
-                        plannerId: route.params.draft.plannerId,
+                    onPlannerCreated={plannerId =>
+                      navigation.setParams({
+                        draft: { ...route.params.draft, plannerId },
                       })
                     }
-                    onStartVote={() =>
-                      navigation.navigate('PlaceVote', {
-                        planId: route.params.draft.plannerId,
-                      })
+                    // 플래너는 담을 때 만들어진다. 그때 받은 id 를 쓴다
+                    onOpenCart={plannerId =>
+                      navigation.navigate('PlanCart', { plannerId })
+                    }
+                    onStartVote={planId =>
+                      navigation.navigate('PlaceVote', { planId })
                     }
                   />
                 )}
@@ -384,6 +401,7 @@ function App() {
                         category,
                       })
                     }
+                    onDeleted={() => navigation.navigate('Planner')}
                   />
                 )}
               </Stack.Screen>
@@ -422,7 +440,7 @@ function App() {
                           sampleAcquiredParamsOf(linkId),
                         );
                       } else if (linkType === 'VOTE' || linkType === 'GROUP') {
-                        // 플래너 화면은 아직 준비 중 안내만 띄운다
+                        // 어느 플래너인지까지는 아직 못 가려서 목록으로 보낸다
                         navigation.navigate('Planner');
                       } else if (linkType === 'WORLD_MAP') {
                         navigation.navigate('WorldMap');
@@ -618,8 +636,11 @@ function App() {
                   <CountryRecordView
                     country={route.params.country}
                     onBack={() => navigation.goBack()}
-                    onOpenRecord={id =>
-                      navigation.navigate('RecordEdit', { id: String(id) })
+                    // 목록이 주는 것은 여행 카드 id 다. 기록 수정(RecordEditView)
+                    // 이 아니라 여행 카드 상세로 보낸다. 예전에는 여기서 수정
+                    // 화면으로 가려다 서버 연동이 없어 막아뒀었다.
+                    onOpenRecord={tripCardId =>
+                      navigation.navigate('TripCardDetail', { tripCardId })
                     }
                   />
                 )}

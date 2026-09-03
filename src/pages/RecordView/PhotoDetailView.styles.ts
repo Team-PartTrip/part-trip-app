@@ -71,31 +71,6 @@ export const photoDetailStyles = StyleSheet.create({
   title: { fontSize: 16, fontWeight: '600', color: colors.text },
   meta: { marginTop: 6, fontSize: 12, color: colors.textSecondary },
 
-  aiCard: {
-    marginTop: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 14,
-    borderRadius: 12,
-    backgroundColor: colors.tint,
-  },
-  aiIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  aiIconText: { fontSize: 16 },
-  aiBody: { flex: 1, marginLeft: 12 },
-  aiLabel: { fontSize: 11, fontWeight: '500', color: colors.primaryDark },
-  aiText: {
-    marginTop: 4,
-    fontSize: 12,
-    lineHeight: 16,
-    color: colors.primaryDark,
-  },
 
   label: {
     marginTop: 20,

@@ -11,7 +11,9 @@ export const placePickerStyles = StyleSheet.create({
   subtitle: { marginTop: 8, fontSize: 12, color: colors.textSecondary },
 
   // 칩 줄이 남은 높이를 다 먹지 않도록 세로로는 내용만큼만 차지시킨다
-  chipScroll: { flexGrow: 0 },
+  // 가로 ScrollView 는 세로 높이를 스스로 못 잡아 칩 아래가 잘린다.
+  // 칩 32 + 위아래 여백 16 = 64 로 고정한다.
+  chipScroll: { flexGrow: 0, flexShrink: 0, height: 64 },
   chipRow: { paddingHorizontal: 24, paddingVertical: 16, gap: 8 },
   chip: {
     height: 32,
@@ -32,7 +34,8 @@ export const placePickerStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 24,
-    marginBottom: 10,
+    marginTop: 4,
+    marginBottom: 12,
   },
   countText: { fontSize: 11, fontWeight: '500', color: colors.textSecondary },
   cartLink: { fontSize: 11, fontWeight: '500', color: colors.primary },

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -9,8 +9,15 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { placePickerStyles as s } from './PlacePickerView.styles';
-import { getTourPlaces, TourPlace as ServerPlace } from '../../entities/main/api';
-import { addCartPlaces } from '../../entities/planner/api';
+import {
+  getTourPlaces,
+  TourPlace as ServerPlace,
+} from '../../entities/main/api';
+import {
+  addCartPlaces,
+  createPlanner,
+  saveTravelPlan,
+} from '../../entities/planner/api';
 import {
   CATEGORIES,
   CATEGORY_EMOJI,
@@ -24,9 +31,12 @@ interface Props {
   draft: PlanDraft;
   onBack?: () => void;
   /** 담은 장소를 장바구니(C6)로 넘긴다 */
-  onOpenCart?: () => void;
+  /** 담기가 끝나면 실제로 쓸 plannerId 를 넘긴다 */
+  onOpenCart?: (plannerId: number) => void;
   /** 담은 장소로 카테고리별 투표(C5)를 연다 */
-  onStartVote?: () => void;
+  onStartVote?: (plannerId: number) => void;
+  /** 새 플래너가 만들어지면 상위 draft 에 id 를 보존한다 */
+  onPlannerCreated?: (plannerId: number) => void;
 }
 
 const PlacePickerView: React.FC<Props> = ({
@@ -34,6 +44,7 @@ const PlacePickerView: React.FC<Props> = ({
   onBack,
   onOpenCart,
   onStartVote,
+  onPlannerCreated,
 }) => {
   const [category, setCategory] = useState<PlaceCategory>('RESTAURANT');
   const [places, setPlaces] = useState<ServerPlace[]>([]);
@@ -41,6 +52,16 @@ const PlacePickerView: React.FC<Props> = ({
   const [failed, setFailed] = useState(false);
   const [picked, setPicked] = useState<number[]>([]);
   const [sending, setSending] = useState(false);
+  const plannerIdRef = useRef(draft.plannerId);
+  const sendingRef = useRef(false);
+
+  /**
+   * 둘 이하면 투표가 의미가 없다. 장바구니에서 직접 고르거나 랜덤으로 뽑는다.
+   *
+   * 장바구니 화면은 원래 이 경우를 위해 만들었는데 들어가는 길이 작은 링크
+   * 하나뿐이라 아무도 못 봤다. 인원에 따라 큰 버튼이 가리키는 곳을 바꾼다.
+   */
+  const smallGroup = draft.isSolo || draft.headcount <= 2;
 
   useEffect(() => {
     let alive = true;
@@ -81,23 +102,54 @@ const PlacePickerView: React.FC<Props> = ({
 
   // 담기와 동시에 서버가 카테고리별 투표를 만들어준다.
   // 그래서 장바구니로 가든 투표로 가든 먼저 담아두어야 다음 화면에 내용이 있다.
+  /**
+   * 담기 = 이 여행이 실제로 시작되는 지점이다.
+   *
+   * 여기까지 와야 플래너를 만든다. 앞 화면에서 만들면 여행지도 안 정하고
+   * 나간 사람의 "기간 미정" 플래너가 목록에 쌓인다. 초대하기를 먼저 눌렀다면
+   * 이미 만들어져 있으므로 그 id 를 쓴다.
+   *
+   * 만들자마자 여행지·기간을 저장한다. 그래야 서버가 카테고리별 투표를
+   * 만들 수 있다.
+   */
   const commit = useCallback(
-    async (next?: () => void) => {
-      if (picked.length === 0 || sending) {
+    async (next?: (plannerId: number) => void) => {
+      if (picked.length === 0 || sendingRef.current) {
         return;
       }
+      // 잠금은 ref 로 건다. state 는 화면이 다시 그려져야 바뀌어서, 위 링크와
+      // 아래 버튼을 거의 동시에 누르면 둘 다 통과해 플래너가 두 개 만들어진다.
+      sendingRef.current = true;
       try {
         setSending(true);
-        await addCartPlaces(draft.plannerId, picked);
+        let plannerId = plannerIdRef.current;
+        if (plannerId == null) {
+          const created = await createPlanner({
+            title: draft.title,
+            memberCount: draft.headcount,
+            isSolo: draft.isSolo,
+          });
+          plannerId = created.plannerId;
+          plannerIdRef.current = plannerId;
+          onPlannerCreated?.(plannerId);
+        }
+        await saveTravelPlan(plannerId, {
+          countryName: draft.countryName,
+          cityName: draft.cityName,
+          startDate: draft.startDate,
+          endDate: draft.endDate,
+        });
+        await addCartPlaces(plannerId, picked);
         setPicked([]);
-        next?.();
+        next?.(plannerId);
       } catch (e: any) {
         Alert.alert('담기 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
       } finally {
+        sendingRef.current = false;
         setSending(false);
       }
     },
-    [draft.plannerId, picked, sending],
+    [draft, onPlannerCreated, picked, sending],
   );
 
   return (
@@ -140,10 +192,10 @@ const PlacePickerView: React.FC<Props> = ({
         <TouchableOpacity
           hitSlop={8}
           disabled={picked.length === 0 || sending}
-          onPress={() => commit(onOpenCart)}
+          onPress={() => commit(smallGroup ? onStartVote : onOpenCart)}
         >
           <Text style={[s.cartLink, picked.length === 0 && s.cartLinkOff]}>
-            투표 후보로 넘기기
+            {smallGroup ? '투표로 정하기' : '장바구니에서 정하기'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -182,7 +234,9 @@ const PlacePickerView: React.FC<Props> = ({
                   {/* 평점·주소가 없는 장소가 많아 있는 것만 붙인다 */}
                   <Text style={s.meta} numberOfLines={1}>
                     {[
-                      place.rating != null ? `★ ${place.rating.toFixed(1)}` : null,
+                      place.rating != null
+                        ? `★ ${place.rating.toFixed(1)}`
+                        : null,
                       place.address,
                     ]
                       .filter(Boolean)
@@ -207,13 +261,20 @@ const PlacePickerView: React.FC<Props> = ({
 
       <SafeAreaView edges={['bottom']} style={s.footer}>
         <TouchableOpacity
-          style={[s.primaryBtn, (picked.length === 0 || sending) && s.primaryBtnOff]}
+          style={[
+            s.primaryBtn,
+            (picked.length === 0 || sending) && s.primaryBtnOff,
+          ]}
           activeOpacity={0.85}
           disabled={picked.length === 0 || sending}
-          onPress={() => commit(onStartVote)}
+          onPress={() => commit(smallGroup ? onOpenCart : onStartVote)}
         >
           <Text style={s.primaryText}>
-            {sending ? '담는 중…' : '투표 시작하기'}
+            {sending
+              ? '담는 중…'
+              : smallGroup
+              ? '장바구니에서 정하기'
+              : '투표 시작하기'}
           </Text>
         </TouchableOpacity>
       </SafeAreaView>

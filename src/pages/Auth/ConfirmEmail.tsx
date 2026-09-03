@@ -16,6 +16,7 @@ import { loginStyles as shared } from './LoginView.styles';
 import { confirmEmailStyles as styles } from './ConfirmEmail.styles';
 import {
   startSignUp,
+  sendEmailCode,
   verifyEmailCode,
   sendPasswordResetCode,
   verifyPasswordResetCode,
@@ -28,6 +29,9 @@ type ConfirmEmailMode = 'signup' | 'resetPassword';
 // 인증번호 유효시간(초). 서버가 메일로 보낸 코드의 만료 시간과 맞춘다.
 const CODE_TTL_SECONDS = 180;
 
+// 재전송을 잠그는 시간(초). 연타하면 그만큼 메일이 여러 통 나간다.
+const RESEND_COOLDOWN_SECONDS = 60;
+
 function formatRemaining(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
@@ -36,14 +40,19 @@ function formatRemaining(seconds: number): string {
 
 interface ConfirmEmailProps {
   mode?: ConfirmEmailMode;
+  onBack?: () => void;
   /** 회원가입 화면에서 입력한 아이디/비밀번호 (signup 모드에서 사용) */
   signupData?: SignUpData;
-  /** 인증 완료 시 호출. resetPassword 모드에서는 인증된 이메일을 넘겨줌 */
-  onConfirm?: (email?: string) => void;
+  /**
+   * 인증 완료 시 호출. resetPassword 모드에서는 인증된 이메일과
+   * 재설정에 쓸 일회용 토큰을 함께 넘겨준다.
+   */
+  onConfirm?: (email?: string, resetToken?: string) => void;
 }
 
 const ConfirmEmail: React.FC<ConfirmEmailProps> = ({
   mode = 'signup',
+  onBack,
   signupData,
   onConfirm,
 }) => {
@@ -53,16 +62,30 @@ const ConfirmEmail: React.FC<ConfirmEmailProps> = ({
   const [loading, setLoading] = useState(false);
   const [sentAt, setSentAt] = useState(0);
   const [remaining, setRemaining] = useState(0);
+  const [cooldown, setCooldown] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // 인증번호를 보낼 때마다 남은 시간을 다시 센다
+  const handleEmailChange = (value: string) => {
+    if (value.trim() !== email.trim()) {
+      setSent(false);
+      setCooldown(0);
+      // 앞 주소로 받은 번호가 남아 있으면 새 주소 인증이 실패한다
+      setCode('');
+    }
+    setEmail(value);
+  };
+
+  // 인증번호를 보낼 때마다 남은 시간과 재전송 잠금을 다시 센다
   useEffect(() => {
     if (!sent) {
       return;
     }
     setRemaining(CODE_TTL_SECONDS);
+    setCooldown(RESEND_COOLDOWN_SECONDS);
     timerRef.current = setInterval(() => {
-      setRemaining((prev) => {
+      // 잠금(60초)이 유효시간(180초)보다 짧아 항상 먼저 끝난다
+      setCooldown(prev => (prev > 0 ? prev - 1 : 0));
+      setRemaining(prev => {
         if (prev <= 1) {
           if (timerRef.current) {
             clearInterval(timerRef.current);
@@ -83,6 +106,10 @@ const ConfirmEmail: React.FC<ConfirmEmailProps> = ({
   const handleSendCode = async () => {
     if (!email.trim()) {
       Alert.alert('알림', '이메일을 입력해주세요.');
+      return;
+    }
+    if (cooldown > 0) {
+      Alert.alert('알림', `${cooldown}초 후에 다시 보낼 수 있습니다.`);
       return;
     }
     // 비밀번호 찾기: 가입된 이메일 확인 후 인증번호 발송
@@ -106,13 +133,18 @@ const ConfirmEmail: React.FC<ConfirmEmailProps> = ({
     }
     try {
       setLoading(true);
-      // 회원가입 임시 저장 + 인증코드 발송
-      await startSignUp({
-        userId: signupData.userId,
-        userPwd: signupData.userPwd,
-        userMail: email.trim(),
-        phoneNumber: signupData.phoneNumber,
-      });
+      if (sent) {
+        // 재전송은 코드만 다시 보낸다. startSignUp 을 또 부르면
+        // 임시 가입 정보를 매번 새로 저장하게 된다.
+        await sendEmailCode(email.trim());
+      } else {
+        // 회원가입 임시 저장 + 인증코드 발송
+        await startSignUp({
+          userId: signupData.userId,
+          userPwd: signupData.userPwd,
+          userMail: email.trim(),
+        });
+      }
       setSent(true);
       setSentAt(Date.now());
       Alert.alert('알림', '인증번호를 전송했습니다.');
@@ -132,8 +164,11 @@ const ConfirmEmail: React.FC<ConfirmEmailProps> = ({
     if (mode !== 'signup') {
       try {
         setLoading(true);
-        await verifyPasswordResetCode(email.trim(), code.trim());
-        onConfirm?.(email.trim());
+        const { resetToken } = await verifyPasswordResetCode(
+          email.trim(),
+          code.trim(),
+        );
+        onConfirm?.(email.trim(), resetToken);
       } catch (e: any) {
         Alert.alert('인증 실패', e?.message ?? '인증에 실패했습니다.');
       } finally {
@@ -155,6 +190,18 @@ const ConfirmEmail: React.FC<ConfirmEmailProps> = ({
 
   return (
     <SafeAreaView style={shared.safeArea}>
+      <TouchableOpacity
+        style={shared.backBtn}
+        hitSlop={12}
+        accessibilityRole="button"
+        accessibilityLabel="뒤로 가기"
+        // 요청이 끝나기 전에 나가면, 화면이 닫힌 뒤에 결과가 돌아와
+        // 이전 화면 위로 다음 화면이 열린다.
+        disabled={loading}
+        onPress={onBack}
+      >
+        <Text style={shared.back}>‹</Text>
+      </TouchableOpacity>
       <KeyboardAvoidingView
         style={shared.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -189,18 +236,26 @@ const ConfirmEmail: React.FC<ConfirmEmailProps> = ({
                 }
                 placeholderTextColor={colors.placeholder}
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={handleEmailChange}
                 autoCapitalize="none"
                 keyboardType="email-address"
               />
               <TouchableOpacity
-                style={styles.sendBtn}
+                style={[
+                  styles.sendBtn,
+                  (loading || cooldown > 0) && styles.sendBtnDisabled,
+                ]}
                 activeOpacity={0.8}
                 onPress={handleSendCode}
-                disabled={loading}
+                disabled={loading || cooldown > 0}
               >
                 <Text style={styles.sendBtnText}>
-                  {sent ? '재전송' : '인증 요청'}
+                  {/* 버튼 폭이 85 라 잠금 중에는 남은 초만 넣는다 */}
+                  {cooldown > 0
+                    ? `${cooldown}초`
+                    : sent
+                    ? '재전송'
+                    : '인증 요청'}
                 </Text>
               </TouchableOpacity>
             </View>

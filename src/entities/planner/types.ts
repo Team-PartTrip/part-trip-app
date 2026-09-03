@@ -123,8 +123,18 @@ export interface PopularCity {
 
 /** 그룹 만들기 ~ 장소 담기까지 화면 사이로 들고 다니는 임시 값 */
 export interface PlanDraft {
-  /** C2 에서 만든 플래너 id. 이후 화면이 이 id 로 서버를 부른다 */
-  plannerId: number;
+  /**
+   * 서버에 만들어진 플래너 id. 아직 안 만들었으면 null 이다.
+   *
+   * 예전에는 '다음' 을 누르는 순간 만들었다. 그래서 여행지도 기간도 안 정하고
+   * 나가면 "기간 미정" 플래너가 목록에 남았다. 지금은 투표를 시작할 때
+   * (장소를 실제로 담을 때) 만든다. 초대하기를 먼저 누르면 링크가 필요해서
+   * 그때 만들어지고, 그 뒤로는 이 값을 그대로 쓴다.
+   */
+  plannerId: number | null;
+  /** 아직 안 만들었을 때 만들 재료 */
+  title: string;
+  isSolo: boolean;
   headcount: number;
   countryName: string;
   cityName: string;
@@ -152,7 +162,7 @@ export function formatNights(startDate: string, endDate: string): string {
 }
 
 /** endDate - startDate (일). 로컬 타임존 영향을 안 받게 UTC 로 계산한다 */
-export function diffDays(startDate: string, endDate: string): number {
+function diffDays(startDate: string, endDate: string): number {
   const start = Date.parse(`${startDate}T00:00:00Z`);
   const end = Date.parse(`${endDate}T00:00:00Z`);
   return Math.round((end - start) / 86_400_000);
@@ -167,13 +177,17 @@ export function today(): string {
 }
 
 /** 마감 시각을 "오늘 21:00" / "08.26 21:00" 로 */
+// '마감' 을 여기서 붙인다. 부르는 쪽에서 붙이면 마감이 없을 때
+// '마감 미정 마감' 이 된다.
 export function formatDeadline(deadline: string | null): string {
   if (!deadline) {
     return '마감 미정';
   }
   const [date, time = ''] = deadline.split('T');
   const hhmm = time.slice(0, 5);
-  return date === today() ? `오늘 ${hhmm}` : `${formatShortDate(date)} ${hhmm}`;
+  return date === today()
+    ? `오늘 ${hhmm} 마감`
+    : `${formatShortDate(date)} ${hhmm} 마감`;
 }
 
 /** 아바타에 넣을 한 글자 */

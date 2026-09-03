@@ -11,6 +11,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import { recordStyles as s } from './RecordView.styles';
 import { getTripCards, TripCardSummary } from '../../entities/record/api';
 import { formatTripRange, today } from '../../entities/record/types';
+import { CardIcon } from '../../shared/ui/icons';
+import colors from '../../shared/tokens/colors';
 
 /** 카드 위쪽 사진 띠 — 실제 썸네일이 붙기 전까지 옅어지는 네 칸으로 둔다 */
 const STRIP_OPACITY = [1, 0.88, 0.76, 0.64];
@@ -28,13 +30,20 @@ const RecordView: React.FC<Props> = ({
   const [year, setYear] = useState('전체');
   const [all, setAll] = useState<TripCardSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  // 조회 실패와 데이터 없음은 다르다. 같은 문구를 쓰면 서버가 죽어도
+  // 기록이 없는 것처럼 보인다.
+  const [failed, setFailed] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       let alive = true;
+      // 다시 들어올 때마다 초기화한다. 안 그러면 한 번 실패한 뒤로는
+      // 정상으로 빈 목록을 받아도 오류 문구가 그대로 남는다.
+      setLoading(true);
+      setFailed(false);
       getTripCards()
         .then(list => alive && setAll(list))
-        .catch(() => alive && setAll([]))
+        .catch(() => alive && (setAll([]), setFailed(true)))
         .finally(() => alive && setLoading(false));
       return () => {
         alive = false;
@@ -64,7 +73,7 @@ const RecordView: React.FC<Props> = ({
             activeOpacity={0.8}
             onPress={onOpenTripCards}
           >
-            <Text style={s.headerBtnIcon}>🎴</Text>
+            <CardIcon size={18} color={colors.text} />
           </TouchableOpacity>
         </View>
 
@@ -93,9 +102,15 @@ const RecordView: React.FC<Props> = ({
           <ActivityIndicator style={s.loading} />
         ) : cards.length === 0 ? (
           <View style={s.empty}>
-            <Text style={s.emptyText}>이 연도에 남긴 기록이 없어요</Text>
+            <Text style={s.emptyText}>
+              {failed
+                ? '기록을 불러오지 못했어요'
+                : '이 연도에 남긴 기록이 없어요'}
+            </Text>
             <Text style={s.emptyDesc}>
-              여행을 시작하면 기록이 여기에 쌓여요.
+              {failed
+                ? '잠시 후 다시 시도해주세요.'
+                : '여행을 시작하면 기록이 여기에 쌓여요.'}
             </Text>
           </View>
         ) : (
