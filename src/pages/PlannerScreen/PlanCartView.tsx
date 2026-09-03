@@ -195,7 +195,13 @@ const PlanCartView: React.FC<Props> = ({ plannerId, onBack, onConfirm }) => {
   const pendingLabels = Array.from(
     new Set(
       items
-        .filter(item => !picks.some(pick => pick.voteId === item.voteId))
+        .filter(
+          item =>
+            // 이미 확정된 카테고리는 다시 고를 필요가 없다. 재시도 화면에서
+            // 또 고르라고 하면, 골라도 확정 요청에서 빠져 아무 일도 안 한다.
+            item.voteStatus !== 'CONFIRMED' &&
+            !picks.some(pick => pick.voteId === item.voteId),
+        )
         .map(item => CATEGORY_LABEL[item.category]),
     ),
   );

@@ -299,7 +299,13 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
         visible={joinOpen}
         transparent
         animationType="fade"
-        onRequestClose={() => setJoinOpen(false)}
+        // 참여 요청 중에는 안드로이드 뒤로가기로도 닫지 않는다. 닫고 나서
+        // 요청이 성공하면 플래너가 갑자기 열린다.
+        onRequestClose={() => {
+          if (!joining) {
+            setJoinOpen(false);
+          }
+        }}
       >
         <View style={s.modalBack}>
           <View style={s.modalCard}>

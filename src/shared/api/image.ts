@@ -1,6 +1,6 @@
 import { BASE_URL } from '@env';
 import { ApiError } from './client';
-import { refreshAccessToken } from './http';
+import { expireSession, refreshAccessToken } from './http';
 import { getAccessToken, getSessionGeneration } from './tokenStorage';
 
 /** 로컬 파일(uri)을 서버에 업로드하고, 서버가 반환한 상대경로(/images/xxx.jpg)를 반환 */
@@ -49,6 +49,12 @@ export async function uploadImage(
     }
     if (fresh) {
       res = await send(fresh);
+    } else {
+      // 서버가 리프레시 토큰을 거부한 것이다. authRequest 와 같은 자리를
+      // 지나 토큰을 지우고 로그인 화면으로 보낸다. 안 하면 사진만 계속
+      // 실패하고 세션은 살아 있는 것처럼 남는다.
+      await expireSession(generation);
+      throw new ApiError(401, '로그인이 만료되었어요. 다시 로그인해주세요.');
     }
   }
 

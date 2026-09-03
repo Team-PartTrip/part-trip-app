@@ -40,6 +40,27 @@ let refreshingGeneration = -1;
  *
  * 파일 업로드(multipart)는 authRequest 를 못 써서 이걸 직접 부른다.
  */
+/** 이미 만료 처리한 세션. 같은 세션을 여러 번 쫓아내지 않는다 */
+let expiredGeneration: number | null = null;
+
+/**
+ * 세션 만료를 알린다.
+ *
+ * 401 을 받은 요청마다 부르면 토큰을 여러 번 지우고 로그인 화면으로도
+ * 여러 번 보낸다. 세션 하나당 한 번만 실행한다.
+ *
+ * 사진 업로드(image.ts)는 multipart 라 authRequest 를 못 쓴다. 그쪽도 이
+ * 함수를 불러 같은 자리를 지나게 한다.
+ */
+export async function expireSession(generation: number): Promise<void> {
+  if (expiredGeneration === generation) {
+    return;
+  }
+  expiredGeneration = generation;
+  await clearTokens();
+  onSessionExpired?.();
+}
+
 export async function refreshAccessToken(): Promise<string | null> {
   const generation = getSessionGeneration();
   if (refreshing && refreshingGeneration === generation) {
@@ -135,8 +156,7 @@ export async function authRequest<T = unknown>(
     }
 
     if (!fresh) {
-      await clearTokens();
-      onSessionExpired?.();
+      await expireSession(generation);
       throw new ApiError(401, '로그인이 만료되었어요. 다시 로그인해주세요.');
     }
     return request<T>(path, { ...options, token: fresh });

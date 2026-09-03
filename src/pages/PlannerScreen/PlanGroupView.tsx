@@ -68,6 +68,15 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
     membersRef.current = members;
   }, [members]);
 
+  /**
+   * 멤버 목록의 세대.
+   *
+   * 내보내기 전에 시작한 조회가 삭제 뒤에 도착하면, 방금 내보낸 사람이
+   * 목록에 되살아난다. 그 목록이 정원을 채우면 다음 폴링도 건너뛰어
+   * 화면을 다시 열기 전까지 안 고쳐진다.
+   */
+  const membersGenerationRef = useRef(0);
+
   // 플래너를 만든 뒤부터 멤버가 다 모일 때까지 목록을 다시 받는다
   useEffect(() => {
     if (!planner) {
@@ -80,8 +89,13 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
       if (membersRef.current.length >= finalHeadcount) {
         return;
       }
+      const generation = membersGenerationRef.current;
       const list = await getPlannerMembers(planner.plannerId).catch(() => null);
       if (!alive || !list) {
+        return;
+      }
+      // 기다리는 사이 멤버를 내보냈으면 이 응답은 이미 옛 것이다
+      if (membersGenerationRef.current !== generation) {
         return;
       }
       setMembers(list);
@@ -112,6 +126,8 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
             setRemoving(member.userId);
             try {
               await removePlannerMember(planner.plannerId, member.userId);
+              // 진행 중인 조회의 결과를 버린다
+              membersGenerationRef.current += 1;
               setMembers(prev =>
                 prev.filter(m => m.userId !== member.userId),
               );

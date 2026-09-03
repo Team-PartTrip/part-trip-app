@@ -8,8 +8,10 @@ jest.mock('../src/shared/api/tokenStorage', () => ({
   getSessionGeneration: () => mockGeneration,
 }));
 const mockRefresh = jest.fn();
+const mockExpireSession = jest.fn(() => Promise.resolve());
 jest.mock('../src/shared/api/http', () => ({
   refreshAccessToken: () => mockRefresh(),
+  expireSession: (generation: number) => mockExpireSession(generation),
 }));
 
 const { uploadImage } = require('../src/shared/api/image');
@@ -29,6 +31,8 @@ beforeEach(() => {
   mockGetAccessToken.mockReset();
   mockGetAccessToken.mockResolvedValue('token');
   mockRefresh.mockReset();
+  mockExpireSession.mockReset();
+  mockExpireSession.mockResolvedValue(undefined);
 });
 
 // 서버(ProfileController)는 ResponseEntity<String> 이라 경로를 평문으로 준다.
@@ -96,6 +100,9 @@ test('갱신이 실패하면 다시 올리지 않는다', async () => {
 
   await expect(upload()).rejects.toBeInstanceOf(ApiError);
   expect(fetchMock).toHaveBeenCalledTimes(1);
+  // 서버가 리프레시 토큰을 거부한 것이다. 사진만 실패하고 세션이 살아
+  // 있는 것처럼 남지 않게, authRequest 와 같은 만료 처리를 지나야 한다.
+  expect(mockExpireSession).toHaveBeenCalledWith(0);
 });
 
 test('갱신 중 세션이 바뀌면 새 토큰으로 다시 올리지 않는다', async () => {

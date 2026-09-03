@@ -5,6 +5,7 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { planDestinationStyles as s } from './PlanDestinationView.styles';
@@ -207,6 +208,16 @@ const PlanDestinationView: React.FC<Props> = ({ draft, onBack, onNext }) => {
   // 여행지·기간은 장소를 담을 때(PlacePickerView) 함께 저장한다.
   const next = () => {
     if (!ready || !city) {
+      return;
+    }
+    // 자정 전에 오늘을 시작일로 골라두면 날이 바뀌어도 ready 는 그대로다.
+    // 그 상태로 다음을 누르면 지난 날짜가 넘어간다.
+    const currentToday = todayIso();
+    if (startDate < currentToday) {
+      setToday(currentToday);
+      setStartDate('');
+      setEndDate('');
+      Alert.alert('알림', '날짜가 바뀌었어요. 기간을 다시 골라주세요.');
       return;
     }
     onNext?.({
