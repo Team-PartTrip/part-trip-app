@@ -66,6 +66,15 @@ export const planConfirmStyles = StyleSheet.create({
     color: colors.text,
   },
 
+  // 날짜별로 묶였을 때만 나오는 제목
+  dayTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.primary,
+    marginTop: 14,
+    marginBottom: 6,
+  },
+
   row: {
     height: 64,
     flexDirection: 'row',

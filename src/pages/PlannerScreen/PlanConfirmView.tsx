@@ -12,6 +12,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { planConfirmStyles as s } from './PlanConfirmView.styles';
 import MemberAvatar from './MemberAvatar';
 import {
+  ConfirmedPlace,
   getConfirmedPlaces,
   getPlannerMembers,
   PlannerFinal,
@@ -27,6 +28,55 @@ interface Props {
   planId: number;
   onBack?: () => void;
   onStart?: () => void;
+}
+
+interface ConfirmedDay {
+  key: string;
+  /** "1일차 · 10.12". 날짜를 모르면 null 이라 제목을 안 그린다 */
+  label: string | null;
+  places: ConfirmedPlace[];
+}
+
+/**
+ * 확정 장소를 날짜별로 묶는다.
+ *
+ * 날짜를 주는 곳이 하나도 없으면 묶지 않는다. 서버가 카테고리마다 한 곳만
+ * 확정하던 동안에는 visitedDate 가 없어서, 그때는 예전 화면 그대로다.
+ */
+function groupByDay(
+  places: ConfirmedPlace[],
+  startDate: string,
+): ConfirmedDay[] {
+  if (!places.some(place => place.visitedDate)) {
+    return [{ key: 'all', label: null, places }];
+  }
+
+  const byDate = new Map<string, ConfirmedPlace[]>();
+  for (const place of places) {
+    // 날짜가 빠진 것은 첫날로 본다. 서버가 섞어 보내도 사라지지 않게
+    const date = place.visitedDate ?? startDate;
+    const bucket = byDate.get(date);
+    if (bucket) {
+      bucket.push(place);
+    } else {
+      byDate.set(date, [place]);
+    }
+  }
+
+  return [...byDate.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([date, group]) => ({
+      key: date,
+      label: `${dayNumber(startDate, date)}일차 · ${formatShortDate(date)}`,
+      places: group,
+    }));
+}
+
+/** 시작일로부터 며칠차인지. 타임존에 안 흔들리게 UTC 로 센다 */
+function dayNumber(startDate: string, date: string): number {
+  const start = Date.parse(`${startDate}T00:00:00Z`);
+  const day = Date.parse(`${date}T00:00:00Z`);
+  return Math.max(1, Math.round((day - start) / 86_400_000) + 1);
 }
 
 const PlanConfirmView: React.FC<Props> = ({ planId, onBack, onStart }) => {
@@ -121,9 +171,23 @@ const PlanConfirmView: React.FC<Props> = ({ planId, onBack, onStart }) => {
 
   const confirmed = plan.places;
 
+  /**
+   * 날짜별로 묶는다.
+   *
+   * 서버가 카테고리마다 한 곳만 확정하던 동안에는 visitedDate 가 없다.
+   * 그때는 묶지 않고 예전처럼 한 줄로 그린다. 날짜가 오기 시작하면
+   * 그대로 일차별 목록이 된다.
+   */
+  const days = groupByDay(confirmed, plan.startDate);
+
   const share = () => {
-    const lines = confirmed.map(
-      item => `· ${CATEGORY_LABEL[item.category]} — ${item.placeName}`,
+    const lines = days.flatMap(day =>
+      // 날짜가 없으면 제목 없이 장소만 나열한다
+      (day.label ? [day.label] : []).concat(
+        day.places.map(
+          item => `· ${CATEGORY_LABEL[item.category]} — ${item.placeName}`,
+        ),
+      ),
     );
     Share.share({
       message: [
@@ -184,24 +248,30 @@ const PlanConfirmView: React.FC<Props> = ({ planId, onBack, onStart }) => {
               <Text style={s.emptyText}>아직 확정된 장소가 없어요.</Text>
             </View>
           ) : (
-            confirmed.map(item => (
-              <View key={item.voteId} style={s.row}>
-                <View style={s.thumb}>
-                  <Text style={s.thumbEmoji}>
-                    {CATEGORY_EMOJI[item.category]}
-                  </Text>
-                </View>
-                <View style={s.rowBody}>
-                  <Text style={s.rowCategory}>
-                    {CATEGORY_LABEL[item.category]}
-                  </Text>
-                  <Text style={s.rowName} numberOfLines={1}>
-                    {item.placeName}
-                  </Text>
-                </View>
-                <View style={s.rowPill}>
-                  <Text style={s.rowPillText}>{item.voteCount}표</Text>
-                </View>
+            days.map(day => (
+              <View key={day.key}>
+                {!!day.label && <Text style={s.dayTitle}>{day.label}</Text>}
+                {day.places.map(item => (
+                  // 한 투표에서 여러 곳이 확정되므로 voteId 로는 키가 겹친다
+                  <View key={item.optionId} style={s.row}>
+                    <View style={s.thumb}>
+                      <Text style={s.thumbEmoji}>
+                        {CATEGORY_EMOJI[item.category]}
+                      </Text>
+                    </View>
+                    <View style={s.rowBody}>
+                      <Text style={s.rowCategory}>
+                        {CATEGORY_LABEL[item.category]}
+                      </Text>
+                      <Text style={s.rowName} numberOfLines={1}>
+                        {item.placeName}
+                      </Text>
+                    </View>
+                    <View style={s.rowPill}>
+                      <Text style={s.rowPillText}>{item.voteCount}표</Text>
+                    </View>
+                  </View>
+                ))}
               </View>
             ))
           )}
