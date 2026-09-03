@@ -279,9 +279,9 @@ const MainView: React.FC<MainViewProps> = ({
             </View>
           ) : (
             <View style={s.placeList}>
-              {recommended.map((p, i) => (
+              {recommended.map(p => (
                 <TouchableOpacity
-                  key={`${p.placeName}-${i}`}
+                  key={String(p.tourPlaceId)}
                   style={s.placeCard}
                   activeOpacity={0.85}
                   disabled={!onOpenPlace}
