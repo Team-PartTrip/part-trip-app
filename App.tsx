@@ -168,6 +168,11 @@ const TAB_BY_ROUTE: Record<string, TabKey> = {
   Main: 'home',
   // 축제·이벤트는 기능명세서 v3 에서 메인(Func-002-03) 소속으로 옮겨졌다
   Festival: 'home',
+  // 탭바가 보이는 화면은 빠짐없이 적는다. 빠지면 어느 탭도 켜지지 않아
+  // 사용자가 지금 어디에 있는지 알 수 없다.
+  PlaceDetail: 'home',
+  Notifications: 'home',
+  NotificationDetail: 'home',
   Planner: 'planner',
   PlanStatus: 'planner',
   Record: 'record',
@@ -175,6 +180,7 @@ const TAB_BY_ROUTE: Record<string, TabKey> = {
   TripCardDetail: 'record',
   TripCardEdit: 'record',
   Profile: 'profile',
+  ProfileEdit: 'profile',
 };
 
 function App() {
