@@ -200,9 +200,9 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
       return;
     }
     try {
-      await Share.share({
-        message: `PartTrip 여행 계획에 초대합니다.\n${made.inviteLink}`,
-      });
+      // 링크만 보낸다. 앞에 안내 문구를 붙이면 '복사' 를 눌렀을 때 그
+      // 문구까지 딸려가서, 받은 사람이 링크만 떼어내야 한다.
+      await Share.share({ message: made.inviteLink });
     } catch {
       // 공유 시트를 못 띄우면 링크라도 보여준다
       Alert.alert('초대 링크', made.inviteLink);
