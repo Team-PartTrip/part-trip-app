@@ -23,6 +23,40 @@ import { BellIcon, CalendarIcon } from '../../shared/ui/icons';
 import colors from '../../shared/tokens/colors';
 
 /**
+ * 추천 목록.
+ *
+ * 서버는 평점 내림차순으로 준다. 그대로 앞에서 자르면 평점이 같은
+ * 한 카테고리가 자리를 다 차지한다 — 오사카에서 액티비티 네 개가 나왔다.
+ * 카테고리마다 1등을 먼저 뽑아 골고루 보이게 하고, 그래도 자리가 남으면
+ * 남은 것에서 평점순으로 채운다.
+ */
+function pickRecommendations(places: TourPlace[], count: number): TourPlace[] {
+  const picked: TourPlace[] = [];
+  const seen = new Set<string>();
+
+  for (const place of places) {
+    const key = place.category ?? '';
+    if (picked.length >= count) {
+      break;
+    }
+    if (!seen.has(key)) {
+      seen.add(key);
+      picked.push(place);
+    }
+  }
+
+  for (const place of places) {
+    if (picked.length >= count) {
+      break;
+    }
+    if (!picked.includes(place)) {
+      picked.push(place);
+    }
+  }
+  return picked;
+}
+
+/**
  * 상단에 깔 여행지 대표 사진.
  *
  * 나라별 이미지를 따로 두지 않는다. 추천 목록을 이미 받아오므로 그 중
@@ -59,11 +93,14 @@ interface MainViewProps {
   onOpenNotifications?: () => void;
   /** 축제 · 이벤트 캘린더 (Func-002-03) */
   onOpenEvents?: () => void;
+  /** 추천 장소를 누르면 상세로 */
+  onOpenPlace?: (place: TourPlace) => void;
 }
 
 const MainView: React.FC<MainViewProps> = ({
   onOpenNotifications,
   onOpenEvents,
+  onOpenPlace,
 }) => {
   const [loading, setLoading] = useState(true);
   const [dday, setDday] = useState<DdayInfo | null>(null);
@@ -96,7 +133,11 @@ const MainView: React.FC<MainViewProps> = ({
           if (!d.countryName) {
             return;
           }
-          const tour = await getTourPlaces(d.countryName).catch(() => []);
+          // 도시를 안 넘기면 나라 전체에서 뽑혀, 오사카 여행에 도쿄 장소가
+          // 섞여 나온다.
+          const tour = await getTourPlaces(d.countryName, {
+            cityName: d.cityName ?? undefined,
+          }).catch(() => []);
           if (alive) {
             setPlaces(tour);
           }
@@ -118,6 +159,7 @@ const MainView: React.FC<MainViewProps> = ({
   );
 
   const hero = heroImageOf(places);
+  const recommended = pickRecommendations(places, 4);
 
   if (loading) {
     return (
@@ -237,8 +279,14 @@ const MainView: React.FC<MainViewProps> = ({
             </View>
           ) : (
             <View style={s.placeList}>
-              {places.slice(0, 4).map((p, i) => (
-                <View key={`${p.placeName}-${i}`} style={s.placeCard}>
+              {recommended.map((p, i) => (
+                <TouchableOpacity
+                  key={`${p.placeName}-${i}`}
+                  style={s.placeCard}
+                  activeOpacity={0.85}
+                  disabled={!onOpenPlace}
+                  onPress={() => onOpenPlace?.(p)}
+                >
                   {p.imageUrl ? (
                     <Image
                       source={{ uri: toImageUrl(p.imageUrl) }}
@@ -262,7 +310,7 @@ const MainView: React.FC<MainViewProps> = ({
                   {p.rating !== null && (
                     <Text style={s.placeRating}>★ {p.rating.toFixed(1)}</Text>
                   )}
-                </View>
+                </TouchableOpacity>
               ))}
             </View>
           )}
