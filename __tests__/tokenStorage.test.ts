@@ -4,9 +4,10 @@
 
 // 모듈을 새로 부르면 mock 도 새로 만들어진다. 그래서 여기서 붙잡지 않고
 // beforeEach 에서 그때의 것을 받아 쓴다.
-let store: { setMany: jest.Mock; removeMany: jest.Mock };
+let store: { setMany: jest.Mock; removeMany: jest.Mock; setItem: jest.Mock };
 
 let saveTokens: typeof import('../src/shared/api/tokenStorage').saveTokens;
+let saveProvider: typeof import('../src/shared/api/tokenStorage').saveProvider;
 let clearTokens: typeof import('../src/shared/api/tokenStorage').clearTokens;
 let getSessionGeneration: typeof import('../src/shared/api/tokenStorage').getSessionGeneration;
 
@@ -31,8 +32,18 @@ beforeEach(() => {
     calls.push('remove');
     return Promise.resolve();
   });
+  store.setItem.mockImplementation(
+    () =>
+      new Promise(resolve =>
+        setTimeout(() => {
+          calls.push('provider');
+          resolve(undefined);
+        }, 20),
+      ),
+  );
   ({
     saveTokens,
+    saveProvider,
     clearTokens,
     getSessionGeneration,
   } = require('../src/shared/api/tokenStorage'));
@@ -64,4 +75,14 @@ test('로그인 저장은 세대를 올린다', async () => {
 
   expect(getSessionGeneration()).toBe(before + 1);
   expect(store.setMany).toHaveBeenCalledTimes(1);
+});
+
+// clearTokens 는 provider 키도 지운다. 저장이 그 뒤에 끝나면
+// 로그아웃했는데 제공자 표시만 남는다.
+test('로그아웃이 제공자 저장도 앞지르지 못한다', async () => {
+  const saving = saveProvider('GOOGLE');
+  const clearing = clearTokens();
+  await Promise.all([saving, clearing]);
+
+  expect(calls).toEqual(['provider', 'remove']);
 });

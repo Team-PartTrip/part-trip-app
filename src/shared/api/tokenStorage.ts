@@ -35,11 +35,16 @@ function serialize<T>(job: () => Promise<T>): Promise<T> {
   return run;
 }
 
-/** 로그인 제공자 저장 ('EMAIL' | 'GOOGLE') */
+/**
+ * 로그인 제공자 저장 ('EMAIL' | 'GOOGLE')
+ *
+ * clearTokens 가 이 키도 지우므로 같은 줄에 세운다. 안 그러면 로그인
+ * 직후 로그아웃했을 때 저장이 삭제 뒤에 끝나 제공자만 남는다.
+ */
 export async function saveProvider(
   provider: 'EMAIL' | 'GOOGLE',
 ): Promise<void> {
-  await AsyncStorage.setItem(PROVIDER_KEY, provider);
+  await serialize(() => AsyncStorage.setItem(PROVIDER_KEY, provider));
 }
 
 /**
