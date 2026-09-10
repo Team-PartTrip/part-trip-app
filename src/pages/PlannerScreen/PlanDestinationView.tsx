@@ -11,7 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { planDestinationStyles as s } from './PlanDestinationView.styles';
 import WizardHeader from './WizardHeader';
 import { getPopularCities } from '../../entities/planner/api';
-import { getCountries } from '../../entities/main/api';
+import { getCities } from '../../entities/main/api';
 import { emojiOf, FALLBACK_CITIES } from '../../entities/planner/sampleData';
 import {
   formatNights,
@@ -36,9 +36,32 @@ function labelOf(date: string, omitMonth: boolean): string {
   return omitMonth ? `${day}일` : `${month}월 ${day}일`;
 }
 
+function toRow(item: PopularCity): Row {
+  return {
+    title: item.cityName,
+    subtitle: item.countryName,
+    emoji: item.emoji,
+  };
+}
+
+function toCityRows(list: { cityName: string; countryName: string }[]): Row[] {
+  return list.map(item => ({
+    title: item.cityName,
+    subtitle: item.countryName,
+    emoji: emojiOf(item.cityName),
+  }));
+}
+
 function todayIso(): string {
   const now = new Date();
   return toIso(now.getFullYear(), now.getMonth(), now.getDate());
+}
+
+/** 목록에 뿌리는 한 줄 */
+interface Row {
+  title: string;
+  subtitle: string;
+  emoji: string;
 }
 
 interface Props {
@@ -53,7 +76,7 @@ const PlanDestinationView: React.FC<Props> = ({ draft, onBack, onNext }) => {
   // 서버가 계획 수로 뽑아준 인기 여행지. 조회 전·실패 시에는 기본 목록을 쓴다.
   const [popular, setPopular] = useState<PopularCity[]>(FALLBACK_CITIES);
   // 검색 결과. null 이면 아직 안 찾아본 것이다
-  const [found, setFound] = useState<PopularCity[] | null>(null);
+  const [found, setFound] = useState<Row[] | null>(null);
   const [searching, setSearching] = useState(false);
   // 피그마에는 달 이동 화살표가 없지만, 한 달에 갇히면 기간을 못 고른다
   const [cursor, setCursor] = useState(() => new Date());
@@ -103,9 +126,12 @@ const PlanDestinationView: React.FC<Props> = ({ draft, onBack, onNext }) => {
   /**
    * 검색은 서버에 묻는다.
    *
-   * 인기 여행지는 관광지 데이터가 있는 도시만이라 지금 다섯 곳뿐이다.
-   * 그 안에서 거르면 "파리" 를 쳐도 아무것도 안 나왔다.
-   * 글자를 칠 때마다 부르지 않도록 잠깐 기다렸다 보낸다.
+   * 도시 이름으로만 찾는다. 나라를 골라도 그 나라 이름이 도시 자리에
+   * 저장돼 관광지를 하나도 못 받아왔다. 검색은 구글에 바로 물어서
+   * 수도가 아닌 도시(오사카·교토)도 나온다.
+   *
+   * 두 글자 미만이면 서버가 어차피 빈 목록을 준다. 글자를 칠 때마다
+   * 부르지 않도록 잠깐 기다렸다 보낸다.
    */
   useEffect(() => {
     const keyword = query.trim();
@@ -117,19 +143,11 @@ const PlanDestinationView: React.FC<Props> = ({ draft, onBack, onNext }) => {
     setSearching(true);
     setFound(null);
     const timer = setTimeout(() => {
-      getCountries(keyword)
+      getCities(keyword)
         .then(list => {
-          if (!alive) {
-            return;
+          if (alive) {
+            setFound(toCityRows(list));
           }
-          setFound(
-            list.map(item => ({
-              // 나라만 있고 도시가 없으면 나라 이름을 도시 자리에 쓴다
-              cityName: item.cityName ?? item.countryName,
-              countryName: item.countryName,
-              emoji: emojiOf(item.cityName ?? item.countryName),
-            })),
-          );
         })
         .catch(() => {
           if (alive) {
@@ -149,19 +167,19 @@ const PlanDestinationView: React.FC<Props> = ({ draft, onBack, onNext }) => {
     };
   }, [query]);
 
-  const cities = useMemo(() => {
+  const rows = useMemo<Row[]>(() => {
     const keyword = query.trim();
     // 검색 전에는 피그마처럼 인기 여행지 네 곳만 보여준다
     if (!keyword) {
-      return popular.slice(0, 4);
+      return popular.slice(0, 4).map(toRow);
     }
     // 관광지가 있는 도시(오사카 등)를 위로 올린다. 거기는 담을 장소가 있다
-    const hits = popular.filter(
-      item =>
-        item.cityName.includes(keyword) || item.countryName.includes(keyword),
-    );
+    const hits = popular.filter(item => item.cityName.includes(keyword));
     const names = new Set(hits.map(h => h.cityName));
-    return [...hits, ...(found ?? []).filter(f => !names.has(f.cityName))];
+    return [
+      ...hits.map(toRow),
+      ...(found ?? []).filter(f => !names.has(f.title)),
+    ];
   }, [query, popular, found]);
 
   // 1일이 무슨 요일인지에 맞춰 앞을 빈 칸으로 채운 뒤 주 단위로 자른다
@@ -242,7 +260,7 @@ const PlanDestinationView: React.FC<Props> = ({ draft, onBack, onNext }) => {
           <Text style={s.searchIcon}>🔍</Text>
           <TextInput
             style={s.searchInput}
-            placeholder="도시 또는 나라 검색"
+            placeholder="도시 검색"
             placeholderTextColor="#5d6f83"
             value={query}
             onChangeText={setQuery}
@@ -250,30 +268,47 @@ const PlanDestinationView: React.FC<Props> = ({ draft, onBack, onNext }) => {
           />
         </View>
 
-        <Text style={s.label}>인기 여행지</Text>
-        {cities.length === 0 ? (
+        <Text style={s.label}>
+          {query.trim() ? '검색 결과' : '인기 여행지'}
+        </Text>
+
+        {rows.length === 0 ? (
           <Text style={s.cityEmpty}>
-            {searching ? '찾는 중…' : '검색 결과가 없어요.'}
+            {searching
+              ? '찾는 중…'
+              : query.trim().length < 2
+              ? '도시 이름을 두 글자 이상 입력해주세요.'
+              : '검색 결과가 없어요.'}
           </Text>
         ) : (
           <View style={s.cityGrid}>
-            {cities.map(item => {
-              const on = city?.cityName === item.cityName;
+            {rows.map(item => {
+              const on =
+                city?.cityName === item.title &&
+                city?.countryName === item.subtitle;
               return (
                 <TouchableOpacity
-                  key={`${item.countryName}-${item.cityName}`}
+                  key={`${item.subtitle}-${item.title}`}
                   style={[s.cityCard, on && s.cityCardOn]}
                   activeOpacity={0.85}
-                  onPress={() => setCity(item)}
+                  onPress={() =>
+                    setCity({
+                      cityName: item.title,
+                      countryName: item.subtitle,
+                      emoji: item.emoji,
+                    })
+                  }
                 >
                   <View style={s.cityThumb}>
                     <Text style={s.cityEmoji}>{item.emoji}</Text>
                   </View>
-                  <View>
+                  <View style={s.cityBody}>
                     <Text style={[s.cityName, on && s.cityNameOn]}>
-                      {item.cityName}
+                      {item.title}
                     </Text>
-                    <Text style={s.cityCountry}>{item.countryName}</Text>
+                    <Text style={s.cityCountry} numberOfLines={1}>
+                      {item.subtitle}
+                    </Text>
                   </View>
                 </TouchableOpacity>
               );

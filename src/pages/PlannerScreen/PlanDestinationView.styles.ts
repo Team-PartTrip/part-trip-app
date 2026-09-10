@@ -56,6 +56,8 @@ export const planDestinationStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   cityEmoji: { fontSize: 20 },
+  // 도시 이름이 길어도 카드 밖으로 안 밀리게 남는 자리를 다 준다
+  cityBody: { flex: 1 },
   cityName: { fontSize: 15, fontWeight: '600', color: colors.text },
   cityNameOn: { color: colors.primaryDark },
   cityCountry: { marginTop: 2, fontSize: 12, color: colors.textSecondary },

@@ -100,6 +100,33 @@ export function getCountries(keyword: string): Promise<CountryInfo[]> {
   );
 }
 
+export interface City {
+  cityName: string;
+  countryName: string;
+}
+
+/**
+ * 도시 검색.
+ *
+ * countries 는 나라당 대표 도시(수도) 하나만 준다. 오사카·교토처럼 수도가
+ * 아닌 도시는 여기서 찾는다. 서버가 구글 자동완성을 대신 불러준다.
+ *
+ * countryName 을 주면 그 나라 안에서만 찾는다. 생략하면 전 세계에서 찾는다.
+ * 두 글자 미만이면 서버가 빈 목록을 준다. 요청마다 돈이 나가서다.
+ */
+export function getCities(
+  keyword: string,
+  countryName?: string,
+): Promise<City[]> {
+  const params = new URLSearchParams({ keyword });
+  if (countryName) {
+    params.append('countryName', countryName);
+  }
+  return authRequest<City[]>(`/api/main/cities?${params.toString()}`, {
+    method: 'GET',
+  });
+}
+
 export interface Festival {
   title: string;
   category: string;
