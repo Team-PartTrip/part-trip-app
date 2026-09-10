@@ -5,19 +5,20 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Modal,
-  Pressable,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { planCitiesStyles as s } from './PlanCitiesView.styles';
 import WizardHeader from './WizardHeader';
 import { getCities, City } from '../../entities/main/api';
+import { getPopularCities } from '../../entities/planner/api';
+import { emojiOf, FALLBACK_CITIES } from '../../entities/planner/sampleData';
 import {
   formatRange,
   formatShortDate,
   PlanCity,
   PlanDraft,
+  PopularCity,
 } from '../../entities/planner/types';
 
 // 글자를 칠 때마다 서버를 부르지 않도록 기다리는 시간
@@ -78,23 +79,17 @@ const PlanCitiesView: React.FC<Props> = ({ draft, onBack, onNext }) => {
   );
 
   const [rows, setRows] = useState<Row[]>(() =>
-    draft.cities.length > 0
-      ? draft.cities.map(city => ({
-          countryName: city.countryName,
-          cityName: city.cityName,
-          days: diffDays(city.startDate, city.endDate) + 1,
-        }))
-      : [
-          {
-            countryName: draft.countryName,
-            cityName: draft.cityName,
-            days: totalDays,
-          },
-        ],
+    draft.cities
+      .filter(city => !!city.cityName)
+      .map(city => ({
+        countryName: city.countryName,
+        cityName: city.cityName,
+        days: diffDays(city.startDate, city.endDate) + 1,
+      })),
   );
 
-  const [adding, setAdding] = useState(false);
   const [query, setQuery] = useState('');
+  const [popular, setPopular] = useState<PopularCity[]>(FALLBACK_CITIES);
   const [found, setFound] = useState<City[] | null>(null);
   const [searching, setSearching] = useState(false);
 
@@ -104,6 +99,26 @@ const PlanCitiesView: React.FC<Props> = ({ draft, onBack, onNext }) => {
     () => toCities(rows, draft.startDate),
     [rows, draft.startDate],
   );
+
+  useEffect(() => {
+    let alive = true;
+    getPopularCities()
+      .then(list => {
+        if (alive && list.length > 0) {
+          setPopular(
+            list.map(item => ({
+              cityName: item.cityName,
+              countryName: item.countryName,
+              emoji: emojiOf(item.cityName),
+            })),
+          );
+        }
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   useEffect(() => {
     const keyword = query.trim();
@@ -139,9 +154,22 @@ const PlanCitiesView: React.FC<Props> = ({ draft, onBack, onNext }) => {
     };
   }, [query]);
 
+  const hits = useMemo<City[]>(() => {
+    const keyword = query.trim();
+    if (!keyword) {
+      return popular
+        .slice(0, 4)
+        .map(item => ({ cityName: item.cityName, countryName: item.countryName }));
+    }
+    return found ?? [];
+  }, [query, popular, found]);
+
   // 새 도시는 남은 날을 다 가져간다. 남은 날이 없으면 1을 앞 도시에서 뗀다
   const addCity = (city: City) => {
     setRows(current => {
+      if (current.some(row => row.cityName === city.cityName)) {
+        return current;
+      }
       const remaining = totalDays - current.reduce((sum, r) => sum + r.days, 0);
       if (remaining > 0) {
         return [...current, { ...city, days: remaining }];
@@ -155,7 +183,6 @@ const PlanCitiesView: React.FC<Props> = ({ draft, onBack, onNext }) => {
       );
       return [...next, { ...city, days: 1 }];
     });
-    setAdding(false);
     setQuery('');
   };
 
@@ -175,9 +202,7 @@ const PlanCitiesView: React.FC<Props> = ({ draft, onBack, onNext }) => {
     );
 
   const removeCity = (index: number) =>
-    setRows(current =>
-      current.length === 1 ? current : current.filter((_, i) => i !== index),
-    );
+    setRows(current => current.filter((_, i) => i !== index));
 
   const ready = left === 0 && rows.length > 0;
 
@@ -196,7 +221,7 @@ const PlanCitiesView: React.FC<Props> = ({ draft, onBack, onNext }) => {
 
   return (
     <View style={s.safeArea}>
-      <WizardHeader title="어디를 도나요?" step={3} onBack={onBack} />
+      <WizardHeader title="여행 도시" step={3} onBack={onBack} />
 
       <ScrollView
         contentContainerStyle={s.content}
@@ -210,67 +235,116 @@ const PlanCitiesView: React.FC<Props> = ({ draft, onBack, onNext }) => {
           </Text>
         </View>
 
+        <View style={s.search}>
+          <Text>🔍</Text>
+          <TextInput
+            style={s.searchInput}
+            placeholder="도시 검색"
+            placeholderTextColor="#5d6f83"
+            value={query}
+            onChangeText={setQuery}
+            returnKeyType="search"
+          />
+        </View>
+
+        <Text style={s.label}>
+          {query.trim() ? '검색 결과' : '인기 여행지'}
+        </Text>
+
+        {searching ? (
+          <ActivityIndicator style={s.hitEmpty} />
+        ) : hits.length === 0 ? (
+          <Text style={s.hitEmpty}>
+            {query.trim().length < 2
+              ? '도시 이름을 두 글자 이상 입력해주세요.'
+              : '검색 결과가 없어요.'}
+          </Text>
+        ) : (
+          <View style={s.hitGrid}>
+            {hits.map(city => {
+              const on = rows.some(row => row.cityName === city.cityName);
+              return (
+                <TouchableOpacity
+                  key={`${city.countryName}-${city.cityName}`}
+                  style={[s.hitCard, on && s.hitCardOn]}
+                  activeOpacity={0.85}
+                  disabled={on}
+                  onPress={() => addCity(city)}
+                >
+                  <Text style={[s.hitCity, on && s.hitCityOn]}>
+                    {city.cityName}
+                  </Text>
+                  <Text style={s.hitCountry} numberOfLines={1}>
+                    {on ? '담김' : city.countryName}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
+
         <Text style={s.label}>방문 도시</Text>
 
-        {rows.map((row, index) => (
-          <View key={`${row.countryName}-${row.cityName}-${index}`} style={s.card}>
-            <View style={s.seq}>
-              <Text style={s.seqText}>{index + 1}</Text>
-            </View>
-            <View style={s.cardBody}>
-              <Text style={s.cityName}>{row.cityName}</Text>
-              <Text style={s.cityRange}>
-                {formatShortDate(cities[index].startDate)} –{' '}
-                {formatShortDate(cities[index].endDate)} · {row.countryName}
-              </Text>
-            </View>
-            <View style={s.stepper}>
-              <TouchableOpacity
-                style={[s.stepBtn, row.days <= 1 && s.stepBtnOff]}
-                hitSlop={6}
-                disabled={row.days <= 1}
-                onPress={() => step(index, -1)}
-              >
-                <Text style={[s.stepText, row.days <= 1 && s.stepTextOff]}>
-                  −
+        {rows.length === 0 ? (
+          <Text style={s.hitEmpty}>위에서 갈 도시를 골라주세요.</Text>
+        ) : (
+          rows.map((row, index) => (
+            <View
+              key={`${row.countryName}-${row.cityName}-${index}`}
+              style={s.card}
+            >
+              <View style={s.seq}>
+                <Text style={s.seqText}>{index + 1}</Text>
+              </View>
+              <View style={s.cardBody}>
+                <Text style={s.cityName}>{row.cityName}</Text>
+                <Text style={s.cityRange}>
+                  {formatShortDate(cities[index].startDate)} –{' '}
+                  {formatShortDate(cities[index].endDate)} · {row.countryName}
                 </Text>
-              </TouchableOpacity>
-              <Text style={s.days}>{row.days}일</Text>
-              <TouchableOpacity
-                style={[s.stepBtn, left <= 0 && s.stepBtnOff]}
-                hitSlop={6}
-                disabled={left <= 0}
-                onPress={() => step(index, 1)}
-              >
-                <Text style={[s.stepText, left <= 0 && s.stepTextOff]}>＋</Text>
-              </TouchableOpacity>
-            </View>
-            {rows.length > 1 && (
+              </View>
+              <View style={s.stepper}>
+                <TouchableOpacity
+                  style={[s.stepBtn, row.days <= 1 && s.stepBtnOff]}
+                  hitSlop={6}
+                  disabled={row.days <= 1}
+                  onPress={() => step(index, -1)}
+                >
+                  <Text style={[s.stepText, row.days <= 1 && s.stepTextOff]}>
+                    −
+                  </Text>
+                </TouchableOpacity>
+                <Text style={s.days}>{row.days}일</Text>
+                <TouchableOpacity
+                  style={[s.stepBtn, left <= 0 && s.stepBtnOff]}
+                  hitSlop={6}
+                  disabled={left <= 0}
+                  onPress={() => step(index, 1)}
+                >
+                  <Text style={[s.stepText, left <= 0 && s.stepTextOff]}>
+                    ＋
+                  </Text>
+                </TouchableOpacity>
+              </View>
               <TouchableOpacity hitSlop={8} onPress={() => removeCity(index)}>
                 <Text style={s.remove}>✕</Text>
               </TouchableOpacity>
-            )}
+            </View>
+          ))
+        )}
+
+        {rows.length > 0 && (
+          <View style={s.note}>
+            <Text style={[s.noteTitle, left !== 0 && s.noteTitleWarn]}>
+              {left === 0
+                ? `남은 날 없음 · ${totalDays}일을 다 채웠어요`
+                : `${left}일이 남았어요`}
+            </Text>
+            <Text style={s.noteDesc}>
+              빈 날이 있으면 AI가 그날 일정을 못 짜요
+            </Text>
           </View>
-        ))}
-
-        <TouchableOpacity
-          style={s.addBtn}
-          activeOpacity={0.85}
-          onPress={() => setAdding(true)}
-        >
-          <Text style={s.addText}>＋ 도시 추가</Text>
-        </TouchableOpacity>
-
-        <View style={s.note}>
-          <Text style={[s.noteTitle, left !== 0 && s.noteTitleWarn]}>
-            {left === 0
-              ? `남은 날 없음 · ${totalDays}일을 다 채웠어요`
-              : `${left}일이 남았어요`}
-          </Text>
-          <Text style={s.noteDesc}>
-            빈 날이 있으면 AI가 그날 일정을 못 짜요
-          </Text>
-        </View>
+        )}
       </ScrollView>
 
       <SafeAreaView edges={['bottom']} style={s.footer}>
@@ -283,54 +357,6 @@ const PlanCitiesView: React.FC<Props> = ({ draft, onBack, onNext }) => {
           <Text style={s.primaryText}>다음</Text>
         </TouchableOpacity>
       </SafeAreaView>
-
-      <Modal
-        visible={adding}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setAdding(false)}
-      >
-        <Pressable style={s.dim} onPress={() => setAdding(false)}>
-          <Pressable style={s.sheet} onPress={() => {}}>
-            <Text style={s.sheetTitle}>도시 추가</Text>
-            <View style={s.search}>
-              <Text>🔍</Text>
-              <TextInput
-                style={s.searchInput}
-                placeholder="도시 검색"
-                placeholderTextColor="#5d6f83"
-                value={query}
-                onChangeText={setQuery}
-                autoFocus
-                returnKeyType="search"
-              />
-            </View>
-            <ScrollView keyboardShouldPersistTaps="handled">
-              {searching ? (
-                <ActivityIndicator style={s.hitEmpty} />
-              ) : found === null ? (
-                <Text style={s.hitEmpty}>
-                  도시 이름을 두 글자 이상 입력해주세요.
-                </Text>
-              ) : found.length === 0 ? (
-                <Text style={s.hitEmpty}>검색 결과가 없어요.</Text>
-              ) : (
-                found.map(city => (
-                  <TouchableOpacity
-                    key={`${city.countryName}-${city.cityName}`}
-                    style={s.hit}
-                    activeOpacity={0.7}
-                    onPress={() => addCity(city)}
-                  >
-                    <Text style={s.hitCity}>{city.cityName}</Text>
-                    <Text style={s.hitCountry}>{city.countryName}</Text>
-                  </TouchableOpacity>
-                ))
-              )}
-            </ScrollView>
-          </Pressable>
-        </Pressable>
-      </Modal>
     </View>
   );
 };

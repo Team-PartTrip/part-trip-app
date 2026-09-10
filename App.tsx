@@ -24,7 +24,7 @@ import FestivalScreen from './src/pages/FestivalScreen/FestivalScreen';
 import ProfileView from './src/pages/ProfileView/ProfileView';
 import PlannerScreen from './src/pages/PlannerScreen/PlannerScreen';
 import PlanGroupView from './src/pages/PlannerScreen/PlanGroupView';
-import PlanDestinationView from './src/pages/PlannerScreen/PlanDestinationView';
+import PlanPeriodView from './src/pages/PlannerScreen/PlanPeriodView';
 import PlanCitiesView from './src/pages/PlannerScreen/PlanCitiesView';
 import PlacePickerView from './src/pages/PlannerScreen/PlacePickerView';
 import PlaceVoteView from './src/pages/PlannerScreen/PlaceVoteView';
@@ -73,7 +73,7 @@ export type RootStackParamList = {
   Main: undefined;
   Planner: undefined;
   PlanGroup: undefined;
-  PlanDestination: { draft: PlanDraft };
+  PlanPeriod: { draft: PlanDraft };
   PlanCities: { draft: PlanDraft };
   PlacePicker: { draft: PlanDraft };
   PlanCart: { plannerId: number };
@@ -130,7 +130,7 @@ const AUTH_ROUTES = [
   'CountryAcquired',
   'Achievement',
   'PlanGroup',
-  'PlanDestination',
+  'PlanPeriod',
   'PlanCities',
   'PlacePicker',
   'PlanCart',
@@ -338,15 +338,15 @@ function App() {
                   <PlanGroupView
                     onBack={() => navigation.goBack()}
                     onNext={draft =>
-                      navigation.navigate('PlanDestination', { draft })
+                      navigation.navigate('PlanPeriod', { draft })
                     }
                   />
                 )}
               </Stack.Screen>
 
-              <Stack.Screen name="PlanDestination">
+              <Stack.Screen name="PlanPeriod">
                 {({ navigation, route }) => (
-                  <PlanDestinationView
+                  <PlanPeriodView
                     draft={route.params.draft}
                     onBack={() => navigation.goBack()}
                     onNext={draft =>

@@ -98,28 +98,13 @@ export const planCitiesStyles = StyleSheet.create({
   primaryBtnOff: { backgroundColor: colors.chevron },
   primaryText: { fontSize: 16, fontWeight: '600', color: colors.textOnPrimary },
 
-  // 도시 추가 모달
-  dim: {
-    flex: 1,
-    backgroundColor: 'rgba(15, 23, 38, 0.45)',
-    justifyContent: 'flex-end',
-  },
-  sheet: {
-    maxHeight: '70%',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    backgroundColor: colors.white,
-    paddingHorizontal: 24,
-    paddingTop: 20,
-    paddingBottom: 24,
-  },
-  sheetTitle: { fontSize: 18, fontWeight: '700', color: colors.text },
+  // 도시 검색
   search: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     height: 48,
-    marginTop: 14,
+    marginTop: 16,
     paddingHorizontal: 14,
     borderRadius: 12,
     borderWidth: 1,
@@ -127,12 +112,24 @@ export const planCitiesStyles = StyleSheet.create({
     backgroundColor: colors.inputBg,
   },
   searchInput: { flex: 1, fontSize: 15, color: colors.text, padding: 0 },
-  hit: {
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+  hitGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  hitCard: {
+    // 24px 좌우 여백 · 10px 간격 기준으로 두 칸이 딱 맞게 들어간다
+    width: '48%',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.white,
   },
+  hitCardOn: { borderColor: colors.primary, backgroundColor: colors.tint },
   hitCity: { fontSize: 15, fontWeight: '600', color: colors.text },
+  hitCityOn: { color: colors.primaryDark },
   hitCountry: { marginTop: 2, fontSize: 12, color: colors.textSecondary },
-  hitEmpty: { paddingVertical: 20, fontSize: 12, textAlign: 'center', color: colors.textMuted },
+  hitEmpty: {
+    paddingVertical: 16,
+    fontSize: 12,
+    color: colors.textMuted,
+  },
 });

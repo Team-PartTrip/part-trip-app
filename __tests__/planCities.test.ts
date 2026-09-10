@@ -59,3 +59,22 @@ test('달을 넘어가도 맞다', () => {
   expect(cities[1].startDate).toBe('2026-09-01');
   expect(cities[1].endDate).toBe('2026-09-02');
 });
+
+test('이름 없는 도시는 버린다', () => {
+  // 앞 화면이 자리만 잡아 넘기면 빈 줄이 남고, 그 줄이 날짜를 먹어
+  // "남은 날 없음" 이 되면서 도시를 안 고르고도 다음으로 넘어간다.
+  const rows = [
+    { countryName: '', cityName: '', days: 5 },
+    { countryName: '일본', cityName: '오사카', days: 2 },
+  ].filter(row => !!row.cityName);
+
+  expect(rows).toHaveLength(1);
+  expect(toCities(rows, '2026-08-23')).toEqual([
+    {
+      countryName: '일본',
+      cityName: '오사카',
+      startDate: '2026-08-23',
+      endDate: '2026-08-24',
+    },
+  ]);
+});
