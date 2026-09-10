@@ -142,4 +142,42 @@ export const festivalStyles = StyleSheet.create({
   },
   emptyText: { fontSize: 15, fontWeight: '600', color: colors.text },
   emptyDesc: { fontSize: 12, textAlign: 'center', color: colors.textMuted },
+
+  // 축제 상세 모달
+  dim: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 38, 0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  sheet: {
+    width: '100%',
+    maxHeight: '80%',
+    borderRadius: 20,
+    backgroundColor: colors.white,
+    overflow: 'hidden',
+  },
+  sheetImage: { width: '100%', height: 160, backgroundColor: colors.inputBg },
+  sheetBody: { flexGrow: 0 },
+  sheetContent: { padding: 20, gap: 6 },
+  sheetPill: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+    backgroundColor: colors.tint,
+  },
+  sheetTitle: { marginTop: 4, fontSize: 20, fontWeight: '700', color: colors.text },
+  sheetMeta: { fontSize: 13, color: colors.textSecondary },
+  sheetPlace: { fontSize: 13, color: colors.textSecondary },
+  sheetDesc: { marginTop: 8, fontSize: 14, lineHeight: 21, color: colors.text },
+  sheetClose: {
+    height: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  sheetCloseText: { fontSize: 15, fontWeight: '600', color: colors.primary },
 });

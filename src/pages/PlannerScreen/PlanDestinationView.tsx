@@ -244,6 +244,15 @@ const PlanDestinationView: React.FC<Props> = ({ draft, onBack, onNext }) => {
       cityName: city.cityName,
       startDate,
       endDate,
+      // 도시 한 곳이 기간 전체를 덮은 상태로 넘긴다. C4 에서 쪼갠다
+      cities: [
+        {
+          countryName: city.countryName,
+          cityName: city.cityName,
+          startDate,
+          endDate,
+        },
+      ],
     });
   };
 

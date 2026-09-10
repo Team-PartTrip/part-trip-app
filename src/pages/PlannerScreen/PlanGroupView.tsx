@@ -226,6 +226,8 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
       cityName: '',
       startDate: '',
       endDate: '',
+      // 여행지를 아직 안 골랐다. C3 을 지나면 채워진다
+      cities: [],
     });
   };
 

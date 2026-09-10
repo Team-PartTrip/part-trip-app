@@ -5,7 +5,13 @@
 //
 
 import { authRequest } from '../../shared/api/http';
-import type { GroupRole, GroupStatus, PlaceCategory, VoteStatus } from './types';
+import type {
+  GroupRole,
+  GroupStatus,
+  PlaceCategory,
+  PlanCity,
+  VoteStatus,
+} from './types';
 
 // ── 플래너 ────────────────────────────────────────────────
 
@@ -115,6 +121,13 @@ export interface SaveTravelPlanPayload {
   cityName: string;
   startDate: string;
   endDate: string;
+  /**
+   * 도는 도시들 (C4). 생략하면 countryName / cityName 한 곳만 쓰는 여행이다.
+   *
+   * 서버는 여행 기간을 빈틈 없이 이어 덮는지 본다. 하루라도 비면 400 이다 —
+   * AI 가 그날 어느 도시에서 일정을 짤지 알 수 없기 때문이다.
+   */
+  cities?: PlanCity[];
 }
 
 export interface PlannerTravelPlan {

@@ -25,6 +25,7 @@ import ProfileView from './src/pages/ProfileView/ProfileView';
 import PlannerScreen from './src/pages/PlannerScreen/PlannerScreen';
 import PlanGroupView from './src/pages/PlannerScreen/PlanGroupView';
 import PlanDestinationView from './src/pages/PlannerScreen/PlanDestinationView';
+import PlanCitiesView from './src/pages/PlannerScreen/PlanCitiesView';
 import PlacePickerView from './src/pages/PlannerScreen/PlacePickerView';
 import PlaceVoteView from './src/pages/PlannerScreen/PlaceVoteView';
 import PlanCartView from './src/pages/PlannerScreen/PlanCartView';
@@ -73,6 +74,7 @@ export type RootStackParamList = {
   Planner: undefined;
   PlanGroup: undefined;
   PlanDestination: { draft: PlanDraft };
+  PlanCities: { draft: PlanDraft };
   PlacePicker: { draft: PlanDraft };
   PlanCart: { plannerId: number };
   PlaceVote: { planId: number; category?: PlaceCategory };
@@ -129,6 +131,7 @@ const AUTH_ROUTES = [
   'Achievement',
   'PlanGroup',
   'PlanDestination',
+  'PlanCities',
   'PlacePicker',
   'PlanCart',
   'PlaceVote',
@@ -344,6 +347,18 @@ function App() {
               <Stack.Screen name="PlanDestination">
                 {({ navigation, route }) => (
                   <PlanDestinationView
+                    draft={route.params.draft}
+                    onBack={() => navigation.goBack()}
+                    onNext={draft =>
+                      navigation.navigate('PlanCities', { draft })
+                    }
+                  />
+                )}
+              </Stack.Screen>
+
+              <Stack.Screen name="PlanCities">
+                {({ navigation, route }) => (
+                  <PlanCitiesView
                     draft={route.params.draft}
                     onBack={() => navigation.goBack()}
                     onNext={draft =>

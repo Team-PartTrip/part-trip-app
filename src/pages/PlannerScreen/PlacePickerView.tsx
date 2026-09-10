@@ -138,6 +138,9 @@ const PlacePickerView: React.FC<Props> = ({
           cityName: draft.cityName,
           startDate: draft.startDate,
           endDate: draft.endDate,
+          // 도시를 한 곳만 골랐어도 한 줄짜리로 보낸다. 서버가 도시별
+          // 날짜를 그대로 쓰므로 여기서 나누는 편이 뒤가 단순하다.
+          cities: draft.cities.length > 0 ? draft.cities : undefined,
         });
         await addCartPlaces(plannerId, picked);
         setPicked([]);

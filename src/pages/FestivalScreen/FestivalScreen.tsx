@@ -5,6 +5,9 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Modal,
+  Pressable,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { festivalStyles as s } from './FestivalScreen.styles';
@@ -15,6 +18,7 @@ import {
   Festival,
 } from '../../entities/main/api';
 import { formatShortDate, formatTripRange } from '../../entities/record/types';
+import { toImageUrl } from '../../shared/api/image';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -73,6 +77,8 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
   const [cursor, setCursor] = useState(() => new Date());
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  // 상세를 보고 있는 축제. null 이면 모달이 닫힌 것이다
+  const [detail, setDetail] = useState<Festival | null>(null);
   // 조회 실패와 일정 없음은 다르다. 같은 문구를 쓰면 서버가 죽어도
   // 그 달에 축제가 없는 것처럼 보인다.
   const [failed, setFailed] = useState(false);
@@ -364,7 +370,12 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
         ) : (
           <View style={s.list}>
             {visible.map(event => (
-              <View key={`${event.title}-${event.startDate}`} style={s.card}>
+              <TouchableOpacity
+                key={`${event.title}-${event.startDate}`}
+                style={s.card}
+                activeOpacity={0.85}
+                onPress={() => setDetail(event)}
+              >
                 <View style={s.cardStripe} />
                 <View style={s.cardBody}>
                   <Text style={s.cardTitle}>{event.title}</Text>
@@ -378,11 +389,54 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
                 <View style={s.cardPill}>
                   <Text style={s.cardPillText}>{event.category}</Text>
                 </View>
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
         )}
       </ScrollView>
+
+      {/* 상세는 서버가 이미 내려주고 있었다. 화면에서 안 쓰고 있었을 뿐이다 */}
+      <Modal
+        visible={!!detail}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDetail(null)}
+      >
+        <Pressable style={s.dim} onPress={() => setDetail(null)}>
+          {/* 안쪽을 눌렀을 때 닫히지 않도록 이벤트를 여기서 멈춘다 */}
+          <Pressable style={s.sheet} onPress={() => {}}>
+            {detail?.imageUrl ? (
+              <Image
+                source={{ uri: toImageUrl(detail.imageUrl) }}
+                style={s.sheetImage}
+              />
+            ) : null}
+            <ScrollView
+              style={s.sheetBody}
+              contentContainerStyle={s.sheetContent}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={s.sheetPill}>
+                <Text style={s.cardPillText}>{detail?.category}</Text>
+              </View>
+              <Text style={s.sheetTitle}>{detail?.title}</Text>
+              <Text style={s.sheetMeta}>
+                {detail ? formatShortDate(detail.startDate) : ''}
+                {detail?.startTime ? ` · ${detail.startTime}` : ''}
+              </Text>
+              <Text style={s.sheetPlace}>{detail?.location}</Text>
+              <Text style={s.sheetDesc}>{detail?.description}</Text>
+            </ScrollView>
+            <TouchableOpacity
+              style={s.sheetClose}
+              activeOpacity={0.85}
+              onPress={() => setDetail(null)}
+            >
+              <Text style={s.sheetCloseText}>닫기</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 };
