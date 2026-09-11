@@ -74,6 +74,29 @@ export function getTourPlaces(
 
 
 
+export interface MoreTourPlaces {
+  /** 새로 받은 장소만 온다. 이미 있던 곳은 빠진다 */
+  places: TourPlace[];
+  /** 다음에 그대로 보낼 값. null 이면 구글이 더 줄 게 없다 */
+  cursor: string | null;
+}
+
+export function getMoreTourPlaces(
+  countryName: string,
+  cityName: string,
+  category: TourPlaceCategory,
+  cursor: string | null,
+): Promise<MoreTourPlaces> {
+  const params = new URLSearchParams({ countryName, cityName, category });
+  if (cursor) {
+    params.append('cursor', cursor);
+  }
+  return authRequest<MoreTourPlaces>(
+    `/api/main/tour-place/more?${params.toString()}`,
+    { method: 'GET' },
+  );
+}
+
 export interface CountryInfo {
   /** DB 에 있는 여행지면 id 가 있고, ISO 목록에서만 온 나라는 null */
   countryInfoId: number | null;

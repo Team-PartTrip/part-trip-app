@@ -7,13 +7,18 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  FlatList,
 } from 'react-native';
 import type { ColorValue } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { placeVoteStyles as s } from './PlaceVoteView.styles';
 import colors from '../../shared/tokens/colors';
-import { getTourPlaces, TourPlace } from '../../entities/main/api';
+import {
+  getMoreTourPlaces,
+  getTourPlaces,
+  TourPlace,
+} from '../../entities/main/api';
 import {
   cancelPlaceVote,
   confirmPlanner,
@@ -120,10 +125,24 @@ export function toVoteRows(
   return rows;
 }
 
+export function mergePlaces(prev: TourPlace[], incoming: TourPlace[]): TourPlace[] {
+  const seen = new Set(prev.map(p => p.tourPlaceId));
+  const fresh = incoming.filter(p => {
+    if (seen.has(p.tourPlaceId)) {
+      return false;
+    }
+    seen.add(p.tourPlaceId);
+    return true;
+  });
+  return fresh.length === 0 ? prev : [...prev, ...fresh];
+}
+
 interface TripCity {
   countryName: string;
   cityName: string;
 }
+
+const cityKey = (city: TripCity) => `${city.countryName}|${city.cityName}`;
 
 interface Props {
   planId: number;
@@ -152,6 +171,10 @@ const PlaceVoteView: React.FC<Props> = ({
   const [places, setPlaces] = useState<TourPlace[]>([]);
   const [placesLoading, setPlacesLoading] = useState(true);
   const [placesFailed, setPlacesFailed] = useState(false);
+  const [cursors, setCursors] = useState<Record<string, string | null>>({});
+  const [loadingMore, setLoadingMore] = useState(false);
+  const moreRef = useRef(false);
+  const generationRef = useRef(0);
   const [sending, setSending] = useState(false);
   const [confirming, setConfirming] = useState(false);
   // 동점이라 그룹장이 골라줘야 하는 투표들. 앞에서부터 하나씩 묻는다
@@ -229,6 +252,8 @@ const PlaceVoteView: React.FC<Props> = ({
       return;
     }
     let alive = true;
+    generationRef.current += 1;
+    setCursors({});
     setPlacesLoading(true);
     setPlacesFailed(false);
     Promise.all(
@@ -260,6 +285,61 @@ const PlaceVoteView: React.FC<Props> = ({
       alive = false;
     };
   }, [cities, active]);
+
+  const loadMore = async () => {
+    if (moreRef.current || placesLoading || !cities || cities.length === 0) {
+      return;
+    }
+    const targets = cities.filter(city => cursors[cityKey(city)] !== null);
+    if (targets.length === 0) {
+      return;
+    }
+    moreRef.current = true;
+    setLoadingMore(true);
+    const generation = generationRef.current;
+    try {
+      const results = await Promise.all(
+        targets.map(city =>
+          getMoreTourPlaces(
+            city.countryName,
+            city.cityName,
+            // 서버는 카테고리를 한글로 받는다 (TourPlaceService 참고)
+            CATEGORY_LABEL[active] as any,
+            cursors[cityKey(city)] ?? null,
+          )
+            .then(result => ({ key: cityKey(city), result }))
+            .catch(() => ({ key: cityKey(city), result: null })),
+        ),
+      );
+      if (generation !== generationRef.current) {
+        return;
+      }
+      setPlaces(prev =>
+        results.reduce(
+          (acc, { result }) => (result ? mergePlaces(acc, result.places) : acc),
+          prev,
+        ),
+      );
+      setCursors(prev => {
+        const next = { ...prev };
+        results.forEach(({ key, result }) => {
+          if (result) {
+            next[key] = result.cursor;
+          }
+        });
+        return next;
+      });
+    } finally {
+      moreRef.current = false;
+      setLoadingMore(false);
+    }
+  };
+
+  // 모든 도시에서 구글이 더 줄 게 없다고 했을 때만 끝이다
+  const exhausted =
+    !!cities &&
+    cities.length > 0 &&
+    cities.every(city => cursors[cityKey(city)] === null);
 
   const vote = votes.find(item => item.category === active);
   const status = vote?.status ?? 'OPEN';
@@ -400,6 +480,65 @@ const PlaceVoteView: React.FC<Props> = ({
     }
   };
 
+  const renderRow = ({ item: row }: { item: VoteRow }) => {
+    const count = row.voteCount;
+    const leading = count > 0 && count === topCount;
+    const off = closed || sending || !row.votable;
+    return (
+      <View key={row.key} style={[s.card, row.mine && s.cardOn]}>
+        <View style={s.cardTop}>
+          <View style={s.thumb}>
+            <Text style={s.thumbEmoji}>{CATEGORY_EMOJI[active]}</Text>
+          </View>
+          <View style={s.body}>
+            <Text style={s.name} numberOfLines={1}>
+              {row.placeName}
+            </Text>
+            <Text style={s.meta} numberOfLines={1}>
+              {row.meta}
+            </Text>
+            {/* 누가 찍었는지는 서버가 내려주지 않아 표 수만 보여준다 */}
+            <View style={s.countRow}>
+              <Text style={s.count}>{count}표</Text>
+            </View>
+          </View>
+          {row.votable && (
+            <TouchableOpacity
+              style={[
+                s.voteBtn,
+                row.mine && s.voteBtnOn,
+                off && s.voteBtnOff,
+              ]}
+              activeOpacity={0.85}
+              disabled={off}
+              onPress={() => toggle(row)}
+            >
+              <Text style={[s.voteText, row.mine && s.voteTextOn]}>
+                {row.mine ? '투표함' : '투표'}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <View style={s.track}>
+          <View
+            style={[
+              s.fill,
+              {
+                width: `${
+                  eligible > 0 ? Math.min(count / eligible, 1) * 100 : 0
+                }%`,
+                backgroundColor: leading
+                  ? colors.primary
+                  : colors.textTertiary,
+              },
+            ]}
+          />
+        </View>
+      </View>
+    );
+  };
+
   return (
     <View style={s.safeArea}>
       <SafeAreaView edges={['top']} style={s.header}>
@@ -441,82 +580,37 @@ const PlaceVoteView: React.FC<Props> = ({
         })}
       </ScrollView>
 
-      <ScrollView
+      <FlatList
+        data={loading || placesLoading ? [] : rows}
+        keyExtractor={row => row.key}
+        renderItem={renderRow}
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
-      >
-        {loading || placesLoading ? (
-          <ActivityIndicator style={s.loading} />
-        ) : rows.length === 0 ? (
-          <View style={s.empty}>
-            <Text style={s.emptyText}>
-              {placesFailed || cities?.length === 0
-                ? '장소를 불러오지 못했어요'
-                : '이 카테고리에는 아직 장소가 없어요'}
-            </Text>
-            <Text style={s.emptyDesc}>다른 카테고리를 골라보세요.</Text>
-          </View>
-        ) : (
-          rows.map(row => {
-            const count = row.voteCount;
-            const leading = count > 0 && count === topCount;
-            const off = closed || sending || !row.votable;
-            return (
-              <View key={row.key} style={[s.card, row.mine && s.cardOn]}>
-                <View style={s.cardTop}>
-                  <View style={s.thumb}>
-                    <Text style={s.thumbEmoji}>{CATEGORY_EMOJI[active]}</Text>
-                  </View>
-                  <View style={s.body}>
-                    <Text style={s.name} numberOfLines={1}>
-                      {row.placeName}
-                    </Text>
-                    <Text style={s.meta} numberOfLines={1}>
-                      {row.meta}
-                    </Text>
-                    {/* 누가 찍었는지는 서버가 내려주지 않아 표 수만 보여준다 */}
-                    <View style={s.countRow}>
-                      <Text style={s.count}>{count}표</Text>
-                    </View>
-                  </View>
-                  {row.votable && (
-                    <TouchableOpacity
-                      style={[
-                        s.voteBtn,
-                        row.mine && s.voteBtnOn,
-                        off && s.voteBtnOff,
-                      ]}
-                      activeOpacity={0.85}
-                      disabled={off}
-                      onPress={() => toggle(row)}
-                    >
-                      <Text style={[s.voteText, row.mine && s.voteTextOn]}>
-                        {row.mine ? '투표함' : '투표'}
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-
-                <View style={s.track}>
-                  <View
-                    style={[
-                      s.fill,
-                      {
-                        width: `${
-                          eligible > 0 ? Math.min(count / eligible, 1) * 100 : 0
-                        }%`,
-                        backgroundColor: leading
-                          ? colors.primary
-                          : colors.textTertiary,
-                      },
-                    ]}
-                  />
-                </View>
-              </View>
-            );
-          })
-        )}
-      </ScrollView>
+        // 끝에서 한 화면 반쯤 남았을 때 미리 받는다. 끝에 닿고서 받으면 멈칫한다
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.6}
+        ListEmptyComponent={
+          loading || placesLoading ? (
+            <ActivityIndicator style={s.loading} />
+          ) : (
+            <View style={s.empty}>
+              <Text style={s.emptyText}>
+                {placesFailed || cities?.length === 0
+                  ? '장소를 불러오지 못했어요'
+                  : '이 카테고리에는 아직 장소가 없어요'}
+              </Text>
+              <Text style={s.emptyDesc}>다른 카테고리를 골라보세요.</Text>
+            </View>
+          )
+        }
+        ListFooterComponent={
+          rows.length === 0 ? null : loadingMore ? (
+            <ActivityIndicator style={s.more} />
+          ) : exhausted ? (
+            <Text style={s.moreEnd}>더 불러올 장소가 없어요</Text>
+          ) : null
+        }
+      />
 
       {/* 동점이라 그룹장이 골라야 하는 투표. 큐 앞에서부터 하나씩 묻는다 */}
       <Modal

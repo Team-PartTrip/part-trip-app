@@ -96,6 +96,14 @@ export const placeVoteStyles = StyleSheet.create({
   loading: {
     marginTop: 60,
   },
+  // 목록 끝에서 더 받는 중 · 더 받을 게 없을 때
+  more: { marginVertical: 16 },
+  moreEnd: {
+    marginVertical: 16,
+    textAlign: 'center',
+    fontSize: 12,
+    color: colors.textMuted,
+  },
   empty: {
     borderRadius: 14,
     backgroundColor: colors.white,

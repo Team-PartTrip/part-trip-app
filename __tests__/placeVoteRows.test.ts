@@ -91,3 +91,21 @@ test('장소 목록에 없는 후보도 표가 살아 있으면 끝에 붙고, �
     ['후보 21', 1, false],
   ]);
 });
+
+// ── 목록 끝에서 더 받은 장소 이어 붙이기 ──
+import { mergePlaces } from '../src/pages/PlannerScreen/PlaceVoteView';
+
+test('더 받은 장소는 뒤에 붙고, 이미 있는 id 는 다시 들어가지 않는다', () => {
+  const merged = mergePlaces(
+    [place(1, '이치란'), place(2, '다루마')],
+    [place(2, '다루마'), place(3, '하리주'), place(3, '하리주')],
+  );
+
+  // 같은 id 가 두 번 들어가면 목록 key 가 겹쳐 줄이 사라진다
+  expect(merged.map(p => p.tourPlaceId)).toEqual([1, 2, 3]);
+});
+
+test('새로 온 게 없으면 원래 배열을 그대로 돌려준다 - 괜히 다시 그리지 않게', () => {
+  const prev = [place(1, '이치란')];
+  expect(mergePlaces(prev, [place(1, '이치란')])).toBe(prev);
+});
