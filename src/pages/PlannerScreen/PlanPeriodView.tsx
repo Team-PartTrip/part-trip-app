@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { planPeriodStyles as s } from './PlanPeriodView.styles';
 import WizardHeader from './WizardHeader';
+import { getPlanners } from '../../entities/planner/api';
 import { formatNights, PlanDraft } from '../../entities/planner/types';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
@@ -15,6 +16,25 @@ function toIso(year: number, monthIndex: number, day: number): string {
 function labelOf(date: string, omitMonth: boolean): string {
   const [, month, day] = date.split('-').map(Number);
   return omitMonth ? `${day}일` : `${month}월 ${day}일`;
+}
+
+/** 이미 다른 여행이 잡힌 기간 */
+export interface DateRange {
+  startDate: string;
+  endDate: string;
+}
+
+/** 이미 다른 여행이 있는 날인지. 서버처럼 양끝 날을 포함한다 */
+export function isBlockedDay(date: string, ranges: DateRange[]): boolean {
+  return ranges.some(r => r.startDate <= date && date <= r.endDate);
+}
+
+export function crossesBlocked(
+  start: string,
+  end: string,
+  ranges: DateRange[],
+): boolean {
+  return ranges.some(r => r.startDate <= end && r.endDate >= start);
 }
 
 function todayIso(): string {
@@ -33,6 +53,30 @@ const PlanPeriodView: React.FC<Props> = ({ draft, onBack, onNext }) => {
   const [startDate, setStartDate] = useState(draft.startDate);
   const [endDate, setEndDate] = useState(draft.endDate);
   const [today, setToday] = useState(todayIso);
+  const [taken, setTaken] = useState<DateRange[]>([]);
+
+  useEffect(() => {
+    let alive = true;
+    getPlanners()
+      .then(list => {
+        if (!alive) {
+          return;
+        }
+        setTaken(
+          list
+            .filter(p => p.plannerId !== draft.plannerId)
+            .filter(p => !!p.startDate && !!p.endDate)
+            .map(p => ({
+              startDate: p.startDate as string,
+              endDate: p.endDate as string,
+            })),
+        );
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [draft.plannerId]);
 
   const year = cursor.getFullYear();
   const monthIndex = cursor.getMonth();
@@ -72,10 +116,15 @@ const PlanPeriodView: React.FC<Props> = ({ draft, onBack, onNext }) => {
     if (currentToday !== today) {
       setToday(currentToday);
     }
-    if (date < currentToday) {
+    if (date < currentToday || isBlockedDay(date, taken)) {
       return;
     }
-    if (startDate && !endDate && date > startDate) {
+    if (
+      startDate &&
+      !endDate &&
+      date > startDate &&
+      !crossesBlocked(startDate, date, taken)
+    ) {
       setEndDate(date);
       return;
     }
@@ -98,6 +147,13 @@ const PlanPeriodView: React.FC<Props> = ({ draft, onBack, onNext }) => {
       setStartDate('');
       setEndDate('');
       Alert.alert('알림', '날짜가 바뀌었어요. 기간을 다시 골라주세요.');
+      return;
+    }
+    // 목록을 받기 전에 골라둔 기간이면 여기서야 겹치는 걸 안다
+    if (crossesBlocked(startDate, endDate, taken)) {
+      setStartDate('');
+      setEndDate('');
+      Alert.alert('알림', '그 기간에 이미 다른 여행이 있어요. 기간을 다시 골라주세요.');
       return;
     }
     onNext?.({
@@ -152,12 +208,13 @@ const PlanPeriodView: React.FC<Props> = ({ draft, onBack, onNext }) => {
                 const isEdge = date === startDate || date === endDate;
                 const isMid = !!endDate && date > startDate && date < endDate;
                 const isPast = date < today;
+                const isTaken = isBlockedDay(date, taken);
                 return (
                   <TouchableOpacity
                     key={dayIndex}
                     style={s.calCell}
                     activeOpacity={0.7}
-                    disabled={isPast}
+                    disabled={isPast || isTaken}
                     onPress={() => pickDay(day)}
                   >
                     <View
@@ -165,12 +222,14 @@ const PlanPeriodView: React.FC<Props> = ({ draft, onBack, onNext }) => {
                         s.dayPill,
                         isMid && s.dayPillMid,
                         isEdge && s.dayPillEdge,
+                        isTaken && s.dayPillTaken,
                       ]}
                     >
                       <Text
                         style={[
                           s.dayText,
                           isPast && s.dayTextPast,
+                          isTaken && s.dayTextTaken,
                           isEdge && s.dayTextEdge,
                         ]}
                       >
@@ -183,6 +242,12 @@ const PlanPeriodView: React.FC<Props> = ({ draft, onBack, onNext }) => {
             </View>
           ))}
         </View>
+
+        {taken.length > 0 && (
+          <Text style={s.takenNote}>
+            줄 그어진 날은 이미 다른 여행이 있어 고를 수 없어요
+          </Text>
+        )}
 
         {ready && (
           <Text style={s.summary}>

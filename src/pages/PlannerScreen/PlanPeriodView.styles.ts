@@ -99,4 +99,7 @@ export const planPeriodStyles = StyleSheet.create({
   primaryBtnOff: { backgroundColor: colors.chevron },
 
   primaryText: { fontSize: 16, fontWeight: '600', color: colors.textOnPrimary },
+  dayPillTaken: { backgroundColor: colors.inputBg },
+  dayTextTaken: { color: colors.placeholder, textDecorationLine: 'line-through' },
+  takenNote: { marginTop: 10, fontSize: 11, color: colors.textMuted },
 });
