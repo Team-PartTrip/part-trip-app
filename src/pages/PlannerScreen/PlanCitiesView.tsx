@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -6,12 +6,17 @@ import {
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { planCitiesStyles as s } from './PlanCitiesView.styles';
 import WizardHeader from './WizardHeader';
 import { getCities, City } from '../../entities/main/api';
-import { getPopularCities } from '../../entities/planner/api';
+import {
+  createPlanner,
+  getPopularCities,
+  saveTravelPlan,
+} from '../../entities/planner/api';
 import { emojiOf, FALLBACK_CITIES } from '../../entities/planner/sampleData';
 import {
   formatRange,
@@ -68,10 +73,21 @@ export function toCities(rows: Row[], startDate: string): PlanCity[] {
 interface Props {
   draft: PlanDraft;
   onBack?: () => void;
-  onNext?: (draft: PlanDraft) => void;
+  /** 새 플래너가 만들어지면 상위 draft 에 id 를 보존한다 */
+  onPlannerCreated?: (plannerId: number) => void;
+  /** 플래너를 만들고 여행 정보를 저장했으면 투표로 간다 */
+  onStart?: (plannerId: number) => void;
 }
 
-const PlanCitiesView: React.FC<Props> = ({ draft, onBack, onNext }) => {
+const PlanCitiesView: React.FC<Props> = ({
+  draft,
+  onBack,
+  onPlannerCreated,
+  onStart,
+}) => {
+  const [starting, setStarting] = useState(false);
+  const startingRef = useRef(false);
+  const plannerIdRef = useRef(draft.plannerId);
   // 여행 전체 일수. 4박 5일이면 5다
   const totalDays = useMemo(
     () => diffDays(draft.startDate, draft.endDate) + 1,
@@ -206,17 +222,39 @@ const PlanCitiesView: React.FC<Props> = ({ draft, onBack, onNext }) => {
 
   const ready = left === 0 && rows.length > 0;
 
-  const next = () => {
-    if (!ready) {
+  const next = async () => {
+    if (!ready || startingRef.current) {
       return;
     }
-    onNext?.({
-      ...draft,
-      // 첫 도시가 대표다. 도시 하나만 보던 화면이 이걸 읽는다
-      countryName: cities[0].countryName,
-      cityName: cities[0].cityName,
-      cities,
-    });
+    startingRef.current = true;
+    setStarting(true);
+    try {
+      let plannerId = plannerIdRef.current;
+      if (plannerId == null) {
+        const created = await createPlanner({
+          title: draft.title,
+          memberCount: draft.headcount,
+          isSolo: draft.isSolo,
+        });
+        plannerId = created.plannerId;
+        plannerIdRef.current = plannerId;
+        onPlannerCreated?.(plannerId);
+      }
+      await saveTravelPlan(plannerId, {
+        // 첫 도시가 대표다. 도시 하나만 보던 화면이 이걸 읽는다
+        countryName: cities[0].countryName,
+        cityName: cities[0].cityName,
+        startDate: draft.startDate,
+        endDate: draft.endDate,
+        cities,
+      });
+      onStart?.(plannerId);
+    } catch (e: any) {
+      Alert.alert('시작하지 못했어요', e?.message ?? '잠시 후 다시 시도해주세요.');
+    } finally {
+      startingRef.current = false;
+      setStarting(false);
+    }
   };
 
   return (
@@ -349,12 +387,18 @@ const PlanCitiesView: React.FC<Props> = ({ draft, onBack, onNext }) => {
 
       <SafeAreaView edges={['bottom']} style={s.footer}>
         <TouchableOpacity
-          style={[s.primaryBtn, !ready && s.primaryBtnOff]}
+          style={[s.primaryBtn, (!ready || starting) && s.primaryBtnOff]}
           activeOpacity={0.85}
-          disabled={!ready}
+          disabled={!ready || starting}
           onPress={next}
         >
-          <Text style={s.primaryText}>다음</Text>
+          <Text style={s.primaryText}>
+            {starting
+              ? '만드는 중…'
+              : draft.isSolo
+              ? '장소 고르러 가기'
+              : '투표 시작하기'}
+          </Text>
         </TouchableOpacity>
       </SafeAreaView>
     </View>

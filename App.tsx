@@ -26,9 +26,7 @@ import PlannerScreen from './src/pages/PlannerScreen/PlannerScreen';
 import PlanGroupView from './src/pages/PlannerScreen/PlanGroupView';
 import PlanPeriodView from './src/pages/PlannerScreen/PlanPeriodView';
 import PlanCitiesView from './src/pages/PlannerScreen/PlanCitiesView';
-import PlacePickerView from './src/pages/PlannerScreen/PlacePickerView';
 import PlaceVoteView from './src/pages/PlannerScreen/PlaceVoteView';
-import PlanCartView from './src/pages/PlannerScreen/PlanCartView';
 import PlanStatusView from './src/pages/PlannerScreen/PlanStatusView';
 import PlanConfirmView from './src/pages/PlannerScreen/PlanConfirmView';
 import type {
@@ -75,8 +73,6 @@ export type RootStackParamList = {
   PlanGroup: undefined;
   PlanPeriod: { draft: PlanDraft };
   PlanCities: { draft: PlanDraft };
-  PlacePicker: { draft: PlanDraft };
-  PlanCart: { plannerId: number };
   PlaceVote: { planId: number; category?: PlaceCategory };
   PlanStatus: { planId: number };
   PlanConfirm: { planId: number };
@@ -132,8 +128,6 @@ const AUTH_ROUTES = [
   'PlanGroup',
   'PlanPeriod',
   'PlanCities',
-  'PlacePicker',
-  'PlanCart',
   'PlaceVote',
   'PlanConfirm',
   'PhotoDetail',
@@ -361,42 +355,20 @@ function App() {
                   <PlanCitiesView
                     draft={route.params.draft}
                     onBack={() => navigation.goBack()}
-                    onNext={draft =>
-                      navigation.navigate('PlacePicker', { draft })
-                    }
-                  />
-                )}
-              </Stack.Screen>
-
-              <Stack.Screen name="PlacePicker">
-                {({ navigation, route }) => (
-                  <PlacePickerView
-                    draft={route.params.draft}
-                    onBack={() => navigation.goBack()}
                     onPlannerCreated={plannerId =>
                       navigation.setParams({
                         draft: { ...route.params.draft, plannerId },
                       })
                     }
-                    // 플래너는 담을 때 만들어진다. 그때 받은 id 를 쓴다
-                    onOpenCart={plannerId =>
-                      navigation.navigate('PlanCart', { plannerId })
-                    }
-                    onStartVote={planId =>
-                      navigation.navigate('PlaceVote', { planId })
-                    }
-                  />
-                )}
-              </Stack.Screen>
-
-              <Stack.Screen name="PlanCart">
-                {({ navigation, route }) => (
-                  <PlanCartView
-                    plannerId={route.params.plannerId}
-                    onBack={() => navigation.goBack()}
-                    onConfirm={() =>
-                      navigation.navigate('PlanConfirm', {
-                        planId: route.params.plannerId,
+                    // 마법사는 여기서 끝난다. 뒤로 가서 다시 저장하면 투표가
+                    // 시작된 플래너라 서버가 거부하므로, 목록 위에 투표만 남긴다.
+                    onStart={planId =>
+                      navigation.reset({
+                        index: 1,
+                        routes: [
+                          { name: 'Planner' },
+                          { name: 'PlaceVote', params: { planId } },
+                        ],
                       })
                     }
                   />

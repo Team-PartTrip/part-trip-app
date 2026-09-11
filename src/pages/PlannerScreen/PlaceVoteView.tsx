@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-  TextInput,
   Modal,
 } from 'react-native';
 import type { ColorValue } from 'react-native';
@@ -14,13 +13,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { placeVoteStyles as s } from './PlaceVoteView.styles';
 import colors from '../../shared/tokens/colors';
+import { getTourPlaces, TourPlace } from '../../entities/main/api';
 import {
-  addVoteOption,
-  castBallot,
+  cancelPlaceVote,
   confirmPlanner,
-  createVote,
   getPlanner,
   getVotes,
+  voteForPlace,
   VoteSelection,
   VoteStatusInfo,
 } from '../../entities/planner/api';
@@ -28,7 +27,6 @@ import {
   CATEGORIES,
   CATEGORY_EMOJI,
   CATEGORY_LABEL,
-  formatDeadline,
   PlaceCategory,
   VoteStatus,
 } from '../../entities/planner/types';
@@ -60,6 +58,73 @@ function tiedOptions(vote: VoteStatusInfo) {
   return leaders.length > 1 ? leaders : [];
 }
 
+/** 목록 한 줄. 장소 목록과 투표 현황을 합친 것이다 */
+export interface VoteRow {
+  key: string;
+  tourPlaceId: number | null;
+  placeName: string;
+  meta: string;
+  voteCount: number;
+  mine: boolean;
+  votable: boolean;
+}
+
+/** 평점·주소가 없는 장소가 많아 있는 것만 붙인다 */
+function metaOf(rating: number | null, address: string | null): string {
+  return (
+    [rating != null ? `★ ${rating.toFixed(1)}` : null, address]
+      .filter(Boolean)
+      .join(' · ') || '정보 없음'
+  );
+}
+
+export function toVoteRows(
+  places: TourPlace[],
+  vote: VoteStatusInfo | undefined,
+): VoteRow[] {
+  const options = vote?.options ?? [];
+  const byPlace = new Map(
+    options
+      .filter(o => o.tourPlaceId != null)
+      .map(o => [o.tourPlaceId as number, o] as const),
+  );
+  const listed = new Set(places.map(p => p.tourPlaceId));
+
+  const rows: VoteRow[] = places.map(place => {
+    const option = byPlace.get(place.tourPlaceId);
+    return {
+      key: `place-${place.tourPlaceId}`,
+      tourPlaceId: place.tourPlaceId,
+      placeName: place.placeName,
+      meta: metaOf(place.rating, place.address),
+      voteCount: option?.voteCount ?? 0,
+      mine: option?.selectedByMe ?? false,
+      votable: true,
+    };
+  });
+
+  for (const option of options) {
+    if (option.tourPlaceId != null && listed.has(option.tourPlaceId)) {
+      continue;
+    }
+    rows.push({
+      key: `option-${option.optionId}`,
+      tourPlaceId: option.tourPlaceId,
+      placeName: option.placeName,
+      meta: metaOf(option.rating, option.address),
+      voteCount: option.voteCount,
+      mine: option.selectedByMe,
+      votable: false,
+    });
+  }
+  return rows;
+}
+
+interface TripCity {
+  countryName: string;
+  cityName: string;
+}
+
 interface Props {
   planId: number;
   /** 어느 카테고리로 열지. 없으면 아직 진행 중인 첫 카테고리를 연다 */
@@ -80,12 +145,15 @@ const PlaceVoteView: React.FC<Props> = ({
     category ?? null,
   );
   const [loading, setLoading] = useState(true);
+  // 이 여행이 도는 도시들. 플래너를 받아와야 안다. null 이면 아직 모른다
+  const [cities, setCities] = useState<TripCity[] | null>(null);
+  // 아무도 투표하지 않은 카테고리는 투표가 없어 인원도 안 온다. 그때 쓴다
+  const [members, setMembers] = useState(0);
+  const [places, setPlaces] = useState<TourPlace[]>([]);
+  const [placesLoading, setPlacesLoading] = useState(true);
+  const [placesFailed, setPlacesFailed] = useState(false);
   const [sending, setSending] = useState(false);
   const [confirming, setConfirming] = useState(false);
-  // 관광지 목록에 없는 곳을 직접 후보로 넣을 때 쓴다 (API-005-27)
-  const [newPlace, setNewPlace] = useState('');
-  const [adding, setAdding] = useState(false);
-  const addingRef = useRef(false);
   // 동점이라 그룹장이 골라줘야 하는 투표들. 앞에서부터 하나씩 묻는다
   const [tieQueue, setTieQueue] = useState<VoteStatusInfo[]>([]);
   /**
@@ -97,7 +165,6 @@ const PlaceVoteView: React.FC<Props> = ({
    */
   const tieQueueRef = useRef<VoteStatusInfo[]>([]);
   const pickedRef = useRef<VoteSelection[]>([]);
-  /** 요청이 나가는 동안 다시 못 누르게 막는다. state 는 한 박자 늦다 */
   const busyRef = useRef(false);
 
   useFocusEffect(
@@ -106,28 +173,40 @@ const PlaceVoteView: React.FC<Props> = ({
       (async () => {
         setLoading(true);
         try {
-          const list = await getVotes(planId);
+          const [list, planner] = await Promise.all([
+            getVotes(planId),
+            getPlanner(planId),
+          ]);
           if (!alive) {
             return;
           }
           setVotes(list);
-          // 어느 카테고리로 열지 정하지 않았으면 후보가 있는 진행 중 투표를 연다.
+          setMembers(planner.joinedMemberCount);
+          setCities(
+            planner.cities && planner.cities.length > 0
+              ? planner.cities
+              : planner.countryName && planner.cityName
+              ? [
+                  {
+                    countryName: planner.countryName,
+                    cityName: planner.cityName,
+                  },
+                ]
+              : [],
+          );
           // 마감이 지난 투표는 status 가 아직 OPEN 이어도 열지 않는다.
           // 열어봐야 버튼이 전부 막혀 있어 사용자가 직접 옮겨야 한다.
           setCurrent(
             prev =>
               prev ??
-              list.find(
-                v =>
-                  v.status === 'OPEN' &&
-                  !v.deadlinePassed &&
-                  v.options.length > 0,
-              )?.category ??
+              list.find(v => v.status === 'OPEN' && !v.deadlinePassed)
+                ?.category ??
               CATEGORIES[0],
           );
         } catch {
           if (alive) {
             setVotes([]);
+            setCities(prev => prev ?? []);
             setCurrent(prev => prev ?? CATEGORIES[0]);
           }
         } finally {
@@ -143,8 +222,46 @@ const PlaceVoteView: React.FC<Props> = ({
   );
 
   const active = current ?? CATEGORIES[0];
+
+  // 카테고리를 바꿀 때마다 그 카테고리의 장소를 도시마다 받아 합친다
+  useEffect(() => {
+    if (cities === null) {
+      return;
+    }
+    let alive = true;
+    setPlacesLoading(true);
+    setPlacesFailed(false);
+    Promise.all(
+      cities.map(city =>
+        getTourPlaces(city.countryName, {
+          cityName: city.cityName,
+          // 서버는 카테고리를 한글로 받는다 (TourPlaceService 참고)
+          category: CATEGORY_LABEL[active] as any,
+        }),
+      ),
+    )
+      .then(lists => {
+        if (alive) {
+          setPlaces(lists.flat());
+        }
+      })
+      .catch(() => {
+        if (alive) {
+          setPlaces([]);
+          setPlacesFailed(true);
+        }
+      })
+      .then(() => {
+        if (alive) {
+          setPlacesLoading(false);
+        }
+      });
+    return () => {
+      alive = false;
+    };
+  }, [cities, active]);
+
   const vote = votes.find(item => item.category === active);
-  const options = vote?.options ?? [];
   const status = vote?.status ?? 'OPEN';
   // 마감 시각이 지나도 status 는 한동안 OPEN 으로 남는다. 그 사이에 누르면
   // 서버가 거부해서 실패 Alert 만 보게 되므로 여기서 먼저 막는다.
@@ -152,72 +269,37 @@ const PlaceVoteView: React.FC<Props> = ({
   // 버튼을 막았으면 배지도 '마감' 이어야 한다. '진행 중' 인데 못 누르면
   // 사용자는 고장으로 읽는다.
   const meta = statusMeta(closed && status === 'OPEN' ? 'CLOSED' : status);
-  const eligible = vote?.eligibleMemberCount ?? 0;
+  const eligible = vote?.eligibleMemberCount ?? members;
+  const rows = toVoteRows(places, vote);
+  const topCount = rows.reduce((max, row) => Math.max(max, row.voteCount), 0);
 
-  const myOptionId =
-    options.find(option => option.selectedByMe)?.optionId ?? null;
-  const topCount = options.reduce(
-    (max, option) => Math.max(max, option.voteCount),
-    0,
-  );
-
-  // 한 카테고리에 한 표만 던질 수 있다 (서버 vote_record 의 uk_vote_record_vote_user).
-  // 서버가 갱신된 현황을 따로 주지 않아서, 성공하면 목록을 다시 받는다.
-  const castVote = async (optionId: number) => {
-    if (!vote || sending) {
+  /**
+   * 누르면 투표, 다시 누르면 취소. 한 카테고리에서 여러 곳에 투표할 수 있다.
+   * 서버가 갱신된 현황을 따로 주지 않아서, 성공하면 목록을 다시 받는다.
+   */
+  const toggle = async (row: VoteRow) => {
+    if (!row.votable || row.tourPlaceId == null || busyRef.current) {
       return;
     }
+    busyRef.current = true;
+    setSending(true);
     try {
-      setSending(true);
-      await castBallot(planId, vote.voteId, optionId);
+      if (row.mine) {
+        await cancelPlaceVote(planId, row.tourPlaceId);
+      } else {
+        await voteForPlace(planId, row.tourPlaceId);
+      }
       setVotes(await getVotes(planId));
     } catch (e: any) {
       Alert.alert('투표 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
     } finally {
+      busyRef.current = false;
       setSending(false);
-    }
-  };
-
-  /**
-   * 이름만으로 후보를 넣는다.
-   *
-   * 장바구니에 담긴 장소가 없는 카테고리는 투표 자체가 없어서, 먼저 만든다.
-   * 투표 만들기는 그룹장만 되므로 멤버에게는 그룹장에게 요청하도록 안내한다.
-   */
-  const addPlace = async () => {
-    const name = newPlace.trim();
-    if (!name || addingRef.current) {
-      return;
-    }
-    addingRef.current = true;
-    setAdding(true);
-    try {
-      let voteId = vote?.voteId;
-      if (voteId == null) {
-        const planner = await getPlanner(planId);
-        if (planner.role !== 'OWNER') {
-          Alert.alert(
-            '후보를 추가할 수 없어요',
-            '이 카테고리의 투표를 먼저 만들어야 해요. 그룹장에게 요청해주세요.',
-          );
-          return;
-        }
-        voteId = (await createVote(planId, active)).voteId;
-      }
-      await addVoteOption(planId, voteId, name);
-      setNewPlace('');
-      setVotes(await getVotes(planId));
-    } catch (e: any) {
-      Alert.alert('추가 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
-    } finally {
-      addingRef.current = false;
-      setAdding(false);
     }
   };
 
   // 마지막 카테고리의 "투표 마치기" 가 일정 확정이다.
   // 확정을 해야 투표가 마감되고 여행 카드가 만들어진다.
-  // 예전에는 화면만 넘겨서, 다음 화면이 늘 "확정된 일정이 없어요" 였다.
   const sendConfirm = async (selections: VoteSelection[]) => {
     if (busyRef.current) {
       return;
@@ -228,7 +310,7 @@ const PlaceVoteView: React.FC<Props> = ({
       await confirmPlanner(planId, selections);
       onDone?.();
     } catch (e: any) {
-      // 방장이 아니거나 담긴 장소가 없으면 서버가 거부한다.
+      // 방장이 아니거나 표가 없으면 서버가 거부한다.
       // 그때 다음 화면으로 넘기면 빈 화면만 보게 되므로 여기 남는다.
       Alert.alert('확정 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
     } finally {
@@ -252,7 +334,6 @@ const PlaceVoteView: React.FC<Props> = ({
 
     // 확정은 그룹장만 된다. 동점을 먼저 물으면, 멤버는 다 골라놓고 나서야
     // "그룹장이 아닙니다" 를 보게 된다. 그래서 묻기 전에 먼저 확인한다.
-    // 이 화면은 역할을 모르므로 확정을 누른 이때만 받아온다.
     setConfirming(true);
     let isOwner: boolean;
     try {
@@ -332,8 +413,8 @@ const PlaceVoteView: React.FC<Props> = ({
           </View>
         </View>
         <Text style={s.subtitle}>
-          {vote?.votedMemberCount ?? 0} / {eligible}명 참여 ·{' '}
-          {formatDeadline(vote?.deadline ?? null)}
+          {vote?.votedMemberCount ?? 0} / {eligible}명 참여 · 전체{' '}
+          {rows.length}곳 · 여러 곳에 투표할 수 있어요
         </Text>
       </SafeAreaView>
 
@@ -364,79 +445,56 @@ const PlaceVoteView: React.FC<Props> = ({
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* 관광지 목록에 없는 곳도 후보로 올릴 수 있어야 한다.
-            마감된 투표에는 서버가 안 받으므로 아예 감춘다. */}
-        {!loading && !closed && (
-          <View style={s.addRow}>
-            <TextInput
-              style={s.addInput}
-              placeholder="가고 싶은 곳을 직접 입력"
-              placeholderTextColor={colors.placeholder}
-              value={newPlace}
-              onChangeText={setNewPlace}
-              maxLength={255}
-              returnKeyType="done"
-              onSubmitEditing={addPlace}
-              editable={!adding}
-            />
-            <TouchableOpacity
-              style={[s.addBtn, !newPlace.trim() && s.addBtnOff]}
-              activeOpacity={0.85}
-              disabled={adding || !newPlace.trim()}
-              onPress={addPlace}
-            >
-              {adding ? (
-                <ActivityIndicator size="small" color={colors.primary} />
-              ) : (
-                <Text style={s.addBtnText}>추가</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {loading ? (
+        {loading || placesLoading ? (
           <ActivityIndicator style={s.loading} />
-        ) : options.length === 0 ? (
+        ) : rows.length === 0 ? (
           <View style={s.empty}>
-            <Text style={s.emptyText}>아직 담긴 후보가 없어요</Text>
-            <Text style={s.emptyDesc}>
-              장소 둘러보기에서 담거나, 위에 직접 입력해 후보를 올릴 수 있어요.
+            <Text style={s.emptyText}>
+              {placesFailed || cities?.length === 0
+                ? '장소를 불러오지 못했어요'
+                : '이 카테고리에는 아직 장소가 없어요'}
             </Text>
+            <Text style={s.emptyDesc}>다른 카테고리를 골라보세요.</Text>
           </View>
         ) : (
-          options.map(option => {
-            const mine = option.optionId === myOptionId;
-            const count = option.voteCount;
+          rows.map(row => {
+            const count = row.voteCount;
             const leading = count > 0 && count === topCount;
+            const off = closed || sending || !row.votable;
             return (
-              <View key={option.optionId} style={[s.card, mine && s.cardOn]}>
+              <View key={row.key} style={[s.card, row.mine && s.cardOn]}>
                 <View style={s.cardTop}>
                   <View style={s.thumb}>
                     <Text style={s.thumbEmoji}>{CATEGORY_EMOJI[active]}</Text>
                   </View>
                   <View style={s.body}>
                     <Text style={s.name} numberOfLines={1}>
-                      {option.placeName}
+                      {row.placeName}
+                    </Text>
+                    <Text style={s.meta} numberOfLines={1}>
+                      {row.meta}
                     </Text>
                     {/* 누가 찍었는지는 서버가 내려주지 않아 표 수만 보여준다 */}
                     <View style={s.countRow}>
                       <Text style={s.count}>{count}표</Text>
                     </View>
                   </View>
-                  <TouchableOpacity
-                    style={[
-                      s.voteBtn,
-                      mine && s.voteBtnOn,
-                      (closed || sending) && s.voteBtnOff,
-                    ]}
-                    activeOpacity={0.85}
-                    disabled={closed || sending}
-                    onPress={() => castVote(option.optionId)}
-                  >
-                    <Text style={[s.voteText, mine && s.voteTextOn]}>
-                      {mine ? '투표함' : '투표'}
-                    </Text>
-                  </TouchableOpacity>
+                  {row.votable && (
+                    <TouchableOpacity
+                      style={[
+                        s.voteBtn,
+                        row.mine && s.voteBtnOn,
+                        off && s.voteBtnOff,
+                      ]}
+                      activeOpacity={0.85}
+                      disabled={off}
+                      onPress={() => toggle(row)}
+                    >
+                      <Text style={[s.voteText, row.mine && s.voteTextOn]}>
+                        {row.mine ? '투표함' : '투표'}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
 
                 <View style={s.track}>
@@ -445,7 +503,7 @@ const PlaceVoteView: React.FC<Props> = ({
                       s.fill,
                       {
                         width: `${
-                          eligible > 0 ? (count / eligible) * 100 : 0
+                          eligible > 0 ? Math.min(count / eligible, 1) * 100 : 0
                         }%`,
                         backgroundColor: leading
                           ? colors.primary

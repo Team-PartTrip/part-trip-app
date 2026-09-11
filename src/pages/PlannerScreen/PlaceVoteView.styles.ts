@@ -1,7 +1,7 @@
 import { StyleSheet } from 'react-native';
 import colors from '../../shared/tokens/colors';
 
-// 피그마 C5 · Func-008-03 카테고리별로 투표하기
+// 피그마 C6 · 장소 리스트에서 바로 투표
 export const placeVoteStyles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
 
@@ -45,32 +45,6 @@ export const placeVoteStyles = StyleSheet.create({
 
   content: { paddingHorizontal: 24, paddingBottom: 24, gap: 14 },
 
-  // 직접 후보 추가 (API-005-27). 목록 맨 위에 둔다
-  addRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  addInput: {
-    flex: 1,
-    height: 44,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    fontSize: 14,
-    color: colors.text,
-    backgroundColor: colors.white,
-  },
-  addBtn: {
-    width: 64,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: colors.tint,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  addBtnOff: { opacity: 0.5 },
-  addBtnText: { fontSize: 14, fontWeight: '600', color: colors.primary },
-
   card: {
     padding: 12,
     borderRadius: 14,
@@ -89,6 +63,8 @@ export const placeVoteStyles = StyleSheet.create({
   thumbEmoji: { fontSize: 24 },
   body: { flex: 1, marginLeft: 12 },
   name: { fontSize: 15, fontWeight: '600', color: colors.text },
+  // 평점 · 주소
+  meta: { marginTop: 2, fontSize: 12, color: colors.textSecondary },
   countRow: { marginTop: 6, flexDirection: 'row', alignItems: 'center', gap: 8 },
   count: { fontSize: 12, color: colors.textSecondary },
 
