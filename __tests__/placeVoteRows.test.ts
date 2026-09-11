@@ -109,3 +109,26 @@ test('새로 온 게 없으면 원래 배열을 그대로 돌려준다 - 괜히 
   const prev = [place(1, '이치란')];
   expect(mergePlaces(prev, [place(1, '이치란')])).toBe(prev);
 });
+
+// ── 목록 끝에서 10곳씩 꺼내기 ──
+import { nextPage } from '../src/pages/PlannerScreen/PlaceVoteView';
+
+test('쌓아둔 게 넉넉하면 10곳만 늘리고 서버는 안 부른다', () => {
+  // DB 에 61곳이 쌓여 있어도 한 번에 10곳씩만 나온다
+  expect(nextPage(10, 10, 61, false)).toEqual({ visible: 20, fetch: false });
+});
+
+test('다음 10곳에 모자라면 늘리면서 미리 받는다', () => {
+  expect(nextPage(10, 10, 15, false)).toEqual({ visible: 20, fetch: true });
+  expect(nextPage(20, 20, 30, false)).toEqual({ visible: 30, fetch: true });
+});
+
+test('받는 중에 끝에 여러 번 닿아도 10곳 넘게 늘지 않는다', () => {
+  // 15곳만 있는데 20곳을 보여주기로 했다 = 아직 받는 중
+  expect(nextPage(15, 20, 15, false)).toEqual({ visible: 20, fetch: true });
+});
+
+test('구글이 더 줄 게 없으면 서버를 부르지 않는다', () => {
+  expect(nextPage(15, 20, 15, true)).toEqual({ visible: 20, fetch: false });
+  expect(nextPage(10, 10, 12, true)).toEqual({ visible: 20, fetch: false });
+});

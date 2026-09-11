@@ -144,6 +144,25 @@ interface TripCity {
 
 const cityKey = (city: TripCity) => `${city.countryName}|${city.cityName}`;
 
+/** 목록 끝에서 한 번에 더 보여주는 개수 */
+export const PAGE_SIZE = 10;
+
+export function nextPage(
+  shown: number,
+  visible: number,
+  total: number,
+  exhausted: boolean,
+): { visible: number; fetch: boolean } {
+  // 지난번에 늘린 만큼 아직 못 채웠으면 더 늘리지 않는다. 받는 동안 끝에
+  // 여러 번 닿아도 한 번에 10곳씩만 늘어나야 한다.
+  if (shown < visible) {
+    return { visible, fetch: !exhausted };
+  }
+  const next = visible + PAGE_SIZE;
+  // 쌓아둔 게 다음 번 10곳에 모자라면 미리 받아둔다. 끝에 닿고서 받으면 멈칫한다
+  return { visible: next, fetch: !exhausted && total - next < PAGE_SIZE };
+}
+
 interface Props {
   planId: number;
   /** 어느 카테고리로 열지. 없으면 아직 진행 중인 첫 카테고리를 연다 */
@@ -173,6 +192,8 @@ const PlaceVoteView: React.FC<Props> = ({
   const [placesFailed, setPlacesFailed] = useState(false);
   const [cursors, setCursors] = useState<Record<string, string | null>>({});
   const [loadingMore, setLoadingMore] = useState(false);
+  // 화면에 보여줄 개수. 쌓아둔 장소가 더 많아도 이만큼만 그린다
+  const [visible, setVisible] = useState(PAGE_SIZE);
   const moreRef = useRef(false);
   const generationRef = useRef(0);
   const [sending, setSending] = useState(false);
@@ -254,6 +275,7 @@ const PlaceVoteView: React.FC<Props> = ({
     let alive = true;
     generationRef.current += 1;
     setCursors({});
+    setVisible(PAGE_SIZE);
     setPlacesLoading(true);
     setPlacesFailed(false);
     Promise.all(
@@ -352,6 +374,18 @@ const PlaceVoteView: React.FC<Props> = ({
   const eligible = vote?.eligibleMemberCount ?? members;
   const rows = toVoteRows(places, vote);
   const topCount = rows.reduce((max, row) => Math.max(max, row.voteCount), 0);
+  const shown = Math.min(visible, rows.length);
+
+  /** 목록 끝에서 10곳씩 더 꺼낸다. 쌓아둔 게 모자라면 서버에서 더 받는다 */
+  const showMore = () => {
+    const step = nextPage(shown, visible, rows.length, exhausted);
+    if (step.visible !== visible) {
+      setVisible(step.visible);
+    }
+    if (step.fetch) {
+      loadMore();
+    }
+  };
 
   /**
    * 누르면 투표, 다시 누르면 취소. 한 카테고리에서 여러 곳에 투표할 수 있다.
@@ -581,13 +615,13 @@ const PlaceVoteView: React.FC<Props> = ({
       </ScrollView>
 
       <FlatList
-        data={loading || placesLoading ? [] : rows}
+        data={loading || placesLoading ? [] : rows.slice(0, visible)}
         keyExtractor={row => row.key}
         renderItem={renderRow}
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
         // 끝에서 한 화면 반쯤 남았을 때 미리 받는다. 끝에 닿고서 받으면 멈칫한다
-        onEndReached={loadMore}
+        onEndReached={showMore}
         onEndReachedThreshold={0.6}
         ListEmptyComponent={
           loading || placesLoading ? (
@@ -604,9 +638,10 @@ const PlaceVoteView: React.FC<Props> = ({
           )
         }
         ListFooterComponent={
-          rows.length === 0 ? null : loadingMore ? (
+          // 미리 받아두는 중에는 돌리지 않는다. 보여줄 게 모자라 기다릴 때만 돌린다
+          rows.length === 0 ? null : loadingMore && shown < visible ? (
             <ActivityIndicator style={s.more} />
-          ) : exhausted ? (
+          ) : exhausted && shown >= rows.length ? (
             <Text style={s.moreEnd}>더 불러올 장소가 없어요</Text>
           ) : null
         }
