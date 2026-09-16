@@ -28,6 +28,13 @@ export function googleLogin(idToken: string): Promise<TokenResponse> {
   });
 }
 
+/** 카카오 로그인: 카카오 액세스 토큰을 백엔드에 보내 우리 JWT 발급 */
+export function kakaoLogin(accessToken: string): Promise<TokenResponse> {
+  return request<TokenResponse>('/api/auth/kakao', {
+    body: { accessToken },
+  });
+}
+
 /** accessToken 재발급 */
 export function refresh(refreshToken: string): Promise<TokenResponse> {
   return request<TokenResponse>('/api/auth/refresh', {

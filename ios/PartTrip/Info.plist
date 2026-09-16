@@ -12,6 +12,27 @@
           <string>com.googleusercontent.apps.435960620705-3b0jrp59qdl7ek72q8m9sektthfuuths</string>
         </array>
       </dict>
+      <!-- 카카오 로그인 리다이렉트. 카카오 콘솔의 네이티브 앱 키를
+           kakao 뒤에 붙인 값이어야 한다 (안드로이드는
+           android/gradle.properties 의 KAKAO_NATIVE_APP_KEY). -->
+      <dict>
+        <key>CFBundleTypeRole</key>
+        <string>Editor</string>
+        <key>CFBundleURLSchemes</key>
+        <array>
+          <string>kakaoPASTE_KAKAO_NATIVE_APP_KEY</string>
+        </array>
+      </dict>
+    </array>
+    <!-- 카카오 SDK 가 이 값을 읽어 스스로 초기화한다 -->
+    <key>KAKAO_APP_KEY</key>
+    <string>PASTE_KAKAO_NATIVE_APP_KEY</string>
+    <!-- 카카오톡이 깔려 있는지 확인하려면 스킴을 미리 밝혀야 한다.
+         없으면 카카오톡이 있어도 항상 웹 로그인으로 넘어간다. -->
+    <key>LSApplicationQueriesSchemes</key>
+    <array>
+      <string>kakaokompassauth</string>
+      <string>kakaolink</string>
     </array>
     <key>NSCameraUsageDescription</key>
     <string>미션 인증과 해설 카메라 촬영을 위해 카메라를 사용합니다.</string>

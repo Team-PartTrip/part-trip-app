@@ -150,4 +150,18 @@ export const loginStyles = StyleSheet.create({
   signupBtn: {
     marginTop: 4,
   },
+
+  kakaoBtn: {
+    marginTop: 20,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 10,
+    backgroundColor: '#FEE500',
+  },
+  kakaoBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: 'rgba(0, 0, 0, 0.85)',
+  },
 });

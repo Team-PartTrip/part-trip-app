@@ -14,11 +14,15 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { loginStyles as styles } from './LoginView.styles';
-import { login, googleLogin } from '../../entities/auth/api';
+import { login, googleLogin, kakaoLogin } from '../../entities/auth/api';
 import {
   configureGoogleSignin,
   signInWithGoogle,
 } from '../../shared/lib/googleSignin';
+import {
+  signInWithKakao,
+  isKakaoCancelled,
+} from '../../shared/lib/kakaoSignin';
 import { saveTokens, saveProvider } from '../../shared/api/tokenStorage';
 import colors from '../../shared/tokens/colors';
 
@@ -59,6 +63,24 @@ const LoginView: React.FC<LoginViewProps> = ({
   useEffect(() => {
     configureGoogleSignin();
   }, []);
+
+  const handleKakaoLogin = async () => {
+    try {
+      setLoading(true);
+      const accessToken = await signInWithKakao();
+      const tokens = await kakaoLogin(accessToken);
+      await saveTokens(tokens);
+      await saveProvider('KAKAO');
+      onLogin?.();
+    } catch (e: any) {
+      if (isKakaoCancelled(e)) {
+        return;
+      }
+      Alert.alert('카카오 로그인 실패', e?.message ?? '다시 시도해주세요.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleGoogleLogin = async () => {
     try {
@@ -143,6 +165,15 @@ const LoginView: React.FC<LoginViewProps> = ({
               <Text style={styles.dividerText}>또는</Text>
               <View style={styles.dividerLine} />
             </View>
+
+            <TouchableOpacity
+              style={styles.kakaoBtn}
+              activeOpacity={0.85}
+              onPress={handleKakaoLogin}
+              disabled={loading}
+            >
+              <Text style={styles.kakaoBtnText}>카카오로 계속하기</Text>
+            </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.outlineBtn, styles.googleBtn]}
