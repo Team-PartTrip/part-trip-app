@@ -163,6 +163,27 @@ export function nextPage(
   return { visible: next, fetch: !exhausted && total - next < PAGE_SIZE };
 }
 
+/**
+ * 목록이 비었을 때 구글에서 받아올지.
+ *
+ * 조건이 틀리면 구글 API 를 끝없이 부른다. 요금이 나가는 자리라 테스트로
+ * 고정한다.
+ */
+export function shouldAutoFetch(state: {
+  loading: boolean;
+  failed: boolean;
+  count: number;
+  exhausted: boolean;
+  generation: number;
+  fetchedGeneration: number;
+}): boolean {
+  if (state.loading || state.failed || state.count > 0 || state.exhausted) {
+    return false;
+  }
+  // 카테고리나 도시가 바뀔 때마다 한 번씩만
+  return state.fetchedGeneration !== state.generation;
+}
+
 interface Props {
   planId: number;
   /** 어느 카테고리로 열지. 없으면 아직 진행 중인 첫 카테고리를 연다 */
@@ -362,6 +383,36 @@ const PlaceVoteView: React.FC<Props> = ({
     !!cities &&
     cities.length > 0 &&
     cities.every(city => cursors[cityKey(city)] === null);
+
+  /**
+   * 처음 받은 목록이 비었으면 구글에서 한 번 받아온다.
+   *
+   * DB 에 아직 장소가 없는 도시(파리 · 로마 …)를 고르면 목록이 0곳이다.
+   * 그러면 FlatList 에 스크롤할 것이 없어 onEndReached 가 걸리지 않고,
+   * 구글에서 더 받아오는 경로를 아무도 부르지 않는다. 서버는 줄 수 있는데
+   * 사용자는 "장소가 없어요" 에서 멈춘다.
+   *
+   * 카테고리나 도시가 바뀔 때마다 한 번씩만 시도한다. 구글도 줄 게 없으면
+   * 커서가 null 이 되어 exhausted 가 막는다.
+   */
+  const autoFetchedRef = useRef(0);
+  useEffect(() => {
+    const go = shouldAutoFetch({
+      loading: placesLoading,
+      failed: placesFailed,
+      count: places.length,
+      exhausted,
+      generation: generationRef.current,
+      fetchedGeneration: autoFetchedRef.current,
+    });
+    if (!go) {
+      return;
+    }
+    autoFetchedRef.current = generationRef.current;
+    loadMore();
+    // loadMore 는 매 렌더 새로 만들어진다. 넣으면 매번 다시 돈다
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [placesLoading, placesFailed, places.length, exhausted]);
 
   const vote = votes.find(item => item.category === active);
   const status = vote?.status ?? 'OPEN';
