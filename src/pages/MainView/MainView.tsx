@@ -97,6 +97,22 @@ interface MainViewProps {
   onOpenPlace?: (place: TourPlace) => void;
 }
 
+/** 날짜가 모두 있는 여행 일정 (NO_TRIP 응답을 걸러낸 뒤의 모습) */
+type TripDday = DdayInfo & {
+  startDate: string;
+  endDate: string;
+};
+
+export function hasTrip(dday: DdayInfo | null): dday is TripDday {
+  if (!dday || !dday.startDate || !dday.endDate) {
+    return false;
+  }
+  if (!dday.status) {
+    return true;
+  }
+  return dday.status !== 'NO_TRIP' && dday.status !== 'ENDED';
+}
+
 const MainView: React.FC<MainViewProps> = ({
   onOpenNotifications,
   onOpenEvents,
@@ -107,7 +123,7 @@ const MainView: React.FC<MainViewProps> = ({
   const [places, setPlaces] = useState<TourPlace[]>([]);
   const [unread, setUnread] = useState(0);
   // 조회가 실패한 것과 일정이 없는 것은 다르다. 같은 화면을 보여주면
-  // 서버가 죽어도 "쉬는 중" 으로 읽힌다.
+  // 서버가 죽어도 여행이 없는 것으로 읽힌다.
   const [failed, setFailed] = useState(false);
 
   useFocusEffect(
@@ -169,9 +185,8 @@ const MainView: React.FC<MainViewProps> = ({
     );
   }
 
-  // 서버는 일정이 없을 때도 200 으로 "쉬는 중" 을 주는데, 그때는 날짜가 null 이다.
-  // 날짜가 없으면 D-Day 를 그릴 수 없으니 일정 없음 화면과 똑같이 다룬다.
-  if (!dday || !dday.startDate || !dday.endDate) {
+  // 서버는 일정이 없을 때도 200 으로 status 'NO_TRIP' 을 준다.
+  if (!hasTrip(dday)) {
     return (
       <SafeAreaView style={s.safeArea} edges={['top']}>
         <View style={s.empty}>
@@ -179,7 +194,7 @@ const MainView: React.FC<MainViewProps> = ({
           <Text style={s.emptyText}>
             {failed
               ? '여행 정보를 불러오지 못했어요\n잠시 후 다시 시도해주세요'
-              : '쉬는 중\n플래너에서 여행을 만들면 D-day 를 보여드려요'}
+              : '다음 여행이 아직 없어요\n플래너에서 여행을 만들어보세요'}
           </Text>
         </View>
       </SafeAreaView>
