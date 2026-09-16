@@ -35,7 +35,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
   /// 카카오톡에서 돌아온 URL. 자세한 설명은 KakaoURLHandler 에 있다.
   private func handle(_ contexts: Set<UIOpenURLContext>) {
     for context in contexts {
-      _ = KakaoURLHandler.handle(context.url, from: "scene")
+      _ = KakaoURLHandler.handle(context.url)
     }
   }
 }

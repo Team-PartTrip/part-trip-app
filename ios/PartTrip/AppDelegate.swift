@@ -29,7 +29,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     open url: URL,
     options: [UIApplication.OpenURLOptionsKey: Any] = [:]
   ) -> Bool {
-    KakaoURLHandler.handle(url, from: "appDelegate")
+    KakaoURLHandler.handle(url)
   }
 
   // MARK: UISceneSession Lifecycle
