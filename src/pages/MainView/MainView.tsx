@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import { touch48 } from '../../shared/ui/hitSlop';
 import {
   View,
   Text,
@@ -229,6 +230,7 @@ const MainView: React.FC<MainViewProps> = ({
             />
             <View style={s.headerActions}>
               <TouchableOpacity
+                hitSlop={touch48(32)}
                 style={s.circleBtn}
                 activeOpacity={0.85}
                 disabled={!onOpenNotifications}

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { touch48 } from '../../shared/ui/hitSlop';
 import {
   View,
   Text,
@@ -589,6 +590,7 @@ const PlaceVoteView: React.FC<Props> = ({
           </View>
           {row.votable && (
             <TouchableOpacity
+              hitSlop={touch48(30)}
               style={[
                 s.voteBtn,
                 row.mine && s.voteBtnOn,
@@ -653,6 +655,7 @@ const PlaceVoteView: React.FC<Props> = ({
           return (
             <TouchableOpacity
               key={key}
+              hitSlop={touch48(32)}
               style={[s.chip, on && s.chipOn]}
               activeOpacity={0.85}
               onPress={() => setCurrent(key)}

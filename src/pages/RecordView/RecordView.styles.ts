@@ -10,7 +10,7 @@ export const recordStyles = StyleSheet.create({
   pageTitle: { flex: 1, fontSize: 24, fontWeight: '700', color: colors.text },
   headerBtn: {
     width: 36,
-    height: 36,
+    minHeight: 48,
     borderRadius: 18,
     marginLeft: 8,
     borderWidth: 1,

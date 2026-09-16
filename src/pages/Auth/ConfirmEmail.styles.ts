@@ -14,7 +14,7 @@ export const confirmEmailStyles = StyleSheet.create({
   },
   sendBtn: {
     width: 85,
-    height: 36,
+    minHeight: 48,
     borderRadius: 10,
     backgroundColor: colors.tint,
     alignItems: 'center',

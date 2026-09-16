@@ -93,7 +93,7 @@ export const loginStyles = StyleSheet.create({
     marginTop: 32,
   },
   loginBtn: {
-    height: 40,
+    minHeight: 48,
     backgroundColor: colors.primary,
     borderRadius: 10,
     alignItems: 'center',
@@ -124,7 +124,7 @@ export const loginStyles = StyleSheet.create({
 
   // 보조 버튼 (Google · 회원가입) — 흰 배경에 테두리
   outlineBtn: {
-    height: 40,
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

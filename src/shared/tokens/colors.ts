@@ -67,14 +67,14 @@ export const lightColors: AppColors = {
   // 텍스트
   text: '#1A3D5C', // LaunchScreen 슬로건 등 기본 텍스트
   textPrimary: '#1a2a3a', // 제목/본문 진한 텍스트
-  textSub: '#7a8a9a', // 보조 설명 텍스트
+  textSub: '#647383', // 보조 설명 텍스트 (4.5:1)
   textSecondary: '#536579', // 폼 라벨 · 항목 라벨
   textTertiary: '#5d6f83', // 비활성 탭 라벨 · 화살표
-  textMuted: '#6b7c8c', // 흐린 텍스트(구분선 라벨·보조 설명)
+  textMuted: '#647382', // 흐린 텍스트(구분선 라벨·보조 설명) (4.5:1)
   textOnPrimary: '#ffffff', // 파란 버튼 위 텍스트
   noteText: '#46566a', // 설명 박스 텍스트
   eventMeta: '#6a7a8a', // 이벤트 시간/장소 텍스트
-  forgotText: '#6b7c8c', // '비밀번호를 잊으셨나요?'
+  forgotText: '#647382', // '비밀번호를 잊으셨나요?' (4.5:1)
 
   // 보더 / 구분선
   border: '#d8dddd', // 기본 테두리
@@ -82,10 +82,10 @@ export const lightColors: AppColors = {
 
   // 입력 필드
   inputBg: '#f7fafd', // 입력창 배경 (DS BG subtle)
-  placeholder: '#9aa7b4', // placeholder 텍스트
+  placeholder: '#627384', // placeholder 텍스트 (4.5:1)
 
   // 상태 / 강조
-  red: '#f06b6b', // 일요일/경고
+  red: '#e11717', // 일요일/경고 (4.5:1)
   redAccent: '#f0564b', // New 배지 등 강한 빨강
   danger: '#ff3e3e', // 삭제 등 되돌릴 수 없는 동작 (DS Danger)
   dangerBg: '#feefee', // 삭제 경고 박스 배경
@@ -104,7 +104,7 @@ export const lightColors: AppColors = {
   // 보조 아이콘 / 흐린 요소
   chevron: '#b6c2cf', // 좌우 화살표
   calMuted: '#c4ced8', // 달력 이전/다음달 날짜
-  tabInactive: '#9aa7b4', // 탭바 비활성
+  tabInactive: '#8796a6', // 탭바 비활성 (아이콘 3:1)
 
   // 다크 영역(두 모드 공통 성격)
   bannerBg: '#2c4a66', // 여행지 배너 폴백 배경
@@ -135,7 +135,7 @@ export const darkColors: AppColors = {
   textSub: '#a7b4c2', // 보조 설명
   textSecondary: '#9fb0c0', // 폼 라벨 · 항목 라벨
   textTertiary: '#8c9dae', // 비활성 탭 라벨 · 화살표
-  textMuted: '#7a8798', // 흐린 텍스트
+  textMuted: '#8794a5', // 흐린 텍스트 (카드 위 4.5:1)
   textOnPrimary: '#ffffff', // 파란 버튼 위 텍스트
   noteText: '#c3cdd9', // 설명 박스 텍스트
   eventMeta: '#9aa7b4', // 이벤트 시간/장소
@@ -147,7 +147,7 @@ export const darkColors: AppColors = {
 
   // 입력 필드
   inputBg: '#161c28', // 입력창 배경
-  placeholder: '#6b7789', // placeholder 텍스트
+  placeholder: '#7e8a9a', // placeholder 텍스트 (4.5:1)
 
   // 상태 / 강조 (모드 무관 유지)
   red: '#f06b6b', // 일요일/경고

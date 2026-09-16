@@ -106,7 +106,7 @@ export const profileStyles = StyleSheet.create({
 
   settingsRow: {
     marginTop: 8,
-    height: 44,
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',

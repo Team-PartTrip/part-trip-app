@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { touch48 } from '../../shared/ui/hitSlop';
 import {
   View,
   Text,
@@ -343,8 +344,8 @@ const PlanCitiesView: React.FC<Props> = ({
               </View>
               <View style={s.stepper}>
                 <TouchableOpacity
+                  hitSlop={touch48(28)}
                   style={[s.stepBtn, row.days <= 1 && s.stepBtnOff]}
-                  hitSlop={6}
                   disabled={row.days <= 1}
                   onPress={() => step(index, -1)}
                 >
@@ -354,8 +355,8 @@ const PlanCitiesView: React.FC<Props> = ({
                 </TouchableOpacity>
                 <Text style={s.days}>{row.days}일</Text>
                 <TouchableOpacity
+                  hitSlop={touch48(28)}
                   style={[s.stepBtn, left <= 0 && s.stepBtnOff]}
-                  hitSlop={6}
                   disabled={left <= 0}
                   onPress={() => step(index, 1)}
                 >

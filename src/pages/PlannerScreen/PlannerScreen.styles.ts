@@ -9,7 +9,7 @@ export const plannerStyles = StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'center' },
   pageTitle: { flex: 1, fontSize: 24, fontWeight: '700', color: colors.text },
   createBtn: {
-    height: 36,
+    minHeight: 48,
     paddingHorizontal: 16,
     borderRadius: 18,
     backgroundColor: colors.primary,
@@ -21,7 +21,7 @@ export const plannerStyles = StyleSheet.create({
   headerBtns: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   // 참여는 생성보다 덜 쓰는 길이라 테두리만 준다
   joinBtn: {
-    height: 36,
+    minHeight: 48,
     paddingHorizontal: 14,
     borderRadius: 18,
     borderWidth: 1,

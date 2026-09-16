@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { touch48 } from '../../shared/ui/hitSlop';
 import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { planPeriodStyles as s } from './PlanPeriodView.styles';
@@ -218,6 +219,7 @@ const PlanPeriodView: React.FC<Props> = ({ draft, onBack, onNext }) => {
                     onPress={() => pickDay(day)}
                   >
                     <View
+                      hitSlop={touch48(26)}
                       style={[
                         s.dayPill,
                         isMid && s.dayPillMid,
