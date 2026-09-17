@@ -21,7 +21,6 @@ export type AppColors = {
   textOnPrimary: ColorValue;
   noteText: ColorValue;
   eventMeta: ColorValue;
-  forgotText: ColorValue;
   border: ColorValue;
   borderLight: ColorValue;
   inputBg: ColorValue;
@@ -74,7 +73,6 @@ export const lightColors: AppColors = {
   textOnPrimary: '#ffffff', // 파란 버튼 위 텍스트
   noteText: '#46566a', // 설명 박스 텍스트
   eventMeta: '#6a7a8a', // 이벤트 시간/장소 텍스트
-  forgotText: '#647382', // '비밀번호를 잊으셨나요?' (4.5:1)
 
   // 보더 / 구분선
   border: '#d8dddd', // 기본 테두리
@@ -139,7 +137,6 @@ export const darkColors: AppColors = {
   textOnPrimary: '#ffffff', // 파란 버튼 위 텍스트
   noteText: '#c3cdd9', // 설명 박스 텍스트
   eventMeta: '#9aa7b4', // 이벤트 시간/장소
-  forgotText: '#8fb0cc', // '비밀번호를 잊으셨나요?'
 
   // 보더 / 구분선
   border: '#2c3547', // 기본 테두리

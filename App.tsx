@@ -15,9 +15,6 @@ import TabBar, { TabKey } from './src/widgets/bottom-tab-bar/TabBar';
 
 import LaunchScreen from './src/pages/LaunchScreen/LaunchScreen';
 import LoginView from './src/pages/Auth/LoginView';
-import SignUpView, { SignUpData } from './src/pages/Auth/SingUpView';
-import ConfirmEmail from './src/pages/Auth/ConfirmEmail';
-import ResetPassword from './src/pages/Auth/ResetPassword';
 import PlaceDetailView from './src/pages/PlaceDetailView/PlaceDetailView';
 import type { TourPlace } from './src/entities/main/api';
 import MainView from './src/pages/MainView/MainView';
@@ -58,17 +55,10 @@ import type {
   VisitedCountry,
 } from './src/entities/worldmap/types';
 import { sampleAcquiredParamsOf } from './src/entities/worldmap/sampleData';
-import { clearTokens } from './src/shared/api/tokenStorage';
 
 export type RootStackParamList = {
   Launch: undefined;
   Login: undefined;
-  SignUp: undefined;
-  ConfirmEmail: {
-    mode: 'signup' | 'resetPassword';
-    signupData?: SignUpData;
-  };
-  ResetPassword: { email: string; resetToken: string };
   Main: undefined;
   Planner: undefined;
   PlanGroup: undefined;
@@ -110,10 +100,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const AUTH_ROUTES = [
   'Launch',
   'Login',
-  'SignUp',
-  'ConfirmEmail',
   'Survey',
-  'ResetPassword',
   'Attendance',
   'MissionList',
   'MissionDetail',
@@ -234,68 +221,7 @@ function App() {
 
               <Stack.Screen name="Login">
                 {({ navigation }) => (
-                  <LoginView
-                    onLogin={() => navigation.replace('Main')}
-                    onSignup={() => navigation.navigate('SignUp')}
-                    onResetPassword={() =>
-                      navigation.navigate('ConfirmEmail', {
-                        mode: 'resetPassword',
-                      })
-                    }
-                  />
-                )}
-              </Stack.Screen>
-
-              <Stack.Screen name="SignUp">
-                {({ navigation }) => (
-                  <SignUpView
-                    onBack={() => navigation.goBack()}
-                    onNext={data =>
-                      navigation.navigate('ConfirmEmail', {
-                        mode: 'signup',
-                        signupData: data,
-                      })
-                    }
-                  />
-                )}
-              </Stack.Screen>
-
-              <Stack.Screen name="ConfirmEmail">
-                {({ navigation, route }) => {
-                  const mode = route.params?.mode ?? 'signup';
-                  return (
-                    <ConfirmEmail
-                      mode={mode}
-                      onBack={() => navigation.goBack()}
-                      signupData={route.params?.signupData}
-                      onConfirm={(email, resetToken) =>
-                        mode === 'signup'
-                          ? navigation.navigate('Login')
-                          : navigation.navigate('ResetPassword', {
-                              email: email ?? '',
-                              resetToken: resetToken ?? '',
-                            })
-                      }
-                    />
-                  );
-                }}
-              </Stack.Screen>
-
-
-              <Stack.Screen name="ResetPassword">
-                {({ navigation, route }) => (
-                  <ResetPassword
-                    email={route.params?.email ?? ''}
-                    resetToken={route.params?.resetToken ?? ''}
-                    onBack={() => navigation.goBack()}
-                    onConfirm={async () => {
-                      await clearTokens();
-                      navigation.reset({
-                        index: 0,
-                        routes: [{ name: 'Login' }],
-                      });
-                    }}
-                  />
+                  <LoginView onLogin={() => navigation.replace('Main')} />
                 )}
               </Stack.Screen>
 
