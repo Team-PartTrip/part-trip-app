@@ -180,12 +180,51 @@ export const darkColors: AppColors = {
   night: '#17191f', // 사진 뷰어 · 여행카드 배경 (두 모드 공통)
 };
 
+// ── 고대비 (명세 Func-008-02) ──────────────────────────────────
+//
+// 앱 안에 고대비 설정 화면을 따로 두지 않는다. iOS 의 "대비 증가"
+// (설정 > 손쉬운 사용 > 디스플레이 및 텍스트 크기)를 켜면 아래 색으로 바뀐다.
+// 글자 크기(Func-008-01)가 OS 설정을 따르는 것과 같은 방식이다.
+//
+// 흐린 글자는 7:1(AAA), 테두리 · 아이콘 · 지난 날짜는 3:1 이 되도록 명도만
+// 낮추거나(라이트) 올렸다(다크). 적지 않은 색은 평소 색 그대로다.
+//
+// 안드로이드는 앱마다 고대비 색을 받는 방법이 없다. OS 의 "고대비 텍스트" 가
+// 글자를 직접 진하게 그린다.
+//
+// ponytail: primary 는 넣지 않았다. 다크 모드에서 글자로 쓸 때와 흰 글자 버튼
+// 배경으로 쓸 때 원하는 방향이 반대라, 배경용 · 글자용 토큰을 나눠야 고칠 수 있다.
+const highContrastLight: Partial<AppColors> = {
+  textSub: '#4a5561',
+  textSecondary: '#465667',
+  textTertiary: '#485565',
+  textMuted: '#4a5561',
+  placeholder: '#495662',
+  eventMeta: '#4a5561',
+  tabInactive: '#8191a2',
+  border: '#829292',
+  chevron: '#7c91a9',
+  calMuted: '#7b91a8',
+};
+
+const highContrastDark: Partial<AppColors> = {
+  textTertiary: '#9faebc',
+  textMuted: '#a4adba',
+  placeholder: '#a4adb8',
+  eventMeta: '#a1aeba',
+  border: '#596c90',
+  chevron: '#606d7d',
+  calMuted: '#606d7d',
+};
+
 const dynamicColors = (): AppColors => {
   const merged = { ...lightColors };
   (Object.keys(lightColors) as (keyof AppColors)[]).forEach(key => {
     merged[key] = DynamicColorIOS({
       light: lightColors[key],
       dark: darkColors[key],
+      highContrastLight: highContrastLight[key] ?? lightColors[key],
+      highContrastDark: highContrastDark[key] ?? darkColors[key],
     });
   });
   return merged;
