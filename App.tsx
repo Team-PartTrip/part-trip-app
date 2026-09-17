@@ -26,7 +26,6 @@ import PlanPeriodView from './src/pages/PlannerScreen/PlanPeriodView';
 import PlanCitiesView from './src/pages/PlannerScreen/PlanCitiesView';
 import PlaceVoteView from './src/pages/PlannerScreen/PlaceVoteView';
 import PlanStatusView from './src/pages/PlannerScreen/PlanStatusView';
-import PlanConfirmView from './src/pages/PlannerScreen/PlanConfirmView';
 import type {
   PlaceCategory,
   PlanDraft,
@@ -62,7 +61,6 @@ export type RootStackParamList = {
   PlanCities: { draft: PlanDraft };
   PlaceVote: { planId: number; category?: PlaceCategory };
   PlanStatus: { planId: number };
-  PlanConfirm: { planId: number };
   Notifications: undefined;
   NotificationDetail: { notification: Notification };
   PlaceDetail: { place: TourPlace };
@@ -102,7 +100,6 @@ const AUTH_ROUTES = [
   'PlanPeriod',
   'PlanCities',
   'PlaceVote',
-  'PlanConfirm',
   'PhotoDetail',
   'CommentEdit',
   'PhotoDelete',
@@ -227,14 +224,10 @@ function App() {
                 {({ navigation }) => (
                   <PlannerScreen
                     onCreate={() => navigation.navigate('PlanGroup')}
-                    onOpenPlan={(planId, status) => {
-                      // 확정된 계획은 최종 확인 화면, 그 밖에는 진행 현황으로
-                      if (status === 'CONFIRMED') {
-                        navigation.navigate('PlanConfirm', { planId });
-                      } else {
-                        navigation.navigate('PlanStatus', { planId });
-                      }
-                    }}
+                    // 확정 전후 모두 같은 화면이다 (Func-005-06)
+                    onOpenPlan={planId =>
+                      navigation.navigate('PlanStatus', { planId })
+                    }
                   />
                 )}
               </Stack.Screen>
@@ -309,9 +302,18 @@ function App() {
                     planId={route.params.planId}
                     category={route.params.category}
                     onBack={() => navigation.goBack()}
+                    // 확정하면 같은 계획 화면이 일정표로 바뀐다. 투표 화면으로
+                    // 돌아가면 이미 확정된 투표를 다시 누르게 되므로 쌓지 않는다
                     onDone={() =>
-                      navigation.navigate('PlanConfirm', {
-                        planId: route.params.planId,
+                      navigation.reset({
+                        index: 1,
+                        routes: [
+                          { name: 'Planner' },
+                          {
+                            name: 'PlanStatus',
+                            params: { planId: route.params.planId },
+                          },
+                        ],
                       })
                     }
                   />
@@ -334,15 +336,6 @@ function App() {
                 )}
               </Stack.Screen>
 
-              <Stack.Screen name="PlanConfirm">
-                {({ navigation, route }) => (
-                  <PlanConfirmView
-                    planId={route.params.planId}
-                    onBack={() => navigation.goBack()}
-                    onStart={() => navigation.navigate('Planner')}
-                  />
-                )}
-              </Stack.Screen>
 
               <Stack.Screen name="Notifications">
                 {({ navigation }) => (
