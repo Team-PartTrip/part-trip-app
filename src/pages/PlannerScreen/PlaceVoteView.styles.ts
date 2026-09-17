@@ -113,6 +113,17 @@ export const placeVoteStyles = StyleSheet.create({
   },
   emptyText: { fontSize: 15, fontWeight: '600', color: colors.text },
   emptyDesc: { fontSize: 12, color: colors.textMuted },
+  retryBtn: {
+    marginTop: 4,
+    minHeight: 48,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  retryText: { fontSize: 14, fontWeight: '600', color: colors.primary },
 
   footer: {
     paddingHorizontal: 24,

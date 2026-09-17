@@ -402,9 +402,13 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
         animationType="fade"
         onRequestClose={() => setDetail(null)}
       >
-        <Pressable style={s.dim} onPress={() => setDetail(null)}>
+        <Pressable
+          accessible={false}
+          style={s.dim}
+          onPress={() => setDetail(null)}
+        >
           {/* 안쪽을 눌렀을 때 닫히지 않도록 이벤트를 여기서 멈춘다 */}
-          <Pressable style={s.sheet} onPress={() => {}}>
+          <Pressable accessible={false} style={s.sheet} onPress={() => {}}>
             {detail?.imageUrl ? (
               <Image
                 source={{ uri: toImageUrl(detail.imageUrl) }}

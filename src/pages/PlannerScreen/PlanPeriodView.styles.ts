@@ -52,7 +52,7 @@ export const planPeriodStyles = StyleSheet.create({
 
   calWeekend: { color: colors.red },
 
-  calCell: { flex: 1, height: 34, alignItems: 'center', justifyContent: 'center' },
+  calCell: { flex: 1, height: 48, alignItems: 'center', justifyContent: 'center' },
 
   dayPill: {
     width: 40,

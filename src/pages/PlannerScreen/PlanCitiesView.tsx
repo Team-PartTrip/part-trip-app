@@ -71,6 +71,12 @@ export function toCities(rows: Row[], startDate: string): PlanCity[] {
   });
 }
 
+/** 이름이 같아도 나라가 다르면 다른 도시다 */
+export const sameCity = (
+  a: { countryName: string; cityName: string },
+  b: { countryName: string; cityName: string },
+) => a.countryName === b.countryName && a.cityName === b.cityName;
+
 interface Props {
   draft: PlanDraft;
   onBack?: () => void;
@@ -184,7 +190,7 @@ const PlanCitiesView: React.FC<Props> = ({
   // 새 도시는 남은 날을 다 가져간다. 남은 날이 없으면 1을 앞 도시에서 뗀다
   const addCity = (city: City) => {
     setRows(current => {
-      if (current.some(row => row.cityName === city.cityName)) {
+      if (current.some(row => sameCity(row, city))) {
         return current;
       }
       const remaining = totalDays - current.reduce((sum, r) => sum + r.days, 0);
@@ -301,7 +307,7 @@ const PlanCitiesView: React.FC<Props> = ({
         ) : (
           <View style={s.hitGrid}>
             {hits.map(city => {
-              const on = rows.some(row => row.cityName === city.cityName);
+              const on = rows.some(row => sameCity(row, city));
               return (
                 <TouchableOpacity
                   key={`${city.countryName}-${city.cityName}`}

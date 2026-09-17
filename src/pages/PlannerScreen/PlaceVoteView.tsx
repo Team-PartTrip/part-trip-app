@@ -172,13 +172,20 @@ export function nextPage(
  */
 export function shouldAutoFetch(state: {
   loading: boolean;
+  busy: boolean;
   failed: boolean;
   count: number;
   exhausted: boolean;
   generation: number;
   fetchedGeneration: number;
 }): boolean {
-  if (state.loading || state.failed || state.count > 0 || state.exhausted) {
+  if (
+    state.loading ||
+    state.busy ||
+    state.failed ||
+    state.count > 0 ||
+    state.exhausted
+  ) {
     return false;
   }
   // 카테고리나 도시가 바뀔 때마다 한 번씩만
@@ -214,6 +221,7 @@ const PlaceVoteView: React.FC<Props> = ({
   const [placesFailed, setPlacesFailed] = useState(false);
   const [cursors, setCursors] = useState<Record<string, string | null>>({});
   const [loadingMore, setLoadingMore] = useState(false);
+  const [moreFailed, setMoreFailed] = useState(false);
   // 화면에 보여줄 개수. 쌓아둔 장소가 더 많아도 이만큼만 그린다
   const [visible, setVisible] = useState(PAGE_SIZE);
   const moreRef = useRef(false);
@@ -297,6 +305,7 @@ const PlaceVoteView: React.FC<Props> = ({
     let alive = true;
     generationRef.current += 1;
     setCursors({});
+    setMoreFailed(false);
     setVisible(PAGE_SIZE);
     setPlacesLoading(true);
     setPlacesFailed(false);
@@ -330,16 +339,17 @@ const PlaceVoteView: React.FC<Props> = ({
     };
   }, [cities, active]);
 
-  const loadMore = async () => {
+  const loadMore = async (): Promise<'skipped' | 'failed' | 'done'> => {
     if (moreRef.current || placesLoading || !cities || cities.length === 0) {
-      return;
+      return 'skipped';
     }
     const targets = cities.filter(city => cursors[cityKey(city)] !== null);
     if (targets.length === 0) {
-      return;
+      return 'skipped';
     }
     moreRef.current = true;
     setLoadingMore(true);
+    setMoreFailed(false);
     const generation = generationRef.current;
     try {
       const results = await Promise.all(
@@ -356,7 +366,11 @@ const PlaceVoteView: React.FC<Props> = ({
         ),
       );
       if (generation !== generationRef.current) {
-        return;
+        return 'skipped';
+      }
+      if (results.every(({ result }) => result === null)) {
+        setMoreFailed(true);
+        return 'failed';
       }
       setPlaces(prev =>
         results.reduce(
@@ -373,6 +387,7 @@ const PlaceVoteView: React.FC<Props> = ({
         });
         return next;
       });
+      return 'done';
     } finally {
       moreRef.current = false;
       setLoadingMore(false);
@@ -400,7 +415,8 @@ const PlaceVoteView: React.FC<Props> = ({
   useEffect(() => {
     const go = shouldAutoFetch({
       loading: placesLoading,
-      failed: placesFailed,
+      busy: loadingMore,
+      failed: placesFailed || moreFailed,
       count: places.length,
       exhausted,
       generation: generationRef.current,
@@ -409,11 +425,16 @@ const PlaceVoteView: React.FC<Props> = ({
     if (!go) {
       return;
     }
-    autoFetchedRef.current = generationRef.current;
-    loadMore();
+    const generation = generationRef.current;
+    autoFetchedRef.current = generation;
+    loadMore().then(outcome => {
+      if (outcome === 'skipped' && autoFetchedRef.current === generation) {
+        autoFetchedRef.current = 0;
+      }
+    });
     // loadMore 는 매 렌더 새로 만들어진다. 넣으면 매번 다시 돈다
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [placesLoading, placesFailed, places.length, exhausted]);
+  }, [placesLoading, placesFailed, places.length, exhausted, loadingMore, moreFailed]);
 
   const vote = votes.find(item => item.category === active);
   const status = vote?.status ?? 'OPEN';
@@ -655,7 +676,7 @@ const PlaceVoteView: React.FC<Props> = ({
           return (
             <TouchableOpacity
               key={key}
-              hitSlop={touch48(32)}
+              hitSlop={touch48(32, 'vertical')}
               style={[s.chip, on && s.chipOn]}
               activeOpacity={0.85}
               onPress={() => setCurrent(key)}
@@ -678,16 +699,34 @@ const PlaceVoteView: React.FC<Props> = ({
         onEndReached={showMore}
         onEndReachedThreshold={0.6}
         ListEmptyComponent={
-          loading || placesLoading ? (
+          loading ||
+          placesLoading ||
+          loadingMore ||
+          // 빈 목록을 받고 자동 조회가 시작되기 직전의 한 순간. 여기서 "없어요"
+          // 를 그리면 곧 목록이 채워지는데도 깜빡인다
+          (!placesFailed &&
+            !moreFailed &&
+            !exhausted &&
+            autoFetchedRef.current !== generationRef.current) ? (
             <ActivityIndicator style={s.loading} />
           ) : (
             <View style={s.empty}>
               <Text style={s.emptyText}>
-                {placesFailed || cities?.length === 0
+                {placesFailed || moreFailed || cities?.length === 0
                   ? '장소를 불러오지 못했어요'
                   : '이 카테고리에는 아직 장소가 없어요'}
               </Text>
-              <Text style={s.emptyDesc}>다른 카테고리를 골라보세요.</Text>
+              {!placesFailed && !exhausted && (cities?.length ?? 0) > 0 ? (
+                <TouchableOpacity
+                  style={s.retryBtn}
+                  activeOpacity={0.85}
+                  onPress={() => loadMore()}
+                >
+                  <Text style={s.retryText}>다시 불러오기</Text>
+                </TouchableOpacity>
+              ) : (
+                <Text style={s.emptyDesc}>다른 카테고리를 골라보세요.</Text>
+              )}
             </View>
           )
         }

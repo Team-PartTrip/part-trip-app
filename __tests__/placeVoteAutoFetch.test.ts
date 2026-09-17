@@ -8,6 +8,7 @@ import { shouldAutoFetch } from '../src/pages/PlannerScreen/PlaceVoteView';
 
 const base = {
   loading: false,
+  busy: false,
   failed: false,
   count: 0,
   exhausted: false,
@@ -33,6 +34,10 @@ describe('shouldAutoFetch', () => {
 
   it('받는 중이면 기다린다', () => {
     expect(shouldAutoFetch({ ...base, loading: true })).toBe(false);
+  });
+
+  it('다른 요청이 돌고 있으면 기다린다', () => {
+    expect(shouldAutoFetch({ ...base, busy: true })).toBe(false);
   });
 
   it('장소가 이미 있으면 부르지 않는다', () => {

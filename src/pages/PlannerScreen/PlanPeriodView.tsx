@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { touch48 } from '../../shared/ui/hitSlop';
 import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { planPeriodStyles as s } from './PlanPeriodView.styles';
@@ -55,14 +54,19 @@ const PlanPeriodView: React.FC<Props> = ({ draft, onBack, onNext }) => {
   const [endDate, setEndDate] = useState(draft.endDate);
   const [today, setToday] = useState(todayIso);
   const [taken, setTaken] = useState<DateRange[]>([]);
+  const [takenState, setTakenState] = useState<'loading' | 'ok' | 'failed'>(
+    'loading',
+  );
 
   useEffect(() => {
     let alive = true;
+    setTakenState('loading');
     getPlanners()
       .then(list => {
         if (!alive) {
           return;
         }
+        setTakenState('ok');
         setTaken(
           list
             .filter(p => p.plannerId !== draft.plannerId)
@@ -73,7 +77,11 @@ const PlanPeriodView: React.FC<Props> = ({ draft, onBack, onNext }) => {
             })),
         );
       })
-      .catch(() => {});
+      .catch(() => {
+        if (alive) {
+          setTakenState('failed');
+        }
+      });
     return () => {
       alive = false;
     };
@@ -123,7 +131,7 @@ const PlanPeriodView: React.FC<Props> = ({ draft, onBack, onNext }) => {
     if (
       startDate &&
       !endDate &&
-      date > startDate &&
+      date >= startDate &&
       !crossesBlocked(startDate, date, taken)
     ) {
       setEndDate(date);
@@ -136,7 +144,7 @@ const PlanPeriodView: React.FC<Props> = ({ draft, onBack, onNext }) => {
   const moveMonth = (step: number) =>
     setCursor(new Date(year, monthIndex + step, 1));
 
-  const ready = !!startDate && !!endDate;
+  const ready = !!startDate && !!endDate && takenState !== 'loading';
 
   const next = () => {
     if (!ready) {
@@ -219,7 +227,6 @@ const PlanPeriodView: React.FC<Props> = ({ draft, onBack, onNext }) => {
                     onPress={() => pickDay(day)}
                   >
                     <View
-                      hitSlop={touch48(26)}
                       style={[
                         s.dayPill,
                         isMid && s.dayPillMid,
@@ -244,6 +251,12 @@ const PlanPeriodView: React.FC<Props> = ({ draft, onBack, onNext }) => {
             </View>
           ))}
         </View>
+
+        {takenState === 'failed' && (
+          <Text style={s.takenNote}>
+            다른 여행 기간을 불러오지 못했어요. 겹치면 다음 단계에서 알려드려요
+          </Text>
+        )}
 
         {taken.length > 0 && (
           <Text style={s.takenNote}>

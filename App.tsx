@@ -4,6 +4,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import {
   NavigationContainer,
   useNavigationContainerRef,
+  CommonActions,
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
@@ -355,11 +356,27 @@ function App() {
                   <PlanCitiesView
                     draft={route.params.draft}
                     onBack={() => navigation.goBack()}
-                    onPlannerCreated={plannerId =>
+                    onPlannerCreated={plannerId => {
                       navigation.setParams({
                         draft: { ...route.params.draft, plannerId },
-                      })
-                    }
+                      });
+                      const period = navigation
+                        .getState()
+                        .routes.find(
+                          (r: { name: string }) => r.name === 'PlanPeriod',
+                        );
+                      if (period) {
+                        navigation.dispatch({
+                          ...CommonActions.setParams({
+                            draft: {
+                              ...(period.params as { draft: PlanDraft }).draft,
+                              plannerId,
+                            },
+                          }),
+                          source: period.key,
+                        });
+                      }
+                    }}
                     // 마법사는 여기서 끝난다. 뒤로 가서 다시 저장하면 투표가
                     // 시작된 플래너라 서버가 거부하므로, 목록 위에 투표만 남긴다.
                     onStart={planId =>

@@ -2,7 +2,7 @@
 //
 // 서버는 도시별 기간이 여행 기간을 빈틈 없이 이어 덮는지 보고, 하루라도
 // 비면 400 을 준다. 여기서 틀리면 사용자가 그 400 을 본다.
-import { toCities } from '../src/pages/PlannerScreen/PlanCitiesView';
+import { sameCity, toCities } from '../src/pages/PlannerScreen/PlanCitiesView';
 
 test('일수를 이어지는 날짜 구간으로 편다', () => {
   const cities = toCities(
@@ -77,4 +77,19 @@ test('이름 없는 도시는 버린다', () => {
       endDate: '2026-08-24',
     },
   ]);
+});
+
+test('이름이 같아도 나라가 다르면 다른 도시다', () => {
+  expect(
+    sameCity(
+      { countryName: '미국', cityName: '포틀랜드' },
+      { countryName: '미국', cityName: '포틀랜드' },
+    ),
+  ).toBe(true);
+  expect(
+    sameCity(
+      { countryName: '미국', cityName: '포틀랜드' },
+      { countryName: '영국', cityName: '포틀랜드' },
+    ),
+  ).toBe(false);
 });
