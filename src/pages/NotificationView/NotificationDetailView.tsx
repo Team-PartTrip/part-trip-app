@@ -23,7 +23,7 @@ const LINK_LABEL: Record<string, string> = {
   GROUP: '그룹 보러가기',
   TRIP_CARD: '여행카드 보러가기',
   RECORD: '기록 보러가기',
-  WORLD_MAP: '세계지도 보러가기',
+  WORLD_MAP: '다녀온 곳 보러가기',
 };
 
 interface Props {

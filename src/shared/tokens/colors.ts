@@ -21,7 +21,6 @@ export type AppColors = {
   textOnPrimary: ColorValue;
   noteText: ColorValue;
   eventMeta: ColorValue;
-  forgotText: ColorValue;
   border: ColorValue;
   borderLight: ColorValue;
   inputBg: ColorValue;
@@ -37,6 +36,7 @@ export type AppColors = {
   surface: ColorValue;
   surfaceAlt: ColorValue;
   track: ColorValue;
+  mapLand: ColorValue;
   profileBg: ColorValue;
   tagRedBg: ColorValue;
   chevron: ColorValue;
@@ -67,14 +67,13 @@ export const lightColors: AppColors = {
   // 텍스트
   text: '#1A3D5C', // LaunchScreen 슬로건 등 기본 텍스트
   textPrimary: '#1a2a3a', // 제목/본문 진한 텍스트
-  textSub: '#7a8a9a', // 보조 설명 텍스트
+  textSub: '#647383', // 보조 설명 텍스트 (4.5:1)
   textSecondary: '#536579', // 폼 라벨 · 항목 라벨
   textTertiary: '#5d6f83', // 비활성 탭 라벨 · 화살표
-  textMuted: '#6b7c8c', // 흐린 텍스트(구분선 라벨·보조 설명)
+  textMuted: '#647382', // 흐린 텍스트(구분선 라벨·보조 설명) (4.5:1)
   textOnPrimary: '#ffffff', // 파란 버튼 위 텍스트
   noteText: '#46566a', // 설명 박스 텍스트
   eventMeta: '#6a7a8a', // 이벤트 시간/장소 텍스트
-  forgotText: '#6b7c8c', // '비밀번호를 잊으셨나요?'
 
   // 보더 / 구분선
   border: '#d8dddd', // 기본 테두리
@@ -82,10 +81,10 @@ export const lightColors: AppColors = {
 
   // 입력 필드
   inputBg: '#f7fafd', // 입력창 배경 (DS BG subtle)
-  placeholder: '#9aa7b4', // placeholder 텍스트
+  placeholder: '#627384', // placeholder 텍스트 (4.5:1)
 
   // 상태 / 강조
-  red: '#f06b6b', // 일요일/경고
+  red: '#e11717', // 일요일/경고 (4.5:1)
   redAccent: '#f0564b', // New 배지 등 강한 빨강
   danger: '#ff3e3e', // 삭제 등 되돌릴 수 없는 동작 (DS Danger)
   dangerBg: '#feefee', // 삭제 경고 박스 배경
@@ -98,13 +97,16 @@ export const lightColors: AppColors = {
   surface: '#eef2f7', // 탭바 보더 등 연한 회색
   surfaceAlt: '#f2f5f9', // 설명 박스 배경
   track: '#e9eef4', // 진행바 트랙
+  // 지도의 안 가본 땅. 바다(surfaceAlt)와도, 다녀온 나라(primary)와도 구분돼야
+  // 해서 둘의 가운데 명도로 둔다. 둘 다 3:1 은 안 되고 각각 약 2.2:1 이 최대다
+  mapLand: '#9ca9b8',
   profileBg: '#e8eef5', // 프로필 아이콘 배경
   tagRedBg: '#fdecec', // '음식' 태그 배경
 
   // 보조 아이콘 / 흐린 요소
   chevron: '#b6c2cf', // 좌우 화살표
   calMuted: '#c4ced8', // 달력 이전/다음달 날짜
-  tabInactive: '#9aa7b4', // 탭바 비활성
+  tabInactive: '#8796a6', // 탭바 비활성 (아이콘 3:1)
 
   // 다크 영역(두 모드 공통 성격)
   bannerBg: '#2c4a66', // 여행지 배너 폴백 배경
@@ -135,11 +137,10 @@ export const darkColors: AppColors = {
   textSub: '#a7b4c2', // 보조 설명
   textSecondary: '#9fb0c0', // 폼 라벨 · 항목 라벨
   textTertiary: '#8c9dae', // 비활성 탭 라벨 · 화살표
-  textMuted: '#7a8798', // 흐린 텍스트
+  textMuted: '#8794a5', // 흐린 텍스트 (카드 위 4.5:1)
   textOnPrimary: '#ffffff', // 파란 버튼 위 텍스트
   noteText: '#c3cdd9', // 설명 박스 텍스트
   eventMeta: '#9aa7b4', // 이벤트 시간/장소
-  forgotText: '#8fb0cc', // '비밀번호를 잊으셨나요?'
 
   // 보더 / 구분선
   border: '#2c3547', // 기본 테두리
@@ -147,7 +148,7 @@ export const darkColors: AppColors = {
 
   // 입력 필드
   inputBg: '#161c28', // 입력창 배경
-  placeholder: '#6b7789', // placeholder 텍스트
+  placeholder: '#7e8a9a', // placeholder 텍스트 (4.5:1)
 
   // 상태 / 강조 (모드 무관 유지)
   red: '#f06b6b', // 일요일/경고
@@ -163,6 +164,7 @@ export const darkColors: AppColors = {
   surface: '#232b39', // 탭바 보더 등
   surfaceAlt: '#1a2130', // 설명 박스 배경
   track: '#2a3242', // 진행바 트랙
+  mapLand: '#485767', // 지도의 안 가본 땅 (라이트 쪽 설명 참고)
   profileBg: '#2a3446', // 프로필 아이콘 배경
   tagRedBg: '#3a2626', // 태그 배경
 
@@ -178,12 +180,51 @@ export const darkColors: AppColors = {
   night: '#17191f', // 사진 뷰어 · 여행카드 배경 (두 모드 공통)
 };
 
+// ── 고대비 (명세 Func-008-02) ──────────────────────────────────
+//
+// 앱 안에 고대비 설정 화면을 따로 두지 않는다. iOS 의 "대비 증가"
+// (설정 > 손쉬운 사용 > 디스플레이 및 텍스트 크기)를 켜면 아래 색으로 바뀐다.
+// 글자 크기(Func-008-01)가 OS 설정을 따르는 것과 같은 방식이다.
+//
+// 흐린 글자는 7:1(AAA), 테두리 · 아이콘 · 지난 날짜는 3:1 이 되도록 명도만
+// 낮추거나(라이트) 올렸다(다크). 적지 않은 색은 평소 색 그대로다.
+//
+// 안드로이드는 앱마다 고대비 색을 받는 방법이 없다. OS 의 "고대비 텍스트" 가
+// 글자를 직접 진하게 그린다.
+//
+// ponytail: primary 는 넣지 않았다. 다크 모드에서 글자로 쓸 때와 흰 글자 버튼
+// 배경으로 쓸 때 원하는 방향이 반대라, 배경용 · 글자용 토큰을 나눠야 고칠 수 있다.
+const highContrastLight: Partial<AppColors> = {
+  textSub: '#4a5561',
+  textSecondary: '#465667',
+  textTertiary: '#485565',
+  textMuted: '#4a5561',
+  placeholder: '#495662',
+  eventMeta: '#4a5561',
+  tabInactive: '#8191a2',
+  border: '#829292',
+  chevron: '#7c91a9',
+  calMuted: '#7b91a8',
+};
+
+const highContrastDark: Partial<AppColors> = {
+  textTertiary: '#9faebc',
+  textMuted: '#a4adba',
+  placeholder: '#a4adb8',
+  eventMeta: '#a1aeba',
+  border: '#596c90',
+  chevron: '#606d7d',
+  calMuted: '#606d7d',
+};
+
 const dynamicColors = (): AppColors => {
   const merged = { ...lightColors };
   (Object.keys(lightColors) as (keyof AppColors)[]).forEach(key => {
     merged[key] = DynamicColorIOS({
       light: lightColors[key],
       dark: darkColors[key],
+      highContrastLight: highContrastLight[key] ?? lightColors[key],
+      highContrastDark: highContrastDark[key] ?? darkColors[key],
     });
   });
   return merged;

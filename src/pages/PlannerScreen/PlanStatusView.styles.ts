@@ -1,7 +1,7 @@
 import { StyleSheet } from 'react-native';
 import colors from '../../shared/tokens/colors';
 
-// 피그마 C7 · Func-008-05 투표중 진행된 계획 내용 조회하기
+// 우리 여행 계획 (Func-005-06). 투표 중에는 카테고리별 현황, 확정되면 일정표
 export const planStatusStyles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
   // 탭바가 화면 위에 떠 있다. 32 로는 삭제 버튼이 탭바에 가린다.
@@ -95,6 +95,41 @@ export const planStatusStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   rowPillText: { fontSize: 11, fontWeight: '500' },
+
+  // ── 확정된 일정 ──
+  dayTitle: {
+    marginTop: 8,
+    marginBottom: 8,
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  thumb: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    backgroundColor: colors.tint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  thumbEmoji: { fontSize: 20 },
+  empty: {
+    borderRadius: 12,
+    backgroundColor: colors.white,
+    paddingVertical: 40,
+    alignItems: 'center',
+  },
+  emptyText: { fontSize: 13, color: colors.textMuted },
+  shareBtn: {
+    marginTop: 8,
+    minHeight: 48,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  shareText: { fontSize: 14, fontWeight: '600', color: colors.primary },
 
 
   // 되돌릴 수 없는 동작이라 화면 맨 아래에 따로 둔다

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { touch48 } from '../../shared/ui/hitSlop';
 import {
   View,
   Text,
@@ -226,6 +227,8 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
       cityName: '',
       startDate: '',
       endDate: '',
+      // 여행지를 아직 안 골랐다. C3 을 지나면 채워진다
+      cities: [],
     });
   };
 
@@ -276,6 +279,7 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
             <View style={s.stepperRow}>
               <Text style={s.stepperLabel}>나를 포함한 인원</Text>
               <TouchableOpacity
+                hitSlop={touch48(34)}
                 style={[
                   s.stepperBtn,
                   (locked || headcount <= minHeadcount) && s.stepperBtnOff,
@@ -290,6 +294,7 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
               </TouchableOpacity>
               <Text style={s.stepperValue}>{headcount}</Text>
               <TouchableOpacity
+                hitSlop={touch48(34)}
                 style={[
                   s.stepperBtn,
                   (locked || headcount >= MAX_HEADCOUNT) && s.stepperBtnOff,

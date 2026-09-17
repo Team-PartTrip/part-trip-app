@@ -3,28 +3,19 @@ import { request } from '../../shared/api/client';
 export interface TokenResponse {
   accessToken: string;
   refreshToken: string;
-  /** 여행 취향 설문을 완료했는지 여부 (false면 로그인 직후 설문 화면으로 안내) */
-}
-
-export interface SignUpPayload {
-  userId: string;
-  userPwd: string;
-  userMail: string;
-  /** 가입 구분 (기본 'EMAIL') */
-  signUpDivision?: string;
-}
-
-/** 로그인 → accessToken / refreshToken 발급 */
-export function login(userId: string, userPwd: string): Promise<TokenResponse> {
-  return request<TokenResponse>('/api/auth/login', {
-    body: { userId, userPwd },
-  });
 }
 
 /** 구글 로그인: idToken을 백엔드에 보내 우리 JWT 발급 */
 export function googleLogin(idToken: string): Promise<TokenResponse> {
   return request<TokenResponse>('/api/auth/google', {
     body: { idToken },
+  });
+}
+
+/** 카카오 로그인: 카카오 액세스 토큰을 백엔드에 보내 우리 JWT 발급 */
+export function kakaoLogin(accessToken: string): Promise<TokenResponse> {
+  return request<TokenResponse>('/api/auth/kakao', {
+    body: { accessToken },
   });
 }
 
@@ -39,71 +30,5 @@ export function refresh(refreshToken: string): Promise<TokenResponse> {
 export function logout(refreshToken: string): Promise<string> {
   return request<string>('/api/auth/logout', {
     body: { refreshToken },
-  });
-}
-
-export function checkUserIdAvailable(userId: string): Promise<boolean> {
-  return request<{ available: boolean }>(
-    `/api/auth/check-id?userId=${encodeURIComponent(userId)}`,
-    { method: 'GET' },
-  ).then(res => res.available);
-}
-
-/** 회원가입 시작: 임시 저장 + 이메일 인증번호 발송 */
-export function startSignUp(payload: SignUpPayload): Promise<string> {
-  return request<string>('/api/auth/signup', {
-    body: {
-      signUpDivision: 'EMAIL',
-      ...payload,
-    },
-  });
-}
-
-/** 이메일 인증번호 재발송 */
-export function sendEmailCode(email: string): Promise<string> {
-  return request<string>('/api/auth/email/send', {
-    body: { email },
-  });
-}
-
-/** 이메일 인증번호 검증 + 회원가입 완료 (가입된 회원 정보 반환) */
-export function verifyEmailCode(email: string, code: string): Promise<unknown> {
-  return request('/api/auth/email/verify', {
-    body: { email, code },
-  });
-}
-
-/** [비밀번호 찾기] 가입된 이메일 확인 후 인증번호 발송 */
-export function sendPasswordResetCode(email: string): Promise<string> {
-  return request<string>('/api/auth/password/send-code', {
-    body: { email },
-  });
-}
-
-/**
- * [비밀번호 찾기] 이메일 인증번호 확인.
- *
- * 인증에 성공한 쪽에만 일회용 토큰을 준다. 다음 단계에서 이 값을 같이
- * 보내야 비밀번호가 바뀐다. 인증 상태를 이메일에만 묶어두면 이메일만
- * 아는 사람이 남의 비밀번호를 바꿀 수 있다.
- */
-export function verifyPasswordResetCode(
-  email: string,
-  code: string,
-): Promise<{ resetToken: string }> {
-  return request<{ resetToken: string }>('/api/auth/password/verify-code', {
-    body: { email, code },
-  });
-}
-
-/** [비밀번호 찾기] 새 비밀번호로 변경 */
-export function resetPassword(
-  email: string,
-  newPassword: string,
-  confirmPassword: string,
-  resetToken: string,
-): Promise<string> {
-  return request<string>('/api/auth/password/reset', {
-    body: { email, newPassword, confirmPassword, resetToken },
   });
 }

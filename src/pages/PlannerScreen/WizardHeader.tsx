@@ -12,7 +12,7 @@ interface Props {
 }
 
 /** 여행 만들기 마법사(C2 · C3)의 공통 상단 */
-const WizardHeader: React.FC<Props> = ({ title, step, total = 4, onBack }) => (
+const WizardHeader: React.FC<Props> = ({ title, step, total = 3, onBack }) => (
   <SafeAreaView edges={['top']} style={s.header}>
     <TouchableOpacity onPress={onBack} hitSlop={12}>
       <Text style={s.back}>‹</Text>

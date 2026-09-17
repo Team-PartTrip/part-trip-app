@@ -1,4 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react';
+import { touch48 } from '../../shared/ui/hitSlop';
 import {
   View,
   Text,
@@ -210,6 +211,7 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
             return (
               <TouchableOpacity
                 key={item.key}
+                hitSlop={touch48(34, 'vertical')}
                 style={[s.filterChip, on && s.filterChipOn]}
                 activeOpacity={0.85}
                 onPress={() => setFilter(item.key)}

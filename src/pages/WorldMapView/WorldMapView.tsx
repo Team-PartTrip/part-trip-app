@@ -24,13 +24,11 @@ import {
 interface Props {
   onBack?: () => void;
   onOpenCountry?: (country: VisitedCountry) => void;
-  onOpenAchievement?: () => void;
 }
 
 const WorldMapView: React.FC<Props> = ({
   onBack,
   onOpenCountry,
-  onOpenAchievement,
 }) => {
   const { width } = useWindowDimensions();
   const [summary, setSummary] = useState<WorldMapSummary | null>(null);
@@ -84,7 +82,7 @@ const WorldMapView: React.FC<Props> = ({
       >
         <SafeAreaView edges={['top']} style={s.header}>
           <View style={s.headerRow}>
-            <Text style={s.title}>내 세계지도</Text>
+            <Text style={s.title}>내가 다녀온 곳</Text>
             <TouchableOpacity onPress={onBack} hitSlop={12} style={s.backBtn}>
               <Text style={s.back}>‹</Text>
             </TouchableOpacity>
@@ -111,11 +109,8 @@ const WorldMapView: React.FC<Props> = ({
 
         <View style={s.section}>
           <View style={s.sectionHead}>
-            <Text style={s.sectionTitle}>획득한 국가</Text>
-            {/* 피그마에는 없지만 달성 현황(E5)으로 들어갈 길이 여기밖에 없다 */}
-            <TouchableOpacity onPress={onOpenAchievement} hitSlop={8}>
-              <Text style={s.sectionMore}>달성 현황 ›</Text>
-            </TouchableOpacity>
+            {/* 명세 Func-006: 획득 · 달성 같은 수집 표현을 쓰지 않는다 */}
+            <Text style={s.sectionTitle}>다녀온 나라</Text>
           </View>
 
           {countries.length === 0 ? (
@@ -123,12 +118,12 @@ const WorldMapView: React.FC<Props> = ({
               <Text style={s.emptyText}>
                 {failed
                   ? '지도를 불러오지 못했어요'
-                  : '아직 획득한 국가가 없어요'}
+                  : '아직 다녀온 나라가 없어요'}
               </Text>
               <Text style={s.emptyDesc}>
                 {failed
                   ? '잠시 후 다시 시도해주세요.'
-                  : '여행 기록을 남기면 국가가 채워져요.'}
+                  : '여행 기록을 남기면 지도에 나라가 표시돼요.'}
               </Text>
             </View>
           ) : (

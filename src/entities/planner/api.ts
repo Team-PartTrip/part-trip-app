@@ -5,7 +5,13 @@
 //
 
 import { authRequest } from '../../shared/api/http';
-import type { GroupRole, GroupStatus, PlaceCategory, VoteStatus } from './types';
+import type {
+  GroupRole,
+  GroupStatus,
+  PlaceCategory,
+  PlanCity,
+  VoteStatus,
+} from './types';
 
 // ── 플래너 ────────────────────────────────────────────────
 
@@ -33,6 +39,7 @@ export function getPlanners(): Promise<PlannerListItem[]> {
 export interface PlannerDetail extends PlannerListItem {
   /** 초대 링크. 서버가 코드가 아니라 링크로 내려준다(server f248378) */
   inviteLink: string;
+  cities?: PlanCity[];
 }
 
 /** 플래너 상세 (C7 헤더) */
@@ -115,6 +122,16 @@ export interface SaveTravelPlanPayload {
   cityName: string;
   startDate: string;
   endDate: string;
+  /**
+   * 도는 도시들 (C4). 생략하면 countryName / cityName 한 곳만 쓰는 여행이다.
+   *
+   * 서버는 여행 기간을 빈틈 없이 이어 덮는지 본다. 하루라도 비면 400 이다 —
+   * AI 가 그날 어느 도시에서 일정을 짤지 알 수 없기 때문이다.
+   */
+  cities?: (PlanCity & {
+    /** 카테고리별 확정 장소 수 (#128). 없으면 서버가 일수로 계산한다 */
+    placeCounts?: Partial<Record<PlaceCategory, number>>;
+  })[];
 }
 
 export interface PlannerTravelPlan {
@@ -184,20 +201,27 @@ export interface VoteBallot {
   voteId: number;
   optionId: number;
   placeName: string;
-  /** 이미 투표한 상태에서 다른 후보로 바꾼 경우 true */
   changed: boolean;
   votedAt: string;
 }
 
-/** 투표하기 · 선택 바꾸기 (C5) */
-export function castBallot(
+export function voteForPlace(
   plannerId: number,
-  voteId: number,
-  optionId: number,
+  tourPlaceId: number,
 ): Promise<VoteBallot> {
   return authRequest<VoteBallot>(
-    `/api/planners/${plannerId}/votes/${voteId}/ballot`,
-    { method: 'PUT', body: { optionId } },
+    `/api/planners/${plannerId}/places/${tourPlaceId}/ballot`,
+    { method: 'PUT' },
+  );
+}
+
+export function cancelPlaceVote(
+  plannerId: number,
+  tourPlaceId: number,
+): Promise<void> {
+  return authRequest<void>(
+    `/api/planners/${plannerId}/places/${tourPlaceId}/ballot`,
+    { method: 'DELETE' },
   );
 }
 
@@ -257,59 +281,6 @@ export function deleteVoteOption(
   );
 }
 
-export interface VoteOptionAdded {
-  optionId: number;
-  voteId: number;
-  tourPlaceId: number | null;
-  placeName: string;
-  addedByUserId: string;
-  createdAt: string;
-}
-
-/**
- * 투표 후보 직접 추가 (API-005-27).
- *
- * tourPlaceId 없이 이름만 보내면 관광지 목록에 없는 곳도 후보가 된다.
- * 멤버 누구나 부를 수 있고, 열린 투표에만 넣을 수 있다.
- */
-export function addVoteOption(
-  plannerId: number,
-  voteId: number,
-  placeName: string,
-): Promise<VoteOptionAdded> {
-  return authRequest<VoteOptionAdded>(
-    `/api/planners/${plannerId}/votes/${voteId}/options`,
-    { method: 'POST', body: { placeName } },
-  );
-}
-
-export interface VoteCreated {
-  voteId: number;
-  plannerId: number;
-  planId: number;
-  category: PlaceCategory;
-  categoryLabel: string;
-  status: VoteStatus;
-  deadline: string | null;
-  createdAt: string;
-}
-
-/**
- * 카테고리 투표 만들기 (API-005-26).
- *
- * 장바구니에 담긴 장소가 없는 카테고리는 투표 자체가 없다.
- * 거기에 후보를 넣으려면 투표를 먼저 만들어야 한다. 그룹장만 부를 수 있다.
- */
-export function createVote(
-  plannerId: number,
-  category: PlaceCategory,
-): Promise<VoteCreated> {
-  return authRequest<VoteCreated>(`/api/planners/${plannerId}/votes`, {
-    method: 'POST',
-    body: { category },
-  });
-}
-
 /**
  * 멤버 내보내기 (API-005-22).
  *
@@ -339,37 +310,6 @@ export interface VoteReminder {
  */
 export function remindVotes(plannerId: number): Promise<VoteReminder> {
   return authRequest<VoteReminder>(`/api/planners/${plannerId}/votes/remind`, {
-    method: 'POST',
-  });
-}
-
-// ── 장바구니 (C4 · C6) ────────────────────────────────────
-
-/**
- * 고른 관광지를 한 번에 담는다 (C4).
- *
- * 서버가 카테고리별로 알아서 투표를 만들고 그 후보로 넣어준다.
- * 그래서 담긴 목록을 다시 볼 때는 getVotes 를 쓰면 된다.
- * 이미 담긴 장소는 건너뛰고, 성공 문구("N개 장소를 …")를 돌려준다.
- */
-export function addCartPlaces(
-  plannerId: number,
-  placeIds: number[],
-): Promise<string> {
-  return authRequest<string>(`/api/planners/${plannerId}/cart`, {
-    method: 'POST',
-    body: { placeIds },
-  });
-}
-
-export interface RandomPlace {
-  placeId: number;
-  placeName: string;
-}
-
-/** 담은 후보 중 하나를 서버가 무작위로 뽑아준다 (C6 랜덤 뽑기) */
-export function drawRandomPlace(plannerId: number): Promise<RandomPlace> {
-  return authRequest<RandomPlace>(`/api/planners/${plannerId}/cart/random`, {
     method: 'POST',
   });
 }

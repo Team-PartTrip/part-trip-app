@@ -70,15 +70,16 @@ export const worldMapStyles = StyleSheet.create({
   legendDotVisited: {
     backgroundColor: colors.primary,
   },
+  // 지도의 안 가본 땅과 같은 색이어야 범례가 맞는다
   legendDotIdle: {
-    backgroundColor: colors.border,
+    backgroundColor: colors.mapLand,
   },
   legendText: {
     fontSize: 12,
     color: colors.textSecondary,
   },
 
-  // ── 획득한 국가 ──
+  // ── 다녀온 나라 ──
   section: {
     marginTop: 28,
     paddingHorizontal: 24,
@@ -92,11 +93,6 @@ export const worldMapStyles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: colors.textPrimary,
-  },
-  sectionMore: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.primary,
   },
 
   countryRow: {

@@ -170,10 +170,10 @@ const ProfileView: React.FC<Props> = ({
         </View>
 
         <View style={s.section}>
-          <Text style={s.sectionTitle}>내 세계지도</Text>
+          <Text style={s.sectionTitle}>내가 다녀온 곳</Text>
           <View style={s.mapCard}>
             <View style={s.mapGrid}>
-              {/* 획득한 나라를 앞에서부터 채우고, 남는 칸은 비워 둔다.
+              {/* 다녀온 나라를 앞에서부터 채우고, 남는 칸은 비워 둔다.
                   칸이 다 비어 있으면 지도가 고장 난 것처럼 보인다. */}
               {Array.from({ length: MAP_CELLS }).map((_, i) => {
                 const country = visited[i];
@@ -194,13 +194,13 @@ const ProfileView: React.FC<Props> = ({
                 {countryCount === null
                   ? '국가 정보를 불러오지 못했어요'
                   : countryCount === 0
-                  ? '아직 획득한 국가가 없어요'
-                  : `${countryCount}개국 획득`}
+                  ? '아직 다녀온 나라가 없어요'
+                  : `${countryCount}개국을 다녀왔어요`}
               </Text>
               <TouchableOpacity
                 style={s.moreBtn}
                 activeOpacity={0.85}
-                onPress={onOpenWorldMap ?? (() => notReady('세계지도'))}
+                onPress={onOpenWorldMap ?? (() => notReady('내가 다녀온 곳'))}
               >
                 <Text style={s.moreBtnText}>더보기</Text>
               </TouchableOpacity>

@@ -1,0 +1,501 @@
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { touch48 } from '../../shared/ui/hitSlop';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { planCitiesStyles as s } from './PlanCitiesView.styles';
+import WizardHeader from './WizardHeader';
+import { getCities, City } from '../../entities/main/api';
+import {
+  createPlanner,
+  getPopularCities,
+  saveTravelPlan,
+} from '../../entities/planner/api';
+import { emojiOf, FALLBACK_CITIES } from '../../entities/planner/sampleData';
+import {
+  CATEGORY_EMOJI,
+  CATEGORY_LABEL,
+  formatRange,
+  formatShortDate,
+  PlaceCategory,
+  PlanCity,
+  PlanDraft,
+  PopularCity,
+} from '../../entities/planner/types';
+import {
+  clampCount,
+  COUNTED_CATEGORIES,
+  countRange,
+  defaultCount,
+  withPlaceCounts,
+} from '../../entities/planner/placeCounts';
+
+// 글자를 칠 때마다 서버를 부르지 않도록 기다리는 시간
+const SEARCH_DELAY_MS = 300;
+
+/** 화면에서 다루는 값. 날짜는 순서와 일수에서 만들어진다 */
+interface Row {
+  countryName: string;
+  cityName: string;
+  days: number;
+}
+
+/** "2026-08-23" 을 days 만큼 옮긴다 */
+function shift(date: string, days: number): string {
+  const [year, month, day] = date.split('-').map(Number);
+  const moved = new Date(year, month - 1, day + days);
+  return `${moved.getFullYear()}-${`${moved.getMonth() + 1}`.padStart(2, '0')}-${`${moved.getDate()}`.padStart(2, '0')}`;
+}
+
+function diffDays(startDate: string, endDate: string): number {
+  const start = Date.parse(`${startDate}T00:00:00Z`);
+  const end = Date.parse(`${endDate}T00:00:00Z`);
+  return Math.round((end - start) / 86_400_000);
+}
+
+/**
+ * 일수를 날짜로 편다.
+ *
+ * 서버는 도시별 기간이 여행 기간을 빈틈 없이 이어 덮는지 본다. 일수로만
+ * 다루면 빈틈이 생길 수가 없어서, 사용자가 400 을 볼 일이 없다.
+ */
+export function toCities(rows: Row[], startDate: string): PlanCity[] {
+  let cursor = startDate;
+  return rows.map(row => {
+    const from = cursor;
+    const to = shift(from, row.days - 1);
+    cursor = shift(to, 1);
+    return {
+      countryName: row.countryName,
+      cityName: row.cityName,
+      startDate: from,
+      endDate: to,
+    };
+  });
+}
+
+/** 이름이 같아도 나라가 다르면 다른 도시다 */
+export const sameCity = (
+  a: { countryName: string; cityName: string },
+  b: { countryName: string; cityName: string },
+) => a.countryName === b.countryName && a.cityName === b.cityName;
+
+interface Props {
+  draft: PlanDraft;
+  onBack?: () => void;
+  /** 새 플래너가 만들어지면 상위 draft 에 id 를 보존한다 */
+  onPlannerCreated?: (plannerId: number) => void;
+  /** 플래너를 만들고 여행 정보를 저장했으면 투표로 간다 */
+  onStart?: (plannerId: number) => void;
+}
+
+const PlanCitiesView: React.FC<Props> = ({
+  draft,
+  onBack,
+  onPlannerCreated,
+  onStart,
+}) => {
+  const [starting, setStarting] = useState(false);
+  const startingRef = useRef(false);
+  const plannerIdRef = useRef(draft.plannerId);
+  // 여행 전체 일수. 4박 5일이면 5다
+  const totalDays = useMemo(
+    () => diffDays(draft.startDate, draft.endDate) + 1,
+    [draft.startDate, draft.endDate],
+  );
+
+  const [rows, setRows] = useState<Row[]>(() =>
+    draft.cities
+      .filter(city => !!city.cityName)
+      .map(city => ({
+        countryName: city.countryName,
+        cityName: city.cityName,
+        days: diffDays(city.startDate, city.endDate) + 1,
+      })),
+  );
+
+  const [query, setQuery] = useState('');
+  // 그룹장이 바꾼 카테고리만 들고 있다. 안 바꾼 것은 일수로 계산한 기본값을
+  // 보여주고, 서버에도 보내지 않는다 (서버가 같은 계산을 한다)
+  const [counts, setCounts] = useState<Partial<Record<PlaceCategory, number>>>(
+    {},
+  );
+  const [popular, setPopular] = useState<PopularCity[]>(FALLBACK_CITIES);
+  const [found, setFound] = useState<City[] | null>(null);
+  const [searching, setSearching] = useState(false);
+
+  const used = rows.reduce((sum, row) => sum + row.days, 0);
+  const left = totalDays - used;
+  const cities = useMemo(
+    () => toCities(rows, draft.startDate),
+    [rows, draft.startDate],
+  );
+
+  useEffect(() => {
+    let alive = true;
+    getPopularCities()
+      .then(list => {
+        if (alive && list.length > 0) {
+          setPopular(
+            list.map(item => ({
+              cityName: item.cityName,
+              countryName: item.countryName,
+              emoji: emojiOf(item.cityName),
+            })),
+          );
+        }
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const keyword = query.trim();
+    if (!keyword) {
+      setFound(null);
+      return;
+    }
+    let alive = true;
+    setSearching(true);
+    setFound(null);
+    const timer = setTimeout(() => {
+      getCities(keyword)
+        .then(list => {
+          if (alive) {
+            setFound(list);
+          }
+        })
+        .catch(() => {
+          if (alive) {
+            setFound([]);
+          }
+        })
+        .then(() => {
+          if (alive) {
+            setSearching(false);
+          }
+        });
+    }, SEARCH_DELAY_MS);
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+      setSearching(false);
+    };
+  }, [query]);
+
+  const hits = useMemo<City[]>(() => {
+    const keyword = query.trim();
+    if (!keyword) {
+      return popular
+        .slice(0, 4)
+        .map(item => ({ cityName: item.cityName, countryName: item.countryName }));
+    }
+    return found ?? [];
+  }, [query, popular, found]);
+
+  // 새 도시는 남은 날을 다 가져간다. 남은 날이 없으면 1을 앞 도시에서 뗀다
+  const addCity = (city: City) => {
+    setRows(current => {
+      if (current.some(row => sameCity(row, city))) {
+        return current;
+      }
+      const remaining = totalDays - current.reduce((sum, r) => sum + r.days, 0);
+      if (remaining > 0) {
+        return [...current, { ...city, days: remaining }];
+      }
+      const donor = current.findIndex(r => r.days > 1);
+      if (donor < 0) {
+        return current;
+      }
+      const next = current.map((r, i) =>
+        i === donor ? { ...r, days: r.days - 1 } : r,
+      );
+      return [...next, { ...city, days: 1 }];
+    });
+    setQuery('');
+  };
+
+  const step = (index: number, by: number) =>
+    setRows(current =>
+      current.map((row, i) => {
+        if (i !== index) {
+          return row;
+        }
+        const days = row.days + by;
+        // 하루 미만으로는 못 줄이고, 남은 날보다 많이는 못 늘린다
+        if (days < 1 || by > totalDays - used) {
+          return row;
+        }
+        return { ...row, days };
+      }),
+    );
+
+  const removeCity = (index: number) =>
+    setRows(current => current.filter((_, i) => i !== index));
+
+  const ready = left === 0 && rows.length > 0;
+
+  const cityDays = rows.map(row => row.days);
+  /** 화면에 보이는 개수. 도시 수나 일수가 바뀌면 범위 안으로 다시 맞춘다 */
+  const countOf = (category: PlaceCategory) =>
+    clampCount(counts[category] ?? defaultCount(category, cityDays), rows.length);
+  const range = countRange(rows.length);
+  const stepCount = (category: PlaceCategory, by: number) =>
+    setCounts(current => ({
+      ...current,
+      [category]: clampCount(countOf(category) + by, rows.length),
+    }));
+
+  const next = async () => {
+    if (!ready || startingRef.current) {
+      return;
+    }
+    startingRef.current = true;
+    setStarting(true);
+    try {
+      let plannerId = plannerIdRef.current;
+      if (plannerId == null) {
+        const created = await createPlanner({
+          title: draft.title,
+          memberCount: draft.headcount,
+          isSolo: draft.isSolo,
+        });
+        plannerId = created.plannerId;
+        plannerIdRef.current = plannerId;
+        onPlannerCreated?.(plannerId);
+      }
+      await saveTravelPlan(plannerId, {
+        // 첫 도시가 대표다. 도시 하나만 보던 화면이 이걸 읽는다
+        countryName: cities[0].countryName,
+        cityName: cities[0].cityName,
+        startDate: draft.startDate,
+        endDate: draft.endDate,
+        cities: withPlaceCounts(cities, counts),
+      });
+      onStart?.(plannerId);
+    } catch (e: any) {
+      Alert.alert('시작하지 못했어요', e?.message ?? '잠시 후 다시 시도해주세요.');
+    } finally {
+      startingRef.current = false;
+      setStarting(false);
+    }
+  };
+
+  return (
+    <View style={s.safeArea}>
+      <WizardHeader title="여행 도시" step={3} onBack={onBack} />
+
+      <ScrollView
+        contentContainerStyle={s.content}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={s.trip}>
+          <Text style={s.tripText}>
+            {formatRange(draft.startDate, draft.endDate)} · {totalDays}일 ·{' '}
+            {draft.headcount}명
+          </Text>
+        </View>
+
+        <View style={s.search}>
+          <Text>🔍</Text>
+          <TextInput
+            style={s.searchInput}
+            placeholder="도시 검색"
+            placeholderTextColor="#5d6f83"
+            value={query}
+            onChangeText={setQuery}
+            returnKeyType="search"
+          />
+        </View>
+
+        <Text style={s.label}>
+          {query.trim() ? '검색 결과' : '인기 여행지'}
+        </Text>
+
+        {searching ? (
+          <ActivityIndicator style={s.hitEmpty} />
+        ) : hits.length === 0 ? (
+          <Text style={s.hitEmpty}>
+            {query.trim().length < 2
+              ? '도시 이름을 두 글자 이상 입력해주세요.'
+              : '검색 결과가 없어요.'}
+          </Text>
+        ) : (
+          <View style={s.hitGrid}>
+            {hits.map(city => {
+              const on = rows.some(row => sameCity(row, city));
+              return (
+                <TouchableOpacity
+                  key={`${city.countryName}-${city.cityName}`}
+                  style={[s.hitCard, on && s.hitCardOn]}
+                  activeOpacity={0.85}
+                  disabled={on}
+                  onPress={() => addCity(city)}
+                >
+                  <Text style={[s.hitCity, on && s.hitCityOn]}>
+                    {city.cityName}
+                  </Text>
+                  <Text style={s.hitCountry} numberOfLines={1}>
+                    {on ? '담김' : city.countryName}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
+
+        <Text style={s.label}>방문 도시</Text>
+
+        {rows.length === 0 ? (
+          <Text style={s.hitEmpty}>위에서 갈 도시를 골라주세요.</Text>
+        ) : (
+          rows.map((row, index) => (
+            <View
+              key={`${row.countryName}-${row.cityName}-${index}`}
+              style={s.card}
+            >
+              <View style={s.seq}>
+                <Text style={s.seqText}>{index + 1}</Text>
+              </View>
+              <View style={s.cardBody}>
+                <Text style={s.cityName}>{row.cityName}</Text>
+                <Text style={s.cityRange}>
+                  {formatShortDate(cities[index].startDate)} –{' '}
+                  {formatShortDate(cities[index].endDate)} · {row.countryName}
+                </Text>
+              </View>
+              <View style={s.stepper}>
+                <TouchableOpacity
+                  hitSlop={touch48(28)}
+                  style={[s.stepBtn, row.days <= 1 && s.stepBtnOff]}
+                  disabled={row.days <= 1}
+                  onPress={() => step(index, -1)}
+                >
+                  <Text style={[s.stepText, row.days <= 1 && s.stepTextOff]}>
+                    −
+                  </Text>
+                </TouchableOpacity>
+                <Text style={s.days}>{row.days}일</Text>
+                <TouchableOpacity
+                  hitSlop={touch48(28)}
+                  style={[s.stepBtn, left <= 0 && s.stepBtnOff]}
+                  disabled={left <= 0}
+                  onPress={() => step(index, 1)}
+                >
+                  <Text style={[s.stepText, left <= 0 && s.stepTextOff]}>
+                    ＋
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity hitSlop={8} onPress={() => removeCity(index)}>
+                <Text style={s.remove}>✕</Text>
+              </TouchableOpacity>
+            </View>
+          ))
+        )}
+
+        {rows.length > 0 && (
+          <View style={s.note}>
+            <Text style={[s.noteTitle, left !== 0 && s.noteTitleWarn]}>
+              {left === 0
+                ? `남은 날 없음 · ${totalDays}일을 다 채웠어요`
+                : `${left}일이 남았어요`}
+            </Text>
+            <Text style={s.noteDesc}>
+              빈 날이 있으면 AI가 그날 일정을 못 짜요
+            </Text>
+          </View>
+        )}
+
+        {/* 카테고리별 확정 장소 수 (Func-005-08). 투표가 끝나면 표를 많이 받은
+            순서로 이만큼 일정에 들어간다 */}
+        {rows.length > 0 && (
+          <>
+            <Text style={[s.label, s.countLabel]}>몇 곳씩 갈까요?</Text>
+            <Text style={s.countHint}>
+              투표가 끝나면 표를 많이 받은 곳부터 이만큼 일정에 들어가요
+              {rows.length > 1 ? '. 도시마다 최소 한 곳씩이에요' : ''}
+            </Text>
+
+            {COUNTED_CATEGORIES.map(category => {
+              const value = countOf(category);
+              return (
+                <View key={category} style={s.countRow}>
+                  <Text style={s.countName}>
+                    {CATEGORY_EMOJI[category]} {CATEGORY_LABEL[category]}
+                  </Text>
+                  <View style={s.stepper}>
+                    <TouchableOpacity
+                      hitSlop={touch48(28)}
+                      style={[s.stepBtn, value <= range.min && s.stepBtnOff]}
+                      disabled={value <= range.min}
+                      accessibilityLabel={`${CATEGORY_LABEL[category]} 한 곳 줄이기`}
+                      onPress={() => stepCount(category, -1)}
+                    >
+                      <Text
+                        style={[s.stepText, value <= range.min && s.stepTextOff]}
+                      >
+                        −
+                      </Text>
+                    </TouchableOpacity>
+                    <Text style={s.days}>{value}곳</Text>
+                    <TouchableOpacity
+                      hitSlop={touch48(28)}
+                      style={[s.stepBtn, value >= range.max && s.stepBtnOff]}
+                      disabled={value >= range.max}
+                      accessibilityLabel={`${CATEGORY_LABEL[category]} 한 곳 늘리기`}
+                      onPress={() => stepCount(category, 1)}
+                    >
+                      <Text
+                        style={[s.stepText, value >= range.max && s.stepTextOff]}
+                      >
+                        ＋
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              );
+            })}
+
+            <View style={s.countRow}>
+              <Text style={s.countName}>
+                {CATEGORY_EMOJI.ACCOMMODATION} {CATEGORY_LABEL.ACCOMMODATION}
+              </Text>
+              {/* 서버가 여행 전체 1곳으로 고정한다 */}
+              <Text style={s.countFixed}>1곳 · 여행 내내 같은 곳</Text>
+            </View>
+          </>
+        )}
+      </ScrollView>
+
+      <SafeAreaView edges={['bottom']} style={s.footer}>
+        <TouchableOpacity
+          style={[s.primaryBtn, (!ready || starting) && s.primaryBtnOff]}
+          activeOpacity={0.85}
+          disabled={!ready || starting}
+          onPress={next}
+        >
+          <Text style={s.primaryText}>
+            {starting
+              ? '만드는 중…'
+              : draft.isSolo
+              ? '장소 고르러 가기'
+              : '투표 시작하기'}
+          </Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    </View>
+  );
+};
+
+export default PlanCitiesView;

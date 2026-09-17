@@ -4,6 +4,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import {
   NavigationContainer,
   useNavigationContainerRef,
+  CommonActions,
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
@@ -14,9 +15,6 @@ import TabBar, { TabKey } from './src/widgets/bottom-tab-bar/TabBar';
 
 import LaunchScreen from './src/pages/LaunchScreen/LaunchScreen';
 import LoginView from './src/pages/Auth/LoginView';
-import SignUpView, { SignUpData } from './src/pages/Auth/SingUpView';
-import ConfirmEmail from './src/pages/Auth/ConfirmEmail';
-import ResetPassword from './src/pages/Auth/ResetPassword';
 import PlaceDetailView from './src/pages/PlaceDetailView/PlaceDetailView';
 import type { TourPlace } from './src/entities/main/api';
 import MainView from './src/pages/MainView/MainView';
@@ -24,12 +22,10 @@ import FestivalScreen from './src/pages/FestivalScreen/FestivalScreen';
 import ProfileView from './src/pages/ProfileView/ProfileView';
 import PlannerScreen from './src/pages/PlannerScreen/PlannerScreen';
 import PlanGroupView from './src/pages/PlannerScreen/PlanGroupView';
-import PlanDestinationView from './src/pages/PlannerScreen/PlanDestinationView';
-import PlacePickerView from './src/pages/PlannerScreen/PlacePickerView';
+import PlanPeriodView from './src/pages/PlannerScreen/PlanPeriodView';
+import PlanCitiesView from './src/pages/PlannerScreen/PlanCitiesView';
 import PlaceVoteView from './src/pages/PlannerScreen/PlaceVoteView';
-import PlanCartView from './src/pages/PlannerScreen/PlanCartView';
 import PlanStatusView from './src/pages/PlannerScreen/PlanStatusView';
-import PlanConfirmView from './src/pages/PlannerScreen/PlanConfirmView';
 import type {
   PlaceCategory,
   PlanDraft,
@@ -51,33 +47,20 @@ import RecordCompleteView from './src/pages/RecordView/RecordCompleteView';
 import ProfileEditView from './src/pages/ProfileView/ProfileEditView';
 import WorldMapView from './src/pages/WorldMapView/WorldMapView';
 import CountryRecordView from './src/pages/WorldMapView/CountryRecordView';
-import CountryAcquiredView from './src/pages/WorldMapView/CountryAcquiredView';
-import AchievementView from './src/pages/WorldMapView/AchievementView';
 import type {
-  CountryAcquiredParams,
   VisitedCountry,
 } from './src/entities/worldmap/types';
-import { sampleAcquiredParamsOf } from './src/entities/worldmap/sampleData';
-import { clearTokens } from './src/shared/api/tokenStorage';
 
 export type RootStackParamList = {
   Launch: undefined;
   Login: undefined;
-  SignUp: undefined;
-  ConfirmEmail: {
-    mode: 'signup' | 'resetPassword';
-    signupData?: SignUpData;
-  };
-  ResetPassword: { email: string; resetToken: string };
   Main: undefined;
   Planner: undefined;
   PlanGroup: undefined;
-  PlanDestination: { draft: PlanDraft };
-  PlacePicker: { draft: PlanDraft };
-  PlanCart: { plannerId: number };
+  PlanPeriod: { draft: PlanDraft };
+  PlanCities: { draft: PlanDraft };
   PlaceVote: { planId: number; category?: PlaceCategory };
   PlanStatus: { planId: number };
-  PlanConfirm: { planId: number };
   Notifications: undefined;
   NotificationDetail: { notification: Notification };
   PlaceDetail: { place: TourPlace };
@@ -101,8 +84,6 @@ export type RootStackParamList = {
   ProfileEdit: undefined;
   WorldMap: undefined;
   CountryRecord: { country: VisitedCountry };
-  CountryAcquired: CountryAcquiredParams;
-  Achievement: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -111,28 +92,14 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const AUTH_ROUTES = [
   'Launch',
   'Login',
-  'SignUp',
-  'ConfirmEmail',
-  'Survey',
-  'ResetPassword',
-  'Attendance',
-  'MissionList',
-  'MissionDetail',
-  'MissionVerify',
-  'PostDetail',
-  'PostCreate',
   'RecordEdit',
   'RecordComplete',
   'WorldMap',
   'CountryRecord',
-  'CountryAcquired',
-  'Achievement',
   'PlanGroup',
-  'PlanDestination',
-  'PlacePicker',
-  'PlanCart',
+  'PlanPeriod',
+  'PlanCities',
   'PlaceVote',
-  'PlanConfirm',
   'PhotoDetail',
   'CommentEdit',
   'PhotoDelete',
@@ -236,68 +203,7 @@ function App() {
 
               <Stack.Screen name="Login">
                 {({ navigation }) => (
-                  <LoginView
-                    onLogin={() => navigation.replace('Main')}
-                    onSignup={() => navigation.navigate('SignUp')}
-                    onResetPassword={() =>
-                      navigation.navigate('ConfirmEmail', {
-                        mode: 'resetPassword',
-                      })
-                    }
-                  />
-                )}
-              </Stack.Screen>
-
-              <Stack.Screen name="SignUp">
-                {({ navigation }) => (
-                  <SignUpView
-                    onBack={() => navigation.goBack()}
-                    onNext={data =>
-                      navigation.navigate('ConfirmEmail', {
-                        mode: 'signup',
-                        signupData: data,
-                      })
-                    }
-                  />
-                )}
-              </Stack.Screen>
-
-              <Stack.Screen name="ConfirmEmail">
-                {({ navigation, route }) => {
-                  const mode = route.params?.mode ?? 'signup';
-                  return (
-                    <ConfirmEmail
-                      mode={mode}
-                      onBack={() => navigation.goBack()}
-                      signupData={route.params?.signupData}
-                      onConfirm={(email, resetToken) =>
-                        mode === 'signup'
-                          ? navigation.navigate('Login')
-                          : navigation.navigate('ResetPassword', {
-                              email: email ?? '',
-                              resetToken: resetToken ?? '',
-                            })
-                      }
-                    />
-                  );
-                }}
-              </Stack.Screen>
-
-
-              <Stack.Screen name="ResetPassword">
-                {({ navigation, route }) => (
-                  <ResetPassword
-                    email={route.params?.email ?? ''}
-                    resetToken={route.params?.resetToken ?? ''}
-                    onBack={() => navigation.goBack()}
-                    onConfirm={async () => {
-                      await clearTokens();
-                      navigation.reset({
-                        index: 0,
-                        routes: [{ name: 'Login' }],
-                      });
-                    }}
-                  />
+                  <LoginView onLogin={() => navigation.replace('Main')} />
                 )}
               </Stack.Screen>
 
@@ -318,14 +224,10 @@ function App() {
                 {({ navigation }) => (
                   <PlannerScreen
                     onCreate={() => navigation.navigate('PlanGroup')}
-                    onOpenPlan={(planId, status) => {
-                      // 확정된 계획은 최종 확인 화면, 그 밖에는 진행 현황으로
-                      if (status === 'CONFIRMED') {
-                        navigation.navigate('PlanConfirm', { planId });
-                      } else {
-                        navigation.navigate('PlanStatus', { planId });
-                      }
-                    }}
+                    // 확정 전후 모두 같은 화면이다 (Func-005-06)
+                    onOpenPlan={planId =>
+                      navigation.navigate('PlanStatus', { planId })
+                    }
                   />
                 )}
               </Stack.Screen>
@@ -335,53 +237,59 @@ function App() {
                   <PlanGroupView
                     onBack={() => navigation.goBack()}
                     onNext={draft =>
-                      navigation.navigate('PlanDestination', { draft })
+                      navigation.navigate('PlanPeriod', { draft })
                     }
                   />
                 )}
               </Stack.Screen>
 
-              <Stack.Screen name="PlanDestination">
+              <Stack.Screen name="PlanPeriod">
                 {({ navigation, route }) => (
-                  <PlanDestinationView
+                  <PlanPeriodView
                     draft={route.params.draft}
                     onBack={() => navigation.goBack()}
                     onNext={draft =>
-                      navigation.navigate('PlacePicker', { draft })
+                      navigation.navigate('PlanCities', { draft })
                     }
                   />
                 )}
               </Stack.Screen>
 
-              <Stack.Screen name="PlacePicker">
+              <Stack.Screen name="PlanCities">
                 {({ navigation, route }) => (
-                  <PlacePickerView
+                  <PlanCitiesView
                     draft={route.params.draft}
                     onBack={() => navigation.goBack()}
-                    onPlannerCreated={plannerId =>
+                    onPlannerCreated={plannerId => {
                       navigation.setParams({
                         draft: { ...route.params.draft, plannerId },
-                      })
-                    }
-                    // 플래너는 담을 때 만들어진다. 그때 받은 id 를 쓴다
-                    onOpenCart={plannerId =>
-                      navigation.navigate('PlanCart', { plannerId })
-                    }
-                    onStartVote={planId =>
-                      navigation.navigate('PlaceVote', { planId })
-                    }
-                  />
-                )}
-              </Stack.Screen>
-
-              <Stack.Screen name="PlanCart">
-                {({ navigation, route }) => (
-                  <PlanCartView
-                    plannerId={route.params.plannerId}
-                    onBack={() => navigation.goBack()}
-                    onConfirm={() =>
-                      navigation.navigate('PlanConfirm', {
-                        planId: route.params.plannerId,
+                      });
+                      const period = navigation
+                        .getState()
+                        .routes.find(
+                          (r: { name: string }) => r.name === 'PlanPeriod',
+                        );
+                      if (period) {
+                        navigation.dispatch({
+                          ...CommonActions.setParams({
+                            draft: {
+                              ...(period.params as { draft: PlanDraft }).draft,
+                              plannerId,
+                            },
+                          }),
+                          source: period.key,
+                        });
+                      }
+                    }}
+                    // 마법사는 여기서 끝난다. 뒤로 가서 다시 저장하면 투표가
+                    // 시작된 플래너라 서버가 거부하므로, 목록 위에 투표만 남긴다.
+                    onStart={planId =>
+                      navigation.reset({
+                        index: 1,
+                        routes: [
+                          { name: 'Planner' },
+                          { name: 'PlaceVote', params: { planId } },
+                        ],
                       })
                     }
                   />
@@ -394,9 +302,18 @@ function App() {
                     planId={route.params.planId}
                     category={route.params.category}
                     onBack={() => navigation.goBack()}
+                    // 확정하면 같은 계획 화면이 일정표로 바뀐다. 투표 화면으로
+                    // 돌아가면 이미 확정된 투표를 다시 누르게 되므로 쌓지 않는다
                     onDone={() =>
-                      navigation.navigate('PlanConfirm', {
-                        planId: route.params.planId,
+                      navigation.reset({
+                        index: 1,
+                        routes: [
+                          { name: 'Planner' },
+                          {
+                            name: 'PlanStatus',
+                            params: { planId: route.params.planId },
+                          },
+                        ],
                       })
                     }
                   />
@@ -419,15 +336,6 @@ function App() {
                 )}
               </Stack.Screen>
 
-              <Stack.Screen name="PlanConfirm">
-                {({ navigation, route }) => (
-                  <PlanConfirmView
-                    planId={route.params.planId}
-                    onBack={() => navigation.goBack()}
-                    onStart={() => navigation.navigate('Planner')}
-                  />
-                )}
-              </Stack.Screen>
 
               <Stack.Screen name="Notifications">
                 {({ navigation }) => (
@@ -445,13 +353,14 @@ function App() {
                   <NotificationDetailView
                     notification={route.params.notification}
                     onBack={() => navigation.goBack()}
-                    onOpenLink={(linkType, linkId) => {
-                      // 국가 획득 알림은 축하 화면(E3)으로 바로 보낸다
-                      if (route.params.notification.type === 'COUNTRY_ACQUIRED') {
-                        navigation.navigate(
-                          'CountryAcquired',
-                          sampleAcquiredParamsOf(linkId),
-                        );
+                    onOpenLink={linkType => {
+                      // 새 나라가 지도에 채워졌다는 알림은 지도로 보낸다.
+                      // 예전에는 축하 화면으로 갔는데, 명세가 '획득' 같은 수집
+                      // 표현을 뺐고(Func-006) 그 화면은 예시 데이터로 그려졌다
+                      if (
+                        route.params.notification.type === 'COUNTRY_ACQUIRED'
+                      ) {
+                        navigation.navigate('WorldMap');
                       } else if (linkType === 'VOTE' || linkType === 'GROUP') {
                         // 어느 플래너인지까지는 아직 못 가려서 목록으로 보낸다
                         navigation.navigate('Planner');
@@ -641,7 +550,7 @@ function App() {
                 )}
               </Stack.Screen>
 
-              {/* 세계지도 */}
+              {/* 내가 다녀온 곳 (Func-006) */}
               <Stack.Screen name="WorldMap">
                 {({ navigation }) => (
                   <WorldMapView
@@ -649,7 +558,6 @@ function App() {
                     onOpenCountry={country =>
                       navigation.navigate('CountryRecord', { country })
                     }
-                    onOpenAchievement={() => navigation.navigate('Achievement')}
                   />
                 )}
               </Stack.Screen>
@@ -665,21 +573,6 @@ function App() {
                       navigation.navigate('TripCardDetail', { tripCardId })
                     }
                   />
-                )}
-              </Stack.Screen>
-              <Stack.Screen name="CountryAcquired">
-                {({ navigation, route }) => (
-                  <CountryAcquiredView
-                    params={route.params}
-                    onClose={() => navigation.goBack()}
-                    onOpenCountry={() => navigation.navigate('Record')}
-                    onOpenWorldMap={() => navigation.navigate('WorldMap')}
-                  />
-                )}
-              </Stack.Screen>
-              <Stack.Screen name="Achievement">
-                {({ navigation }) => (
-                  <AchievementView onBack={() => navigation.goBack()} />
                 )}
               </Stack.Screen>
             </Stack.Navigator>

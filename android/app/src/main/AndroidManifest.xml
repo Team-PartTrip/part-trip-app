@@ -27,5 +27,21 @@
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
       </activity>
+
+      <!-- 카카오 로그인 리다이렉트 (kakao{NATIVE_APP_KEY}://oauth).
+           카카오톡 앱이나 브라우저가 로그인을 마치고 이 주소로 돌아온다.
+           targetSdk 31 이상은 exported 를 반드시 true 로 둬야 한다. -->
+      <activity
+        android:name="com.kakao.sdk.auth.AuthCodeHandlerActivity"
+        android:exported="true">
+        <intent-filter>
+          <action android:name="android.intent.action.VIEW" />
+          <category android:name="android.intent.category.DEFAULT" />
+          <category android:name="android.intent.category.BROWSABLE" />
+          <data
+            android:host="oauth"
+            android:scheme="kakao${KAKAO_NATIVE_APP_KEY}" />
+        </intent-filter>
+      </activity>
     </application>
 </manifest>

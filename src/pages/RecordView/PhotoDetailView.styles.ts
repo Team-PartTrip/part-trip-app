@@ -95,7 +95,7 @@ export const photoDetailStyles = StyleSheet.create({
   commentPlaceholder: { color: colors.textTertiary },
   commentBtn: {
     width: 56,
-    height: 36,
+    minHeight: 48,
     marginLeft: 8,
     borderRadius: 8,
     backgroundColor: colors.primary,

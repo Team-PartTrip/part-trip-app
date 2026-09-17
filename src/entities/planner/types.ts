@@ -121,6 +121,15 @@ export interface PopularCity {
   emoji: string;
 }
 
+/** 플래너가 도는 도시 한 곳과 머무는 기간 */
+export interface PlanCity {
+  countryName: string;
+  cityName: string;
+  /** YYYY-MM-DD */
+  startDate: string;
+  endDate: string;
+}
+
 /** 그룹 만들기 ~ 장소 담기까지 화면 사이로 들고 다니는 임시 값 */
 export interface PlanDraft {
   /**
@@ -141,6 +150,13 @@ export interface PlanDraft {
   /** YYYY-MM-DD. 아직 안 고른 단계에서는 빈 문자열 */
   startDate: string;
   endDate: string;
+  /**
+   * 도는 도시들. 여행 기간을 빈틈 없이 이어 덮어야 서버가 받아준다.
+   *
+   * 도시를 한 곳만 고른 여행이면 한 줄이다. countryName / cityName 은
+   * 첫 도시라 그대로 둔다 — 도시 하나만 보던 화면이 안 깨진다.
+   */
+  cities: PlanCity[];
 }
 
 // ── 표시용 헬퍼 ──────────────────────────────────────────────

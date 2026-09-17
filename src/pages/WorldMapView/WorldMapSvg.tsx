@@ -87,7 +87,7 @@ const WorldMapSvg: React.FC<Props> = ({ visitedCodes, width }) => {
             // id 없는 도형이 셋 있어서 id 를 key 로 쓰면 겹친다
             key={i}
             d={shape.d}
-            fill={visited ? colors.primary : colors.inputBg}
+            fill={visited ? colors.primary : colors.mapLand}
             stroke={colors.background}
             // 나라끼리 붙어 있어서 선이 없으면 한 덩어리로 보인다
             strokeWidth={0.5}

@@ -94,7 +94,7 @@ export const tripCardDeleteStyles = StyleSheet.create({
   dangerBtnOff: { backgroundColor: colors.chevron },
   dangerText: { fontSize: 16, fontWeight: '600', color: colors.textOnPrimary },
   cancelBtn: {
-    height: 44,
+    minHeight: 48,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: colors.border,
