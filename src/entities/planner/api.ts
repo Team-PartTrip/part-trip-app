@@ -128,7 +128,10 @@ export interface SaveTravelPlanPayload {
    * 서버는 여행 기간을 빈틈 없이 이어 덮는지 본다. 하루라도 비면 400 이다 —
    * AI 가 그날 어느 도시에서 일정을 짤지 알 수 없기 때문이다.
    */
-  cities?: PlanCity[];
+  cities?: (PlanCity & {
+    /** 카테고리별 확정 장소 수 (#128). 없으면 서버가 일수로 계산한다 */
+    placeCounts?: Partial<Record<PlaceCategory, number>>;
+  })[];
 }
 
 export interface PlannerTravelPlan {
