@@ -36,6 +36,7 @@ export type AppColors = {
   surface: ColorValue;
   surfaceAlt: ColorValue;
   track: ColorValue;
+  mapLand: ColorValue;
   profileBg: ColorValue;
   tagRedBg: ColorValue;
   chevron: ColorValue;
@@ -96,6 +97,9 @@ export const lightColors: AppColors = {
   surface: '#eef2f7', // 탭바 보더 등 연한 회색
   surfaceAlt: '#f2f5f9', // 설명 박스 배경
   track: '#e9eef4', // 진행바 트랙
+  // 지도의 안 가본 땅. 바다(surfaceAlt)와도, 다녀온 나라(primary)와도 구분돼야
+  // 해서 둘의 가운데 명도로 둔다. 둘 다 3:1 은 안 되고 각각 약 2.2:1 이 최대다
+  mapLand: '#9ca9b8',
   profileBg: '#e8eef5', // 프로필 아이콘 배경
   tagRedBg: '#fdecec', // '음식' 태그 배경
 
@@ -160,6 +164,7 @@ export const darkColors: AppColors = {
   surface: '#232b39', // 탭바 보더 등
   surfaceAlt: '#1a2130', // 설명 박스 배경
   track: '#2a3242', // 진행바 트랙
+  mapLand: '#485767', // 지도의 안 가본 땅 (라이트 쪽 설명 참고)
   profileBg: '#2a3446', // 프로필 아이콘 배경
   tagRedBg: '#3a2626', // 태그 배경
 

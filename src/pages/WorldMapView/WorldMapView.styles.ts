@@ -70,8 +70,9 @@ export const worldMapStyles = StyleSheet.create({
   legendDotVisited: {
     backgroundColor: colors.primary,
   },
+  // 지도의 안 가본 땅과 같은 색이어야 범례가 맞는다
   legendDotIdle: {
-    backgroundColor: colors.border,
+    backgroundColor: colors.mapLand,
   },
   legendText: {
     fontSize: 12,
