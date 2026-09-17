@@ -48,13 +48,9 @@ import RecordCompleteView from './src/pages/RecordView/RecordCompleteView';
 import ProfileEditView from './src/pages/ProfileView/ProfileEditView';
 import WorldMapView from './src/pages/WorldMapView/WorldMapView';
 import CountryRecordView from './src/pages/WorldMapView/CountryRecordView';
-import CountryAcquiredView from './src/pages/WorldMapView/CountryAcquiredView';
-import AchievementView from './src/pages/WorldMapView/AchievementView';
 import type {
-  CountryAcquiredParams,
   VisitedCountry,
 } from './src/entities/worldmap/types';
-import { sampleAcquiredParamsOf } from './src/entities/worldmap/sampleData';
 
 export type RootStackParamList = {
   Launch: undefined;
@@ -90,8 +86,6 @@ export type RootStackParamList = {
   ProfileEdit: undefined;
   WorldMap: undefined;
   CountryRecord: { country: VisitedCountry };
-  CountryAcquired: CountryAcquiredParams;
-  Achievement: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -100,19 +94,10 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const AUTH_ROUTES = [
   'Launch',
   'Login',
-  'Survey',
-  'Attendance',
-  'MissionList',
-  'MissionDetail',
-  'MissionVerify',
-  'PostDetail',
-  'PostCreate',
   'RecordEdit',
   'RecordComplete',
   'WorldMap',
   'CountryRecord',
-  'CountryAcquired',
-  'Achievement',
   'PlanGroup',
   'PlanPeriod',
   'PlanCities',
@@ -375,13 +360,14 @@ function App() {
                   <NotificationDetailView
                     notification={route.params.notification}
                     onBack={() => navigation.goBack()}
-                    onOpenLink={(linkType, linkId) => {
-                      // 국가 획득 알림은 축하 화면(E3)으로 바로 보낸다
-                      if (route.params.notification.type === 'COUNTRY_ACQUIRED') {
-                        navigation.navigate(
-                          'CountryAcquired',
-                          sampleAcquiredParamsOf(linkId),
-                        );
+                    onOpenLink={linkType => {
+                      // 새 나라가 지도에 채워졌다는 알림은 지도로 보낸다.
+                      // 예전에는 축하 화면으로 갔는데, 명세가 '획득' 같은 수집
+                      // 표현을 뺐고(Func-006) 그 화면은 예시 데이터로 그려졌다
+                      if (
+                        route.params.notification.type === 'COUNTRY_ACQUIRED'
+                      ) {
+                        navigation.navigate('WorldMap');
                       } else if (linkType === 'VOTE' || linkType === 'GROUP') {
                         // 어느 플래너인지까지는 아직 못 가려서 목록으로 보낸다
                         navigation.navigate('Planner');
@@ -571,7 +557,7 @@ function App() {
                 )}
               </Stack.Screen>
 
-              {/* 세계지도 */}
+              {/* 내가 다녀온 곳 (Func-006) */}
               <Stack.Screen name="WorldMap">
                 {({ navigation }) => (
                   <WorldMapView
@@ -579,7 +565,6 @@ function App() {
                     onOpenCountry={country =>
                       navigation.navigate('CountryRecord', { country })
                     }
-                    onOpenAchievement={() => navigation.navigate('Achievement')}
                   />
                 )}
               </Stack.Screen>
@@ -595,21 +580,6 @@ function App() {
                       navigation.navigate('TripCardDetail', { tripCardId })
                     }
                   />
-                )}
-              </Stack.Screen>
-              <Stack.Screen name="CountryAcquired">
-                {({ navigation, route }) => (
-                  <CountryAcquiredView
-                    params={route.params}
-                    onClose={() => navigation.goBack()}
-                    onOpenCountry={() => navigation.navigate('Record')}
-                    onOpenWorldMap={() => navigation.navigate('WorldMap')}
-                  />
-                )}
-              </Stack.Screen>
-              <Stack.Screen name="Achievement">
-                {({ navigation }) => (
-                  <AchievementView onBack={() => navigation.goBack()} />
                 )}
               </Stack.Screen>
             </Stack.Navigator>

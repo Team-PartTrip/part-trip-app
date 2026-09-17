@@ -48,7 +48,7 @@ export interface WorldMapStats {
   byContinent: ContinentStats[];
 }
 
-/** 대륙별 달성률 (API-006-04) */
+/** 대륙별 다녀온 나라 수 (API-006-04) */
 export function getWorldMapStats(): Promise<WorldMapStats> {
   return authRequest<WorldMapStats>('/api/world-map/stats', { method: 'GET' });
 }
@@ -77,19 +77,6 @@ export function getCountryHistory(
     `/api/world-map/countries/${encodeURIComponent(countryCode)}`,
     { method: 'GET' },
   );
-}
-
-export interface CountryAcquired {
-  countryCode: string;
-  isNew: boolean;
-}
-
-/** 여행 카드로 국가 획득 (API-006-02) */
-export function acquireCountry(tripId: number): Promise<CountryAcquired> {
-  return authRequest<CountryAcquired>('/api/world-map/countries', {
-    method: 'POST',
-    body: { tripId },
-  });
 }
 
 // ── 화면 모양으로 바꾸기 ────────────────────────────────────

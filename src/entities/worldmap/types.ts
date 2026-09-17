@@ -8,7 +8,7 @@ export type ContinentCode = 'AS' | 'EU' | 'NA' | 'SA' | 'OC' | 'AF';
 export interface Continent {
   code: ContinentCode;
   name: string;
-  /** 획득한 국가 수 */
+  /** 다녀온 국가 수 */
   visited: number;
   /** 그 대륙의 전체 국가 수 */
   total: number;
@@ -45,25 +45,6 @@ export interface CountryTripRecord {
   photoCount: number;
 }
 
-/** 국가 획득 축하 화면(E3) 에 필요한 값 */
-export interface CountryAcquiredParams {
-  countryInfoId: number;
-  countryName: string;
-  countryNameEn: string;
-  countryCode: string;
-  /** 몇 번째로 획득한 국가인지 */
-  order: number;
-  /** YYYY-MM-DD */
-  acquiredAt: string;
-  /** 획득의 근거가 된 여행 기록의 도시 */
-  cityName: string;
-  visitCount: number;
-  continentName: string;
-  /** 그 대륙에서 획득한 국가 수 / 전체 국가 수 */
-  continentVisited: number;
-  continentTotal: number;
-}
-
 /** "JP" → 🇯🇵 — 국기 이미지 없이 유니코드 지역표시 기호로 만든다 */
 export function flagOf(countryCode: string): string {
   if (countryCode.length !== 2) {
@@ -88,14 +69,4 @@ export function formatDateRange(start: string, end: string): string {
   const from = start.split('-');
   const to = end.split('-');
   return `${from.join('.')} – ${(from[0] === to[0] ? to.slice(1) : to).join('.')}`;
-}
-
-/** 받침 유무에 따라 목적격 조사를 고른다. "일본" → "을", "대만" → "을", "프랑스" → "를" */
-export function objectParticle(word: string): string {
-  const last = word.charCodeAt(word.length - 1);
-  // 한글 음절이 아니면 판단할 수 없으니 둘 다 적는다
-  if (Number.isNaN(last) || last < 0xac00 || last > 0xd7a3) {
-    return '을(를)';
-  }
-  return (last - 0xac00) % 28 === 0 ? '를' : '을';
 }

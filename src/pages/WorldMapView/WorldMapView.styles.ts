@@ -78,7 +78,7 @@ export const worldMapStyles = StyleSheet.create({
     color: colors.textSecondary,
   },
 
-  // ── 획득한 국가 ──
+  // ── 다녀온 나라 ──
   section: {
     marginTop: 28,
     paddingHorizontal: 24,
@@ -92,11 +92,6 @@ export const worldMapStyles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: colors.textPrimary,
-  },
-  sectionMore: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.primary,
   },
 
   countryRow: {
