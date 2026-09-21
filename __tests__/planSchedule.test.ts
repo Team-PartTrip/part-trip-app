@@ -6,6 +6,8 @@ jest.mock('@react-navigation/native', () => ({ useFocusEffect: jest.fn() }));
 jest.mock('react-native-safe-area-context', () => ({ SafeAreaView: 'View' }));
 
 import {
+  dayLabel,
+  filledCount,
   groupByDay,
   isSchedule,
 } from '../src/pages/PlannerScreen/PlanStatusView';
@@ -52,4 +54,42 @@ test('날짜가 빠진 장소는 사라지지 않고 첫날에 붙는다', () =>
   const days = groupByDay([place(1, '2026-10-02'), place(2)], '2026-10-01');
   expect(days[0].label).toBe('1일차 · 10.01');
   expect(days[0].places.map(p => p.tourPlaceId)).toEqual([2]);
+});
+
+test('며칠차 제목은 시작일부터 센다', () => {
+  expect(dayLabel('2026-10-01', '2026-10-01')).toBe('1일차 · 10.01');
+  expect(dayLabel('2026-10-01', '2026-10-03')).toBe('3일차 · 10.03');
+});
+
+test('빈 칸은 확정할 장소로 세지 않는다', () => {
+  const place = {
+    tourPlaceId: 1,
+    name: '경포대',
+    category: null,
+    categoryLabel: null,
+    imageUrl: null,
+    address: null,
+    rating: null,
+    latitude: null,
+    longitude: null,
+  };
+  const schedule = {
+    plannerId: 1,
+    title: '강릉',
+    cityName: '강릉',
+    startDate: '2026-10-01',
+    endDate: '2026-10-02',
+    days: [
+      {
+        date: '2026-10-01',
+        slots: [
+          { slotId: 1, order: 1, place },
+          { slotId: 2, order: 2, place: null },
+        ],
+      },
+      { date: '2026-10-02', slots: [{ slotId: 3, order: 1, place: null }] },
+    ],
+  };
+  expect(filledCount(schedule)).toBe(1);
+  expect(filledCount(null)).toBe(0);
 });

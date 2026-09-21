@@ -14,10 +14,13 @@ import { planStatusStyles as s } from './PlanStatusView.styles';
 import colors from '../../shared/tokens/colors';
 import {
   ConfirmedPlace,
+  confirmPlanner,
   deletePlanner,
   getConfirmedPlaces,
   getPlanner,
+  getSchedule,
   PlannerDetail,
+  PlannerSchedule,
 } from '../../entities/planner/api';
 import {
   CATEGORY_EMOJI,
@@ -45,6 +48,19 @@ function dayNumber(startDate: string, date: string): number {
   const start = Date.parse(`${startDate}T00:00:00Z`);
   const day = Date.parse(`${date}T00:00:00Z`);
   return Math.max(1, Math.round((day - start) / 86_400_000) + 1);
+}
+
+/** "1일차 · 10.12" */
+export function dayLabel(startDate: string, date: string): string {
+  return `${dayNumber(startDate, date)}일차 · ${formatShortDate(date)}`;
+}
+
+/** 장소를 정한 칸 수. 하나도 없으면 확정해도 여행카드가 비어 서버가 거부한다 */
+export function filledCount(schedule: PlannerSchedule | null): number {
+  return (schedule?.days ?? []).reduce(
+    (sum, day) => sum + day.slots.filter(slot => slot.place).length,
+    0,
+  );
 }
 
 /**
@@ -77,7 +93,7 @@ export function groupByDay(
     .sort((a, b) => a[0].localeCompare(b[0]))
     .map(([date, group]) => ({
       key: date,
-      label: `${dayNumber(startDate, date)}일차 · ${formatShortDate(date)}`,
+      label: dayLabel(startDate, date),
       places: group,
     }));
 }
@@ -92,19 +108,18 @@ interface Props {
 /**
  * 우리 여행 계획 (명세 Func-005-06).
  *
- * 확정되면 일정표가 된다. 확정 전 화면(AI 초안 · 리더 수정)은 서버 #158 ·
- * #131 을 기다린다. 투표는 기획에서 빠졌다(server #161).
+ * 확정 전에는 AI 가 짠 일정 카드(server #158)를 보여주고, 그룹장이 확정하면
+ * 같은 화면이 날짜별 일정표가 된다. 카드 고치기는 서버 #131 을 기다린다.
  */
-const PlanStatusView: React.FC<Props> = ({
-  planId,
-  onBack,
-  onDeleted,
-}) => {
+const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
   const [deleting, setDeleting] = useState(false);
   const [plan, setPlan] = useState<PlannerDetail | null>(null);
   // 확정 후에만 채운다. 확정 전에 부르면 서버가 400 을 준다
   const [schedule, setSchedule] = useState<ConfirmedPlace[] | null>(null);
+  // 확정 전에만 채운다. AI 초안 카드
+  const [draft, setDraft] = useState<PlannerSchedule | null>(null);
   const [loading, setLoading] = useState(true);
+  const [confirming, setConfirming] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -113,12 +128,15 @@ const PlanStatusView: React.FC<Props> = ({
         setLoading(true);
         try {
           const detail = await getPlanner(planId);
-          const final = isSchedule(detail.status)
-            ? await getConfirmedPlaces(planId).catch(() => null)
-            : null;
+          const confirmed = isSchedule(detail.status);
+          const [final, cards] = await Promise.all([
+            confirmed ? getConfirmedPlaces(planId).catch(() => null) : null,
+            confirmed ? null : getSchedule(planId).catch(() => null),
+          ]);
           if (alive) {
             setPlan(detail);
             setSchedule(final?.places ?? null);
+            setDraft(cards);
           }
         } catch {
           if (alive) {
@@ -135,6 +153,40 @@ const PlanStatusView: React.FC<Props> = ({
       };
     }, [planId]),
   );
+
+  // 확정하면 여행카드가 만들어지고 카드를 더 고칠 수 없다. 한 번 묻는다
+  const confirmSchedule = () =>
+    Alert.alert(
+      '이 일정으로 확정할까요?',
+      '확정하면 여행카드가 만들어지고, 일정은 더 고칠 수 없어요.\n빈 칸은 빼고 확정돼요.',
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '확정',
+          onPress: async () => {
+            setConfirming(true);
+            try {
+              await confirmPlanner(planId);
+              // 확정되면 같은 화면이 일정표로 바뀐다
+              const [detail, final] = await Promise.all([
+                getPlanner(planId),
+                getConfirmedPlaces(planId).catch(() => null),
+              ]);
+              setPlan(detail);
+              setSchedule(final?.places ?? null);
+              setDraft(null);
+            } catch (e: any) {
+              Alert.alert(
+                '확정하지 못했어요',
+                e?.message ?? '잠시 후 다시 시도해주세요.',
+              );
+            } finally {
+              setConfirming(false);
+            }
+          },
+        },
+      ],
+    );
 
   // 되돌릴 수 없어서 한 번 묻는다. 서버는 그룹장만 받아준다(API-005-12).
   const confirmDelete = () =>
@@ -296,8 +348,73 @@ const PlanStatusView: React.FC<Props> = ({
             )}
           </View>
         ) : (
-          <View style={s.empty}>
-            <Text style={s.emptyText}>아직 확정된 일정이 없어요</Text>
+          <View style={s.section}>
+            <Text style={s.sectionTitle}>AI가 짠 일정</Text>
+
+            {!draft || draft.days.every(day => day.slots.length === 0) ? (
+              <View style={s.empty}>
+                <Text style={s.emptyText}>
+                  {draft ? '아직 일정이 없어요' : '일정을 불러오지 못했어요'}
+                </Text>
+              </View>
+            ) : (
+              draft.days.map(day => (
+                <View key={day.date}>
+                  <Text style={s.dayTitle}>
+                    {dayLabel(draft.startDate, day.date)}
+                  </Text>
+                  {day.slots.map(slot =>
+                    slot.place ? (
+                      <View key={slot.slotId} style={s.row}>
+                        <View style={s.thumb}>
+                          <Text style={s.thumbEmoji}>
+                            {slot.place.category
+                              ? CATEGORY_EMOJI[slot.place.category]
+                              : '📍'}
+                          </Text>
+                        </View>
+                        <View style={s.rowBody}>
+                          <Text style={s.rowSub}>
+                            {slot.order}번째
+                            {slot.place.categoryLabel
+                              ? ` · ${slot.place.categoryLabel}`
+                              : ''}
+                          </Text>
+                          <Text style={s.rowTitle} numberOfLines={1}>
+                            {slot.place.name}
+                          </Text>
+                        </View>
+                      </View>
+                    ) : (
+                      // 장소를 고르는 + 는 서버 #131 이 들어오면 붙인다
+                      <View key={slot.slotId} style={s.emptySlot}>
+                        <Text style={s.emptySlotText}>
+                          {slot.order}번째 · 비어 있는 칸
+                        </Text>
+                      </View>
+                    ),
+                  )}
+                </View>
+              ))
+            )}
+
+            {plan.role === 'OWNER' && filledCount(draft) > 0 ? (
+              <TouchableOpacity
+                style={s.confirmBtn}
+                activeOpacity={0.85}
+                accessibilityRole="button"
+                disabled={confirming}
+                onPress={confirmSchedule}
+              >
+                {confirming ? (
+                  <ActivityIndicator color={colors.textOnPrimary} />
+                ) : (
+                  <Text style={s.confirmText}>이 일정으로 확정하기</Text>
+                )}
+              </TouchableOpacity>
+            ) : plan.role !== 'OWNER' && filledCount(draft) > 0 ? (
+              <Text style={s.note}>리더가 확정하면 일정표가 돼요.</Text>
+            ) : null}
           </View>
         )}
 

@@ -99,6 +99,34 @@ export const planStatusStyles = StyleSheet.create({
   },
   shareText: { fontSize: 14, fontWeight: '600', color: colors.primary },
 
+  // 장소를 못 정한 칸. 서버 #131 이 들어오면 + 를 붙여 누를 수 있게 한다
+  emptySlot: {
+    minHeight: 56,
+    marginBottom: 10,
+    paddingHorizontal: 16,
+    justifyContent: 'center',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: colors.border,
+  },
+  emptySlotText: { fontSize: 14, color: colors.textSecondary },
+  confirmBtn: {
+    marginTop: 16,
+    minHeight: 54,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
+  },
+  confirmText: { fontSize: 16, fontWeight: '600', color: colors.textOnPrimary },
+  note: {
+    marginTop: 16,
+    fontSize: 14,
+    textAlign: 'center',
+    color: colors.textSecondary,
+  },
+
   // 되돌릴 수 없는 동작이라 화면 맨 아래에 따로 둔다
   deleteBtn: {
     alignSelf: 'center',
