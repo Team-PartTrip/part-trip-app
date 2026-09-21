@@ -111,6 +111,9 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
                 <Text style={s.stepperSign}>＋</Text>
               </TouchableOpacity>
             </View>
+            <Text style={s.soloNote}>
+              함께 갈 사람은 일정을 만든 뒤에 링크로 초대해요.
+            </Text>
           </>
         ) : (
           <Text style={s.soloNote}>

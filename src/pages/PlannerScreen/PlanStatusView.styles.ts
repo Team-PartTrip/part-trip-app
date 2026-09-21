@@ -99,6 +99,19 @@ export const planStatusStyles = StyleSheet.create({
   },
   shareText: { fontSize: 14, fontWeight: '600', color: colors.primary },
 
+  inviteBtn: {
+    marginTop: 4,
+    minHeight: 52,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inviteText: { fontSize: 15, fontWeight: '700', color: colors.primary },
+  removeText: { fontSize: 14, fontWeight: '600', color: colors.danger },
+
   // 장소를 못 정한 칸. 서버 #131 이 들어오면 + 를 붙여 누를 수 있게 한다
   emptySlot: {
     minHeight: 56,

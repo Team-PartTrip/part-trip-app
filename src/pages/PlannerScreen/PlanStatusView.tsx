@@ -10,16 +10,21 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
+import { touch48 } from '../../shared/ui/hitSlop';
 import { planStatusStyles as s } from './PlanStatusView.styles';
 import colors from '../../shared/tokens/colors';
+import MemberAvatar from './MemberAvatar';
 import {
   ConfirmedPlace,
   confirmPlanner,
   deletePlanner,
   getConfirmedPlaces,
   getPlanner,
+  getPlannerMembers,
   getSchedule,
   PlannerDetail,
+  PlannerMember,
+  removePlannerMember,
   PlannerSchedule,
 } from '../../entities/planner/api';
 import {
@@ -120,6 +125,9 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
   const [draft, setDraft] = useState<PlannerSchedule | null>(null);
   const [loading, setLoading] = useState(true);
   const [confirming, setConfirming] = useState(false);
+  const [members, setMembers] = useState<PlannerMember[]>([]);
+  // 내보내는 중인 멤버. 연타로 같은 요청이 두 번 나가는 것을 막는다
+  const [removing, setRemoving] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -129,14 +137,17 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
         try {
           const detail = await getPlanner(planId);
           const confirmed = isSchedule(detail.status);
-          const [final, cards] = await Promise.all([
+          const [final, cards, people] = await Promise.all([
             confirmed ? getConfirmedPlaces(planId).catch(() => null) : null,
             confirmed ? null : getSchedule(planId).catch(() => null),
+            // 초대 링크를 보내고 돌아오면 화면이 다시 포커스되며 새로 받는다
+            getPlannerMembers(planId).catch(() => []),
           ]);
           if (alive) {
             setPlan(detail);
             setSchedule(final?.places ?? null);
             setDraft(cards);
+            setMembers(people);
           }
         } catch {
           if (alive) {
@@ -182,6 +193,51 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
               );
             } finally {
               setConfirming(false);
+            }
+          },
+        },
+      ],
+    );
+
+  // 초안이 나온 뒤에 부른다(명세 Func-005-01). 링크만 보낸다 — 안내 문구를
+  // 붙이면 '복사' 했을 때 문구까지 딸려가 받은 사람이 링크를 떼어내야 한다
+  const invite = async () => {
+    if (!plan?.inviteLink) {
+      Alert.alert(
+        '알림',
+        '초대 링크를 받지 못했어요. 잠시 후 다시 시도해주세요.',
+      );
+      return;
+    }
+    try {
+      await Share.share({ message: plan.inviteLink });
+    } catch {
+      Alert.alert('초대 링크', plan.inviteLink);
+    }
+  };
+
+  // 되돌릴 수 없어서 한 번 묻는다. 서버는 그룹장만 받아준다(API-005-22)
+  const confirmRemove = (member: PlannerMember) =>
+    Alert.alert(
+      '멤버 내보내기',
+      `${member.nickName}님을 내보낼까요?\n다시 들어오려면 초대가 필요해요.`,
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '내보내기',
+          style: 'destructive',
+          onPress: async () => {
+            setRemoving(member.userId);
+            try {
+              await removePlannerMember(planId, member.userId);
+              setMembers(prev => prev.filter(m => m.userId !== member.userId));
+            } catch (e: any) {
+              Alert.alert(
+                '내보내지 못했어요',
+                e?.message ?? '잠시 후 다시 시도해주세요.',
+              );
+            } finally {
+              setRemoving(null);
             }
           },
         },
@@ -295,9 +351,58 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
             {plan.startDate && plan.endDate
               ? `${formatRange(plan.startDate, plan.endDate)} · `
               : ''}
-            {plan.joinedMemberCount}/{plan.memberCount}명
+            {members.length || plan.joinedMemberCount}/{plan.memberCount}명
           </Text>
         </SafeAreaView>
+
+        {/* 혼자 여행이면 초대할 사람이 없다 */}
+        {plan.memberCount > 1 && (
+          <View style={s.section}>
+            <Text style={s.sectionTitle}>
+              함께할 사람 {members.length}/{plan.memberCount}명
+            </Text>
+            {members.map((member, i) => (
+              <View key={member.userId} style={s.row}>
+                <MemberAvatar nickname={member.nickName} index={i} size={36} />
+                <View style={s.rowBody}>
+                  <Text style={s.rowTitle}>{member.nickName}</Text>
+                  <Text style={s.rowSub}>
+                    {member.role === 'OWNER' ? '리더' : '참여 완료'}
+                  </Text>
+                </View>
+                {/* 그룹장만 내보낸다. 자기 자신 줄에는 안 보인다. 참여는 확정 전까지만 받는다 */}
+                {plan.role === 'OWNER' &&
+                  member.role !== 'OWNER' &&
+                  !confirmed && (
+                    <TouchableOpacity
+                      hitSlop={touch48(24)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${member.nickName} 내보내기`}
+                      disabled={removing !== null}
+                      onPress={() => confirmRemove(member)}
+                    >
+                      <Text style={s.removeText}>
+                        {removing === member.userId ? '…' : '내보내기'}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+              </View>
+            ))}
+            {/* 서버는 확정 전(PLANNING)에만, 정원 안에서만 참여를 받는다 */}
+            {plan.role === 'OWNER' &&
+              !confirmed &&
+              members.length < plan.memberCount && (
+                <TouchableOpacity
+                  style={s.inviteBtn}
+                  activeOpacity={0.85}
+                  accessibilityRole="button"
+                  onPress={invite}
+                >
+                  <Text style={s.inviteText}>+ 링크로 초대하기</Text>
+                </TouchableOpacity>
+              )}
+          </View>
+        )}
 
         {confirmed ? (
           <View style={s.section}>
