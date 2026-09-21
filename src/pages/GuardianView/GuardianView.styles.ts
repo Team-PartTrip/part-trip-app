@@ -76,4 +76,36 @@ export const guardianStyles = StyleSheet.create({
   rowTitle: { fontSize: 16, fontWeight: '600', color: colors.text },
   rowSub: { marginTop: 2, fontSize: 13, color: colors.textSecondary },
   unlink: { fontSize: 15, fontWeight: '600', color: colors.danger },
+
+  // ── 보호자 쪽 ──
+  codeInput: {
+    flex: 1,
+    minHeight: 54,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.white,
+    paddingHorizontal: 16,
+    fontSize: 22,
+    fontWeight: '700',
+    letterSpacing: 4,
+    color: colors.textPrimary,
+  },
+  acceptRow: { flexDirection: 'row', gap: 8 },
+  acceptBtn: {
+    minHeight: 54,
+    paddingHorizontal: 18,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
+  },
+  seniorList: { marginTop: 16 },
+  disabled: { opacity: 0.5 },
+  chevron: { fontSize: 16, color: colors.textSecondary },
+
+  locationText: { fontSize: 17, fontWeight: '700', color: colors.text },
+  locationBtn: { marginTop: 16 },
+  refresh: { marginTop: 12, minHeight: 32, justifyContent: 'center' },
+  refreshText: { fontSize: 14, fontWeight: '600', color: colors.primary },
 });

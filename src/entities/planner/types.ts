@@ -107,6 +107,18 @@ export function formatShortDate(date: string): string {
   return date.slice(5).replace('-', '.');
 }
 
+/** 시작일로부터 며칠차인지. 타임존에 안 흔들리게 UTC 로 센다 */
+function dayNumber(startDate: string, date: string): number {
+  const start = Date.parse(`${startDate}T00:00:00Z`);
+  const day = Date.parse(`${date}T00:00:00Z`);
+  return Math.max(1, Math.round((day - start) / 86_400_000) + 1);
+}
+
+/** "1일차 · 10.12" */
+export function dayLabel(startDate: string, date: string): string {
+  return `${dayNumber(startDate, date)}일차 · ${formatShortDate(date)}`;
+}
+
 /** "2026-08-23", "2026-08-27" → "08.23 – 08.27" */
 export function formatRange(startDate: string, endDate: string): string {
   return `${formatShortDate(startDate)} – ${formatShortDate(endDate)}`;

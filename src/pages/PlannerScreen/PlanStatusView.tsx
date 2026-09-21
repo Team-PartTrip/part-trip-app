@@ -14,6 +14,7 @@ import { touch48 } from '../../shared/ui/hitSlop';
 import { planStatusStyles as s } from './PlanStatusView.styles';
 import colors from '../../shared/tokens/colors';
 import MemberAvatar from './MemberAvatar';
+import ScheduleDays from './ScheduleDays';
 import {
   ConfirmedPlace,
   confirmPlanner,
@@ -31,7 +32,7 @@ import {
   CATEGORY_EMOJI,
   CATEGORY_LABEL,
   formatRange,
-  formatShortDate,
+  dayLabel,
   GroupStatus,
   planStatusLabel,
 } from '../../entities/planner/types';
@@ -46,18 +47,6 @@ export interface ScheduleDay {
   /** "1일차 · 10.12". 날짜를 모르면 null 이라 제목을 안 그린다 */
   label: string | null;
   places: ConfirmedPlace[];
-}
-
-/** 시작일로부터 며칠차인지. 타임존에 안 흔들리게 UTC 로 센다 */
-function dayNumber(startDate: string, date: string): number {
-  const start = Date.parse(`${startDate}T00:00:00Z`);
-  const day = Date.parse(`${date}T00:00:00Z`);
-  return Math.max(1, Math.round((day - start) / 86_400_000) + 1);
-}
-
-/** "1일차 · 10.12" */
-export function dayLabel(startDate: string, date: string): string {
-  return `${dayNumber(startDate, date)}일차 · ${formatShortDate(date)}`;
 }
 
 /** 장소를 정한 칸 수. 하나도 없으면 확정해도 여행카드가 비어 서버가 거부한다 */
@@ -463,44 +452,7 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
                 </Text>
               </View>
             ) : (
-              draft.days.map(day => (
-                <View key={day.date}>
-                  <Text style={s.dayTitle}>
-                    {dayLabel(draft.startDate, day.date)}
-                  </Text>
-                  {day.slots.map(slot =>
-                    slot.place ? (
-                      <View key={slot.slotId} style={s.row}>
-                        <View style={s.thumb}>
-                          <Text style={s.thumbEmoji}>
-                            {slot.place.category
-                              ? CATEGORY_EMOJI[slot.place.category]
-                              : '📍'}
-                          </Text>
-                        </View>
-                        <View style={s.rowBody}>
-                          <Text style={s.rowSub}>
-                            {slot.order}번째
-                            {slot.place.categoryLabel
-                              ? ` · ${slot.place.categoryLabel}`
-                              : ''}
-                          </Text>
-                          <Text style={s.rowTitle} numberOfLines={1}>
-                            {slot.place.name}
-                          </Text>
-                        </View>
-                      </View>
-                    ) : (
-                      // 장소를 고르는 + 는 서버 #131 이 들어오면 붙인다
-                      <View key={slot.slotId} style={s.emptySlot}>
-                        <Text style={s.emptySlotText}>
-                          {slot.order}번째 · 비어 있는 칸
-                        </Text>
-                      </View>
-                    ),
-                  )}
-                </View>
-              ))
+              <ScheduleDays schedule={draft} />
             )}
 
             {plan.role === 'OWNER' && filledCount(draft) > 0 ? (

@@ -41,6 +41,7 @@ import RecordEditView from './src/pages/RecordView/RecordEditView';
 import RecordCompleteView from './src/pages/RecordView/RecordCompleteView';
 import ProfileEditView from './src/pages/ProfileView/ProfileEditView';
 import GuardianView from './src/pages/GuardianView/GuardianView';
+import SeniorView from './src/pages/GuardianView/SeniorView';
 import WorldMapView from './src/pages/WorldMapView/WorldMapView';
 import CountryRecordView from './src/pages/WorldMapView/CountryRecordView';
 import type { VisitedCountry } from './src/entities/worldmap/types';
@@ -76,6 +77,7 @@ export type RootStackParamList = {
   Profile: undefined;
   ProfileEdit: undefined;
   Guardian: undefined;
+  Senior: { seniorUserId: string; nickName: string };
   WorldMap: undefined;
   CountryRecord: { country: VisitedCountry };
 };
@@ -114,6 +116,7 @@ const OWN_HEADER_ROUTES = [
   'TripCardEdit',
   'Profile',
   'Guardian',
+  'Senior',
   'Notifications',
   'NotificationDetail',
 ];
@@ -143,6 +146,7 @@ const TAB_BY_ROUTE: Record<string, TabKey> = {
   Profile: 'profile',
   ProfileEdit: 'profile',
   Guardian: 'profile',
+  Senior: 'profile',
 };
 
 function App() {
@@ -499,7 +503,25 @@ function App() {
               {/* 가족 연결 (Func-012) */}
               <Stack.Screen name="Guardian">
                 {({ navigation }) => (
-                  <GuardianView onBack={() => navigation.goBack()} />
+                  <GuardianView
+                    onBack={() => navigation.goBack()}
+                    onOpenSenior={senior =>
+                      navigation.navigate('Senior', {
+                        seniorUserId: senior.userId,
+                        nickName: senior.nickName,
+                      })
+                    }
+                  />
+                )}
+              </Stack.Screen>
+
+              <Stack.Screen name="Senior">
+                {({ navigation, route }) => (
+                  <SeniorView
+                    seniorUserId={route.params.seniorUserId}
+                    nickName={route.params.nickName}
+                    onBack={() => navigation.goBack()}
+                  />
                 )}
               </Stack.Screen>
 

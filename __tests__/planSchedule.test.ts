@@ -5,8 +5,8 @@
 jest.mock('@react-navigation/native', () => ({ useFocusEffect: jest.fn() }));
 jest.mock('react-native-safe-area-context', () => ({ SafeAreaView: 'View' }));
 
+import { dayLabel } from '../src/entities/planner/types';
 import {
-  dayLabel,
   filledCount,
   groupByDay,
   isSchedule,
@@ -62,7 +62,7 @@ test('며칠차 제목은 시작일부터 센다', () => {
 });
 
 test('빈 칸은 확정할 장소로 세지 않는다', () => {
-  const place = {
+  const spot = {
     tourPlaceId: 1,
     name: '경포대',
     category: null,
@@ -83,7 +83,7 @@ test('빈 칸은 확정할 장소로 세지 않는다', () => {
       {
         date: '2026-10-01',
         slots: [
-          { slotId: 1, order: 1, place },
+          { slotId: 1, order: 1, place: spot },
           { slotId: 2, order: 2, place: null },
         ],
       },

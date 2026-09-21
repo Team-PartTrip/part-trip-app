@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Alert,
   Share,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -14,8 +15,10 @@ import { guardianStyles as s } from './GuardianView.styles';
 import colors from '../../shared/tokens/colors';
 import { touch48 } from '../../shared/ui/hitSlop';
 import {
+  acceptGuardianInvite,
   createGuardianInvite,
   getMyGuardians,
+  getMySeniors,
   GuardianInvite,
   GuardianLink,
   unlinkGuardian,
@@ -43,6 +46,8 @@ export function inviteMessage(code: string): string {
 
 interface Props {
   onBack?: () => void;
+  /** 보호자: 시니어의 일정 · 위치 보기 */
+  onOpenSenior?: (senior: GuardianLink) => void;
 }
 
 /**
@@ -51,11 +56,14 @@ interface Props {
  * 시니어가 코드를 만들어 자녀에게 보내면, 자녀가 보호자로 연결되어 일정과
  * 여행 중 위치를 본다. 보호자는 일정을 고칠 수 없다.
  */
-const GuardianView: React.FC<Props> = ({ onBack }) => {
+const GuardianView: React.FC<Props> = ({ onBack, onOpenSenior }) => {
   const [guardians, setGuardians] = useState<GuardianLink[] | null>(null);
   const [invite, setInvite] = useState<GuardianInvite | null>(null);
   const [creating, setCreating] = useState(false);
   const [unlinking, setUnlinking] = useState<number | null>(null);
+  const [seniors, setSeniors] = useState<GuardianLink[] | null>(null);
+  const [code, setCode] = useState('');
+  const [accepting, setAccepting] = useState(false);
 
   // 코드를 보내고 돌아오면 그 사이 연결된 보호자가 보이게 포커스마다 받는다
   useFocusEffect(
@@ -64,6 +72,9 @@ const GuardianView: React.FC<Props> = ({ onBack }) => {
       getMyGuardians()
         .then(list => alive && setGuardians(list))
         .catch(() => alive && setGuardians([]));
+      getMySeniors()
+        .then(list => alive && setSeniors(list))
+        .catch(() => alive && setSeniors([]));
       return () => {
         alive = false;
       };
@@ -98,11 +109,34 @@ const GuardianView: React.FC<Props> = ({ onBack }) => {
     }
   };
 
+  const accept = async () => {
+    if (accepting || code.trim().length < 6) {
+      return;
+    }
+    setAccepting(true);
+    try {
+      const link = await acceptGuardianInvite(code);
+      setCode('');
+      setSeniors(prev => [
+        ...(prev ?? []).filter(s2 => s2.linkId !== link.linkId),
+        link,
+      ]);
+      Alert.alert('연결했어요', `${link.nickName}님의 여행을 볼 수 있어요.`);
+    } catch (e: any) {
+      Alert.alert(
+        '연결하지 못했어요',
+        e?.message ?? '잠시 후 다시 시도해주세요.',
+      );
+    } finally {
+      setAccepting(false);
+    }
+  };
+
   // 끊으면 그 가족은 바로 일정과 위치를 못 본다. 한 번 묻는다
   const confirmUnlink = (link: GuardianLink) =>
     Alert.alert(
       '연결 끊기',
-      `${link.nickName}님과 연결을 끊을까요?\n끊으면 내 일정과 위치를 더 볼 수 없어요.`,
+      `${link.nickName}님과 연결을 끊을까요?\n끊으면 서로의 일정과 위치를 더 볼 수 없어요.`,
       [
         { text: '취소', style: 'cancel' },
         {
@@ -112,7 +146,11 @@ const GuardianView: React.FC<Props> = ({ onBack }) => {
             setUnlinking(link.linkId);
             try {
               await unlinkGuardian(link.linkId);
+              // 시니어 쪽 · 보호자 쪽 어느 목록에서 끊었든 같은 연결이다
               setGuardians(prev =>
+                (prev ?? []).filter(g => g.linkId !== link.linkId),
+              );
+              setSeniors(prev =>
                 (prev ?? []).filter(g => g.linkId !== link.linkId),
               );
             } catch (e: any) {
@@ -216,6 +254,66 @@ const GuardianView: React.FC<Props> = ({ onBack }) => {
             </View>
           ))
         )}
+
+        <Text style={s.section}>내가 보호하는 가족</Text>
+        <Text style={s.lead}>가족에게 받은 6자리 코드를 넣어주세요.</Text>
+        <View style={[s.acceptRow, s.locationBtn]}>
+          <TextInput
+            style={s.codeInput}
+            placeholder="코드 6자리"
+            placeholderTextColor={colors.placeholder}
+            value={code}
+            onChangeText={text => setCode(text.toUpperCase())}
+            autoCapitalize="characters"
+            autoCorrect={false}
+            maxLength={6}
+            accessibilityLabel="보호자 초대 코드"
+          />
+          <TouchableOpacity
+            style={[s.acceptBtn, code.trim().length < 6 && s.disabled]}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            disabled={accepting || code.trim().length < 6}
+            onPress={accept}
+          >
+            {accepting ? (
+              <ActivityIndicator color={colors.textOnPrimary} />
+            ) : (
+              <Text style={s.primaryText}>연결</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        <View style={s.seniorList}>
+          {seniors === null ? (
+            <ActivityIndicator style={s.loading} color={colors.primary} />
+          ) : (
+            seniors.map(link => (
+              <View key={link.linkId} style={s.row}>
+                <TouchableOpacity
+                  style={s.rowBody}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${link.nickName}님의 여행 보기`}
+                  onPress={() => onOpenSenior?.(link)}
+                >
+                  <Text style={s.rowTitle}>{link.nickName}</Text>
+                  <Text style={s.rowSub}>일정 · 위치 보기 ›</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  hitSlop={touch48(24)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${link.nickName}님과 연결 끊기`}
+                  disabled={unlinking !== null}
+                  onPress={() => confirmUnlink(link)}
+                >
+                  <Text style={s.unlink}>
+                    {unlinking === link.linkId ? '…' : '끊기'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ))
+          )}
+        </View>
       </ScrollView>
     </View>
   );
