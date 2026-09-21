@@ -5,12 +5,7 @@
 //
 
 import { authRequest } from '../../shared/api/http';
-import type {
-  GroupRole,
-  GroupStatus,
-  PlaceCategory,
-  PlanCity,
-} from './types';
+import type { GroupRole, GroupStatus, PlaceCategory } from './types';
 
 // ── 플래너 ────────────────────────────────────────────────
 
@@ -38,47 +33,12 @@ export function getPlanners(): Promise<PlannerListItem[]> {
 export interface PlannerDetail extends PlannerListItem {
   /** 초대 링크. 서버가 코드가 아니라 링크로 내려준다(server f248378) */
   inviteLink: string;
-  cities?: PlanCity[];
 }
 
 /** 플래너 상세 (C7 헤더) */
 export function getPlanner(plannerId: number): Promise<PlannerDetail> {
   return authRequest<PlannerDetail>(`/api/planners/${plannerId}`, {
     method: 'GET',
-  });
-}
-
-export interface CreatePlannerPayload {
-  title: string;
-  memberCount: number;
-  /** 혼자 가는 여행이면 true. 그러면 초대 없이 바로 진행한다 */
-  isSolo: boolean;
-  countryName?: string;
-  cityName?: string;
-  startDate?: string;
-  endDate?: string;
-}
-
-export interface PlannerCreated {
-  plannerId: number;
-  title: string;
-  status: GroupStatus;
-  memberCount: number;
-  startDate: string | null;
-  endDate: string | null;
-  countryName: string | null;
-  cityName: string | null;
-  /** 다른 멤버가 참여할 때 여는 초대 링크 */
-  inviteLink: string;
-}
-
-/** 플래너(여행 그룹) 만들기 (C2) */
-export function createPlanner(
-  payload: CreatePlannerPayload,
-): Promise<PlannerCreated> {
-  return authRequest<PlannerCreated>('/api/planners', {
-    method: 'POST',
-    body: payload,
   });
 }
 
@@ -108,47 +68,82 @@ export interface PlannerMember {
 }
 
 /** 플래너 멤버 목록 (C2 · C7) */
-export function getPlannerMembers(
-  plannerId: number,
-): Promise<PlannerMember[]> {
+export function getPlannerMembers(plannerId: number): Promise<PlannerMember[]> {
   return authRequest<PlannerMember[]>(`/api/planners/${plannerId}/members`, {
     method: 'GET',
   });
 }
 
-export interface SaveTravelPlanPayload {
-  countryName: string;
-  cityName: string;
-  startDate: string;
-  endDate: string;
-  /**
-   * 도는 도시들 (C4). 생략하면 countryName / cityName 한 곳만 쓰는 여행이다.
-   *
-   * 서버는 여행 기간을 빈틈 없이 이어 덮는지 본다. 하루라도 비면 400 이다 —
-   * AI 가 그날 어느 도시에서 일정을 짤지 알 수 없기 때문이다.
-   */
-  cities?: PlanCity[];
+/** 블록 한 종류. 서버가 목록을 들고 있고 앱은 받아서 그린다 */
+export interface PlannerBlock {
+  /** 서버 PlannerBlockType. 예) TRAVEL_TYPE */
+  type: string;
+  label: string;
+  /** 여러 값을 같이 고를 수 있는지 */
+  multiple: boolean;
+  /** 고르기 쉽게 보여주는 예시 값 */
+  options: string[];
 }
 
-export interface PlannerTravelPlan {
-  plannerId: number;
-  planId: number;
+/** 블록 목록 (GET /api/planners/blocks) */
+export function getBlocks(): Promise<PlannerBlock[]> {
+  return authRequest<PlannerBlock[]>('/api/planners/blocks', { method: 'GET' });
+}
+
+export interface GeneratePlannerPayload {
   title: string;
-  countryName: string;
+  memberCount: number;
+  isSolo: boolean;
+  /** 국내 도시 · 지역 이름 */
+  cityName: string;
+  /** YYYY-MM-DD. 최대 14일 */
+  startDate: string;
+  endDate: string;
+  blocks: { type: string; value: string }[];
+}
+
+export interface SchedulePlace {
+  tourPlaceId: number;
+  name: string;
+  category: PlaceCategory | null;
+  categoryLabel: string | null;
+  imageUrl: string | null;
+  address: string | null;
+  rating: number | null;
+  latitude: number | null;
+  longitude: number | null;
+}
+
+export interface ScheduleSlot {
+  slotId: number;
+  order: number;
+  /** AI 가 못 채운 칸은 null. 앱은 + 버튼을 띄운다 */
+  place: SchedulePlace | null;
+}
+
+export interface PlannerSchedule {
+  plannerId: number;
+  title: string;
   cityName: string;
   startDate: string;
   endDate: string;
+  days: { date: string; slots: ScheduleSlot[] }[];
 }
 
-/** 여행지 · 기간 정하기 (C3) */
-export function saveTravelPlan(
-  plannerId: number,
-  payload: SaveTravelPlanPayload,
-): Promise<PlannerTravelPlan> {
-  return authRequest<PlannerTravelPlan>(
-    `/api/planners/${plannerId}/travel-plan`,
-    { method: 'PUT', body: payload },
-  );
+export function generatePlanner(
+  payload: GeneratePlannerPayload,
+): Promise<PlannerSchedule> {
+  return authRequest<PlannerSchedule>('/api/planners/generate', {
+    method: 'POST',
+    body: payload,
+  });
+}
+
+/** 날짜별 일정 카드 (GET /api/planners/{id}/schedule) */
+export function getSchedule(plannerId: number): Promise<PlannerSchedule> {
+  return authRequest<PlannerSchedule>(`/api/planners/${plannerId}/schedule`, {
+    method: 'GET',
+  });
 }
 
 /**
@@ -233,22 +228,6 @@ export function deletePlanner(plannerId: number): Promise<void> {
 export function getConfirmedPlaces(plannerId: number): Promise<PlannerFinal> {
   return authRequest<PlannerFinal>(
     `/api/planners/${plannerId}/confirmed-places`,
-    { method: 'GET' },
-  );
-}
-
-/** 인기 여행지 한 줄 (API-005-11). 서버는 이모지를 들고 있지 않다 */
-export interface PopularCityResponse {
-  cityName: string;
-  countryName: string;
-  /** 이 도시로 만들어진 여행 계획 수 */
-  planCount: number;
-}
-
-/** 인기 여행지 (API-005-11) — 여행 계획이 많이 만들어진 도시 순 */
-export function getPopularCities(limit = 8): Promise<PopularCityResponse[]> {
-  return authRequest<PopularCityResponse[]>(
-    `/api/main/popular-cities?limit=${limit}`,
     { method: 'GET' },
   );
 }

@@ -89,49 +89,15 @@ export interface TourPlace {
   rating: number;
 }
 
-/** 인기 여행지(C3) 한 칸 */
-export interface PopularCity {
-  cityName: string;
-  countryName: string;
-  emoji: string;
-}
-
-/** 플래너가 도는 도시 한 곳과 머무는 기간 */
-export interface PlanCity {
-  countryName: string;
-  cityName: string;
-  /** YYYY-MM-DD */
-  startDate: string;
-  endDate: string;
-}
-
 /** 그룹 만들기 ~ 장소 담기까지 화면 사이로 들고 다니는 임시 값 */
+/** 여행 만들기 단계 사이에 넘기는 값. 마지막 단계에서 AI 초안과 함께 플래너가 만들어진다 */
 export interface PlanDraft {
-  /**
-   * 서버에 만들어진 플래너 id. 아직 안 만들었으면 null 이다.
-   *
-   * 예전에는 '다음' 을 누르는 순간 만들었다. 그래서 여행지도 기간도 안 정하고
-   * 나가면 "기간 미정" 플래너가 목록에 남았다. 지금은 마지막 단계에서
-   * "계획 만들기" 를 누를 때 만든다. 초대하기를 먼저 누르면 링크가 필요해서
-   * 그때 만들어지고, 그 뒤로는 이 값을 그대로 쓴다.
-   */
-  plannerId: number | null;
-  /** 아직 안 만들었을 때 만들 재료 */
   title: string;
   isSolo: boolean;
   headcount: number;
-  countryName: string;
-  cityName: string;
   /** YYYY-MM-DD. 아직 안 고른 단계에서는 빈 문자열 */
   startDate: string;
   endDate: string;
-  /**
-   * 도는 도시들. 여행 기간을 빈틈 없이 이어 덮어야 서버가 받아준다.
-   *
-   * 도시를 한 곳만 고른 여행이면 한 줄이다. countryName / cityName 은
-   * 첫 도시라 그대로 둔다 — 도시 하나만 보던 화면이 안 깨진다.
-   */
-  cities: PlanCity[];
 }
 
 // ── 표시용 헬퍼 ──────────────────────────────────────────────

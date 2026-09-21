@@ -4,7 +4,6 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import {
   NavigationContainer,
   useNavigationContainerRef,
-  CommonActions,
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
@@ -23,7 +22,7 @@ import ProfileView from './src/pages/ProfileView/ProfileView';
 import PlannerScreen from './src/pages/PlannerScreen/PlannerScreen';
 import PlanGroupView from './src/pages/PlannerScreen/PlanGroupView';
 import PlanPeriodView from './src/pages/PlannerScreen/PlanPeriodView';
-import PlanCitiesView from './src/pages/PlannerScreen/PlanCitiesView';
+import PlanBlocksView from './src/pages/PlannerScreen/PlanBlocksView';
 import PlanStatusView from './src/pages/PlannerScreen/PlanStatusView';
 import type { PlanDraft } from './src/entities/planner/types';
 import NotificationListView from './src/pages/NotificationView/NotificationListView';
@@ -43,9 +42,7 @@ import RecordCompleteView from './src/pages/RecordView/RecordCompleteView';
 import ProfileEditView from './src/pages/ProfileView/ProfileEditView';
 import WorldMapView from './src/pages/WorldMapView/WorldMapView';
 import CountryRecordView from './src/pages/WorldMapView/CountryRecordView';
-import type {
-  VisitedCountry,
-} from './src/entities/worldmap/types';
+import type { VisitedCountry } from './src/entities/worldmap/types';
 
 export type RootStackParamList = {
   Launch: undefined;
@@ -54,7 +51,7 @@ export type RootStackParamList = {
   Planner: undefined;
   PlanGroup: undefined;
   PlanPeriod: { draft: PlanDraft };
-  PlanCities: { draft: PlanDraft };
+  PlanBlocks: { draft: PlanDraft };
   PlanStatus: { planId: number };
   Notifications: undefined;
   NotificationDetail: { notification: Notification };
@@ -93,7 +90,7 @@ const AUTH_ROUTES = [
   'CountryRecord',
   'PlanGroup',
   'PlanPeriod',
-  'PlanCities',
+  'PlanBlocks',
   'PhotoDetail',
   'CommentEdit',
   'PhotoDelete',
@@ -204,7 +201,9 @@ function App() {
               <Stack.Screen name="Main">
                 {({ navigation }) => (
                   <MainView
-                    onOpenNotifications={() => navigation.navigate('Notifications')}
+                    onOpenNotifications={() =>
+                      navigation.navigate('Notifications')
+                    }
                     onOpenEvents={() => navigation.navigate('Festival')}
                     onOpenPlace={place =>
                       navigation.navigate('PlaceDetail', { place })
@@ -243,41 +242,20 @@ function App() {
                     draft={route.params.draft}
                     onBack={() => navigation.goBack()}
                     onNext={draft =>
-                      navigation.navigate('PlanCities', { draft })
+                      navigation.navigate('PlanBlocks', { draft })
                     }
                   />
                 )}
               </Stack.Screen>
 
-              <Stack.Screen name="PlanCities">
+              <Stack.Screen name="PlanBlocks">
                 {({ navigation, route }) => (
-                  <PlanCitiesView
+                  <PlanBlocksView
                     draft={route.params.draft}
                     onBack={() => navigation.goBack()}
-                    onPlannerCreated={plannerId => {
-                      navigation.setParams({
-                        draft: { ...route.params.draft, plannerId },
-                      });
-                      const period = navigation
-                        .getState()
-                        .routes.find(
-                          (r: { name: string }) => r.name === 'PlanPeriod',
-                        );
-                      if (period) {
-                        navigation.dispatch({
-                          ...CommonActions.setParams({
-                            draft: {
-                              ...(period.params as { draft: PlanDraft }).draft,
-                              plannerId,
-                            },
-                          }),
-                          source: period.key,
-                        });
-                      }
-                    }}
-                    // 마법사는 여기서 끝난다. 뒤로 가서 다시 저장하지 않게
-                    // 목록 위에 계획 화면만 남긴다.
-                    onStart={planId =>
+                    // 마법사는 여기서 끝난다. 뒤로 가서 다시 만들면 플래너가
+                    // 하나 더 생기므로, 목록 위에 계획 화면만 남긴다.
+                    onCreated={planId =>
                       navigation.reset({
                         index: 1,
                         routes: [
@@ -300,13 +278,14 @@ function App() {
                 )}
               </Stack.Screen>
 
-
               <Stack.Screen name="Notifications">
                 {({ navigation }) => (
                   <NotificationListView
                     onBack={() => navigation.goBack()}
                     onOpen={notification =>
-                      navigation.navigate('NotificationDetail', { notification })
+                      navigation.navigate('NotificationDetail', {
+                        notification,
+                      })
                     }
                   />
                 )}
@@ -508,9 +487,7 @@ function App() {
               </Stack.Screen>
               <Stack.Screen name="ProfileEdit">
                 {({ navigation }) => (
-                  <ProfileEditView
-                    onConfirm={() => navigation.goBack()}
-                  />
+                  <ProfileEditView onConfirm={() => navigation.goBack()} />
                 )}
               </Stack.Screen>
 

@@ -8,6 +8,19 @@ import { formatNights, PlanDraft } from '../../entities/planner/types';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
+/** 서버 AI 초안이 받는 최대 기간 (PlannerDraftService.MAX_DAYS) */
+export const MAX_DAYS = 14;
+
+/** 시작일과 종료일을 포함한 일수. 타임존에 안 흔들리게 UTC 로 센다 */
+export function daysBetween(start: string, end: string): number {
+  return (
+    Math.round(
+      (Date.parse(`${end}T00:00:00Z`) - Date.parse(`${start}T00:00:00Z`)) /
+        86_400_000,
+    ) + 1
+  );
+}
+
 function toIso(year: number, monthIndex: number, day: number): string {
   const month = `${monthIndex + 1}`.padStart(2, '0');
   return `${year}-${month}-${`${day}`.padStart(2, '0')}`;
@@ -69,7 +82,6 @@ const PlanPeriodView: React.FC<Props> = ({ draft, onBack, onNext }) => {
         setTakenState('ok');
         setTaken(
           list
-            .filter(p => p.plannerId !== draft.plannerId)
             .filter(p => !!p.startDate && !!p.endDate)
             .map(p => ({
               startDate: p.startDate as string,
@@ -85,7 +97,7 @@ const PlanPeriodView: React.FC<Props> = ({ draft, onBack, onNext }) => {
     return () => {
       alive = false;
     };
-  }, [draft.plannerId]);
+  }, []);
 
   const year = cursor.getFullYear();
   const monthIndex = cursor.getMonth();
@@ -134,6 +146,10 @@ const PlanPeriodView: React.FC<Props> = ({ draft, onBack, onNext }) => {
       date >= startDate &&
       !crossesBlocked(startDate, date, taken)
     ) {
+      if (daysBetween(startDate, date) > MAX_DAYS) {
+        Alert.alert('알림', `여행은 ${MAX_DAYS}일까지 만들 수 있어요.`);
+        return;
+      }
       setEndDate(date);
       return;
     }
@@ -162,15 +178,13 @@ const PlanPeriodView: React.FC<Props> = ({ draft, onBack, onNext }) => {
     if (crossesBlocked(startDate, endDate, taken)) {
       setStartDate('');
       setEndDate('');
-      Alert.alert('알림', '그 기간에 이미 다른 여행이 있어요. 기간을 다시 골라주세요.');
+      Alert.alert(
+        '알림',
+        '그 기간에 이미 다른 여행이 있어요. 기간을 다시 골라주세요.',
+      );
       return;
     }
-    onNext?.({
-      ...draft,
-      startDate,
-      endDate,
-      cities: [],
-    });
+    onNext?.({ ...draft, startDate, endDate });
   };
 
   return (
