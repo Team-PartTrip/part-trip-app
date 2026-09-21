@@ -65,7 +65,7 @@ interface PlannerRow extends PlannerListItem {
   members: PlannerMember[];
 }
 
-/** 상단 띠 · 상태 배지 색. 모집 중은 파랑, 투표/여행 중은 주황, 확정은 초록 */
+/** 상단 띠 · 상태 배지 색. 모집 중은 파랑, 일정 만드는 중/여행 중은 주황, 확정은 초록 */
 function toneOf(status: GroupStatus): ColorValue {
   switch (status) {
     case 'PLANNING':

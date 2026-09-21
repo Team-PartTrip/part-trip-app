@@ -216,7 +216,7 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
       return;
     }
     // 여기서 만들지 않는다. 여행지도 기간도 안 정하고 나가면 "기간 미정"
-    // 플래너가 목록에 남는다. 장소를 실제로 담을 때(투표 시작) 만든다.
+    // 플래너가 목록에 남는다. "계획 만들기"를 누를 때 만든다.
     // 초대하기를 먼저 눌렀다면 이미 만들어져 있고, 그 id 를 그대로 넘긴다.
     onNext?.({
       plannerId: planner?.plannerId ?? null,
@@ -358,7 +358,7 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
           </>
         ) : (
           <Text style={s.soloNote}>
-            혼자 떠나는 여행이라 투표 없이 바로 일정을 만들어요.{'\n'}
+            혼자 떠나는 여행이라 초대 없이 바로 일정을 만들어요.{'\n'}
             나중에 함께할 사람을 초대할 수도 있어요.
           </Text>
         )}

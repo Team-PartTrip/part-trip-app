@@ -60,20 +60,6 @@ export const planCitiesStyles = StyleSheet.create({
   days: { minWidth: 34, fontSize: 13, fontWeight: '700', textAlign: 'center', color: colors.text },
   remove: { fontSize: 14, color: colors.textMuted, paddingHorizontal: 4 },
 
-  // ── 카테고리별 확정 장소 수 ──
-  countLabel: { marginTop: 28 },
-  countHint: { marginTop: -4, marginBottom: 8, fontSize: 12, color: colors.textSecondary },
-  countRow: {
-    minHeight: 52,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
-  },
-  countName: { fontSize: 15, fontWeight: '600', color: colors.text },
-  countFixed: { fontSize: 13, color: colors.textSecondary },
-
   addBtn: {
     height: 52,
     borderRadius: 14,

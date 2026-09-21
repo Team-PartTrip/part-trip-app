@@ -1,7 +1,7 @@
 import { StyleSheet } from 'react-native';
 import colors from '../../shared/tokens/colors';
 
-// 우리 여행 계획 (Func-005-06). 투표 중에는 카테고리별 현황, 확정되면 일정표
+// 우리 여행 계획 (Func-005-06). 확정되면 일정표
 export const planStatusStyles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
   // 탭바가 화면 위에 떠 있다. 32 로는 삭제 버튼이 탭바에 가린다.
@@ -44,20 +44,6 @@ export const planStatusStyles = StyleSheet.create({
   statusText: { fontSize: 11, fontWeight: '500', color: colors.textOnPrimary },
   meta: { marginTop: 8, fontSize: 12, color: colors.textSecondary },
 
-  summaryCard: {
-    marginTop: 36,
-    marginHorizontal: 24,
-    height: 84,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 14,
-    backgroundColor: colors.white,
-  },
-  summaryCol: { flex: 1, alignItems: 'center', gap: 6 },
-  summaryValue: { fontSize: 18, fontWeight: '600' },
-  summaryLabel: { fontSize: 11, fontWeight: '500', color: colors.textSecondary },
-  summaryDivider: { width: 1, height: 40, backgroundColor: colors.border },
-
   section: { marginTop: 24, paddingHorizontal: 24 },
   sectionTitle: {
     marginBottom: 10,
@@ -74,27 +60,9 @@ export const planStatusStyles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: colors.white,
   },
-  dot: { width: 10, height: 10, borderRadius: 5, marginTop: 4 },
   rowBody: { flex: 1, marginLeft: 12 },
   rowTitle: { fontSize: 15, fontWeight: '600', color: colors.text },
   rowSub: { marginTop: 2, fontSize: 12, color: colors.textSecondary },
-  track: {
-    marginTop: 8,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.inputBg,
-    overflow: 'hidden',
-  },
-  fill: { height: 4, borderRadius: 2 },
-  rowPill: {
-    height: 26,
-    paddingHorizontal: 16,
-    borderRadius: 13,
-    backgroundColor: colors.inputBg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  rowPillText: { fontSize: 11, fontWeight: '500' },
 
   // ── 확정된 일정 ──
   dayTitle: {
@@ -131,32 +99,7 @@ export const planStatusStyles = StyleSheet.create({
   },
   shareText: { fontSize: 14, fontWeight: '600', color: colors.primary },
 
-
   // 되돌릴 수 없는 동작이라 화면 맨 아래에 따로 둔다
-  // 독촉은 삭제 위에 놓는다. 파괴적인 버튼이 항상 맨 아래여야 잘못 누르지 않는다.
-  remindBtn: {
-    alignSelf: 'center',
-    marginTop: 32,
-    paddingVertical: 12,
-    paddingHorizontal: 28,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    minWidth: 140,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  remindBtnDisabled: {
-    borderColor: colors.textTertiary,
-  },
-  remindText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.primary,
-  },
-  remindTextDisabled: {
-    color: colors.textTertiary,
-  },
   deleteBtn: {
     alignSelf: 'center',
     marginTop: 16,

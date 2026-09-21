@@ -21,7 +21,7 @@ import {
 
 const FILTERS: { key: 'ALL' | NotificationCategory; label: string }[] = [
   { key: 'ALL', label: '전체' },
-  { key: 'VOTE', label: '투표' },
+  { key: 'VOTE', label: '플래너' },
   { key: 'RECORD', label: '기록' },
 ];
 

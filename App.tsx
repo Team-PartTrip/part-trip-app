@@ -24,12 +24,8 @@ import PlannerScreen from './src/pages/PlannerScreen/PlannerScreen';
 import PlanGroupView from './src/pages/PlannerScreen/PlanGroupView';
 import PlanPeriodView from './src/pages/PlannerScreen/PlanPeriodView';
 import PlanCitiesView from './src/pages/PlannerScreen/PlanCitiesView';
-import PlaceVoteView from './src/pages/PlannerScreen/PlaceVoteView';
 import PlanStatusView from './src/pages/PlannerScreen/PlanStatusView';
-import type {
-  PlaceCategory,
-  PlanDraft,
-} from './src/entities/planner/types';
+import type { PlanDraft } from './src/entities/planner/types';
 import NotificationListView from './src/pages/NotificationView/NotificationListView';
 import NotificationDetailView from './src/pages/NotificationView/NotificationDetailView';
 import type { Notification } from './src/entities/notification/api';
@@ -59,7 +55,6 @@ export type RootStackParamList = {
   PlanGroup: undefined;
   PlanPeriod: { draft: PlanDraft };
   PlanCities: { draft: PlanDraft };
-  PlaceVote: { planId: number; category?: PlaceCategory };
   PlanStatus: { planId: number };
   Notifications: undefined;
   NotificationDetail: { notification: Notification };
@@ -99,7 +94,6 @@ const AUTH_ROUTES = [
   'PlanGroup',
   'PlanPeriod',
   'PlanCities',
-  'PlaceVote',
   'PhotoDetail',
   'CommentEdit',
   'PhotoDelete',
@@ -281,38 +275,14 @@ function App() {
                         });
                       }
                     }}
-                    // 마법사는 여기서 끝난다. 뒤로 가서 다시 저장하면 투표가
-                    // 시작된 플래너라 서버가 거부하므로, 목록 위에 투표만 남긴다.
+                    // 마법사는 여기서 끝난다. 뒤로 가서 다시 저장하지 않게
+                    // 목록 위에 계획 화면만 남긴다.
                     onStart={planId =>
                       navigation.reset({
                         index: 1,
                         routes: [
                           { name: 'Planner' },
-                          { name: 'PlaceVote', params: { planId } },
-                        ],
-                      })
-                    }
-                  />
-                )}
-              </Stack.Screen>
-
-              <Stack.Screen name="PlaceVote">
-                {({ navigation, route }) => (
-                  <PlaceVoteView
-                    planId={route.params.planId}
-                    category={route.params.category}
-                    onBack={() => navigation.goBack()}
-                    // 확정하면 같은 계획 화면이 일정표로 바뀐다. 투표 화면으로
-                    // 돌아가면 이미 확정된 투표를 다시 누르게 되므로 쌓지 않는다
-                    onDone={() =>
-                      navigation.reset({
-                        index: 1,
-                        routes: [
-                          { name: 'Planner' },
-                          {
-                            name: 'PlanStatus',
-                            params: { planId: route.params.planId },
-                          },
+                          { name: 'PlanStatus', params: { planId } },
                         ],
                       })
                     }
@@ -325,12 +295,6 @@ function App() {
                   <PlanStatusView
                     planId={route.params.planId}
                     onBack={() => navigation.goBack()}
-                    onOpenVote={category =>
-                      navigation.navigate('PlaceVote', {
-                        planId: route.params.planId,
-                        category,
-                      })
-                    }
                     onDeleted={() => navigation.navigate('Planner')}
                   />
                 )}

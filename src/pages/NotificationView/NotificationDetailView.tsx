@@ -19,7 +19,7 @@ function formatStamp(iso: string): string {
 
 // 알림을 눌렀을 때 갈 곳. 플래너는 아직 준비 중 화면이다.
 const LINK_LABEL: Record<string, string> = {
-  VOTE: '투표 보러가기',
+  VOTE: '플래너 보러가기',
   GROUP: '그룹 보러가기',
   TRIP_CARD: '여행카드 보러가기',
   RECORD: '기록 보러가기',

@@ -1,7 +1,7 @@
 import { StyleSheet } from 'react-native';
 import colors from '../../shared/tokens/colors';
 
-// 피그마 C1 · Func-008 여행 플래너(투표) — 제목 + 상태 필터 + 계획 카드 목록
+// 피그마 C1 · Func-008 여행 플래너 — 제목 + 상태 필터 + 계획 카드 목록
 export const plannerStyles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
 

@@ -10,7 +10,6 @@ import type {
   GroupStatus,
   PlaceCategory,
   PlanCity,
-  VoteStatus,
 } from './types';
 
 // ── 플래너 ────────────────────────────────────────────────
@@ -128,10 +127,7 @@ export interface SaveTravelPlanPayload {
    * 서버는 여행 기간을 빈틈 없이 이어 덮는지 본다. 하루라도 비면 400 이다 —
    * AI 가 그날 어느 도시에서 일정을 짤지 알 수 없기 때문이다.
    */
-  cities?: (PlanCity & {
-    /** 카테고리별 확정 장소 수 (#128). 없으면 서버가 일수로 계산한다 */
-    placeCounts?: Partial<Record<PlaceCategory, number>>;
-  })[];
+  cities?: PlanCity[];
 }
 
 export interface PlannerTravelPlan {
@@ -155,132 +151,6 @@ export function saveTravelPlan(
   );
 }
 
-// ── 투표 ──────────────────────────────────────────────────
-
-export interface VoteOptionStatus {
-  optionId: number;
-  tourPlaceId: number | null;
-  placeName: string;
-  imageUrl: string | null;
-  address: string | null;
-  rating: number | null;
-  /** 이 후보를 담은 사람 */
-  addedByUserId: string;
-  voteCount: number;
-  /** 내가 이 후보를 골랐는지 */
-  selectedByMe: boolean;
-  confirmed: boolean;
-}
-
-export interface VoteStatusInfo {
-  voteId: number;
-  plannerId: number;
-  category: PlaceCategory;
-  categoryLabel: string;
-  status: VoteStatus;
-  /** ISO-8601. 마감 시각을 안 정했으면 null */
-  deadline: string | null;
-  deadlinePassed: boolean;
-  /** 투표할 수 있는 인원 */
-  eligibleMemberCount: number;
-  /** 실제로 투표한 인원 */
-  votedMemberCount: number;
-  confirmedOptionId: number | null;
-  options: VoteOptionStatus[];
-}
-
-/** 카테고리별 투표 현황 전체 (C7) */
-export function getVotes(plannerId: number): Promise<VoteStatusInfo[]> {
-  return authRequest<VoteStatusInfo[]>(`/api/planners/${plannerId}/votes`, {
-    method: 'GET',
-  });
-}
-
-export interface VoteBallot {
-  voteRecordId: number;
-  voteId: number;
-  optionId: number;
-  placeName: string;
-  changed: boolean;
-  votedAt: string;
-}
-
-export function voteForPlace(
-  plannerId: number,
-  tourPlaceId: number,
-): Promise<VoteBallot> {
-  return authRequest<VoteBallot>(
-    `/api/planners/${plannerId}/places/${tourPlaceId}/ballot`,
-    { method: 'PUT' },
-  );
-}
-
-export function cancelPlaceVote(
-  plannerId: number,
-  tourPlaceId: number,
-): Promise<void> {
-  return authRequest<void>(
-    `/api/planners/${plannerId}/places/${tourPlaceId}/ballot`,
-    { method: 'DELETE' },
-  );
-}
-
-export interface VoteClosed {
-  voteId: number;
-  status: VoteStatus;
-  totalVoteCount: number;
-  highestVoteCount: number;
-  /** 1등이 여럿이면 여러 개가 온다 */
-  topOptionIds: number[];
-  tied: boolean;
-}
-
-/** 투표 마감 (OWNER) */
-export function closeVote(
-  plannerId: number,
-  voteId: number,
-): Promise<VoteClosed> {
-  return authRequest<VoteClosed>(
-    `/api/planners/${plannerId}/votes/${voteId}/close`,
-    { method: 'POST' },
-  );
-}
-
-export interface VoteConfirmed {
-  voteId: number;
-  voteStatus: VoteStatus;
-  confirmedOptionId: number;
-  tourPlaceId: number | null;
-  placeName: string;
-  voteCount: number;
-  /** 모든 투표가 확정되면 플래너 상태도 함께 바뀐다 */
-  plannerStatus: GroupStatus;
-}
-
-/** 최종 후보 확정 (OWNER). 동점이면 optionId 로 하나를 고른다 */
-export function confirmVote(
-  plannerId: number,
-  voteId: number,
-  optionId: number,
-): Promise<VoteConfirmed> {
-  return authRequest<VoteConfirmed>(
-    `/api/planners/${plannerId}/votes/${voteId}/confirm`,
-    { method: 'POST', body: { optionId } },
-  );
-}
-
-/** 후보 빼기 (담은 사람 또는 OWNER) */
-export function deleteVoteOption(
-  plannerId: number,
-  voteId: number,
-  optionId: number,
-): Promise<void> {
-  return authRequest<void>(
-    `/api/planners/${plannerId}/votes/${voteId}/options/${optionId}`,
-    { method: 'DELETE' },
-  );
-}
-
 /**
  * 멤버 내보내기 (API-005-22).
  *
@@ -296,43 +166,27 @@ export function removePlannerMember(
   );
 }
 
-export interface VoteReminder {
-  /** 알림을 받은 사람 수. 전원이 투표를 마쳤으면 0 */
-  notifiedCount: number;
-  message: string;
-}
-
-/**
- * 투표 독촉 알림 (API-005-29).
- *
- * 열린 투표에 아직 참여하지 않은 멤버에게만 알림이 간다.
- * 그룹장만 부를 수 있고, 열린 투표가 없으면 서버가 거부한다.
- */
-export function remindVotes(plannerId: number): Promise<VoteReminder> {
-  return authRequest<VoteReminder>(`/api/planners/${plannerId}/votes/remind`, {
-    method: 'POST',
-  });
-}
-
 // ── 최종 확인 (C8) ────────────────────────────────────────
 
+/**
+ * 확정된 장소 한 곳.
+ *
+ * 서버는 아직 voteId · optionId · voteCount 도 보내지만 투표를 없애면서(server
+ * #161) 사라질 값이라 읽지 않는다. 일정은 서버 #131 의 일정 카드로 옮겨간다.
+ */
 export interface ConfirmedPlace {
-  voteId: number;
   category: PlaceCategory;
   categoryLabel: string;
-  optionId: number;
   tourPlaceId: number | null;
   placeName: string;
   imageUrl: string | null;
   address: string | null;
   rating: number | null;
-  voteCount: number;
   /**
    * 며칠차에 가는 곳인지 (YYYY-MM-DD).
    *
-   * 서버가 카테고리마다 한 곳만 확정하던 동안에는 없던 값이다. 득표순으로
-   * 여러 곳을 확정하면서 날짜가 붙는다. 아직 안 주는 서버도 있어 optional
-   * 로 둔다 — 없으면 화면이 예전처럼 카테고리 순으로 그린다.
+   * 지금 서버(confirmed-places)는 안 준다. 없으면 화면이 날짜 없이 한 목록으로
+   * 그린다.
    */
   visitedDate?: string | null;
 }
@@ -356,35 +210,19 @@ export interface PlannerConfirmed {
 }
 
 /**
- * 일정 확정 (API-005-09).
- *
- * 열린 투표를 모두 마감·확정하고 여행 카드를 만든다.
- * 방장만 부를 수 있고, 담긴 장소가 하나도 없으면 서버가 거부한다.
+ * 일정 확정 (API-005-09). 여행 카드를 만든다.
+ * 방장만 부를 수 있고, 장소가 하나도 없으면 서버가 거부한다.
  */
-export interface VoteSelection {
-  voteId: number;
-  optionId: number;
-}
-
-export function confirmPlanner(
-  plannerId: number,
-  selections?: VoteSelection[],
-): Promise<PlannerConfirmed> {
-  return authRequest<PlannerConfirmed>(
-    `/api/planners/${plannerId}/confirm`,
-    {
-      method: 'POST',
-      // 지정하지 않은 투표는 서버가 득표순으로 확정한다.
-      // 빈 배열을 보내면 안 되는 것은 아니지만, 본문을 생략하는 쪽이 맞다.
-      body: selections && selections.length > 0 ? { selections } : undefined,
-    },
-  );
+export function confirmPlanner(plannerId: number): Promise<PlannerConfirmed> {
+  return authRequest<PlannerConfirmed>(`/api/planners/${plannerId}/confirm`, {
+    method: 'POST',
+  });
 }
 
 /**
  * 플래너 삭제 (API-005-12).
  *
- * 그룹장만 부를 수 있다. 투표·멤버·초대까지 함께 지워진다.
+ * 그룹장만 부를 수 있다. 멤버·초대까지 함께 지워진다.
  * 확정으로 만들어진 여행 카드는 남고 플래너와의 연결만 끊긴다.
  */
 export function deletePlanner(plannerId: number): Promise<void> {

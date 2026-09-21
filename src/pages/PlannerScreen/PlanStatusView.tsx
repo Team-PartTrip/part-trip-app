@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,6 @@ import {
   Alert,
   Share,
 } from 'react-native';
-import type { ColorValue } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { planStatusStyles as s } from './PlanStatusView.styles';
@@ -18,74 +17,16 @@ import {
   deletePlanner,
   getConfirmedPlaces,
   getPlanner,
-  getVotes,
-  remindVotes,
   PlannerDetail,
-  VoteStatusInfo,
 } from '../../entities/planner/api';
 import {
-  CATEGORIES,
   CATEGORY_EMOJI,
   CATEGORY_LABEL,
   formatRange,
   formatShortDate,
   GroupStatus,
-  PlaceCategory,
   planStatusLabel,
 } from '../../entities/planner/types';
-
-type RowState = 'confirmed' | 'voting' | 'none';
-
-interface CategoryRow {
-  category: PlaceCategory;
-  state: RowState;
-  sub: string;
-  color: ColorValue;
-  /** 진행 막대 비율 0 ~ 1 */
-  ratio: number;
-  pill: string;
-}
-
-function buildRow(
-  category: PlaceCategory,
-  vote: VoteStatusInfo | undefined,
-): CategoryRow {
-  if (!vote || vote.options.length === 0) {
-    return {
-      category,
-      state: 'none',
-      sub: '후보 없음',
-      color: colors.textTertiary,
-      ratio: 0,
-      pill: '미정',
-    };
-  }
-
-  if (vote.status === 'CONFIRMED') {
-    const confirmed = vote.options.find(
-      option => option.optionId === vote.confirmedOptionId,
-    );
-    return {
-      category,
-      state: 'confirmed',
-      sub: confirmed?.placeName ?? '확정됨',
-      color: colors.success,
-      ratio: 1,
-      pill: '확정',
-    };
-  }
-
-  // 몇 명이 투표했는지는 서버가 세어서 내려준다
-  const { votedMemberCount: voted, eligibleMemberCount: total } = vote;
-  return {
-    category,
-    state: 'voting',
-    sub: `투표 중 · ${voted}/${total}`,
-    color: colors.accent,
-    ratio: total > 0 ? voted / total : 0,
-    pill: '진행',
-  };
-}
 
 /** 일정이 확정된 뒤의 상태. 이때부터 이 화면은 일정표가 된다 */
 export function isSchedule(status: GroupStatus): boolean {
@@ -144,7 +85,6 @@ export function groupByDay(
 interface Props {
   planId: number;
   onBack?: () => void;
-  onOpenVote?: (category: PlaceCategory, voteId?: number) => void;
   /** 삭제가 끝나면 목록으로 돌려보낸다. 이 화면은 이미 사라진 플래너를 본다 */
   onDeleted: () => void;
 }
@@ -152,22 +92,16 @@ interface Props {
 /**
  * 우리 여행 계획 (명세 Func-005-06).
  *
- * 투표 중인 항목과 확정된 항목을 한 화면에서 본다. 확정되면 같은 화면이
- * 그대로 일정표가 된다. 예전에는 진행 현황(C7)과 최종 확인(C8)이 따로
- * 있어서, 확정 전후로 다른 화면을 찾아 들어가야 했다.
+ * 확정되면 일정표가 된다. 확정 전 화면(AI 초안 · 리더 수정)은 서버 #158 ·
+ * #131 을 기다린다. 투표는 기획에서 빠졌다(server #161).
  */
 const PlanStatusView: React.FC<Props> = ({
   planId,
   onBack,
-  onOpenVote,
   onDeleted,
 }) => {
   const [deleting, setDeleting] = useState(false);
-  const [reminding, setReminding] = useState(false);
-  // 버튼 disabled 는 렌더 값이라 연타를 다 막지 못한다. 잠금은 ref 로 건다.
-  const remindingRef = useRef(false);
   const [plan, setPlan] = useState<PlannerDetail | null>(null);
-  const [votes, setVotes] = useState<VoteStatusInfo[]>([]);
   // 확정 후에만 채운다. 확정 전에 부르면 서버가 400 을 준다
   const [schedule, setSchedule] = useState<ConfirmedPlace[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -178,16 +112,12 @@ const PlanStatusView: React.FC<Props> = ({
       (async () => {
         setLoading(true);
         try {
-          const [detail, voteList] = await Promise.all([
-            getPlanner(planId),
-            getVotes(planId).catch(() => []),
-          ]);
+          const detail = await getPlanner(planId);
           const final = isSchedule(detail.status)
             ? await getConfirmedPlaces(planId).catch(() => null)
             : null;
           if (alive) {
             setPlan(detail);
-            setVotes(voteList);
             setSchedule(final?.places ?? null);
           }
         } catch {
@@ -212,7 +142,7 @@ const PlanStatusView: React.FC<Props> = ({
       '플래너 삭제',
       `"${
         plan?.title ?? ''
-      }" 을(를) 삭제할까요?\n투표와 멤버도 함께 사라져요. 되돌릴 수 없어요.`,
+      }" 을(를) 삭제할까요?\n멤버와 일정도 함께 사라져요. 되돌릴 수 없어요.`,
       [
         { text: '취소', style: 'cancel' },
         {
@@ -237,28 +167,6 @@ const PlanStatusView: React.FC<Props> = ({
       ],
     );
 
-  // 누를 때마다 팀원 전원에게 알림이 나간다. 요청이 끝날 때까지 잠근다.
-  const handleRemind = async () => {
-    if (remindingRef.current) {
-      return;
-    }
-    remindingRef.current = true;
-    setReminding(true);
-    try {
-      const result = await remindVotes(planId);
-      // 전원이 투표를 마쳤으면 notifiedCount 가 0 이다. 서버 문구를 그대로 쓴다.
-      Alert.alert('투표 독촉', result.message);
-    } catch (e: any) {
-      Alert.alert(
-        '보내지 못했어요',
-        e?.message ?? '잠시 후 다시 시도해주세요.',
-      );
-    } finally {
-      remindingRef.current = false;
-      setReminding(false);
-    }
-  };
-
   if (loading) {
     return (
       <View style={s.safeArea}>
@@ -281,36 +189,6 @@ const PlanStatusView: React.FC<Props> = ({
   }
 
   const confirmed = isSchedule(plan.status);
-
-  // 서버는 열린 투표가 하나도 없으면 독촉을 거부한다(VoteReminderService)
-  const hasOpenVote = votes.some(
-    vote => vote.status === 'OPEN' && !vote.deadlinePassed,
-  );
-
-  const rows = CATEGORIES.map(category =>
-    buildRow(
-      category,
-      votes.find(vote => vote.category === category),
-    ),
-  );
-
-  const summary = [
-    {
-      label: '확정',
-      value: rows.filter(row => row.state === 'confirmed').length,
-      color: colors.success,
-    },
-    {
-      label: '투표 중',
-      value: rows.filter(row => row.state === 'voting').length,
-      color: colors.accent,
-    },
-    {
-      label: '미정',
-      value: rows.filter(row => row.state === 'none').length,
-      color: colors.textTertiary,
-    },
-  ];
 
   const days =
     schedule && plan.startDate ? groupByDay(schedule, plan.startDate) : [];
@@ -385,9 +263,9 @@ const PlanStatusView: React.FC<Props> = ({
               days.map(day => (
                 <View key={day.key}>
                   {!!day.label && <Text style={s.dayTitle}>{day.label}</Text>}
-                  {day.places.map(item => (
-                    // 한 투표에서 여러 곳이 확정되므로 voteId 로는 키가 겹친다
-                    <View key={item.optionId} style={s.row}>
+                  {day.places.map((item, i) => (
+                    // 같은 장소가 다른 날 또 나올 수 있어 순서까지 붙인다
+                    <View key={`${item.tourPlaceId}-${i}`} style={s.row}>
                       <View style={s.thumb}>
                         <Text style={s.thumbEmoji}>
                           {CATEGORY_EMOJI[item.category]}
@@ -399,13 +277,6 @@ const PlanStatusView: React.FC<Props> = ({
                         </Text>
                         <Text style={s.rowTitle} numberOfLines={1}>
                           {item.placeName}
-                        </Text>
-                      </View>
-                      <View style={s.rowPill}>
-                        <Text
-                          style={[s.rowPillText, { color: colors.success }]}
-                        >
-                          {item.voteCount}표
                         </Text>
                       </View>
                     </View>
@@ -425,89 +296,9 @@ const PlanStatusView: React.FC<Props> = ({
             )}
           </View>
         ) : (
-          <>
-            <View style={s.summaryCard}>
-              {summary.map((item, i) => (
-                <React.Fragment key={item.label}>
-                  {i > 0 && <View style={s.summaryDivider} />}
-                  <View style={s.summaryCol}>
-                    <Text style={[s.summaryValue, { color: item.color }]}>
-                      {item.value}
-                    </Text>
-                    <Text style={s.summaryLabel}>{item.label}</Text>
-                  </View>
-                </React.Fragment>
-              ))}
-            </View>
-
-            <View style={s.section}>
-              <Text style={s.sectionTitle}>카테고리별 현황</Text>
-
-              {rows.map(row => (
-                <TouchableOpacity
-                  key={row.category}
-                  style={s.row}
-                  activeOpacity={0.85}
-                  onPress={() =>
-                    onOpenVote?.(
-                      row.category,
-                      votes.find(v => v.category === row.category)?.voteId,
-                    )
-                  }
-                >
-                  <View style={[s.dot, { backgroundColor: row.color }]} />
-                  <View style={s.rowBody}>
-                    <Text style={s.rowTitle}>
-                      {CATEGORY_LABEL[row.category]}
-                    </Text>
-                    <Text style={s.rowSub} numberOfLines={1}>
-                      {row.sub}
-                    </Text>
-                    <View style={s.track}>
-                      <View
-                        style={[
-                          s.fill,
-                          {
-                            width: `${row.ratio * 100}%`,
-                            backgroundColor: row.color,
-                          },
-                        ]}
-                      />
-                    </View>
-                  </View>
-                  <View style={s.rowPill}>
-                    <Text style={[s.rowPillText, { color: row.color }]}>
-                      {row.pill}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </>
-        )}
-
-        {/* 독촉·삭제는 그룹장만 할 수 있다. 멤버에게 보여주면 눌러도 서버가
-            거부하는 버튼이 된다. 독촉은 투표 중에만 의미가 있다. */}
-        {plan.role === 'OWNER' && !confirmed && (
-          <TouchableOpacity
-            style={[s.remindBtn, !hasOpenVote && s.remindBtnDisabled]}
-            activeOpacity={0.85}
-            accessibilityRole="button"
-            accessibilityLabel="투표 독촉하기"
-            // 열린 투표가 없으면 서버가 거부한다. 미리 막는다.
-            disabled={reminding || !hasOpenVote}
-            onPress={handleRemind}
-          >
-            {reminding ? (
-              <ActivityIndicator size="small" color={colors.primary} />
-            ) : (
-              <Text
-                style={[s.remindText, !hasOpenVote && s.remindTextDisabled]}
-              >
-                {hasOpenVote ? '투표 독촉하기' : '진행 중인 투표가 없어요'}
-              </Text>
-            )}
-          </TouchableOpacity>
+          <View style={s.empty}>
+            <Text style={s.emptyText}>아직 확정된 일정이 없어요</Text>
+          </View>
         )}
 
         {plan.role === 'OWNER' && (

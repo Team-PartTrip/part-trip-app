@@ -1,24 +1,18 @@
 // 여행 플래너(Func-008) 타입.
 //
-// 서버 planner 패키지에는 엔티티(TravelGroupEntity · GroupTravelPlanEntity ·
-// VoteEntity · VoteOptionEntity · VoteRecordEntity)만 있고 아직 컨트롤러가 없다.
-// 그래서 세계지도(Func-009)와 같은 방식으로, 필드 이름을 서버 엔티티에 맞춰두고
-// sampleData.ts 로 화면을 그린다. 엔드포인트가 생기면 sampleData 호출만
-// api.ts 로 바꾸면 화면 코드는 그대로 쓸 수 있다.
+// 필드 이름은 서버 planner 패키지에 맞춘다.
 
 /** 서버 GroupStatus */
 export type GroupStatus =
   | 'PLANNING' // 그룹만 만들어진 상태
-  | 'VOTING' // 카테고리별 투표 진행 중
-  | 'CONFIRMED' // 투표가 끝나고 일정이 확정됨
+  // 투표를 없앴지만(server #161) 그 전에 만든 플래너는 아직 이 상태로 온다
+  | 'VOTING'
+  | 'CONFIRMED' // 일정이 확정됨
   | 'TRAVELING'
   | 'DONE';
 
 /** 서버 GroupRole */
 export type GroupRole = 'OWNER' | 'MEMBER';
-
-/** 서버 VoteStatus */
-export type VoteStatus = 'OPEN' | 'CLOSED' | 'CONFIRMED';
 
 /** 서버 TourPlaceCategory */
 export type PlaceCategory =
@@ -85,25 +79,6 @@ export interface TravelPlan {
   members: GroupMember[];
 }
 
-export interface VoteOption {
-  optionId: number;
-  tourPlaceId: number | null;
-  placeName: string;
-  /** 이 후보를 찍은 멤버들. VoteRecordEntity 를 옵션 기준으로 모은 값 */
-  voterIds: string[];
-}
-
-export interface Vote {
-  voteId: number;
-  planId: number;
-  category: PlaceCategory;
-  status: VoteStatus;
-  /** ISO-8601. null 이면 마감 시각을 아직 안 정한 것 */
-  deadline: string | null;
-  confirmedOptionId: number | null;
-  options: VoteOption[];
-}
-
 /** TourPlaceResponseDto 를 화면에서 쓰는 만큼만 옮긴 것 */
 export interface TourPlace {
   tourPlaceId: number;
@@ -136,8 +111,8 @@ export interface PlanDraft {
    * 서버에 만들어진 플래너 id. 아직 안 만들었으면 null 이다.
    *
    * 예전에는 '다음' 을 누르는 순간 만들었다. 그래서 여행지도 기간도 안 정하고
-   * 나가면 "기간 미정" 플래너가 목록에 남았다. 지금은 투표를 시작할 때
-   * (장소를 실제로 담을 때) 만든다. 초대하기를 먼저 누르면 링크가 필요해서
+   * 나가면 "기간 미정" 플래너가 목록에 남았다. 지금은 마지막 단계에서
+   * "계획 만들기" 를 누를 때 만든다. 초대하기를 먼저 누르면 링크가 필요해서
    * 그때 만들어지고, 그 뒤로는 이 값을 그대로 쓴다.
    */
   plannerId: number | null;
@@ -222,7 +197,7 @@ export function planStatusLabel(status: GroupStatus): string {
     case 'PLANNING':
       return '그룹 모집 중';
     case 'VOTING':
-      return '투표 진행 중';
+      return '일정 만드는 중';
     case 'CONFIRMED':
       return '계획 확정';
     case 'TRAVELING':
@@ -230,15 +205,4 @@ export function planStatusLabel(status: GroupStatus): string {
     default:
       return '여행 완료';
   }
-}
-
-/** 투표에 한 번이라도 참여한 멤버 수 */
-export function votedMemberCount(votes: Vote[]): number {
-  const voters = new Set<string>();
-  votes.forEach(vote =>
-    vote.options.forEach(option =>
-      option.voterIds.forEach(userId => voters.add(userId)),
-    ),
-  );
-  return voters.size;
 }
