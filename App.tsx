@@ -42,6 +42,7 @@ import RecordCompleteView from './src/pages/RecordView/RecordCompleteView';
 import ProfileEditView from './src/pages/ProfileView/ProfileEditView';
 import GuardianView from './src/pages/GuardianView/GuardianView';
 import SeniorView from './src/pages/GuardianView/SeniorView';
+import { useLocationSharing } from './src/shared/lib/locationSharing';
 import WorldMapView from './src/pages/WorldMapView/WorldMapView';
 import CountryRecordView from './src/pages/WorldMapView/CountryRecordView';
 import type { VisitedCountry } from './src/entities/worldmap/types';
@@ -155,6 +156,8 @@ function App() {
   const [routeName, setRouteName] = useState<string | undefined>(undefined);
 
   const showChrome = !!routeName && !AUTH_ROUTES.includes(routeName);
+  // 로그인한 화면에서만. 여행 중 · 보호자 있음 · 동의했을 때 위치를 보낸다
+  useLocationSharing(showChrome);
 
   const activeTab =
     routeName && TAB_BY_ROUTE[routeName] ? TAB_BY_ROUTE[routeName] : '';

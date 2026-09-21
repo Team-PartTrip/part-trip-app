@@ -68,7 +68,7 @@
 		<true/>
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>해설 카메라와 주변 명소 추천을 위해 위치 정보가 필요합니다.</string>
+	<string>여행 중 가족(보호자)에게 지금 위치를 알려주고, 사진 위치와 주변 명소를 찾는 데 위치 정보를 사용합니다.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>

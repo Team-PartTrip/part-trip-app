@@ -24,3 +24,8 @@ jest.mock('react-native-image-picker', () => ({
   launchImageLibrary: jest.fn().mockResolvedValue({ didCancel: true }),
   launchCamera: jest.fn().mockResolvedValue({ didCancel: true }),
 }));
+
+jest.mock('@react-native-community/geolocation', () => ({
+  getCurrentPosition: jest.fn(),
+  requestAuthorization: jest.fn(),
+}));

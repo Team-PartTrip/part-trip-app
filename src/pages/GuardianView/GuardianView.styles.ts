@@ -77,6 +77,17 @@ export const guardianStyles = StyleSheet.create({
   rowSub: { marginTop: 2, fontSize: 13, color: colors.textSecondary },
   unlink: { fontSize: 15, fontWeight: '600', color: colors.danger },
 
+  shareRow: {
+    minHeight: 72,
+    marginTop: 6,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderRadius: 14,
+    backgroundColor: colors.white,
+  },
+
   // ── 보호자 쪽 ──
   codeInput: {
     flex: 1,

@@ -93,3 +93,21 @@ export function getSeniorLocation(
     { method: 'GET' },
   );
 }
+
+// ── 여행 중 위치 공유 (server #160) ──────────────────────────────
+
+/** 내 위치 보내기. 오늘이 여행 기간이 아니면 서버가 400 을 준다 */
+export function updateMyLocation(
+  latitude: number,
+  longitude: number,
+): Promise<void> {
+  return authRequest<void>('/api/location', {
+    method: 'PUT',
+    body: { latitude, longitude },
+  });
+}
+
+/** 공유 그만하기. 서버에 남은 위치를 바로 지운다 */
+export function stopSharingLocation(): Promise<void> {
+  return authRequest<void>('/api/location', { method: 'DELETE' });
+}

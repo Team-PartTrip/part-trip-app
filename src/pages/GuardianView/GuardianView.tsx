@@ -8,12 +8,14 @@ import {
   Alert,
   Share,
   TextInput,
+  Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { guardianStyles as s } from './GuardianView.styles';
 import colors from '../../shared/tokens/colors';
 import { touch48 } from '../../shared/ui/hitSlop';
+import { getConsent, setSharing } from '../../shared/lib/locationSharing';
 import {
   acceptGuardianInvite,
   createGuardianInvite,
@@ -64,6 +66,7 @@ const GuardianView: React.FC<Props> = ({ onBack, onOpenSenior }) => {
   const [seniors, setSeniors] = useState<GuardianLink[] | null>(null);
   const [code, setCode] = useState('');
   const [accepting, setAccepting] = useState(false);
+  const [sharing, setSharingOn] = useState(false);
 
   // 코드를 보내고 돌아오면 그 사이 연결된 보호자가 보이게 포커스마다 받는다
   useFocusEffect(
@@ -75,6 +78,7 @@ const GuardianView: React.FC<Props> = ({ onBack, onOpenSenior }) => {
       getMySeniors()
         .then(list => alive && setSeniors(list))
         .catch(() => alive && setSeniors([]));
+      getConsent().then(consent => alive && setSharingOn(consent === 'yes'));
       return () => {
         alive = false;
       };
@@ -107,6 +111,11 @@ const GuardianView: React.FC<Props> = ({ onBack, onOpenSenior }) => {
     } catch {
       Alert.alert('보호자 초대 코드', invite.code);
     }
+  };
+
+  const toggleSharing = (on: boolean) => {
+    setSharingOn(on);
+    setSharing(on);
   };
 
   const accept = async () => {
@@ -253,6 +262,23 @@ const GuardianView: React.FC<Props> = ({ onBack, onOpenSenior }) => {
               </TouchableOpacity>
             </View>
           ))
+        )}
+
+        {!!guardians?.length && (
+          <View style={s.shareRow}>
+            <View style={s.rowBody}>
+              <Text style={s.rowTitle}>여행 중 위치 알려주기</Text>
+              <Text style={s.rowSub}>
+                여행하는 동안, 앱을 켜 둔 동안만 1~2분마다 보내요
+              </Text>
+            </View>
+            <Switch
+              value={sharing}
+              onValueChange={toggleSharing}
+              trackColor={{ true: colors.primary }}
+              accessibilityLabel="여행 중 위치 알려주기"
+            />
+          </View>
         )}
 
         <Text style={s.section}>내가 보호하는 가족</Text>
