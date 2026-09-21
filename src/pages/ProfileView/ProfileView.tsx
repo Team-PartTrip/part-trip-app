@@ -36,6 +36,8 @@ interface Props {
   onOpenNotifications?: () => void;
   onLogout?: () => void;
   onOpenWorldMap?: () => void;
+  /** 가족 연결 (보호자, Func-012) */
+  onOpenGuardian?: () => void;
 }
 
 const ProfileView: React.FC<Props> = ({
@@ -43,6 +45,7 @@ const ProfileView: React.FC<Props> = ({
   onOpenNotifications,
   onLogout,
   onOpenWorldMap,
+  onOpenGuardian,
 }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [stats, setStats] = useState<ProfileStats | null>(null);
@@ -114,7 +117,10 @@ const ProfileView: React.FC<Props> = ({
 
   return (
     <View style={s.safeArea}>
-      <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={s.content}
+        showsVerticalScrollIndicator={false}
+      >
         <SafeAreaView edges={['top']} style={s.header}>
           <View style={s.headerTop}>
             <Text style={s.headerTitle}>마이</Text>
@@ -147,7 +153,11 @@ const ProfileView: React.FC<Props> = ({
               <Text style={s.handle}>@{profile?.userId ?? ''}</Text>
             </View>
 
-            <TouchableOpacity style={s.editBtn} activeOpacity={0.85} onPress={onEdit}>
+            <TouchableOpacity
+              style={s.editBtn}
+              activeOpacity={0.85}
+              onPress={onEdit}
+            >
               <Text style={s.editBtnText}>프로필 수정</Text>
             </TouchableOpacity>
           </View>
@@ -212,8 +222,22 @@ const ProfileView: React.FC<Props> = ({
           <Text style={s.sectionTitle}>설정</Text>
 
           {/* 여행 타입 · 계정 보안은 뺐다. 프로필 수정은 위 버튼으로 간다 */}
-          <TouchableOpacity style={s.settingsRow} activeOpacity={0.85} onPress={handleLogout}>
-            <Text style={[s.settingsRowText, s.settingsRowDanger]}>로그아웃</Text>
+          <TouchableOpacity
+            style={s.settingsRow}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            onPress={onOpenGuardian}
+          >
+            <Text style={s.settingsRowText}>가족 연결 (보호자)</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={s.settingsRow}
+            activeOpacity={0.85}
+            onPress={handleLogout}
+          >
+            <Text style={[s.settingsRowText, s.settingsRowDanger]}>
+              로그아웃
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

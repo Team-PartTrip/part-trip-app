@@ -40,6 +40,7 @@ import TripCardDeleteView from './src/pages/RecordView/TripCardDeleteView';
 import RecordEditView from './src/pages/RecordView/RecordEditView';
 import RecordCompleteView from './src/pages/RecordView/RecordCompleteView';
 import ProfileEditView from './src/pages/ProfileView/ProfileEditView';
+import GuardianView from './src/pages/GuardianView/GuardianView';
 import WorldMapView from './src/pages/WorldMapView/WorldMapView';
 import CountryRecordView from './src/pages/WorldMapView/CountryRecordView';
 import type { VisitedCountry } from './src/entities/worldmap/types';
@@ -74,6 +75,7 @@ export type RootStackParamList = {
   RecordComplete: undefined;
   Profile: undefined;
   ProfileEdit: undefined;
+  Guardian: undefined;
   WorldMap: undefined;
   CountryRecord: { country: VisitedCountry };
 };
@@ -111,6 +113,7 @@ const OWN_HEADER_ROUTES = [
   'TripCardDetail',
   'TripCardEdit',
   'Profile',
+  'Guardian',
   'Notifications',
   'NotificationDetail',
 ];
@@ -139,6 +142,7 @@ const TAB_BY_ROUTE: Record<string, TabKey> = {
   TripCardEdit: 'record',
   Profile: 'profile',
   ProfileEdit: 'profile',
+  Guardian: 'profile',
 };
 
 function App() {
@@ -476,6 +480,7 @@ function App() {
                     }
                     onEdit={() => navigation.navigate('ProfileEdit')}
                     onOpenWorldMap={() => navigation.navigate('WorldMap')}
+                    onOpenGuardian={() => navigation.navigate('Guardian')}
                     onLogout={() =>
                       navigation.reset({
                         index: 0,
@@ -488,6 +493,13 @@ function App() {
               <Stack.Screen name="ProfileEdit">
                 {({ navigation }) => (
                   <ProfileEditView onConfirm={() => navigation.goBack()} />
+                )}
+              </Stack.Screen>
+
+              {/* 가족 연결 (Func-012) */}
+              <Stack.Screen name="Guardian">
+                {({ navigation }) => (
+                  <GuardianView onBack={() => navigation.goBack()} />
                 )}
               </Stack.Screen>
 
