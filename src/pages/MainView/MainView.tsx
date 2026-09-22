@@ -19,6 +19,7 @@ import {
   TourPlace,
 } from '../../entities/main/api';
 import { getUnreadCount } from '../../entities/notification/api';
+import type { SchedulePlace, ScheduleSlot } from '../../entities/planner/api';
 import { toImageUrl } from '../../shared/api/image';
 import { BellIcon, CalendarIcon } from '../../shared/ui/icons';
 import colors from '../../shared/tokens/colors';
@@ -66,7 +67,8 @@ function pickRecommendations(places: TourPlace[], count: number): TourPlace[] {
  */
 function heroImageOf(places: TourPlace[]): string | null {
   const withImage = places.filter(place => place.imageUrl);
-  const picked = withImage.find(place => place.category === '명소') ?? withImage[0];
+  const picked =
+    withImage.find(place => place.category === '명소') ?? withImage[0];
   return picked?.imageUrl ? toImageUrl(picked.imageUrl) : null;
 }
 
@@ -103,6 +105,15 @@ type TripDday = DdayInfo & {
   startDate: string;
   endDate: string;
 };
+
+/** 오늘 카드 중 장소를 정한 것만. 빈 칸은 갈 곳이 아니다 */
+export function todayPlaces(
+  slots: DdayInfo['todaySchedule'],
+): (ScheduleSlot & { place: SchedulePlace })[] {
+  return (slots ?? []).filter(
+    (slot): slot is ScheduleSlot & { place: SchedulePlace } => !!slot.place,
+  );
+}
 
 export function hasTrip(dday: DdayInfo | null): dday is TripDday {
   if (!dday || !dday.startDate || !dday.endDate) {
@@ -219,48 +230,70 @@ const MainView: React.FC<MainViewProps> = ({
           {/* 사진 위에서도 흰 글씨가 읽히게 어둡게 덮는다 */}
           {!!hero && <View style={s.headerScrim} />}
           <SafeAreaView edges={['top']} style={s.header}>
-          <View style={s.headerTop}>
-            {/* 헤더가 파란 배경이라 흰색 로고를 쓴다 */}
-            <Image
-              source={require('../../shared/assets/images/logo-white.png')}
-              style={s.brand}
-              resizeMode="contain"
-              accessibilityRole="image"
-              accessibilityLabel="PartTrip"
-            />
-            <View style={s.headerActions}>
-              <TouchableOpacity
-                hitSlop={touch48(32)}
-                style={s.circleBtn}
-                activeOpacity={0.85}
-                disabled={!onOpenNotifications}
-                onPress={onOpenNotifications}
-                // 아이콘만 있는 버튼이라 읽어줄 글자가 없다
-                accessibilityRole="button"
-                accessibilityLabel={
-                  unread > 0 ? `알림 ${unread}건` : '알림'
-                }
-              >
-                <BellIcon size={17} color={colors.primary} />
-                {unread > 0 && <View style={s.badge} />}
-              </TouchableOpacity>
+            <View style={s.headerTop}>
+              {/* 헤더가 파란 배경이라 흰색 로고를 쓴다 */}
+              <Image
+                source={require('../../shared/assets/images/logo-white.png')}
+                style={s.brand}
+                resizeMode="contain"
+                accessibilityRole="image"
+                accessibilityLabel="PartTrip"
+              />
+              <View style={s.headerActions}>
+                <TouchableOpacity
+                  hitSlop={touch48(32)}
+                  style={s.circleBtn}
+                  activeOpacity={0.85}
+                  disabled={!onOpenNotifications}
+                  onPress={onOpenNotifications}
+                  // 아이콘만 있는 버튼이라 읽어줄 글자가 없다
+                  accessibilityRole="button"
+                  accessibilityLabel={unread > 0 ? `알림 ${unread}건` : '알림'}
+                >
+                  <BellIcon size={17} color={colors.primary} />
+                  {unread > 0 && <View style={s.badge} />}
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
 
-          {/* Func-002-01 은 D-day 를 보여주기만 한다. 누르는 동작은 없다 */}
-          <View>
-            <Text style={s.eyebrow}>다가오는 여행</Text>
-            <Text style={s.dday}>{dday.dday}</Text>
-            <Text style={s.tripTitle}>
-              {nights ? `${dday.cityName} · ${nights}` : dday.cityName}
-            </Text>
-            <Text style={s.tripMeta}>
-              {formatRange(dday.startDate, dday.endDate)}
-              {dday.headcount ? ` · ${dday.headcount}명` : ''}
-            </Text>
-          </View>
+            {/* Func-002-01 은 D-day 를 보여주기만 한다. 누르는 동작은 없다 */}
+            <View>
+              <Text style={s.eyebrow}>다가오는 여행</Text>
+              <Text style={s.dday}>{dday.dday}</Text>
+              <Text style={s.tripTitle}>
+                {nights ? `${dday.cityName} · ${nights}` : dday.cityName}
+              </Text>
+              <Text style={s.tripMeta}>
+                {formatRange(dday.startDate, dday.endDate)}
+                {dday.headcount ? ` · ${dday.headcount}명` : ''}
+              </Text>
+            </View>
           </SafeAreaView>
         </ImageBackground>
+
+        {/* 여행 중에는 오늘 갈 곳이 가장 먼저다 (Func-002-02) */}
+        {dday.status === 'DURING' && (
+          <View style={s.today}>
+            <Text style={s.todayTitle}>오늘 갈 곳</Text>
+            {todayPlaces(dday.todaySchedule).length === 0 ? (
+              <Text style={s.todayEmpty}>오늘은 정해진 일정이 없어요</Text>
+            ) : (
+              todayPlaces(dday.todaySchedule).map((slot, i) => (
+                <View key={slot.slotId} style={s.todayRow}>
+                  <View style={s.todayNum}>
+                    <Text style={s.todayNumText}>{i + 1}</Text>
+                  </View>
+                  <View style={s.todayBody}>
+                    <Text style={s.todayName}>{slot.place.name}</Text>
+                    {!!slot.place.categoryLabel && (
+                      <Text style={s.todaySub}>{slot.place.categoryLabel}</Text>
+                    )}
+                  </View>
+                </View>
+              ))
+            )}
+          </View>
+        )}
 
         {/* 축제 · 이벤트 캘린더 (Func-002-03) — 메인에서 들어갈 유일한 입구 */}
         <TouchableOpacity
@@ -291,7 +324,8 @@ const MainView: React.FC<MainViewProps> = ({
                 아직 {dday.countryName} 추천 장소가 없어요
               </Text>
               <Text style={s.noPlacesDesc}>
-                추천 장소가 준비된 여행지를 고르면{'\n'}가볼 만한 곳을 모아서 보여드려요.
+                추천 장소가 준비된 여행지를 고르면{'\n'}가볼 만한 곳을 모아서
+                보여드려요.
               </Text>
             </View>
           ) : (

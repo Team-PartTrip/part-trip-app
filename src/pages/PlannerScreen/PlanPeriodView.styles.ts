@@ -6,7 +6,6 @@ export const planPeriodStyles = StyleSheet.create({
 
   content: { paddingHorizontal: 24, paddingTop: 32, paddingBottom: 24 },
 
-
   label: {
     marginTop: 24,
     marginBottom: 8,
@@ -14,7 +13,6 @@ export const planPeriodStyles = StyleSheet.create({
     fontWeight: '500',
     color: colors.textSecondary,
   },
-
 
   // 달력
   calCard: {
@@ -52,7 +50,12 @@ export const planPeriodStyles = StyleSheet.create({
 
   calWeekend: { color: colors.red },
 
-  calCell: { flex: 1, height: 48, alignItems: 'center', justifyContent: 'center' },
+  calCell: {
+    flex: 1,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 
   dayPill: {
     width: 40,
@@ -73,14 +76,12 @@ export const planPeriodStyles = StyleSheet.create({
   // 누를 수 없다는 걸 눌러보기 전에 알 수 있게
   dayTextPast: { color: colors.placeholder },
 
-
   summary: {
     marginTop: 16,
     fontSize: 11,
     fontWeight: '500',
     color: colors.primary,
   },
-
 
   footer: {
     paddingHorizontal: 24,
@@ -100,6 +101,9 @@ export const planPeriodStyles = StyleSheet.create({
 
   primaryText: { fontSize: 16, fontWeight: '600', color: colors.textOnPrimary },
   dayPillTaken: { backgroundColor: colors.inputBg },
-  dayTextTaken: { color: colors.placeholder, textDecorationLine: 'line-through' },
+  dayTextTaken: {
+    color: colors.placeholder,
+    textDecorationLine: 'line-through',
+  },
   takenNote: { marginTop: 10, fontSize: 11, color: colors.textMuted },
 });

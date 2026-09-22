@@ -91,7 +91,10 @@ export const plannerStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  filterChipOn: { borderColor: colors.primary, backgroundColor: colors.primary },
+  filterChipOn: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primary,
+  },
   filterText: { fontSize: 12, color: colors.textSecondary },
   filterTextOn: { color: colors.textOnPrimary },
 
@@ -149,5 +152,4 @@ export const plannerStyles = StyleSheet.create({
   },
   emptyText: { fontSize: 15, fontWeight: '600', color: colors.text },
   emptyDesc: { fontSize: 12, color: colors.textMuted },
-
 });

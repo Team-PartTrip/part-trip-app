@@ -1,4 +1,5 @@
 import { authRequest } from '../../shared/api/http';
+import type { ScheduleSlot } from '../planner/api';
 
 /** 첫 화면 상태. 문구는 이걸 보고 앱이 정한다 (서버 #141) */
 export type TripPhase = 'NO_TRIP' | 'BEFORE' | 'DURING' | 'ENDED';
@@ -17,6 +18,7 @@ export interface DdayInfo {
   headcount: number | null;
   dday: string;
   status?: TripPhase;
+  todaySchedule?: ScheduleSlot[];
 }
 
 /** D-Day 조회. 일정이 없으면 status 가 'NO_TRIP' 인 응답이 온다 */
@@ -71,12 +73,6 @@ export function getTourPlaces(
     method: 'GET',
   });
 }
-
-
-
-
-
-
 
 export interface MoreTourPlaces {
   /** 새로 받은 장소만 온다. 이미 있던 곳은 빠진다 */

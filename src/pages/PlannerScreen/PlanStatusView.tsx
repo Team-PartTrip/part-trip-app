@@ -15,6 +15,15 @@ import { planStatusStyles as s } from './PlanStatusView.styles';
 import colors from '../../shared/tokens/colors';
 import MemberAvatar from './MemberAvatar';
 import ScheduleDays from './ScheduleDays';
+import { MenuAction, PlacePicker, SlotMenu } from './ScheduleEditModals';
+import {
+  addSlot,
+  moveSlot,
+  removeSlot,
+  setPlace,
+  swapPlaces,
+  toSaveRequest,
+} from '../../entities/planner/scheduleEdit';
 import {
   ConfirmedPlace,
   confirmPlanner,
@@ -27,6 +36,8 @@ import {
   PlannerMember,
   removePlannerMember,
   PlannerSchedule,
+  saveSchedule,
+  ScheduleSlot,
 } from '../../entities/planner/api';
 import {
   CATEGORY_EMOJI,
@@ -117,6 +128,18 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
   const [members, setMembers] = useState<PlannerMember[]>([]);
   // 내보내는 중인 멤버. 연타로 같은 요청이 두 번 나가는 것을 막는다
   const [removing, setRemoving] = useState<string | null>(null);
+  // ── 일정 카드 고치기 (Func-011-03) ──
+  const [saving, setSaving] = useState(false);
+  const [swapping, setSwapping] = useState<number | null>(null);
+  const [scrollLocked, setScrollLocked] = useState(false);
+  const [menu, setMenu] = useState<{
+    title: string;
+    actions: MenuAction[];
+  } | null>(null);
+  const [picking, setPicking] = useState<{
+    slotId: number;
+    date: string;
+  } | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -153,6 +176,70 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
       };
     }, [planId]),
   );
+
+  const applyEdit = async (next: PlannerSchedule) => {
+    const before = draft;
+    setDraft(next);
+    setSaving(true);
+    try {
+      setDraft(await saveSchedule(planId, toSaveRequest(next)));
+    } catch (e: any) {
+      setDraft(before);
+      Alert.alert(
+        '저장하지 못했어요',
+        e?.message ?? '잠시 후 다시 시도해주세요.',
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const openMenu = (
+    slot: ScheduleSlot,
+    date: string,
+    index: number,
+    count: number,
+  ) => {
+    if (!draft) {
+      return;
+    }
+    const actions: MenuAction[] = [];
+    if (index > 0) {
+      actions.push({
+        label: '위로 옮기기',
+        onPress: () => applyEdit(moveSlot(draft, date, index, index - 1)),
+      });
+    }
+    if (index < count - 1) {
+      actions.push({
+        label: '아래로 옮기기',
+        onPress: () => applyEdit(moveSlot(draft, date, index, index + 1)),
+      });
+    }
+    actions.push({
+      label: '다른 칸과 바꾸기',
+      onPress: () => setSwapping(slot.slotId),
+    });
+    if (slot.place) {
+      actions.push({
+        label: '다른 장소로 바꾸기',
+        onPress: () => setPicking({ slotId: slot.slotId, date }),
+      });
+      actions.push({
+        label: '장소 비우기',
+        onPress: () => applyEdit(setPlace(draft, slot.slotId, null)),
+      });
+    }
+    actions.push({
+      label: '칸 지우기',
+      danger: true,
+      onPress: () => applyEdit(removeSlot(draft, slot.slotId)),
+    });
+    setMenu({
+      title: slot.place ? slot.place.name : `${slot.order}번째 빈 칸`,
+      actions,
+    });
+  };
 
   // 확정하면 여행카드가 만들어지고 카드를 더 고칠 수 없다. 한 번 묻는다
   const confirmSchedule = () =>
@@ -316,6 +403,7 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
       <ScrollView
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
+        scrollEnabled={!scrollLocked}
       >
         <SafeAreaView edges={['top']} style={s.header}>
           <TouchableOpacity onPress={onBack} hitSlop={12}>
@@ -445,14 +533,58 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
           <View style={s.section}>
             <Text style={s.sectionTitle}>AI가 짠 일정</Text>
 
-            {!draft || draft.days.every(day => day.slots.length === 0) ? (
+            {plan.role === 'OWNER' && !!draft && (
+              <Text style={s.editHint}>
+                {swapping !== null
+                  ? '바꿀 칸을 눌러주세요'
+                  : '빈 칸을 눌러 장소를 고르고, ≡ 를 끌거나 눌러 옮겨요'}
+              </Text>
+            )}
+            {swapping !== null && (
+              <TouchableOpacity
+                style={s.swapCancel}
+                accessibilityRole="button"
+                onPress={() => setSwapping(null)}
+              >
+                <Text style={s.swapCancelText}>바꾸기 취소</Text>
+              </TouchableOpacity>
+            )}
+
+            {!draft ? (
               <View style={s.empty}>
-                <Text style={s.emptyText}>
-                  {draft ? '아직 일정이 없어요' : '일정을 불러오지 못했어요'}
-                </Text>
+                <Text style={s.emptyText}>일정을 불러오지 못했어요</Text>
+              </View>
+            ) : plan.role !== 'OWNER' &&
+              draft.days.every(day => day.slots.length === 0) ? (
+              <View style={s.empty}>
+                <Text style={s.emptyText}>아직 일정이 없어요</Text>
               </View>
             ) : (
-              <ScheduleDays schedule={draft} />
+              <ScheduleDays
+                schedule={draft}
+                // 리더만 고친다(server #131). 멤버 · 보호자는 보기만
+                edit={
+                  plan.role === 'OWNER'
+                    ? {
+                        disabled: saving,
+                        swapping,
+                        onPick: (slot, date) =>
+                          setPicking({ slotId: slot.slotId, date }),
+                        onMenu: openMenu,
+                        onMove: (date, from, to) =>
+                          applyEdit(moveSlot(draft, date, from, to)),
+                        onSwapTarget: slot => {
+                          if (swapping !== null) {
+                            applyEdit(swapPlaces(draft, swapping, slot.slotId));
+                          }
+                          setSwapping(null);
+                        },
+                        onAdd: date => applyEdit(addSlot(draft, date)),
+                        onDragging: setScrollLocked,
+                      }
+                    : undefined
+                }
+              />
             )}
 
             {plan.role === 'OWNER' && filledCount(draft) > 0 ? (
@@ -492,6 +624,27 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
           </TouchableOpacity>
         )}
       </ScrollView>
+
+      <SlotMenu
+        title={menu?.title ?? null}
+        actions={menu?.actions ?? []}
+        onClose={() => setMenu(null)}
+      />
+      <PlacePicker
+        plannerId={planId}
+        date={picking?.date ?? null}
+        title={
+          picking && draft
+            ? `${dayLabel(draft.startDate, picking.date)} 장소 고르기`
+            : ''
+        }
+        onPick={place => {
+          if (picking && draft) {
+            applyEdit(setPlace(draft, picking.slotId, place));
+          }
+        }}
+        onClose={() => setPicking(null)}
+      />
     </View>
   );
 };

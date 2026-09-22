@@ -44,3 +44,26 @@ describe('hasTrip', () => {
     expect(hasTrip(null)).toBe(false);
   });
 });
+
+test('오늘 갈 곳에는 장소를 정한 칸만 순서대로 나온다', () => {
+  const { todayPlaces } = require('../src/pages/MainView/MainView');
+  const place = {
+    tourPlaceId: 1,
+    name: '경포대',
+    category: null,
+    categoryLabel: null,
+    imageUrl: null,
+    address: null,
+    rating: null,
+    latitude: null,
+    longitude: null,
+  };
+  expect(
+    todayPlaces([
+      { slotId: 2, order: 1, place },
+      { slotId: 3, order: 2, place: null },
+    ]).map((slot: { slotId: number }) => slot.slotId),
+  ).toEqual([2]);
+  // 예전 서버는 todaySchedule 을 안 준다
+  expect(todayPlaces(undefined)).toEqual([]);
+});

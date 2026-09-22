@@ -107,6 +107,38 @@ export const mainStyles = StyleSheet.create({
     color: colors.text,
   },
 
+  today: {
+    marginTop: 20,
+    marginHorizontal: 24,
+    padding: 20,
+    borderRadius: 16,
+    backgroundColor: colors.white,
+  },
+  todayTitle: { fontSize: 22, fontWeight: '700', color: colors.text },
+  todayEmpty: { marginTop: 12, fontSize: 17, color: colors.textSecondary },
+  todayRow: {
+    marginTop: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  todayNum: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
+  },
+  todayNumText: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: colors.textOnPrimary,
+  },
+  todayBody: { flex: 1 },
+  todayName: { fontSize: 20, fontWeight: '700', color: colors.text },
+  todaySub: { marginTop: 2, fontSize: 15, color: colors.textSecondary },
+
   // ── 축제 · 이벤트 캘린더 행 (Func-002-03) ──
   eventRow: {
     marginTop: 20,

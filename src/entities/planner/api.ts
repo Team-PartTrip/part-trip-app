@@ -146,6 +146,37 @@ export function getSchedule(plannerId: number): Promise<PlannerSchedule> {
   });
 }
 
+export interface SaveSchedulePayload {
+  days: {
+    date: string;
+    /** 배열 순서가 카드 순서다. 새 칸은 slotId 가 null, 빈 칸은 tourPlaceId 가 null */
+    slots: { slotId: number | null; tourPlaceId: number | null }[];
+  }[];
+}
+
+export function saveSchedule(
+  plannerId: number,
+  payload: SaveSchedulePayload,
+): Promise<PlannerSchedule> {
+  return authRequest<PlannerSchedule>(`/api/planners/${plannerId}/schedule`, {
+    method: 'PUT',
+    body: payload,
+  });
+}
+
+/** 빈 칸에 넣을 장소 검색. 그날 이미 들어간 곳은 서버가 뺀다 */
+export function getScheduleCandidates(
+  plannerId: number,
+  date: string,
+  query: string,
+): Promise<SchedulePlace[]> {
+  const params = new URLSearchParams({ date, q: query });
+  return authRequest<SchedulePlace[]>(
+    `/api/planners/${plannerId}/schedule/candidates?${params.toString()}`,
+    { method: 'GET' },
+  );
+}
+
 /**
  * 멤버 내보내기 (API-005-22).
  *
