@@ -19,12 +19,12 @@ import {
 } from '../../entities/main/api';
 import { formatShortDate, formatTripRange } from '../../entities/record/types';
 import { toImageUrl } from '../../shared/api/image';
+import { KOREA } from '../../entities/region/regions';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
-/** 날짜와 나라가 모두 있는 여행 일정 ("쉬는 중" 응답을 걸러낸 뒤의 모습) */
+/** 날짜가 있는 여행 일정 ("쉬는 중" 응답을 걸러낸 뒤의 모습) */
 type TripDday = DdayInfo & {
-  countryName: string;
   startDate: string;
   endDate: string;
 };
@@ -95,8 +95,8 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
       try {
         const info = await getDday();
         // 일정이 없으면 서버가 200 으로 "쉬는 중"(전 필드 null)을 준다.
-        // 맞출 달도 물어볼 나라도 없으니 일정 없음으로 둔다.
-        if (!info.startDate || !info.endDate || !info.countryName) {
+        // 맞출 달이 없으니 일정 없음으로 둔다.
+        if (!info.startDate || !info.endDate) {
           setDday(null);
           return;
         }
@@ -142,7 +142,7 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
     // 보통 1~2번이다.
     Promise.all(
       monthsBetween(range.from, range.to).map(month =>
-        getFestivals(dday.countryName, month),
+        getFestivals(KOREA, month),
       ),
     )
       .then(lists => {
@@ -244,7 +244,7 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
           <Text style={s.title}>축제 & 이벤트</Text>
           <Text style={s.subtitle}>
             {dday
-              ? `${dday.countryName} · 여행 기간 앞뒤 1주`
+              ? `${dday.cityName ?? '국내'} · 여행 기간 앞뒤 1주`
               : ddayFailed
               ? '여행 일정을 불러오지 못했어요'
               : '등록된 여행 일정이 없어요'}

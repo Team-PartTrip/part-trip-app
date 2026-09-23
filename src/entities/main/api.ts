@@ -10,7 +10,7 @@ export type TripPhase = 'NO_TRIP' | 'BEFORE' | 'DURING' | 'ENDED';
  * (TravelPlanService.getDday 참고) — 그래서 날짜까지 null 이 될 수 있다.
  */
 export interface DdayInfo {
-  countryName: string | null;
+  regionName: string | null;
   cityName: string | null;
   startDate: string | null;
   endDate: string | null;

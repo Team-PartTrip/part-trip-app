@@ -13,6 +13,7 @@ import { tripCardDetailStyles as s } from './TripCardDetailView.styles';
 import {
   getTripCard,
   getTripCards,
+  placeOf,
   TimelineItem,
   TripCardSummary,
 } from '../../entities/record/api';
@@ -91,7 +92,7 @@ const TripCardDetailView: React.FC<Props> = ({
     }, [tripCardId]),
   );
 
-  const place = card ? `${card.countryName} ${card.cityName}` : '여행';
+  const place = card ? placeOf(card) : '여행';
 
   return (
     <View style={s.safeArea}>
@@ -136,7 +137,7 @@ const TripCardDetailView: React.FC<Props> = ({
                   {(i === 0 || entries[i - 1].date !== entry.date) && (
                     <View style={s.dateBar}>
                       <Text style={s.dateBarText}>
-                        {formatDotDate(entry.date)}  |  {place}
+                        {formatDotDate(entry.date)} | {place}
                       </Text>
                     </View>
                   )}

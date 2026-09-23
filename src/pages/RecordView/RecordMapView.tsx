@@ -21,10 +21,11 @@ import { recordMapStyles as s } from './RecordMapView.styles';
 import {
   getTripCard,
   getTripCards,
+  placeOf,
   TimelineItem,
   TripCardSummary,
 } from '../../entities/record/api';
-import CountryTripMap from './CountryTripMap';
+import { TripRegionMap } from '../RegionMapView/KoreaMapSvg';
 import { formatShortDate } from '../../entities/record/types';
 
 /** 지도에 찍을 한 지점. 위·경도는 지도와 같은 투영을 태워야 해서 그대로 둔다 */
@@ -127,8 +128,7 @@ const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
   const startHeight = useRef(SHEET_COLLAPSED);
 
   const clampSheetHeight = useCallback(
-    (height: number) =>
-      Math.min(SHEET_FULL, Math.max(SHEET_COLLAPSED, height)),
+    (height: number) => Math.min(SHEET_FULL, Math.max(SHEET_COLLAPSED, height)),
     [SHEET_COLLAPSED, SHEET_FULL],
   );
 
@@ -204,7 +204,7 @@ const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
       })),
     [spots],
   );
-  const place = card ? `${card.countryName} · ${card.cityName}` : '여행';
+  const place = card ? placeOf(card, ' · ') : '여행';
 
   const list = (
     <>
@@ -262,8 +262,8 @@ const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
     <View style={s.safeArea}>
       <View style={s.map} onLayout={onMapLayout}>
         {mapSize ? (
-          <CountryTripMap
-            countryName={card?.countryName}
+          <TripRegionMap
+            regionCode={card?.regionCode}
             points={points}
             width={mapSize.width}
             height={mapSize.height}

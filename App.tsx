@@ -43,9 +43,7 @@ import ProfileEditView from './src/pages/ProfileView/ProfileEditView';
 import GuardianView from './src/pages/GuardianView/GuardianView';
 import SeniorView from './src/pages/GuardianView/SeniorView';
 import { useLocationSharing } from './src/shared/lib/locationSharing';
-import WorldMapView from './src/pages/WorldMapView/WorldMapView';
-import CountryRecordView from './src/pages/WorldMapView/CountryRecordView';
-import type { VisitedCountry } from './src/entities/worldmap/types';
+import RegionMapView from './src/pages/RegionMapView/RegionMapView';
 
 export type RootStackParamList = {
   Launch: undefined;
@@ -79,8 +77,7 @@ export type RootStackParamList = {
   ProfileEdit: undefined;
   Guardian: undefined;
   Senior: { seniorUserId: string; nickName: string };
-  WorldMap: undefined;
-  CountryRecord: { country: VisitedCountry };
+  RegionMap: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -91,8 +88,7 @@ const AUTH_ROUTES = [
   'Login',
   'RecordEdit',
   'RecordComplete',
-  'WorldMap',
-  'CountryRecord',
+  'RegionMap',
   'PlanGroup',
   'PlanPeriod',
   'PlanBlocks',
@@ -308,18 +304,17 @@ function App() {
                     notification={route.params.notification}
                     onBack={() => navigation.goBack()}
                     onOpenLink={linkType => {
-                      // 새 나라가 지도에 채워졌다는 알림은 지도로 보낸다.
-                      // 예전에는 축하 화면으로 갔는데, 명세가 '획득' 같은 수집
-                      // 표현을 뺐고(Func-006) 그 화면은 예시 데이터로 그려졌다
+                      // 새 지역을 다녀왔다는 알림은 지도로 보낸다.
+                      // 예전 알림(국가 획득 · WORLD_MAP)도 같은 지도로 보낸다
                       if (
+                        linkType === 'REGION_MAP' ||
+                        linkType === 'WORLD_MAP' ||
                         route.params.notification.type === 'COUNTRY_ACQUIRED'
                       ) {
-                        navigation.navigate('WorldMap');
+                        navigation.navigate('RegionMap');
                       } else if (linkType === 'VOTE' || linkType === 'GROUP') {
                         // 어느 플래너인지까지는 아직 못 가려서 목록으로 보낸다
                         navigation.navigate('Planner');
-                      } else if (linkType === 'WORLD_MAP') {
-                        navigation.navigate('WorldMap');
                       } else {
                         navigation.navigate('Record');
                       }
@@ -486,7 +481,7 @@ function App() {
                       navigation.navigate('Notifications')
                     }
                     onEdit={() => navigation.navigate('ProfileEdit')}
-                    onOpenWorldMap={() => navigation.navigate('WorldMap')}
+                    onOpenRegionMap={() => navigation.navigate('RegionMap')}
                     onOpenGuardian={() => navigation.navigate('Guardian')}
                     onLogout={() =>
                       navigation.reset({
@@ -529,28 +524,9 @@ function App() {
               </Stack.Screen>
 
               {/* 내가 다녀온 곳 (Func-006) */}
-              <Stack.Screen name="WorldMap">
+              <Stack.Screen name="RegionMap">
                 {({ navigation }) => (
-                  <WorldMapView
-                    onBack={() => navigation.goBack()}
-                    onOpenCountry={country =>
-                      navigation.navigate('CountryRecord', { country })
-                    }
-                  />
-                )}
-              </Stack.Screen>
-              <Stack.Screen name="CountryRecord">
-                {({ navigation, route }) => (
-                  <CountryRecordView
-                    country={route.params.country}
-                    onBack={() => navigation.goBack()}
-                    // 목록이 주는 것은 여행 카드 id 다. 기록 수정(RecordEditView)
-                    // 이 아니라 여행 카드 상세로 보낸다. 예전에는 여기서 수정
-                    // 화면으로 가려다 서버 연동이 없어 막아뒀었다.
-                    onOpenRecord={tripCardId =>
-                      navigation.navigate('TripCardDetail', { tripCardId })
-                    }
-                  />
+                  <RegionMapView onBack={() => navigation.goBack()} />
                 )}
               </Stack.Screen>
             </Stack.Navigator>

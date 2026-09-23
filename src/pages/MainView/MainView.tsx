@@ -19,6 +19,7 @@ import {
   TourPlace,
 } from '../../entities/main/api';
 import { getUnreadCount } from '../../entities/notification/api';
+import { KOREA } from '../../entities/region/regions';
 import type { SchedulePlace, ScheduleSlot } from '../../entities/planner/api';
 import { toImageUrl } from '../../shared/api/image';
 import { BellIcon, CalendarIcon } from '../../shared/ui/icons';
@@ -157,13 +158,13 @@ const MainView: React.FC<MainViewProps> = ({
           setDday(d);
           setUnread(count);
 
-          // 일정이 없으면 countryName 도 null 이라 추천 장소를 물어볼 게 없다
-          if (!d.countryName) {
+          // 일정이 없으면 도시도 null 이라 추천 장소를 물어볼 게 없다
+          if (!d.cityName) {
             return;
           }
-          // 도시를 안 넘기면 나라 전체에서 뽑혀, 오사카 여행에 도쿄 장소가
+          // 도시를 안 넘기면 나라 전체에서 뽑혀, 강릉 여행에 부산 장소가
           // 섞여 나온다.
-          const tour = await getTourPlaces(d.countryName, {
+          const tour = await getTourPlaces(KOREA, {
             cityName: d.cityName ?? undefined,
           }).catch(() => []);
           if (alive) {
@@ -307,9 +308,7 @@ const MainView: React.FC<MainViewProps> = ({
           </View>
           <View style={s.eventBody}>
             <Text style={s.eventTitle}>축제 · 이벤트 캘린더</Text>
-            <Text style={s.eventSub}>
-              {dday.countryName ?? '여행지'}의 이번 달 일정
-            </Text>
+            <Text style={s.eventSub}>이번 달 국내 축제</Text>
           </View>
           <Text style={s.chevron}>›</Text>
         </TouchableOpacity>
@@ -321,7 +320,7 @@ const MainView: React.FC<MainViewProps> = ({
             // 관광지 데이터가 없는 나라도 많다. 빈 화면 대신 이유를 알려준다.
             <View style={s.noPlaces}>
               <Text style={s.noPlacesText}>
-                아직 {dday.countryName} 추천 장소가 없어요
+                아직 {dday.cityName} 추천 장소가 없어요
               </Text>
               <Text style={s.noPlacesDesc}>
                 추천 장소가 준비된 여행지를 고르면{'\n'}가볼 만한 곳을 모아서

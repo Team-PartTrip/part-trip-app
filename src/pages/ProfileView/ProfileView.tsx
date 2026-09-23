@@ -9,11 +9,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { CountryShapeSvg } from '../WorldMapView/WorldMapSvg';
-import {
-  getWorldMap,
-  VisitedCountryResponse,
-} from '../../entities/worldmap/api';
+import { RegionShapeSvg } from '../RegionMapView/KoreaMapSvg';
+import { getRegionMap, VisitedRegion } from '../../entities/region/api';
 import { profileStyles as s } from './ProfileView.styles';
 import {
   getMyProfile,
@@ -35,7 +32,7 @@ interface Props {
   /** 상단 종 버튼 — 알림 목록 */
   onOpenNotifications?: () => void;
   onLogout?: () => void;
-  onOpenWorldMap?: () => void;
+  onOpenRegionMap?: () => void;
   /** 가족 연결 (보호자, Func-012) */
   onOpenGuardian?: () => void;
 }
@@ -44,12 +41,12 @@ const ProfileView: React.FC<Props> = ({
   onEdit,
   onOpenNotifications,
   onLogout,
-  onOpenWorldMap,
+  onOpenRegionMap,
   onOpenGuardian,
 }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [stats, setStats] = useState<ProfileStats | null>(null);
-  const [visited, setVisited] = useState<VisitedCountryResponse[]>([]);
+  const [visited, setVisited] = useState<VisitedRegion[]>([]);
 
   useFocusEffect(
     useCallback(() => {
@@ -61,8 +58,8 @@ const ProfileView: React.FC<Props> = ({
       getProfileStats()
         .then(setStats)
         .catch(() => setStats(null));
-      // 미리보기 칸에 채울 나라들
-      getWorldMap()
+      // 미리보기 칸에 채울 시·도
+      getRegionMap()
         .then(map => {
           if (alive) {
             setVisited(map.visited);
@@ -110,10 +107,7 @@ const ProfileView: React.FC<Props> = ({
   const statText = (n: number | undefined) =>
     n === undefined ? '-' : String(n);
 
-  // 어느 나라를 갔는지 알려주는 API 가 아직 없다(server feat/67).
-  // 예시 국기를 개수만큼 잘라 쓰면 가보지도 않은 나라 국기가 뜬다.
-  // 그래서 국기는 안 그리고 통계 API 의 개수만 보여준다.
-  const countryCount = stats?.countryCount ?? null;
+  const regionCount = stats?.regionCount ?? null;
 
   return (
     <View style={s.safeArea}>
@@ -166,7 +160,7 @@ const ProfileView: React.FC<Props> = ({
         <View style={s.statsCard}>
           {[
             { value: statText(stats?.tripCount), label: '여행' },
-            { value: statText(stats?.countryCount), label: '국가' },
+            { value: statText(stats?.regionCount), label: '지역' },
             { value: statText(stats?.recordCount), label: '기록' },
           ].map((stat, i) => (
             <React.Fragment key={stat.label}>
@@ -183,15 +177,15 @@ const ProfileView: React.FC<Props> = ({
           <Text style={s.sectionTitle}>내가 다녀온 곳</Text>
           <View style={s.mapCard}>
             <View style={s.mapGrid}>
-              {/* 다녀온 나라를 앞에서부터 채우고, 남는 칸은 비워 둔다.
+              {/* 다녀온 시·도를 앞에서부터 채우고, 남는 칸은 비워 둔다.
                   칸이 다 비어 있으면 지도가 고장 난 것처럼 보인다. */}
               {Array.from({ length: MAP_CELLS }).map((_, i) => {
-                const country = visited[i];
+                const region = visited[i];
                 return (
                   <View key={i} style={s.mapCell}>
-                    {country ? (
-                      <CountryShapeSvg
-                        countryCode={country.countryCode}
+                    {region ? (
+                      <RegionShapeSvg
+                        code={region.regionCode}
                         size={MAP_CELL_SIZE}
                       />
                     ) : null}
@@ -201,16 +195,16 @@ const ProfileView: React.FC<Props> = ({
             </View>
             <View style={s.mapFooter}>
               <Text style={s.mapSummary}>
-                {countryCount === null
-                  ? '국가 정보를 불러오지 못했어요'
-                  : countryCount === 0
-                  ? '아직 다녀온 나라가 없어요'
-                  : `${countryCount}개국을 다녀왔어요`}
+                {regionCount === null
+                  ? '지역 정보를 불러오지 못했어요'
+                  : regionCount === 0
+                  ? '아직 다녀온 곳이 없어요'
+                  : `시·도 ${regionCount}곳을 다녀왔어요`}
               </Text>
               <TouchableOpacity
                 style={s.moreBtn}
                 activeOpacity={0.85}
-                onPress={onOpenWorldMap ?? (() => notReady('내가 다녀온 곳'))}
+                onPress={onOpenRegionMap ?? (() => notReady('내가 다녀온 곳'))}
               >
                 <Text style={s.moreBtnText}>더보기</Text>
               </TouchableOpacity>

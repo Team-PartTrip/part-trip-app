@@ -12,7 +12,8 @@ import type { GroupRole, GroupStatus, PlaceCategory } from './types';
 export interface PlannerListItem {
   plannerId: number;
   title: string;
-  countryName: string | null;
+  regionCode: string | null;
+  regionName: string | null;
   cityName: string | null;
   /** YYYY-MM-DD. 여행지·기간을 아직 안 정했으면 null */
   startDate: string | null;
@@ -94,7 +95,7 @@ export interface GeneratePlannerPayload {
   title: string;
   memberCount: number;
   isSolo: boolean;
-  /** 국내 도시 · 지역 이름 */
+  regionCode: string;
   cityName: string;
   /** YYYY-MM-DD. 최대 14일 */
   startDate: string;
@@ -220,7 +221,8 @@ export interface ConfirmedPlace {
 export interface PlannerFinal {
   plannerId: number;
   title: string;
-  countryName: string;
+  regionCode: string | null;
+  regionName: string | null;
   cityName: string;
   startDate: string;
   endDate: string;

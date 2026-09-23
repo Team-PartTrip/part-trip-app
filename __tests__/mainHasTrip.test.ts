@@ -6,7 +6,7 @@ import type { DdayInfo, TripPhase } from '../src/entities/main/api';
 
 function dday(over: Partial<DdayInfo>): DdayInfo {
   return {
-    countryName: '일본',
+    regionName: '일본',
     cityName: '오사카',
     startDate: '2026-10-01',
     endDate: '2026-10-05',

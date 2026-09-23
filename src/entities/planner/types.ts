@@ -63,22 +63,6 @@ export interface GroupMember {
   invite: InviteStatus;
 }
 
-/** TravelGroupEntity + GroupTravelPlanEntity 를 화면 한 장 기준으로 합친 것 */
-export interface TravelPlan {
-  planId: number;
-  groupId: number;
-  travelTitle: string;
-  countryName: string;
-  cityName: string;
-  /** YYYY-MM-DD */
-  startDate: string;
-  endDate: string;
-  /** 나를 포함해 모집하려는 인원 */
-  headcount: number;
-  status: GroupStatus;
-  members: GroupMember[];
-}
-
 /** TourPlaceResponseDto 를 화면에서 쓰는 만큼만 옮긴 것 */
 export interface TourPlace {
   tourPlaceId: number;

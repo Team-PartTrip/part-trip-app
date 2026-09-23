@@ -15,6 +15,13 @@ import colors from '../../shared/tokens/colors';
 import { touch48 } from '../../shared/ui/hitSlop';
 import { getCities } from '../../entities/main/api';
 import {
+  isMetro,
+  REGIONS,
+  regionOf,
+  shortName,
+  SUGGESTED_CITIES,
+} from '../../entities/region/regions';
+import {
   generatePlanner,
   getBlocks,
   PlannerBlock,
@@ -32,20 +39,7 @@ import { formatRange, PlanDraft } from '../../entities/planner/types';
 // 글자를 칠 때마다 서버를 부르지 않도록 기다리는 시간
 const SEARCH_DELAY_MS = 300;
 // 서버 CountryCodeMapper 가 아는 이름. 이걸 넘기면 한국 안에서만 찾는다
-const KOREA = '한국';
-// 9/17 회의 자료 "여행지 (국내)" 의 예시 도시
-const SUGGESTED = [
-  '서울',
-  '부산',
-  '제주',
-  '경주',
-  '전주',
-  '강릉',
-  '여수',
-  '통영',
-  '안동',
-  '속초',
-];
+const KOREA_FOR_SEARCH = '한국';
 
 interface Props {
   draft: PlanDraft;
@@ -55,6 +49,8 @@ interface Props {
 }
 
 const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
+  // 시·도 → 시·군 두 단계로 고른다 (server #162 는 regionCode 가 필수다)
+  const [regionCode, setRegionCode] = useState('');
   const [city, setCity] = useState('');
   const [query, setQuery] = useState('');
   const [found, setFound] = useState<string[] | null>(null);
@@ -85,7 +81,7 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
     }
     let alive = true;
     const timer = setTimeout(() => {
-      getCities(keyword, KOREA)
+      getCities(keyword, KOREA_FOR_SEARCH)
         .then(list => alive && setFound(list.map(c => c.cityName)))
         .catch(() => alive && setFound([]));
     }, SEARCH_DELAY_MS);
@@ -95,6 +91,19 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
     };
   }, [query]);
 
+  const chooseRegion = (code: string) => {
+    setRegionCode(code);
+    setQuery('');
+    setFound(null);
+    const region = regionOf(code);
+    setCity(region && isMetro(code) ? shortName(region.name) : '');
+  };
+
+  const resetPlace = () => {
+    setRegionCode('');
+    setCity('');
+  };
+
   const chooseCity = (name: string) => {
     setCity(name);
     setQuery('');
@@ -102,7 +111,7 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
   };
 
   const generate = async () => {
-    if (!city || generatingRef.current) {
+    if (!regionCode || !city || generatingRef.current) {
       return;
     }
     generatingRef.current = true;
@@ -112,6 +121,7 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
         title: draft.title,
         memberCount: draft.headcount,
         isSolo: draft.isSolo,
+        regionCode,
         cityName: city,
         startDate: draft.startDate,
         endDate: draft.endDate,
@@ -205,20 +215,53 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
         </View>
 
         <Text style={s.section}>어디로 가세요?</Text>
-        {city ? (
+        {regionCode && city ? (
           <View style={s.cityPicked}>
-            <Text style={s.cityPickedText}>📍 {city}</Text>
+            <Text style={s.cityPickedText}>
+              📍 {shortName(regionOf(regionCode)?.name ?? '')}
+              {isMetro(regionCode) ? '' : ` ${city}`}
+            </Text>
             <TouchableOpacity
               hitSlop={touch48(24)}
               accessibilityRole="button"
               accessibilityLabel="지역 다시 고르기"
-              onPress={() => setCity('')}
+              onPress={resetPlace}
             >
               <Text style={s.cityChange}>바꾸기</Text>
             </TouchableOpacity>
           </View>
+        ) : !regionCode ? (
+          <View style={s.chips}>
+            {REGIONS.map(region => (
+              <TouchableOpacity
+                key={region.code}
+                style={s.chip}
+                activeOpacity={0.8}
+                hitSlop={touch48(44, 'vertical')}
+                accessibilityRole="button"
+                accessibilityLabel={region.name}
+                onPress={() => chooseRegion(region.code)}
+              >
+                <Text style={s.chipText}>{shortName(region.name)}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         ) : (
           <>
+            <View style={s.cityPicked}>
+              <Text style={s.cityPickedText}>
+                📍 {regionOf(regionCode)?.name}
+              </Text>
+              <TouchableOpacity
+                hitSlop={touch48(24)}
+                accessibilityRole="button"
+                accessibilityLabel="시·도 다시 고르기"
+                onPress={resetPlace}
+              >
+                <Text style={s.cityChange}>바꾸기</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={s.sectionHint}>어느 도시로 가세요?</Text>
             <TextInput
               style={s.input}
               placeholder="도시 이름으로 찾기 (예: 강릉)"
@@ -228,7 +271,7 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
               accessibilityLabel="여행할 도시 찾기"
             />
             <View style={s.chips}>
-              {(found ?? SUGGESTED).map(name => (
+              {(found ?? SUGGESTED_CITIES[regionCode] ?? []).map(name => (
                 <TouchableOpacity
                   key={name}
                   style={s.chip}
@@ -290,9 +333,12 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
           <Text style={s.waiting}>AI가 일정을 짜고 있어요. 10초쯤 걸려요.</Text>
         )}
         <TouchableOpacity
-          style={[s.primaryBtn, (!city || generating) && s.primaryBtnOff]}
+          style={[
+            s.primaryBtn,
+            (!regionCode || !city || generating) && s.primaryBtnOff,
+          ]}
           activeOpacity={0.85}
-          disabled={!city || generating}
+          disabled={!regionCode || !city || generating}
           accessibilityRole="button"
           onPress={generate}
         >

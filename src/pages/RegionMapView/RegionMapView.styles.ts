@@ -3,7 +3,7 @@ import colors from '../../shared/tokens/colors';
 
 // E2 · Func-009-01 개인 세계지도 조회
 // 피그마 402pt 프레임 기준. 좌우 여백 24 · 본문 354 · 지도 402x420.
-export const worldMapStyles = StyleSheet.create({
+export const regionMapStyles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background,
@@ -95,7 +95,8 @@ export const worldMapStyles = StyleSheet.create({
     color: colors.textPrimary,
   },
 
-  countryRow: {
+  regionRowOn: { borderWidth: 2, borderColor: colors.primary },
+  regionRow: {
     marginTop: 10,
     height: 52,
     borderRadius: 14,
@@ -105,7 +106,7 @@ export const worldMapStyles = StyleSheet.create({
     paddingHorizontal: 14,
     gap: 12,
   },
-  flagCircle: {
+  regionBadge: {
     width: 28,
     height: 28,
     borderRadius: 14,
@@ -113,18 +114,20 @@ export const worldMapStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  flag: {
-    fontSize: 15,
+  regionBadgeText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.primary,
   },
-  countryBody: {
+  regionBody: {
     flex: 1,
   },
-  countryName: {
+  regionName: {
     fontSize: 15,
     fontWeight: '600',
     color: colors.textPrimary,
   },
-  countryMeta: {
+  regionMeta: {
     marginTop: 1,
     fontSize: 11,
     color: colors.textSub,

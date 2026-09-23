@@ -19,6 +19,7 @@ import { tripCardEditStyles as s } from './TripCardEditView.styles';
 import {
   addTripCardEntry,
   getTripCards,
+  placeOf,
   PickedPhoto,
   TripCardSummary,
 } from '../../entities/record/api';
@@ -110,7 +111,7 @@ const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
     }
   };
 
-  const title = card ? `${card.countryName} ${card.cityName}` : '여행';
+  const title = card ? placeOf(card) : '여행';
 
   return (
     <View style={s.safeArea}>
@@ -134,7 +135,7 @@ const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
             {card && (
               <View style={s.tripBar}>
                 <Text style={s.tripBarText}>
-                  {title}  ·  {formatDotDate(card.startDate)} 시작
+                  {title} · {formatDotDate(card.startDate)} 시작
                 </Text>
               </View>
             )}

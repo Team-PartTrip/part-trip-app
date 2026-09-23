@@ -7,10 +7,12 @@ import { BASE_URL } from '@env';
 import { authRequest } from '../../shared/api/http';
 import { ApiError } from '../../shared/api/client';
 import { getAccessToken } from '../../shared/api/tokenStorage';
+import { shortName } from '../region/regions';
 
 export interface TripCardSummary {
   cardId: number;
-  countryName: string;
+  regionCode: string | null;
+  regionName: string | null;
   cityName: string;
   /** YYYY-MM-DD */
   startDate: string;
@@ -18,6 +20,15 @@ export interface TripCardSummary {
   /** 사용자가 올린 사진 중 대표컷. 아직 사진이 없으면 null */
   coverImageUrl: string | null;
   photoCount: number | null;
+}
+
+export function placeOf(
+  card: Pick<TripCardSummary, 'regionName' | 'cityName'>,
+  sep = ' ',
+): string {
+  return [card.regionName ? shortName(card.regionName) : null, card.cityName]
+    .filter(Boolean)
+    .join(sep);
 }
 
 /** 여행 카드 목록 (D2) — 서버가 최근 여행순으로 준다 */
@@ -141,7 +152,9 @@ export async function addTripCardEntry(
 
   // 본문 없이 201 만 오거나 JSON 이 아닌 문자열이 올 수 있다.
   // 그럴 땐 올리기는 성공했으니 던지지 않고 null 로 돌려준다.
-  return data !== null && typeof data === 'object' ? (data as TripCardEntry) : null;
+  return data !== null && typeof data === 'object'
+    ? (data as TripCardEntry)
+    : null;
 }
 
 /** 여행 카드에서 사진 제거 (API-003-07) */

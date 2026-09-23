@@ -9,7 +9,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { recordStyles as s } from './RecordView.styles';
-import { getTripCards, TripCardSummary } from '../../entities/record/api';
+import {
+  getTripCards,
+  placeOf,
+  TripCardSummary,
+} from '../../entities/record/api';
 import { formatTripRange, today } from '../../entities/record/types';
 import { CardIcon } from '../../shared/ui/icons';
 import colors from '../../shared/tokens/colors';
@@ -23,10 +27,7 @@ interface Props {
   onOpenTripCards?: () => void;
 }
 
-const RecordView: React.FC<Props> = ({
-  onOpenTrip,
-  onOpenTripCards,
-}) => {
+const RecordView: React.FC<Props> = ({ onOpenTrip, onOpenTripCards }) => {
   const [year, setYear] = useState('전체');
   const [all, setAll] = useState<TripCardSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -134,9 +135,7 @@ const RecordView: React.FC<Props> = ({
 
               <View style={s.cardBottom}>
                 <View style={s.cardBody}>
-                  <Text style={s.cardTitle}>
-                    {card.countryName} {card.cityName}
-                  </Text>
+                  <Text style={s.cardTitle}>{placeOf(card)}</Text>
                   <Text style={s.cardDate}>
                     {formatTripRange(card.startDate, card.endDate)}
                   </Text>

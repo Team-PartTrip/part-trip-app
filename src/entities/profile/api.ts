@@ -11,10 +11,10 @@ export function getMyProfile(): Promise<UserProfile> {
   return authRequest<UserProfile>('/api/profile/myInfo', { method: 'GET' });
 }
 
-/** 마이 탭 상단의 "여행 · 국가 · 기록" 3칸 (Func-007-01) */
+/** 마이 탭 상단의 "여행 · 지역 · 기록" 3칸*/
 export interface ProfileStats {
   tripCount: number;
-  countryCount: number;
+  regionCount: number;
   recordCount: number;
 }
 
@@ -41,5 +41,3 @@ export function updateProfile(
     body: payload,
   });
 }
-
-
