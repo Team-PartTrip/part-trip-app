@@ -207,6 +207,7 @@ export const mainStyles = StyleSheet.create({
     fontSize: 12,
     color: colors.textTertiary,
   },
+  placeRatingRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   placeRating: {
     fontSize: 12,
     fontWeight: '600',

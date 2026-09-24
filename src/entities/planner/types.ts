@@ -42,16 +42,6 @@ export const CATEGORY_LABEL: Record<PlaceCategory, string> = {
   SHOPPING: '쇼핑',
 };
 
-/** 썸네일 자리에 넣는 카테고리 아이콘 — 장소 이미지가 없을 때 쓴다 */
-export const CATEGORY_EMOJI: Record<PlaceCategory, string> = {
-  RESTAURANT: '🍜',
-  ATTRACTION: '🏯',
-  ACCOMMODATION: '🏨',
-  CAFE: '☕',
-  ACTIVITY: '🎡',
-  SHOPPING: '🛍️',
-};
-
 /** 초대 진행 상태. 서버 GroupMemberEntity 에는 없고 그룹 만들기(C2)에서만 쓴다 */
 export type InviteStatus = 'ME' | 'ACCEPTED' | 'PENDING';
 

@@ -24,6 +24,8 @@ import {
   TripCardSummary,
 } from '../../entities/record/api';
 import { formatDotDate } from '../../entities/record/types';
+import { CheckIcon } from '../../shared/ui/icons';
+import colors from '../../shared/tokens/colors';
 
 const MAX_LENGTH = 100;
 // 좌우 여백 24 · 칸 간격 12 를 빼고 세 칸으로 나눈 크기
@@ -152,7 +154,7 @@ const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
               >
                 <Image source={{ uri: photo.uri }} style={s.thumb} />
                 <View style={[s.check, s.checkOn]}>
-                  <Text style={s.checkText}>✓</Text>
+                  <CheckIcon size={13} color={colors.textOnPrimary} />
                 </View>
               </TouchableOpacity>
             ))}

@@ -33,7 +33,6 @@ export const planGroupStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   modeDotOn: { backgroundColor: colors.primary },
-  modeIcon: { fontSize: 18 },
   modeLabel: { fontSize: 15, fontWeight: '600', color: colors.text },
   modeLabelOn: { color: colors.primaryDark },
 

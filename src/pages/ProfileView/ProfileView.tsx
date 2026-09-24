@@ -21,6 +21,8 @@ import {
 import { logout } from '../../entities/auth/api';
 import { getRefreshToken, clearTokens } from '../../shared/api/tokenStorage';
 import { toImageUrl } from '../../shared/api/image';
+import { BellIcon } from '../../shared/ui/icons';
+import colors from '../../shared/tokens/colors';
 
 // 세계지도 미리보기 칸 수 (피그마 E1 은 6칸)
 const MAP_CELLS = 6;
@@ -125,7 +127,7 @@ const ProfileView: React.FC<Props> = ({
               disabled={!onOpenNotifications}
               onPress={onOpenNotifications}
             >
-              <Text style={s.headerCircleEmoji}>🔔</Text>
+              <BellIcon size={18} color={colors.primary} />
             </TouchableOpacity>
           </View>
 

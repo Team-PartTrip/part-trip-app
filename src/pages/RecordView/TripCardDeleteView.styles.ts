@@ -56,7 +56,6 @@ export const tripCardDeleteStyles = StyleSheet.create({
   },
   checkOn: { backgroundColor: colors.primary },
   checkOff: { backgroundColor: colors.surface },
-  checkText: { fontSize: 12, fontWeight: '700', color: colors.textOnPrimary },
 
   warning: {
     marginTop: 8,

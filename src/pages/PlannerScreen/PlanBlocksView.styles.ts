@@ -41,6 +41,7 @@ export const planBlocksStyles = StyleSheet.create({
     borderColor: colors.primary,
     backgroundColor: colors.tint,
   },
+  cityPickedName: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   cityPickedText: { fontSize: 17, fontWeight: '700', color: colors.primary },
   cityChange: { fontSize: 15, fontWeight: '600', color: colors.primary },
 

@@ -26,6 +26,7 @@ import type {
   PlannerSchedule,
 } from '../../entities/planner/api';
 import { formatRange, planStatusLabel } from '../../entities/planner/types';
+import { PinIcon } from '../../shared/ui/icons';
 
 /** 카카오맵 웹 링크. 앱이 깔려 있으면 앱으로, 없으면 브라우저로 열린다 */
 export function kakaoMapUrl(label: string, lat: number, lng: number): string {
@@ -143,9 +144,12 @@ const SeniorView: React.FC<Props> = ({ seniorUserId, nickName, onBack }) => {
         <View style={s.codeBox}>
           {location ? (
             <>
-              <Text style={s.locationText}>
-                📍 {timeAgo(location.recordedAt)} 위치
-              </Text>
+              <View style={s.locationRow}>
+                <PinIcon size={20} color={colors.primary} />
+                <Text style={s.locationText}>
+                  {timeAgo(location.recordedAt)} 위치
+                </Text>
+              </View>
               <TouchableOpacity
                 style={[s.primaryBtn, s.locationBtn]}
                 activeOpacity={0.85}

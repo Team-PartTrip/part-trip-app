@@ -25,6 +25,7 @@ import { toImageUrl } from '../../shared/api/image';
 import { BellIcon, CalendarIcon } from '../../shared/ui/icons';
 import colors from '../../shared/tokens/colors';
 import DandiWordmark from '../../shared/ui/DandiWordmark';
+import { StarIcon } from '../../shared/ui/icons';
 
 /**
  * 추천 목록.
@@ -356,7 +357,10 @@ const MainView: React.FC<MainViewProps> = ({
                     )}
                   </View>
                   {p.rating !== null && (
-                    <Text style={s.placeRating}>★ {p.rating.toFixed(1)}</Text>
+                    <View style={s.placeRatingRow}>
+                      <StarIcon size={12} color={colors.textSecondary} />
+                      <Text style={s.placeRating}>{p.rating.toFixed(1)}</Text>
+                    </View>
                   )}
                 </TouchableOpacity>
               ))}

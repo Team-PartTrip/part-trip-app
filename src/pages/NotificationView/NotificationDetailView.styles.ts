@@ -20,6 +20,8 @@ export const notificationDetailStyles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 12,
     backgroundColor: colors.tint,
+    flexDirection: 'row',
+    gap: 4,
     alignItems: 'center',
     justifyContent: 'center',
   },

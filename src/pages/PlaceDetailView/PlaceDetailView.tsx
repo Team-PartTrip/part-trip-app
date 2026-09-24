@@ -14,6 +14,8 @@ import ScreenHeader from '../../shared/ui/ScreenHeader';
 import { placeDetailStyles as s } from './PlaceDetailView.styles';
 import { TourPlace } from '../../entities/main/api';
 import { toImageUrl } from '../../shared/api/image';
+import { StarIcon } from '../../shared/ui/icons';
+import colors from '../../shared/tokens/colors';
 
 interface Props {
   place: TourPlace;
@@ -67,7 +69,10 @@ const PlaceDetailView: React.FC<Props> = ({ place, onBack }) => (
           </View>
         )}
         {place.rating !== null && (
-          <Text style={s.rating}>★ {place.rating.toFixed(1)}</Text>
+          <View style={s.ratingRow}>
+            <StarIcon size={13} color={colors.textSecondary} />
+            <Text style={s.rating}>{place.rating.toFixed(1)}</Text>
+          </View>
         )}
       </View>
 

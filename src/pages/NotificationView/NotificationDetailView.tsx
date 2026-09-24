@@ -4,6 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { notificationDetailStyles as s } from './NotificationDetailView.styles';
 import { metaOf, timeAgo } from './notificationMeta';
 import type { Notification } from '../../entities/notification/api';
+import { CheckIcon } from '../../shared/ui/icons';
+import colors from '../../shared/tokens/colors';
 
 // "2026-08-21T10:24:00" → "2026.08.21  10:24"
 function formatStamp(iso: string): string {
@@ -51,7 +53,8 @@ const NotificationDetailView: React.FC<Props> = ({
           <Text style={s.title}>알림 상세</Text>
           {n.read && (
             <View style={s.readBadge}>
-              <Text style={s.readBadgeText}>✓ 읽음 처리</Text>
+              <CheckIcon size={11} color={colors.primary} />
+              <Text style={s.readBadgeText}>읽음 처리</Text>
             </View>
           )}
         </View>

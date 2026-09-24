@@ -9,7 +9,9 @@ import {
 import { planStatusStyles as s } from './PlanStatusView.styles';
 import { touch48 } from '../../shared/ui/hitSlop';
 import type { PlannerSchedule, ScheduleSlot } from '../../entities/planner/api';
-import { CATEGORY_EMOJI, dayLabel } from '../../entities/planner/types';
+import { dayLabel } from '../../entities/planner/types';
+import CategoryIcon from '../../entities/planner/CategoryIcon';
+import colors from '../../shared/tokens/colors';
 
 /** 리더가 카드를 고칠 때만 넘긴다 (명세 Func-011-03). 없으면 보기 전용이다 */
 export interface ScheduleEditHandlers {
@@ -93,11 +95,10 @@ const DayCards: React.FC<{
         const body = slot.place ? (
           <>
             <View style={s.thumb}>
-              <Text style={s.thumbEmoji}>
-                {slot.place.category
-                  ? CATEGORY_EMOJI[slot.place.category]
-                  : '📍'}
-              </Text>
+              <CategoryIcon
+                category={slot.place.category}
+                color={colors.primary}
+              />
             </View>
             <View style={s.rowBody}>
               <Text style={s.rowSub}>

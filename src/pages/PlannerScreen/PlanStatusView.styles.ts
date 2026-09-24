@@ -63,6 +63,7 @@ export const planStatusStyles = StyleSheet.create({
   rowBody: { flex: 1, marginLeft: 12 },
   rowTitle: { fontSize: 15, fontWeight: '600', color: colors.text },
   rowSub: { marginTop: 2, fontSize: 12, color: colors.textSecondary },
+  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
 
   // ── 확정된 일정 ──
   dayTitle: {
@@ -80,7 +81,6 @@ export const planStatusStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  thumbEmoji: { fontSize: 20 },
   empty: {
     borderRadius: 12,
     backgroundColor: colors.white,

@@ -36,6 +36,7 @@ import {
   toPayload,
 } from '../../entities/planner/blocks';
 import { formatRange, PlanDraft } from '../../entities/planner/types';
+import { PinIcon } from '../../shared/ui/icons';
 
 // 글자를 칠 때마다 서버를 부르지 않도록 기다리는 시간
 const SEARCH_DELAY_MS = 300;
@@ -228,10 +229,13 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
         <Text style={s.section}>어디로 가세요?</Text>
         {regionCode && city ? (
           <View style={s.cityPicked}>
-            <Text style={s.cityPickedText}>
-              📍 {shortName(regionOf(regionCode)?.name ?? '')}
-              {isMetro(regionCode) ? '' : ` ${city}`}
-            </Text>
+            <View style={s.cityPickedName}>
+              <PinIcon size={18} color={colors.primary} />
+              <Text style={s.cityPickedText}>
+                {shortName(regionOf(regionCode)?.name ?? '')}
+                {isMetro(regionCode) ? '' : ` ${city}`}
+              </Text>
+            </View>
             <TouchableOpacity
               hitSlop={touch48(24)}
               accessibilityRole="button"
@@ -260,9 +264,12 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
         ) : (
           <>
             <View style={s.cityPicked}>
-              <Text style={s.cityPickedText}>
-                📍 {regionOf(regionCode)?.name}
-              </Text>
+              <View style={s.cityPickedName}>
+                <PinIcon size={18} color={colors.primary} />
+                <Text style={s.cityPickedText}>
+                  {regionOf(regionCode)?.name}
+                </Text>
+              </View>
               <TouchableOpacity
                 hitSlop={touch48(24)}
                 accessibilityRole="button"

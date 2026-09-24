@@ -27,7 +27,6 @@ export const profileStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   // 알림(🔔) — 쓸 만한 아이콘 이미지가 없어 이모지로 둔다
-  headerCircleEmoji: { fontSize: 17 },
 
   profileRow: { marginTop: 24, flexDirection: 'row', alignItems: 'flex-start' },
   avatar: {

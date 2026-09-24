@@ -57,7 +57,6 @@ export const tripCardEditStyles = StyleSheet.create({
     backgroundColor: colors.white,
     opacity: 0.75,
   },
-  checkText: { fontSize: 12, fontWeight: '700', color: colors.textOnPrimary },
 
   commentBox: {
     height: 104,

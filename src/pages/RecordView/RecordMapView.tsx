@@ -27,6 +27,8 @@ import {
 } from '../../entities/record/api';
 import { TripRegionMap } from '../RegionMapView/KoreaMapSvg';
 import { formatShortDate } from '../../entities/record/types';
+import { PinIcon } from '../../shared/ui/icons';
+import colors from '../../shared/tokens/colors';
 
 /** 지도에 찍을 한 지점. 위·경도는 지도와 같은 투영을 태워야 해서 그대로 둔다 */
 interface Spot {
@@ -242,7 +244,7 @@ const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
               }
             >
               <View style={s.thumb}>
-                <Text style={s.thumbIcon}>📍</Text>
+                <PinIcon size={20} color={colors.primary} />
               </View>
               <View style={s.rowBody}>
                 <Text style={s.rowTitle}>{spot.title}</Text>

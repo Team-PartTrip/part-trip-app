@@ -57,11 +57,6 @@ export const tripCardListStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  badgeText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.textOnPrimary,
-  },
 
   body: { paddingHorizontal: 24, paddingTop: 24 },
   cityName: { fontSize: 32, fontWeight: '700', color: colors.textOnPrimary },

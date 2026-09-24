@@ -17,6 +17,8 @@ import {
   TripCardSummary,
 } from '../../entities/record/api';
 import { formatTripRange } from '../../entities/record/types';
+import { CheckIcon } from '../../shared/ui/icons';
+import colors from '../../shared/tokens/colors';
 
 interface Props {
   onBack?: () => void;
@@ -127,7 +129,7 @@ const TripCardDeleteView: React.FC<Props> = ({ onBack, onDeleted }) => {
                   </Text>
                 </View>
                 <View style={[s.check, on ? s.checkOn : s.checkOff]}>
-                  {on && <Text style={s.checkText}>✓</Text>}
+                  {on && <CheckIcon size={13} color={colors.textOnPrimary} />}
                 </View>
               </TouchableOpacity>
             );

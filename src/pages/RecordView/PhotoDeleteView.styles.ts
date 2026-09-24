@@ -60,11 +60,6 @@ export const photoDeleteStyles = StyleSheet.create({
     backgroundColor: colors.white,
     opacity: 0.75,
   },
-  checkText: {
-    fontSize: 11,
-    fontWeight: '500',
-    color: colors.textOnPrimary,
-  },
 
   warning: {
     marginTop: 24,

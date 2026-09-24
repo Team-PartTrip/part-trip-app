@@ -9,7 +9,7 @@ export const recordCompleteStyles = StyleSheet.create({
     justifyContent: 'center',
     padding: 28,
   },
-  cat: { fontSize: 92, marginBottom: 16 },
+  doneIcon: { marginBottom: 16 },
   title: {
     fontSize: 24,
     fontWeight: '900',

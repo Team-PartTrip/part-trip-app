@@ -126,7 +126,6 @@ export const recordMapStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  thumbIcon: { fontSize: 18 },
   rowBody: { flex: 1, marginLeft: 12 },
   rowTitle: { fontSize: 15, fontWeight: '600', color: colors.text },
   rowMeta: { marginTop: 2, fontSize: 12, color: colors.textSecondary },

@@ -29,6 +29,7 @@ export const placeDetailStyles = StyleSheet.create({
     backgroundColor: colors.tint,
   },
   chipText: { fontSize: 12, fontWeight: '600', color: colors.primary },
+  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   rating: { fontSize: 13, fontWeight: '600', color: colors.textSecondary },
 
   address: {

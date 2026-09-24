@@ -19,6 +19,8 @@ import {
   TripCardSummary,
 } from '../../entities/record/api';
 import { formatTripRange } from '../../entities/record/types';
+import { StarIcon } from '../../shared/ui/icons';
+import colors from '../../shared/tokens/colors';
 
 const PAGE_WIDTH = Dimensions.get('window').width;
 
@@ -157,7 +159,7 @@ const TripCardListView: React.FC<Props> = ({
                     ))}
                   </View>
                   <View style={s.badge}>
-                    <Text style={s.badgeText}>★</Text>
+                    <StarIcon size={18} color={colors.textOnPrimary} />
                   </View>
                 </View>
               </TouchableOpacity>

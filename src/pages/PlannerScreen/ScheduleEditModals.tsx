@@ -14,7 +14,8 @@ import {
   getScheduleCandidates,
   SchedulePlace,
 } from '../../entities/planner/api';
-import { CATEGORY_EMOJI } from '../../entities/planner/types';
+import CategoryIcon from '../../entities/planner/CategoryIcon';
+import { StarIcon } from '../../shared/ui/icons';
 
 // 글자를 칠 때마다 서버를 부르지 않도록 기다리는 시간
 const SEARCH_DELAY_MS = 300;
@@ -155,21 +156,27 @@ export const PlacePicker: React.FC<{
                   close();
                 }}
               >
-                <Text style={s.thumbEmoji}>
-                  {item.category ? CATEGORY_EMOJI[item.category] : '📍'}
-                </Text>
+                <View style={s.thumb}>
+                  <CategoryIcon
+                    category={item.category}
+                    color={colors.primary}
+                  />
+                </View>
                 <View style={s.rowBody}>
                   <Text style={s.rowTitle} numberOfLines={1}>
                     {item.name}
                   </Text>
-                  <Text style={s.rowSub} numberOfLines={1}>
-                    {[
-                      item.categoryLabel,
-                      item.rating ? `★${item.rating}` : null,
-                    ]
-                      .filter(Boolean)
-                      .join(' · ')}
-                  </Text>
+                  <View style={s.ratingRow}>
+                    {!!item.categoryLabel && (
+                      <Text style={s.rowSub}>{item.categoryLabel}</Text>
+                    )}
+                    {!!item.rating && (
+                      <>
+                        <StarIcon size={12} color={colors.textSecondary} />
+                        <Text style={s.rowSub}>{item.rating}</Text>
+                      </>
+                    )}
+                  </View>
                 </View>
               </TouchableOpacity>
             )}

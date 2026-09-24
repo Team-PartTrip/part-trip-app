@@ -115,6 +115,7 @@ export const guardianStyles = StyleSheet.create({
   disabled: { opacity: 0.5 },
   chevron: { fontSize: 16, color: colors.textSecondary },
 
+  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   locationText: { fontSize: 17, fontWeight: '700', color: colors.text },
   locationBtn: { marginTop: 16 },
   refresh: { marginTop: 12, minHeight: 32, justifyContent: 'center' },

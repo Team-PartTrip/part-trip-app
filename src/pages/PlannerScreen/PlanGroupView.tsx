@@ -13,6 +13,7 @@ import { planGroupStyles as s } from './PlanGroupView.styles';
 import WizardHeader from './WizardHeader';
 import colors from '../../shared/tokens/colors';
 import { PlanDraft } from '../../entities/planner/types';
+import { UserIcon, UsersIcon } from '../../shared/ui/icons';
 
 const MAX_HEADCOUNT = 10;
 
@@ -52,8 +53,8 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
       >
         <View style={s.modeRow}>
           {[
-            { on: !together, label: '혼자 여행', icon: '🧍' },
-            { on: together, label: '함께 여행', icon: '🧑‍🤝‍🧑' },
+            { on: !together, label: '혼자 여행', Icon: UserIcon },
+            { on: together, label: '함께 여행', Icon: UsersIcon },
           ].map(mode => (
             <TouchableOpacity
               key={mode.label}
@@ -62,7 +63,10 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
               onPress={() => setTogether(mode.label === '함께 여행')}
             >
               <View style={[s.modeDot, mode.on && s.modeDotOn]}>
-                <Text style={s.modeIcon}>{mode.icon}</Text>
+                <mode.Icon
+                  size={20}
+                  color={mode.on ? colors.textOnPrimary : colors.textSecondary}
+                />
               </View>
               <Text style={[s.modeLabel, mode.on && s.modeLabelOn]}>
                 {mode.label}
