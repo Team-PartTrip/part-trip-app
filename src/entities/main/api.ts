@@ -151,6 +151,7 @@ export function getCities(
 }
 
 export interface Festival {
+  festivalId: number;
   title: string;
   category: string;
   description: string;

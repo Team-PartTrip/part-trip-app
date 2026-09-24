@@ -149,15 +149,20 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
         if (!alive) {
           return;
         }
-        // 달 전체가 오므로 범위 밖은 여기서 버린다
-        setEvents(
-          lists
-            .flat()
-            .filter(
-              event =>
-                event.startDate >= range.from && event.startDate <= range.to,
-            ),
-        );
+        // 달 전체가 오므로 범위 밖과 다른 도시는 여기서 버린다.
+        // 두 달에 걸친 축제는 두 번 오니 하나만 남긴다
+        const city = dday.cityName;
+        const byId = new Map<number, Festival>();
+        for (const event of lists.flat()) {
+          if (
+            event.startDate >= range.from &&
+            event.startDate <= range.to &&
+            (!city || event.location.includes(city))
+          ) {
+            byId.set(event.festivalId, event);
+          }
+        }
+        setEvents([...byId.values()]);
       })
       .catch(() => alive && (setEvents([]), setFailed(true)))
       .finally(() => alive && setLoading(false));
@@ -371,7 +376,7 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
           <View style={s.list}>
             {visible.map(event => (
               <TouchableOpacity
-                key={`${event.title}-${event.startDate}`}
+                key={event.festivalId}
                 style={s.card}
                 activeOpacity={0.85}
                 onPress={() => setDetail(event)}
