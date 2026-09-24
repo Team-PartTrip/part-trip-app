@@ -349,7 +349,11 @@ function App() {
                   />
                 )}
               </Stack.Screen>
-              <Stack.Screen name="RecordMap">
+              {/* 지도를 옆으로 끌다 이전 화면으로 넘어가지 않게 한다. 뒤로는 ‹ 버튼으로 */}
+              <Stack.Screen
+                name="RecordMap"
+                options={{ gestureEnabled: false }}
+              >
                 {({ navigation, route }) => (
                   <RecordMapView
                     tripCardId={route.params.tripCardId}
@@ -524,7 +528,10 @@ function App() {
               </Stack.Screen>
 
               {/* 내가 다녀온 곳 (Func-006) */}
-              <Stack.Screen name="RegionMap">
+              <Stack.Screen
+                name="RegionMap"
+                options={{ gestureEnabled: false }}
+              >
                 {({ navigation }) => (
                   <RegionMapView onBack={() => navigation.goBack()} />
                 )}

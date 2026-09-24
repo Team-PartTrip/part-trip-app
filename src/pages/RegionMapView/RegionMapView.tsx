@@ -10,7 +10,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { regionMapStyles as s } from './RegionMapView.styles';
-import KoreaMapSvg from './KoreaMapSvg';
+import KoreaMapSvg, { mapHeight } from './KoreaMapSvg';
+import ZoomableView from '../../shared/ui/ZoomableView';
 import { getRegionMap, RegionMap } from '../../entities/region/api';
 import { shortName } from '../../entities/region/regions';
 
@@ -21,6 +22,8 @@ interface Props {
 const RegionMapView: React.FC<Props> = ({ onBack }) => {
   const { width } = useWindowDimensions();
   const [map, setMap] = useState<RegionMap | null>(null);
+  // 지도를 확대한 동안에는 화면 스크롤을 멈춘다
+  const [zoomed, setZoomed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
@@ -62,6 +65,7 @@ const RegionMapView: React.FC<Props> = ({ onBack }) => {
   return (
     <View style={s.safeArea}>
       <ScrollView
+        scrollEnabled={!zoomed}
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
       >
@@ -81,12 +85,18 @@ const RegionMapView: React.FC<Props> = ({ onBack }) => {
         </SafeAreaView>
 
         <View style={s.map}>
-          <KoreaMapSvg
-            visitedCodes={visited.map(v => v.regionCode)}
+          <ZoomableView
             width={width - 48}
-            selectedCode={selected}
-            onPressRegion={toggle}
-          />
+            height={mapHeight(width - 48)}
+            onZoomedChange={setZoomed}
+          >
+            <KoreaMapSvg
+              visitedCodes={visited.map(v => v.regionCode)}
+              width={width - 48}
+              selectedCode={selected}
+              onPressRegion={toggle}
+            />
+          </ZoomableView>
         </View>
 
         <View style={s.legend}>

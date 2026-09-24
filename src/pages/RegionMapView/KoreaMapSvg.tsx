@@ -15,6 +15,8 @@ interface RegionShape {
 const BASE_WIDTH = 600;
 const BASE_HEIGHT = 720;
 
+export const mapHeight = (width: number) => (width * BASE_HEIGHT) / BASE_WIDTH;
+
 const COLLECTION: any = feature(
   provincesTopo as any,
   (provincesTopo as any).objects[
@@ -51,7 +53,7 @@ const KoreaMapSvg: React.FC<Props> = ({
   onPressRegion,
 }) => {
   const visited = useMemo(() => new Set(visitedCodes), [visitedCodes]);
-  const height = (width * BASE_HEIGHT) / BASE_WIDTH;
+  const height = mapHeight(width);
   const ordered = useMemo(
     () =>
       [...SHAPES].sort(
@@ -117,8 +119,10 @@ export function TripRegionMap({
   width,
   height,
   onPressPoint,
+  scale = 1,
 }: {
   regionCode: string | null | undefined;
+  scale?: number;
   points: MapPoint[];
   width: number;
   height: number;
@@ -158,8 +162,10 @@ export function TripRegionMap({
           key={pin.key}
           cx={pin.x}
           cy={pin.y}
-          r={7}
+          r={7 / scale}
           fill={colors.primary}
+          stroke={colors.white}
+          strokeWidth={2 / scale}
           onPress={() => onPressPoint?.(pin.key)}
         />
       ))}

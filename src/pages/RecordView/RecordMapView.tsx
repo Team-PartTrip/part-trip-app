@@ -26,6 +26,7 @@ import {
   TripCardSummary,
 } from '../../entities/record/api';
 import { TripRegionMap } from '../RegionMapView/KoreaMapSvg';
+import ZoomableView from '../../shared/ui/ZoomableView';
 import { formatShortDate } from '../../entities/record/types';
 import { PinIcon } from '../../shared/ui/icons';
 import colors from '../../shared/tokens/colors';
@@ -264,18 +265,27 @@ const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
     <View style={s.safeArea}>
       <View style={s.map} onLayout={onMapLayout}>
         {mapSize ? (
-          <TripRegionMap
-            regionCode={card?.regionCode}
-            points={points}
+          <ZoomableView
             width={mapSize.width}
             height={mapSize.height}
-            onPressPoint={key => {
-              const spot = spots.find(item => item.key === key);
-              if (spot) {
-                onOpenSpot?.({ tripCardId, entryId: spot.entryId });
-              }
-            }}
-          />
+            controlsStyle={[s.zoomControls, { top: insets.top + 64 }]}
+          >
+            {zoom => (
+              <TripRegionMap
+                scale={zoom}
+                regionCode={card?.regionCode}
+                points={points}
+                width={mapSize.width}
+                height={mapSize.height}
+                onPressPoint={key => {
+                  const spot = spots.find(item => item.key === key);
+                  if (spot) {
+                    onOpenSpot?.({ tripCardId, entryId: spot.entryId });
+                  }
+                }}
+              />
+            )}
+          </ZoomableView>
         ) : null}
 
         <View style={[s.topBar, { top: insets.top + 8 }]}>
