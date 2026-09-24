@@ -126,6 +126,7 @@ export function getCountries(keyword: string): Promise<CountryInfo[]> {
 export interface City {
   cityName: string;
   countryName: string;
+  regionName?: string | null;
 }
 
 /**

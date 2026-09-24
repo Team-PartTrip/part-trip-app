@@ -36,6 +36,11 @@ export function shortName(name: string): string {
   );
 }
 
+export function isSameRegion(name: string, code: string): boolean {
+  const region = regionOf(code);
+  return !!region && shortName(name) === shortName(region.name);
+}
+
 export function regionOf(code: string | null | undefined): Region | undefined {
   return REGIONS.find(region => region.code === code);
 }

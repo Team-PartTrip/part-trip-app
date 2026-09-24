@@ -16,6 +16,7 @@ import { touch48 } from '../../shared/ui/hitSlop';
 import { getCities } from '../../entities/main/api';
 import {
   isMetro,
+  isSameRegion,
   REGIONS,
   regionOf,
   shortName,
@@ -82,14 +83,24 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
     let alive = true;
     const timer = setTimeout(() => {
       getCities(keyword, KOREA_FOR_SEARCH)
-        .then(list => alive && setFound(list.map(c => c.cityName)))
+        .then(
+          list =>
+            alive &&
+            setFound(
+              list
+                .filter(
+                  c => !c.regionName || isSameRegion(c.regionName, regionCode),
+                )
+                .map(c => c.cityName),
+            ),
+        )
         .catch(() => alive && setFound([]));
     }, SEARCH_DELAY_MS);
     return () => {
       alive = false;
       clearTimeout(timer);
     };
-  }, [query]);
+  }, [query, regionCode]);
 
   const chooseRegion = (code: string) => {
     setRegionCode(code);

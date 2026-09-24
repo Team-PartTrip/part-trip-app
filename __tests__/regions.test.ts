@@ -1,4 +1,5 @@
 import {
+  isSameRegion,
   codeOfMapCode,
   REGIONS,
   regionOf,
@@ -46,4 +47,12 @@ test('지도 파일의 시·도 17개가 모두 서버 코드로 이어지고, �
     expect(region).toBeDefined();
     expect(g.properties.name.slice(0, 1)).toBe(region!.name.slice(0, 1));
   }
+});
+
+test('구글 시·도 이름을 옛 이름까지 맞춘다', () => {
+  expect(isSameRegion('경상북도', '47')).toBe(true);
+  expect(isSameRegion('강원도', '42')).toBe(true);
+  expect(isSameRegion('전라북도', '45')).toBe(true);
+  expect(isSameRegion('경기도', '47')).toBe(false);
+  expect(isSameRegion('광주광역시', '41')).toBe(false);
 });
