@@ -1,4 +1,8 @@
-import { monthsBetween, shiftIso } from '../src/pages/FestivalScreen/FestivalScreen';
+import {
+  isOpenDuring,
+  monthsBetween,
+  shiftIso,
+} from '../src/pages/FestivalScreen/FestivalScreen';
 
 // 여행 기간 ±1주는 달·해를 자주 넘는다. 여기서 틀리면 화면에는
 // "축제가 없어요" 로만 보여서 알아채기 어렵다.
@@ -42,4 +46,13 @@ test('해를 걸쳐도 순서대로 조회한다', () => {
     { year: 2026, month: 12 },
     { year: 2027, month: 1 },
   ]);
+});
+
+test('기간이 겹치면 열린 것으로 본다', () => {
+  const biennale = { startDate: '2026-09-01', endDate: '2026-10-31' } as any;
+  const oneDay = { startDate: '2026-10-05', endDate: null } as any;
+  expect(isOpenDuring(biennale, '2026-10-10', '2026-10-10')).toBe(true);
+  expect(isOpenDuring(biennale, '2026-11-01', '2026-11-07')).toBe(false);
+  expect(isOpenDuring(oneDay, '2026-10-05', '2026-10-05')).toBe(true);
+  expect(isOpenDuring(oneDay, '2026-10-06', '2026-10-10')).toBe(false);
 });

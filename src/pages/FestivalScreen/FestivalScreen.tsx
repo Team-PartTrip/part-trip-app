@@ -37,6 +37,17 @@ function toIso(year: number, monthIndex: number, day: number): string {
 /** 여행 기간 앞뒤로 함께 보여줄 날수 */
 const WINDOW_DAYS = 7;
 
+/** from~to 사이에 하루라도 열리는가 */
+export function isOpenDuring(event: Festival, from: string, to: string) {
+  return event.startDate <= to && (event.endDate ?? event.startDate) >= from;
+}
+
+function periodOf(event: Festival): string {
+  return event.endDate && event.endDate !== event.startDate
+    ? `${formatShortDate(event.startDate)} ~ ${formatShortDate(event.endDate)}`
+    : formatShortDate(event.startDate);
+}
+
 /** YYYY-MM-DD 를 days 만큼 옮긴다. Date 가 달·해 넘김을 알아서 처리한다 */
 export function shiftIso(iso: string, days: number): string {
   const [year, month, day] = iso.split('-').map(Number);
@@ -155,8 +166,7 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
         const byId = new Map<number, Festival>();
         for (const event of lists.flat()) {
           if (
-            event.startDate >= range.from &&
-            event.startDate <= range.to &&
+            isOpenDuring(event, range.from, range.to) &&
             (!city || event.location.includes(city))
           ) {
             byId.set(event.festivalId, event);
@@ -186,10 +196,6 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
     );
   }, [year, monthIndex]);
 
-  const eventDates = useMemo(
-    () => new Set(events.map(event => event.startDate)),
-    [events],
-  );
 
   const chips = useMemo(
     () => Array.from(new Set(events.map(event => event.category))),
@@ -201,7 +207,9 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
   const visible = useMemo(() => {
     let list = events;
     if (selectedDate) {
-      list = list.filter(event => event.startDate === selectedDate);
+      list = list.filter(event =>
+        isOpenDuring(event, selectedDate, selectedDate),
+      );
     }
     if (categories.length > 0) {
       list = list.filter(event => categories.includes(event.category));
@@ -319,7 +327,7 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
                         {day}
                       </Text>
                     </View>
-                    {eventDates.has(date) && (
+                    {events.some(event => isOpenDuring(event, date, date)) && (
                       <View style={[s.dot, on && s.dotOnSelected]} />
                     )}
                   </TouchableOpacity>
@@ -386,7 +394,7 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
                   <Text style={s.cardTitle}>{event.title}</Text>
                   <Text style={s.cardMeta}>
                     {/* 시작 시각이 없는 축제는 날짜만 보여준다 */}
-                    {formatShortDate(event.startDate)}
+                    {periodOf(event)}
                     {event.startTime ? ` · ${event.startTime}` : ''}
                   </Text>
                   <Text style={s.cardPlace}>{event.location}</Text>
@@ -430,7 +438,7 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
               </View>
               <Text style={s.sheetTitle}>{detail?.title}</Text>
               <Text style={s.sheetMeta}>
-                {detail ? formatShortDate(detail.startDate) : ''}
+                {detail ? periodOf(detail) : ''}
                 {detail?.startTime ? ` · ${detail.startTime}` : ''}
               </Text>
               <Text style={s.sheetPlace}>{detail?.location}</Text>

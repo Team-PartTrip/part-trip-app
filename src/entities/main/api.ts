@@ -156,7 +156,9 @@ export interface Festival {
   category: string;
   description: string;
   startDate: string;
-  /** 시작 시각이 정해지지 않은 축제가 많다 */
+  /** 하루짜리면 null */
+  endDate: string | null;
+  /** 시작 시각 정해지지 않은 축제가 많다 */
   startTime: string | null;
   location: string;
   /** 확보한 이미지가 없으면 null */
