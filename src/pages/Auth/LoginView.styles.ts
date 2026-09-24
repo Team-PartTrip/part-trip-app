@@ -19,11 +19,6 @@ export const loginStyles = StyleSheet.create({
   logoArea: {
     alignItems: 'center',
   },
-  // 재디자인 전과 같은 브랜드 로고 이미지 크기 (170x40)
-  brandLogo: {
-    width: 170,
-    height: 40,
-  },
   title: {
     marginTop: 20,
     fontSize: 24,

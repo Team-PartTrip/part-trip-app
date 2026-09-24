@@ -24,6 +24,7 @@ import type { SchedulePlace, ScheduleSlot } from '../../entities/planner/api';
 import { toImageUrl } from '../../shared/api/image';
 import { BellIcon, CalendarIcon } from '../../shared/ui/icons';
 import colors from '../../shared/tokens/colors';
+import DandiWordmark from '../../shared/ui/DandiWordmark';
 
 /**
  * 추천 목록.
@@ -233,12 +234,9 @@ const MainView: React.FC<MainViewProps> = ({
           <SafeAreaView edges={['top']} style={s.header}>
             <View style={s.headerTop}>
               {/* 헤더가 파란 배경이라 흰색 로고를 쓴다 */}
-              <Image
-                source={require('../../shared/assets/images/logo-white.png')}
-                style={s.brand}
-                resizeMode="contain"
-                accessibilityRole="image"
-                accessibilityLabel="PartTrip"
+              <DandiWordmark
+                height={26}
+                color={colors.textOnPrimary as string}
               />
               <View style={s.headerActions}>
                 <TouchableOpacity

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import colors from '../../shared/tokens/colors';
+import DandiWordmark from '../../shared/ui/DandiWordmark';
 import { launchStyles as styles } from './LaunchScreen.styles';
 
 import {
@@ -24,13 +25,12 @@ interface LaunchScreenProps {
   onFinish?: () => void; // 완료 시 메인뷰로 전환 콜백
 }
 
-const PartTripLogo: React.FC<{ animValue: Animated.Value }> = ({ animValue }) => {
+const DandiLogo: React.FC<{ animValue: Animated.Value }> = ({ animValue }) => {
   return (
     <View style={styles.logoContainer}>
       <View style={styles.logoRow}>
-        <Text style={[styles.logoText, styles.logoPart]}>Part</Text>
         <View style={styles.tripWrapper}>
-          <Text style={[styles.logoText, styles.logoTrip]}>Trip</Text>
+          <DandiWordmark height={64} color={colors.primary as string} />
           <Animated.View
             style={[
               styles.shimmer,
@@ -176,7 +176,7 @@ const LaunchScreen: React.FC<LaunchScreenProps> = ({ onFinish }) => {
           },
         ]}
       >
-        <PartTripLogo animValue={shimmerAnim} />
+        <DandiLogo animValue={shimmerAnim} />
 
         <Animated.Text
           style={[

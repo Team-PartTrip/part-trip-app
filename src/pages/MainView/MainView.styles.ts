@@ -46,10 +46,6 @@ export const mainStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  brand: {
-    width: 110,
-    height: 26,
-  },
   headerActions: {
     flexDirection: 'row',
     gap: 12,

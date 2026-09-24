@@ -41,21 +41,9 @@ export const launchStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  logoText: {
-    fontSize: 52,
-    fontWeight: '800',
-    fontStyle: 'italic',
-    letterSpacing: -1,
-  },
-  logoPart: {
-    color: colors.primary,
-  },
   tripWrapper: {
     position: 'relative',
     overflow: 'hidden',
-  },
-  logoTrip: {
-    color: colors.primaryDark,
   },
   shimmer: {
     position: 'absolute',

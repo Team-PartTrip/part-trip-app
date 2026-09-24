@@ -4,7 +4,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Image,
   Alert,
   ActivityIndicator,
 } from 'react-native';
@@ -21,6 +20,7 @@ import {
 } from '../../shared/lib/kakaoSignin';
 import { saveTokens, saveProvider } from '../../shared/api/tokenStorage';
 import colors from '../../shared/tokens/colors';
+import DandiWordmark from '../../shared/ui/DandiWordmark';
 
 interface LoginViewProps {
   onLogin?: () => void;
@@ -77,11 +77,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <View style={styles.logoArea}>
-          <Image
-            source={require('../../shared/assets/images/logo.png')}
-            style={styles.brandLogo}
-            resizeMode="contain"
-          />
+          <DandiWordmark height={48} color={colors.primary as string} />
           <Text style={styles.title}>로그인</Text>
           <Text style={styles.subtitle}>
             처음이면 로그인하면서 가입도 함께 끝나요
