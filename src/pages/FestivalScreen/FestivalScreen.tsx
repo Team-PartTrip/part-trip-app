@@ -196,7 +196,6 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
     );
   }, [year, monthIndex]);
 
-
   const chips = useMemo(
     () => Array.from(new Set(events.map(event => event.category))),
     [events],
@@ -327,9 +326,10 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
                         {day}
                       </Text>
                     </View>
-                    {events.some(event => isOpenDuring(event, date, date)) && (
-                      <View style={[s.dot, on && s.dotOnSelected]} />
-                    )}
+                    {!outsideRange &&
+                      events.some(event => isOpenDuring(event, date, date)) && (
+                        <View style={[s.dot, on && s.dotOnSelected]} />
+                      )}
                   </TouchableOpacity>
                 );
               })}
