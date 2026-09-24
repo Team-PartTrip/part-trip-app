@@ -7,7 +7,7 @@ export const recordMapStyles = StyleSheet.create({
 
   // 지도 자리. 지도 SDK 를 붙이기 전까지 격자 + 육지 모양으로 대신한다
   map: { flex: 1, backgroundColor: colors.tint, overflow: 'hidden' },
-  zoomControls: { bottom: undefined, right: 16 },
+  mapView: StyleSheet.absoluteFill,
   gridLine: { position: 'absolute', backgroundColor: colors.white, opacity: 0.7 },
   gridRow: { left: 0, right: 0, height: 1 },
   gridCol: { top: 0, bottom: 0, width: 1 },

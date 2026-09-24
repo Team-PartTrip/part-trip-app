@@ -25,13 +25,12 @@ import {
   TimelineItem,
   TripCardSummary,
 } from '../../entities/record/api';
-import { TripRegionMap } from '../RegionMapView/KoreaMapSvg';
-import ZoomableView from '../../shared/ui/ZoomableView';
+import MapView, { Marker } from 'react-native-maps';
 import { formatShortDate } from '../../entities/record/types';
 import { PinIcon } from '../../shared/ui/icons';
 import colors from '../../shared/tokens/colors';
 
-/** 지도에 찍을 한 지점. 위·경도는 지도와 같은 투영을 태워야 해서 그대로 둔다 */
+/** 지도에 찍을 한 지점 */
 interface Spot {
   key: string;
   entryId: number | null;
@@ -42,7 +41,7 @@ interface Spot {
   longitude: number;
 }
 
-/** 좌표가 있는 타임라인 항목을 지도 위 비율 좌표로 바꾼다 */
+/** 좌표가 있는 타임라인 항목만 지도에 찍는다 */
 function toSpots(timeline: TimelineItem[]): Spot[] {
   const located = timeline.filter(
     item => item.latitude != null && item.longitude != null,
@@ -64,6 +63,13 @@ function toSpots(timeline: TimelineItem[]): Spot[] {
   }));
 }
 
+const KOREA_REGION = {
+  latitude: 36.3,
+  longitude: 127.8,
+  latitudeDelta: 6.5,
+  longitudeDelta: 5,
+};
+
 interface Props {
   tripCardId: number;
   onBack?: () => void;
@@ -75,11 +81,7 @@ const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
-  // 지도를 그리려면 실제 픽셀 크기를 알아야 한다. 화면마다 다르다.
-  const [mapSize, setMapSize] = useState<{
-    width: number;
-    height: number;
-  } | null>(null);
+  const mapRef = useRef<MapView>(null);
   const [card, setCard] = useState<TripCardSummary | null>(null);
   const [loading, setLoading] = useState(true);
   // 조회 실패와 데이터 없음은 다르다. 같은 문구를 쓰면 서버가 죽어도
@@ -187,26 +189,21 @@ const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
     [clampSheetHeight, settle, sheetHeight],
   );
 
-  const onMapLayout = (e: any) => {
-    const { width, height } = e.nativeEvent.layout;
-    setMapSize(prev =>
-      prev?.width === width && prev?.height === height
-        ? prev
-        : { width, height },
-    );
-  };
-
   const spots = useMemo(() => toSpots(timeline), [timeline]);
-  const points = useMemo(
-    () =>
-      spots.map((spot, index) => ({
-        key: spot.key,
-        latitude: spot.latitude,
-        longitude: spot.longitude,
-        index,
-      })),
-    [spots],
+  const mapPadding = useMemo(
+    () => ({ top: insets.top + 64, right: 24, bottom: SHEET_COLLAPSED, left: 24 }),
+    [insets.top, SHEET_COLLAPSED],
   );
+  const fitSpots = useCallback(() => {
+    if (spots.length === 0) {
+      return;
+    }
+    mapRef.current?.fitToCoordinates(spots, {
+      edgePadding: { top: 48, right: 48, bottom: 48, left: 48 },
+      animated: false,
+    });
+  }, [spots]);
+  useEffect(fitSpots, [fitSpots]);
   const place = card ? placeOf(card, ' · ') : '여행';
 
   const list = (
@@ -263,30 +260,28 @@ const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
 
   return (
     <View style={s.safeArea}>
-      <View style={s.map} onLayout={onMapLayout}>
-        {mapSize ? (
-          <ZoomableView
-            width={mapSize.width}
-            height={mapSize.height}
-            controlsStyle={[s.zoomControls, { top: insets.top + 64 }]}
-          >
-            {zoom => (
-              <TripRegionMap
-                scale={zoom}
-                regionCode={card?.regionCode}
-                points={points}
-                width={mapSize.width}
-                height={mapSize.height}
-                onPressPoint={key => {
-                  const spot = spots.find(item => item.key === key);
-                  if (spot) {
-                    onOpenSpot?.({ tripCardId, entryId: spot.entryId });
-                  }
-                }}
-              />
-            )}
-          </ZoomableView>
-        ) : null}
+      <View style={s.map}>
+        <MapView
+          ref={mapRef}
+          style={s.mapView}
+          initialRegion={KOREA_REGION}
+          mapPadding={mapPadding}
+          onMapReady={fitSpots}
+          toolbarEnabled={false}
+        >
+          {spots.map(spot => (
+            <Marker
+              key={spot.key}
+              coordinate={spot}
+              title={spot.title}
+              description={formatShortDate(spot.date)}
+              pinColor={colors.primary as string}
+              onCalloutPress={() =>
+                onOpenSpot?.({ tripCardId, entryId: spot.entryId })
+              }
+            />
+          ))}
+        </MapView>
 
         <View style={[s.topBar, { top: insets.top + 8 }]}>
           <TouchableOpacity

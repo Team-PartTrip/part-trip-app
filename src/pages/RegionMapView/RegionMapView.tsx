@@ -22,7 +22,6 @@ interface Props {
 const RegionMapView: React.FC<Props> = ({ onBack }) => {
   const { width } = useWindowDimensions();
   const [map, setMap] = useState<RegionMap | null>(null);
-  // 지도를 확대한 동안에는 화면 스크롤을 멈춘다
   const [zoomed, setZoomed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);

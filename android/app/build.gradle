@@ -86,7 +86,8 @@ android {
         versionName "1.0"
 
         manifestPlaceholders = [
-            KAKAO_NATIVE_APP_KEY: project.properties.get("KAKAO_NATIVE_APP_KEY", "")
+            KAKAO_NATIVE_APP_KEY: project.properties.get("KAKAO_NATIVE_APP_KEY", ""),
+            GOOGLE_MAPS_API_KEY: project.properties.get("GOOGLE_MAPS_API_KEY", "")
         ]
         resValue "string", "kakao_app_key",
             project.properties.get("KAKAO_NATIVE_APP_KEY", "")

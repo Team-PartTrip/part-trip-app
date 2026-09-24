@@ -39,20 +39,15 @@ const distance = (e: GestureResponderEvent) => {
 const ZoomableView: React.FC<{
   width: number;
   height: number;
-  /** 함수로 주면 현재 배율을 받는다. 핀처럼 커지면 안 되는 것을 줄일 때 쓴다 */
-  children: React.ReactNode | ((scale: number) => React.ReactNode);
+  children: React.ReactNode;
   controlsStyle?: StyleProp<ViewStyle>;
   onZoomedChange?: (zoomed: boolean) => void;
 }> = ({ width, height, children, controlsStyle, onZoomedChange }) => {
   const scale = useRef(new Animated.Value(1)).current;
   const pan = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
-  // 제스처 중 계산에 쓰는 현재 값. Animated 값은 바로 읽을 수 없다
   const now = useRef({ scale: 1, x: 0, y: 0 });
   const start = useRef({ scale: 1, x: 0, y: 0, dist: 0 });
   const [zoomed, setZoomed] = useState(false);
-  const [liveScale, setLiveScale] = useState(1);
-  const frame = useRef<number | null>(null);
-  const wantsScale = typeof children === 'function';
 
   const apply = (next: { scale: number; x: number; y: number }) => {
     const s = clamp(next.scale, MIN_SCALE, MAX_SCALE);
@@ -60,13 +55,6 @@ const ZoomableView: React.FC<{
     now.current = { scale: s, ...p };
     scale.setValue(s);
     pan.setValue(p);
-    // 한 프레임에 한 번만 다시 그린다
-    if (wantsScale && frame.current === null) {
-      frame.current = requestAnimationFrame(() => {
-        frame.current = null;
-        setLiveScale(now.current.scale);
-      });
-    }
   };
   const settle = () => {
     const isZoomed = now.current.scale > 1.02;
@@ -95,7 +83,6 @@ const ZoomableView: React.FC<{
           const base = start.current;
           let nextScale = base.scale;
           if (e.nativeEvent.touches.length >= 2) {
-            // 한 손가락으로 시작해 두 번째 손가락이 늦게 닿을 때
             if (!base.dist) {
               start.current = { ...now.current, dist: distance(e) };
               return;
@@ -106,7 +93,6 @@ const ZoomableView: React.FC<{
         },
         onPanResponderRelease: settle,
         onPanResponderTerminate: settle,
-        // 지도를 움직이는 중에 바깥 스크롤이 가져가지 않게 한다
         onPanResponderTerminationRequest: () => false,
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -132,7 +118,7 @@ const ZoomableView: React.FC<{
           transform: [{ translateX: pan.x }, { translateY: pan.y }, { scale }],
         }}
       >
-        {typeof children === 'function' ? children(liveScale) : children}
+        {children}
       </Animated.View>
       <View style={[controls.box, controlsStyle]}>
         <TouchableOpacity

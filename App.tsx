@@ -349,7 +349,6 @@ function App() {
                   />
                 )}
               </Stack.Screen>
-              {/* 지도를 옆으로 끌다 이전 화면으로 넘어가지 않게 한다. 뒤로는 ‹ 버튼으로 */}
               <Stack.Screen
                 name="RecordMap"
                 options={{ gestureEnabled: false }}

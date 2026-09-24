@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import Svg, { Circle, Path } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 import { geoMercator, geoPath } from 'd3-geo';
 import { feature } from 'topojson-client';
 import provincesTopo from '../../shared/assets/maps/skorea-provinces-topo.json';
@@ -102,73 +102,6 @@ export function RegionShapeSvg({ code, size }: { code: string; size: number }) {
   return (
     <Svg width={padded} height={padded}>
       <Path d={d} fill={colors.primary} />
-    </Svg>
-  );
-}
-
-export interface MapPoint {
-  key: string;
-  latitude: number;
-  longitude: number;
-  index: number;
-}
-
-export function TripRegionMap({
-  regionCode,
-  points,
-  width,
-  height,
-  onPressPoint,
-  scale = 1,
-}: {
-  regionCode: string | null | undefined;
-  scale?: number;
-  points: MapPoint[];
-  width: number;
-  height: number;
-  onPressPoint?: (key: string) => void;
-}) {
-  const drawing = useMemo(() => {
-    const target =
-      SHAPES.find(shape => shape.code === regionCode)?.feature ?? COLLECTION;
-    const projection = geoMercator().fitExtent(
-      [
-        [width * 0.1, height * 0.1],
-        [width * 0.9, height * 0.9],
-      ],
-      target,
-    );
-    return {
-      d: geoPath(projection)(target) ?? '',
-      pins: points
-        .map(p => {
-          const xy = projection([p.longitude, p.latitude]);
-          return xy ? { ...p, x: xy[0], y: xy[1] } : null;
-        })
-        .filter((p): p is MapPoint & { x: number; y: number } => p !== null),
-    };
-  }, [regionCode, points, width, height]);
-
-  return (
-    <Svg width={width} height={height}>
-      <Path
-        d={drawing.d}
-        fill={colors.surfaceAlt}
-        stroke={colors.border}
-        strokeWidth={1}
-      />
-      {drawing.pins.map(pin => (
-        <Circle
-          key={pin.key}
-          cx={pin.x}
-          cy={pin.y}
-          r={7 / scale}
-          fill={colors.primary}
-          stroke={colors.white}
-          strokeWidth={2 / scale}
-          onPress={() => onPressPoint?.(pin.key)}
-        />
-      ))}
     </Svg>
   );
 }
