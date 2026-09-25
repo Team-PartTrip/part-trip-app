@@ -5,6 +5,7 @@ import { feature } from 'topojson-client';
 import provincesTopo from '../../shared/assets/maps/skorea-provinces-topo.json';
 import colors from '../../shared/tokens/colors';
 import { codeOfMapCode } from '../../entities/region/regions';
+import { visibleBox, Zoom } from '../../shared/ui/ZoomableView';
 
 interface RegionShape {
   code: string;
@@ -49,6 +50,7 @@ interface Props {
   width: number;
   selectedCode?: string | null;
   onPressRegion?: (code: string) => void;
+  zoom?: Zoom;
 }
 
 const KoreaMapSvg: React.FC<Props> = ({
@@ -56,6 +58,7 @@ const KoreaMapSvg: React.FC<Props> = ({
   width,
   selectedCode,
   onPressRegion,
+  zoom = { scale: 1, x: 0, y: 0 },
 }) => {
   const visited = useMemo(() => new Set(visitedCodes), [visitedCodes]);
   const height = mapHeight(width);
@@ -72,7 +75,10 @@ const KoreaMapSvg: React.FC<Props> = ({
     <Svg
       width={width}
       height={height}
-      viewBox={`0 0 ${BASE_WIDTH} ${BASE_HEIGHT}`}
+      viewBox={(() => {
+        const b = visibleBox(zoom, width, height, BASE_WIDTH, BASE_HEIGHT);
+        return `${b.x} ${b.y} ${b.width} ${b.height}`;
+      })()}
     >
       {ordered.map(shape => (
         <Path
@@ -80,7 +86,8 @@ const KoreaMapSvg: React.FC<Props> = ({
           d={shape.d}
           fill={visited.has(shape.code) ? colors.primary : colors.mapLand}
           stroke={shape.code === selectedCode ? colors.text : colors.background}
-          strokeWidth={shape.code === selectedCode ? 3 : 1}
+          strokeWidth={shape.code === selectedCode ? 2 : 0.6}
+          vectorEffect="non-scaling-stroke"
           onPress={onPressRegion ? () => onPressRegion(shape.code) : undefined}
         />
       ))}

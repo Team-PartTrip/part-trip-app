@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   GestureResponderEvent,
@@ -13,7 +13,7 @@ import {
 import colors from '../tokens/colors';
 
 export const MIN_SCALE = 1;
-export const MAX_SCALE = 4;
+export const MAX_SCALE = 10;
 const STEP = 1.6;
 
 const clamp = (v: number, lo: number, hi: number) =>
@@ -31,6 +31,30 @@ export function clampPan(
   return { x: clamp(x, -maxX, maxX), y: clamp(y, -maxY, maxY) };
 }
 
+export interface Zoom {
+  scale: number;
+  x: number;
+  y: number;
+}
+
+export function visibleBox(
+  z: Zoom,
+  width: number,
+  height: number,
+  baseWidth: number,
+  baseHeight: number,
+) {
+  const k = baseWidth / width;
+  return {
+    x: ((width / 2) * (1 - 1 / z.scale) - z.x / z.scale) * k,
+    y:
+      ((height / 2) * (1 - 1 / z.scale) - z.y / z.scale) *
+      (baseHeight / height),
+    width: baseWidth / z.scale,
+    height: baseHeight / z.scale,
+  };
+}
+
 const distance = (e: GestureResponderEvent) => {
   const [a, b] = e.nativeEvent.touches;
   return Math.hypot(a.pageX - b.pageX, a.pageY - b.pageY);
@@ -39,13 +63,20 @@ const distance = (e: GestureResponderEvent) => {
 const ZoomableView: React.FC<{
   width: number;
   height: number;
-  children: React.ReactNode;
+  children: (zoom: Zoom) => React.ReactNode;
   controlsStyle?: StyleProp<ViewStyle>;
   onZoomedChange?: (zoomed: boolean) => void;
 }> = ({ width, height, children, controlsStyle, onZoomedChange }) => {
-  const scale = useRef(new Animated.Value(1)).current;
-  const pan = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
-  const now = useRef({ scale: 1, x: 0, y: 0 });
+  const now = useRef<Zoom>({ scale: 1, x: 0, y: 0 });
+  const [zoom, setZoom] = useState<Zoom>(now.current);
+  const drawn = useRef<Zoom>(zoom);
+  const liveScale = useRef(new Animated.Value(1)).current;
+  const livePan = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
+  useLayoutEffect(() => {
+    drawn.current = zoom;
+    liveScale.setValue(1);
+    livePan.setValue({ x: 0, y: 0 });
+  }, [zoom, liveScale, livePan]);
   const start = useRef({ scale: 1, x: 0, y: 0, dist: 0 });
   const [zoomed, setZoomed] = useState(false);
 
@@ -53,14 +84,19 @@ const ZoomableView: React.FC<{
     const s = clamp(next.scale, MIN_SCALE, MAX_SCALE);
     const p = clampPan(s, width, height, next.x, next.y);
     now.current = { scale: s, ...p };
-    scale.setValue(s);
-    pan.setValue(p);
+    const k = s / drawn.current.scale;
+    liveScale.setValue(k);
+    livePan.setValue({
+      x: p.x - drawn.current.x * k,
+      y: p.y - drawn.current.y * k,
+    });
   };
   const settle = () => {
     const isZoomed = now.current.scale > 1.02;
     if (!isZoomed) {
       apply({ scale: 1, x: 0, y: 0 });
     }
+    setZoom(now.current);
     if (isZoomed !== zoomed) {
       setZoomed(isZoomed);
       onZoomedChange?.(isZoomed);
@@ -115,10 +151,14 @@ const ZoomableView: React.FC<{
         style={{
           width,
           height,
-          transform: [{ translateX: pan.x }, { translateY: pan.y }, { scale }],
+          transform: [
+            { translateX: livePan.x },
+            { translateY: livePan.y },
+            { scale: liveScale },
+          ],
         }}
       >
-        {children}
+        {children(zoom)}
       </Animated.View>
       <View style={[controls.box, controlsStyle]}>
         <TouchableOpacity

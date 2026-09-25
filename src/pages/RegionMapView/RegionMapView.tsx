@@ -89,12 +89,15 @@ const RegionMapView: React.FC<Props> = ({ onBack }) => {
             height={mapHeight(width - 48)}
             onZoomedChange={setZoomed}
           >
-            <KoreaMapSvg
-              visitedCodes={visited.map(v => v.regionCode)}
-              width={width - 48}
-              selectedCode={selected}
-              onPressRegion={toggle}
-            />
+            {zoom => (
+              <KoreaMapSvg
+                visitedCodes={visited.map(v => v.regionCode)}
+                width={width - 48}
+                selectedCode={selected}
+                onPressRegion={toggle}
+                zoom={zoom}
+              />
+            )}
           </ZoomableView>
         </View>
 
