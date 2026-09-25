@@ -38,6 +38,7 @@ interface Props {
   onOpenRegionMap?: () => void;
   /** 가족 연결 (보호자, Func-012) */
   onOpenGuardian?: () => void;
+  onOpenTravelPreference?: () => void;
 }
 
 const ProfileView: React.FC<Props> = ({
@@ -46,6 +47,7 @@ const ProfileView: React.FC<Props> = ({
   onLogout,
   onOpenRegionMap,
   onOpenGuardian,
+  onOpenTravelPreference,
 }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [stats, setStats] = useState<ProfileStats | null>(null);
@@ -253,6 +255,14 @@ const ProfileView: React.FC<Props> = ({
             onPress={onOpenGuardian}
           >
             <Text style={s.settingsRowText}>가족 연결 (보호자)</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={s.settingsRow}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            onPress={onOpenTravelPreference}
+          >
+            <Text style={s.settingsRowText}>여행 편의 설정</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={s.settingsRow}

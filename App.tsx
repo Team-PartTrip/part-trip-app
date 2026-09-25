@@ -41,6 +41,7 @@ import RecordEditView from './src/pages/RecordView/RecordEditView';
 import RecordCompleteView from './src/pages/RecordView/RecordCompleteView';
 import ProfileEditView from './src/pages/ProfileView/ProfileEditView';
 import GuardianView from './src/pages/GuardianView/GuardianView';
+import TravelPreferenceView from './src/pages/TravelPreferenceView/TravelPreferenceView';
 import SeniorView from './src/pages/GuardianView/SeniorView';
 import { useLocationSharing } from './src/shared/lib/locationSharing';
 import RegionMapView from './src/pages/RegionMapView/RegionMapView';
@@ -76,6 +77,7 @@ export type RootStackParamList = {
   Profile: undefined;
   ProfileEdit: undefined;
   Guardian: undefined;
+  TravelPreference: undefined;
   Senior: { seniorUserId: string; nickName: string };
   RegionMap: undefined;
 };
@@ -113,6 +115,7 @@ const OWN_HEADER_ROUTES = [
   'TripCardEdit',
   'Profile',
   'Guardian',
+  'TravelPreference',
   'Senior',
   'Notifications',
   'NotificationDetail',
@@ -143,6 +146,7 @@ const TAB_BY_ROUTE: Record<string, TabKey> = {
   Profile: 'profile',
   ProfileEdit: 'profile',
   Guardian: 'profile',
+  TravelPreference: 'profile',
   Senior: 'profile',
 };
 
@@ -486,6 +490,9 @@ function App() {
                     onEdit={() => navigation.navigate('ProfileEdit')}
                     onOpenRegionMap={() => navigation.navigate('RegionMap')}
                     onOpenGuardian={() => navigation.navigate('Guardian')}
+                    onOpenTravelPreference={() =>
+                      navigation.navigate('TravelPreference')
+                    }
                     onLogout={() =>
                       navigation.reset({
                         index: 0,
@@ -498,6 +505,12 @@ function App() {
               <Stack.Screen name="ProfileEdit">
                 {({ navigation }) => (
                   <ProfileEditView onConfirm={() => navigation.goBack()} />
+                )}
+              </Stack.Screen>
+
+              <Stack.Screen name="TravelPreference">
+                {({ navigation }) => (
+                  <TravelPreferenceView onBack={() => navigation.goBack()} />
                 )}
               </Stack.Screen>
 
