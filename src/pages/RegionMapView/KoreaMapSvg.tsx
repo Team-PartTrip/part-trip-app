@@ -14,6 +14,7 @@ interface RegionShape {
 
 const BASE_WIDTH = 600;
 const BASE_HEIGHT = 720;
+const MAP_PADDING = 20;
 
 export const mapHeight = (width: number) => (width * BASE_HEIGHT) / BASE_WIDTH;
 
@@ -25,8 +26,12 @@ const COLLECTION: any = feature(
 );
 
 const SHAPES: RegionShape[] = (() => {
-  const projection = geoMercator().fitSize(
-    [BASE_WIDTH, BASE_HEIGHT],
+  // 울릉도 · 독도가 오른쪽 끝에 닿아 테두리가 잘린다. 안쪽 여백을 둔다
+  const projection = geoMercator().fitExtent(
+    [
+      [MAP_PADDING, MAP_PADDING],
+      [BASE_WIDTH - MAP_PADDING, BASE_HEIGHT - MAP_PADDING],
+    ],
     COLLECTION,
   );
   const toPath = geoPath(projection);

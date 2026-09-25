@@ -41,6 +41,7 @@ export const regionMapStyles = StyleSheet.create({
   // ── 지도 일러스트 ──
   // 실제 지도 데이터 대신 피그마에 그려진 대륙 덩어리를 그대로 옮겼다.
   map: {
+    alignItems: 'center',
     backgroundColor: colors.surfaceAlt,
     overflow: 'hidden',
   },
