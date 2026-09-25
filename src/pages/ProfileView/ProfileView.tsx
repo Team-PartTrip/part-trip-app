@@ -13,6 +13,7 @@ import { RegionShapeSvg } from '../RegionMapView/KoreaMapSvg';
 import { getRegionMap, VisitedRegion } from '../../entities/region/api';
 import { profileStyles as s } from './ProfileView.styles';
 import {
+  deleteAccount,
   getMyProfile,
   getProfileStats,
   ProfileStats,
@@ -97,6 +98,33 @@ const ProfileView: React.FC<Props> = ({
         },
       },
     ]);
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      '회원 탈퇴',
+      '여행 계획, 여행카드, 사진이 모두 지워지고 되살릴 수 없어요. 함께 가는 여행은 다른 일행에게 넘어가요.',
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '탈퇴하기',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteAccount();
+            } catch (e: any) {
+              Alert.alert(
+                '탈퇴하지 못했어요',
+                e?.message ?? '잠시 후 다시 시도해주세요.',
+              );
+              return;
+            }
+            await clearTokens();
+            onLogout?.();
+          },
+        },
+      ],
+    );
   };
 
   // 아직 화면이 없는 항목은 조용히 무반응으로 두지 않고 준비 중임을 알린다
@@ -234,6 +262,14 @@ const ProfileView: React.FC<Props> = ({
             <Text style={[s.settingsRowText, s.settingsRowDanger]}>
               로그아웃
             </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={s.settingsRow}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            onPress={handleDeleteAccount}
+          >
+            <Text style={s.settingsRowMuted}>회원 탈퇴</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

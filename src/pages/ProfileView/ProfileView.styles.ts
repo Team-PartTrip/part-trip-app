@@ -114,5 +114,6 @@ export const profileStyles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   settingsRowText: { fontSize: 15, color: colors.text },
+  settingsRowMuted: { fontSize: 14, color: colors.textTertiary },
   settingsRowDanger: { color: colors.badge },
 });

@@ -41,3 +41,8 @@ export function updateProfile(
     body: payload,
   });
 }
+
+/** 회원 탈퇴. 계정과 여행 · 기록 · 사진이 모두 지워진다 */
+export function deleteAccount(): Promise<void> {
+  return authRequest<void>('/api/profile', { method: 'DELETE' });
+}
