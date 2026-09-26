@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import colors from '../../shared/tokens/colors';
 import DandiWordmark from '../../shared/ui/DandiWordmark';
+import DandiLogoMark from '../../shared/ui/DandiLogoMark';
 import { launchStyles as styles } from './LaunchScreen.styles';
 
 import {
@@ -28,9 +29,10 @@ interface LaunchScreenProps {
 const DandiLogo: React.FC<{ animValue: Animated.Value }> = ({ animValue }) => {
   return (
     <View style={styles.logoContainer}>
+      <DandiLogoMark size={96} />
       <View style={styles.logoRow}>
         <View style={styles.tripWrapper}>
-          <DandiWordmark height={64} color={colors.primary as string} />
+          <DandiWordmark height={40} color={colors.primary as string} />
           <Animated.View
             style={[
               styles.shimmer,

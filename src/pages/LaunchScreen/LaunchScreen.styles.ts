@@ -38,6 +38,7 @@ export const launchStyles = StyleSheet.create({
     alignItems: 'center',
   },
   logoRow: {
+    marginTop: 20,
     flexDirection: 'row',
     alignItems: 'center',
   },
