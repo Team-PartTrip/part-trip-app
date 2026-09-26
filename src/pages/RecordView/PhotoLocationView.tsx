@@ -118,7 +118,13 @@ const PhotoLocationView: React.FC<Props> = ({
                 item.longitude != null,
             ),
           );
-          setDays(tripDays(detail.startDate, detail.endDate));
+          // 서버가 아직 오지 않은 날짜는 받지 않는다
+          const today = new Date(Date.now() + 9 * 3600 * 1000)
+            .toISOString()
+            .slice(0, 10);
+          setDays(
+            tripDays(detail.startDate, detail.endDate).filter(d => d <= today),
+          );
         })
         .catch(() => alive && setPhoto(null))
         .finally(() => alive && setLoading(false));
