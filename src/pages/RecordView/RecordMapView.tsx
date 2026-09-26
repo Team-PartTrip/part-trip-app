@@ -84,6 +84,7 @@ interface Props {
 const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
+  const [areaHeight, setAreaHeight] = useState(windowHeight);
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
   const mapRef = useRef<MapView>(null);
   const [card, setCard] = useState<TripCardSummary | null>(null);
@@ -131,7 +132,7 @@ const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
   // 끌어 목록을 펼치고 접는 편이 지도를 보면서 쓰기 좋다.
   const SHEET_PEEK = 354;
   const SHEET_MIN = 96 + insets.bottom;
-  const SHEET_FULL = Math.max(SHEET_MIN, windowHeight - insets.top - 64);
+  const SHEET_FULL = Math.max(SHEET_MIN, areaHeight - insets.top - 64);
   const SHEET_COLLAPSED = Math.min(SHEET_PEEK, SHEET_FULL);
   const snaps = useMemo(
     () => [SHEET_MIN, SHEET_COLLAPSED, SHEET_FULL],
@@ -273,7 +274,10 @@ const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
   );
 
   return (
-    <View style={s.safeArea}>
+    <View
+      style={s.safeArea}
+      onLayout={e => setAreaHeight(e.nativeEvent.layout.height)}
+    >
       <View style={s.map}>
         <MapView
           ref={mapRef}
