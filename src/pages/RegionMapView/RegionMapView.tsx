@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { regionMapStyles as s } from './RegionMapView.styles';
 import KoreaMapSvg, { mapHeight } from './KoreaMapSvg';
+import { DISTRICTS, visitedDistricts } from './districts';
 import ZoomableView from '../../shared/ui/ZoomableView';
 import { getRegionMap, RegionMap } from '../../entities/region/api';
 import { shortName } from '../../entities/region/regions';
@@ -28,6 +29,10 @@ const RegionMapView: React.FC<Props> = ({ onBack }) => {
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
+  const districtIds = useMemo(
+    () => visitedDistricts(map?.trips ?? []),
+    [map],
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -96,6 +101,7 @@ const RegionMapView: React.FC<Props> = ({ onBack }) => {
             {zoom => (
               <KoreaMapSvg
                 visitedCodes={visited.map(v => v.regionCode)}
+                visitedDistrictIds={districtIds}
                 width={width - 48}
                 selectedCode={selected}
                 onPressRegion={toggle}
@@ -160,7 +166,16 @@ const RegionMapView: React.FC<Props> = ({ onBack }) => {
                   </View>
                   <View style={s.regionBody}>
                     <Text style={s.regionName}>{region.regionName}</Text>
-                    <Text style={s.regionMeta}>여행 {region.tripCount}번</Text>
+                    <Text style={s.regionMeta}>
+                      {[
+                        ...DISTRICTS.filter(
+                          d =>
+                            d.regionCode === region.regionCode &&
+                            districtIds.has(d.id),
+                        ).map(d => d.name),
+                        `여행 ${region.tripCount}번`,
+                      ].join(' · ')}
+                    </Text>
                   </View>
                 </TouchableOpacity>
               ))

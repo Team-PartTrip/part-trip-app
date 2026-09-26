@@ -6,6 +6,7 @@ import provincesTopo from '../../shared/assets/maps/skorea-provinces-topo.json';
 import colors from '../../shared/tokens/colors';
 import { codeOfMapCode } from '../../entities/region/regions';
 import { visibleBox, Zoom } from '../../shared/ui/ZoomableView';
+import { DISTRICTS } from './districts';
 
 interface RegionShape {
   code: string;
@@ -26,16 +27,24 @@ const COLLECTION: any = feature(
   ],
 );
 
-const SHAPES: RegionShape[] = (() => {
-  // 울릉도 · 독도가 오른쪽 끝에 닿아 테두리가 잘린다. 안쪽 여백을 둔다
-  const projection = geoMercator().fitExtent(
+// 울릉도 · 독도가 오른쪽 끝에 닿아 테두리가 잘린다. 안쪽 여백을 둔다
+const toPath = geoPath(
+  geoMercator().fitExtent(
     [
       [MAP_PADDING, MAP_PADDING],
       [BASE_WIDTH - MAP_PADDING, BASE_HEIGHT - MAP_PADDING],
     ],
     COLLECTION,
-  );
-  const toPath = geoPath(projection);
+  ),
+).digits(1);
+
+const DISTRICT_SHAPES = DISTRICTS.map(d => ({
+  id: d.id,
+  code: d.regionCode,
+  d: toPath(d.feature) ?? '',
+})).filter(shape => shape.d);
+
+const SHAPES: RegionShape[] = (() => {
   return COLLECTION.features
     .map((f: any) => ({
       code: codeOfMapCode(String(f.properties?.code)) ?? '',
@@ -47,6 +56,7 @@ const SHAPES: RegionShape[] = (() => {
 
 interface Props {
   visitedCodes: string[];
+  visitedDistrictIds?: Set<string>;
   width: number;
   selectedCode?: string | null;
   onPressRegion?: (code: string) => void;
@@ -55,6 +65,7 @@ interface Props {
 
 const KoreaMapSvg: React.FC<Props> = ({
   visitedCodes,
+  visitedDistrictIds,
   width,
   selectedCode,
   onPressRegion,
@@ -80,15 +91,31 @@ const KoreaMapSvg: React.FC<Props> = ({
         return `${b.x} ${b.y} ${b.width} ${b.height}`;
       })()}
     >
+      {DISTRICT_SHAPES.map(shape => (
+        <Path
+          key={shape.id}
+          d={shape.d}
+          fill={
+            visitedDistrictIds?.has(shape.id)
+              ? colors.primary
+              : visited.has(shape.code)
+              ? colors.mapRegion
+              : colors.mapLand
+          }
+          stroke={colors.background}
+          strokeWidth={0.3}
+          vectorEffect="non-scaling-stroke"
+          onPress={onPressRegion ? () => onPressRegion(shape.code) : undefined}
+        />
+      ))}
       {ordered.map(shape => (
         <Path
           key={shape.code}
           d={shape.d}
-          fill={visited.has(shape.code) ? colors.primary : colors.mapLand}
+          fill="none"
           stroke={shape.code === selectedCode ? colors.text : colors.background}
-          strokeWidth={shape.code === selectedCode ? 2 : 0.6}
+          strokeWidth={shape.code === selectedCode ? 2 : 1}
           vectorEffect="non-scaling-stroke"
-          onPress={onPressRegion ? () => onPressRegion(shape.code) : undefined}
         />
       ))}
     </Svg>
