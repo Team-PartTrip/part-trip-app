@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -54,8 +54,44 @@ const DayCards: React.FC<{
   edit?: ScheduleEditHandlers;
 }> = ({ date, slots, edit }) => {
   const heights = useRef<number[]>([]);
+  const tops = useRef<number[]>([]);
   const dy = useRef(new Animated.Value(0)).current;
   const [dragging, setDragging] = useState<number | null>(null);
+  // 끄는 동안 다른 카드가 미리 비켜 서는 거리. 놓으면 0 으로 돌리고 순서를 바꾼다
+  const offsets = useRef<Animated.Value[]>([]);
+  const offsetOf = (i: number) =>
+    (offsets.current[i] ??= new Animated.Value(0));
+  const hoverTo = useRef<number | null>(null);
+
+  const shiftOthers = (from: number, to: number) => {
+    // 카드 사이 간격까지 더해야 비켜 선 자리가 딱 맞는다
+    const gap =
+      tops.current.length > 1 && heights.current[0] != null
+        ? Math.max(0, tops.current[1] - tops.current[0] - heights.current[0])
+        : 0;
+    const pitch = (heights.current[from] ?? 0) + gap;
+    slots.forEach((_, i) => {
+      if (i === from) {
+        return;
+      }
+      const target =
+        from < to && i > from && i <= to
+          ? -pitch
+          : to < from && i >= to && i < from
+          ? pitch
+          : 0;
+      Animated.timing(offsetOf(i), {
+        toValue: target,
+        duration: 150,
+        useNativeDriver: true,
+      }).start();
+    });
+  };
+  const resetShift = () => {
+    hoverTo.current = null;
+    offsets.current.forEach(v => v.setValue(0));
+  };
+  useEffect(resetShift, [slots]);
 
   // ponytail: 칸마다 렌더 때 새로 만든다. 칸 수가 하루 10개 안쪽이라 문제없다
   const handle = (index: number) =>
@@ -65,14 +101,26 @@ const DayCards: React.FC<{
       onPanResponderTerminationRequest: () => false,
       onPanResponderGrant: () => {
         dy.setValue(0);
+        hoverTo.current = index;
         setDragging(index);
         edit?.onDragging(true);
       },
-      onPanResponderMove: (_, g) => dy.setValue(g.dy),
+      onPanResponderMove: (_, g) => {
+        dy.setValue(g.dy);
+        const to = dropIndex(index, g.dy, heights.current);
+        if (to !== hoverTo.current) {
+          hoverTo.current = to;
+          shiftOthers(index, to);
+        }
+      },
       onPanResponderRelease: (_, g) => {
         const to = dropIndex(index, g.dy, heights.current);
         setDragging(null);
         dy.setValue(0);
+        // 옮길 때는 새 순서가 그려진 뒤에 푼다(아래 useEffect). 먼저 풀면 한 번 튄다
+        if (to === index || Math.abs(g.dy) < 6) {
+          resetShift();
+        }
         edit?.onDragging(false);
         // 거의 안 움직였으면 끈 게 아니라 누른 것이다 — 메뉴를 연다
         if (Math.abs(g.dy) < 6) {
@@ -84,6 +132,7 @@ const DayCards: React.FC<{
       onPanResponderTerminate: () => {
         setDragging(null);
         dy.setValue(0);
+        resetShift();
         edit?.onDragging(false);
       },
     }).panHandlers;
@@ -124,9 +173,14 @@ const DayCards: React.FC<{
             key={slot.slotId}
             onLayout={e => {
               heights.current[index] = e.nativeEvent.layout.height;
+              tops.current[index] = e.nativeEvent.layout.y;
             }}
             style={[
-              dragging === index && { transform: [{ translateY: dy }] },
+              {
+                transform: [
+                  { translateY: dragging === index ? dy : offsetOf(index) },
+                ],
+              },
               dragging === index && s.dragging,
             ]}
           >
