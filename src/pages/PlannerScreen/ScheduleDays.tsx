@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -83,7 +83,7 @@ const DayCards: React.FC<{
       Animated.timing(offsetOf(i), {
         toValue: target,
         duration: 150,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }).start();
     });
   };
@@ -91,7 +91,7 @@ const DayCards: React.FC<{
     hoverTo.current = null;
     offsets.current.forEach(v => v.setValue(0));
   };
-  useEffect(resetShift, [slots]);
+  useLayoutEffect(resetShift, [slots]);
 
   // ponytail: 칸마다 렌더 때 새로 만든다. 칸 수가 하루 10개 안쪽이라 문제없다
   const handle = (index: number) =>
