@@ -24,7 +24,7 @@ export const recordCompleteStyles = StyleSheet.create({
   },
   btns: { alignSelf: 'stretch', gap: 12 },
   btn: { borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
-  primary: { backgroundColor: colors.primary },
+  primary: { backgroundColor: colors.primaryFill },
   primaryText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   ghost: { backgroundColor: colors.tint },
   ghostText: { color: colors.primary, fontSize: 16, fontWeight: '700' },

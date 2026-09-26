@@ -14,6 +14,8 @@ import KoreaMapSvg, { mapHeight } from './KoreaMapSvg';
 import ZoomableView from '../../shared/ui/ZoomableView';
 import { getRegionMap, RegionMap } from '../../entities/region/api';
 import { shortName } from '../../entities/region/regions';
+import { ChevronLeftIcon } from '../../shared/ui/icons';
+import colors from '../../shared/tokens/colors';
 
 interface Props {
   onBack?: () => void;
@@ -78,7 +80,9 @@ const RegionMapView: React.FC<Props> = ({ onBack }) => {
               accessibilityRole="button"
               accessibilityLabel="뒤로"
             >
-              <Text style={s.back}>‹</Text>
+              <View style={s.back}>
+                <ChevronLeftIcon size={24} color={colors.textPrimary} />
+              </View>
             </TouchableOpacity>
           </View>
         </SafeAreaView>

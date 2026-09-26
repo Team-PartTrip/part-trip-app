@@ -12,7 +12,7 @@ export const guardianStyles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  back: { fontSize: 28, lineHeight: 32, color: colors.text },
+  back: {},
   title: { fontSize: 22, fontWeight: '700', color: colors.text },
   content: { paddingHorizontal: 24, paddingBottom: 96 },
 
@@ -57,7 +57,7 @@ export const guardianStyles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
   },
   primaryText: { fontSize: 16, fontWeight: '600', color: colors.textOnPrimary },
 
@@ -74,6 +74,7 @@ export const guardianStyles = StyleSheet.create({
   },
   rowBody: { flex: 1 },
   rowTitle: { fontSize: 16, fontWeight: '600', color: colors.text },
+  rowSubLink: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   rowSub: { marginTop: 2, fontSize: 13, color: colors.textSecondary },
   unlink: { fontSize: 15, fontWeight: '600', color: colors.danger },
 
@@ -109,11 +110,11 @@ export const guardianStyles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
   },
   seniorList: { marginTop: 16 },
   disabled: { opacity: 0.5 },
-  chevron: { fontSize: 16, color: colors.textSecondary },
+  chevron: {},
 
   locationRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   locationText: { fontSize: 17, fontWeight: '700', color: colors.text },

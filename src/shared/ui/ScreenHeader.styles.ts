@@ -17,7 +17,7 @@ export const screenHeaderStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  back: { fontSize: 28, lineHeight: 30, color: colors.textPrimary },
+  back: {},
   title: {
     flex: 1,
     textAlign: 'center',

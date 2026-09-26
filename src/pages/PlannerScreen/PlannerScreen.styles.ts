@@ -12,7 +12,7 @@ export const plannerStyles = StyleSheet.create({
     minHeight: 48,
     paddingHorizontal: 16,
     borderRadius: 18,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -73,7 +73,7 @@ export const plannerStyles = StyleSheet.create({
     flex: 1,
     height: 44,
     borderRadius: 12,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -93,7 +93,7 @@ export const plannerStyles = StyleSheet.create({
   },
   filterChipOn: {
     borderColor: colors.primary,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
   },
   filterText: { fontSize: 12, color: colors.textSecondary },
   filterTextOn: { color: colors.textOnPrimary },
@@ -138,7 +138,7 @@ export const plannerStyles = StyleSheet.create({
   cardMeta: { fontSize: 11, fontWeight: '500', color: colors.textTertiary },
   // 카드 touchable 밖에 있는 형제라서 위치를 직접 잡는다.
   // cardBody padding 20 + footer 높이를 감안해 화살표 왼쪽에 놓는다.
-  chevron: { fontSize: 18, fontWeight: '600', color: colors.textTertiary },
+  chevron: {},
 
   loading: {
     marginTop: 60,

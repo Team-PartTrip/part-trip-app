@@ -40,7 +40,7 @@ export const photoDeleteStyles = StyleSheet.create({
     right: 0,
     top: 0,
     bottom: 0,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
     opacity: 0.22,
   },
   check: {
@@ -53,7 +53,7 @@ export const photoDeleteStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checkOn: { backgroundColor: colors.primary },
+  checkOn: { backgroundColor: colors.primaryFill },
   checkOff: {
     borderWidth: 1,
     borderColor: colors.border,

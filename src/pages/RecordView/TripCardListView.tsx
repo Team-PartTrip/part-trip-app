@@ -19,7 +19,7 @@ import {
   TripCardSummary,
 } from '../../entities/record/api';
 import { formatTripRange } from '../../entities/record/types';
-import { StarIcon } from '../../shared/ui/icons';
+import { ChevronLeftIcon, StarIcon } from '../../shared/ui/icons';
 import colors from '../../shared/tokens/colors';
 
 const PAGE_WIDTH = Dimensions.get('window').width;
@@ -98,7 +98,9 @@ const TripCardListView: React.FC<Props> = ({
     <SafeAreaView edges={['top', 'bottom']} style={s.safeArea}>
       <View style={s.header}>
         <TouchableOpacity onPress={onBack} hitSlop={12}>
-          <Text style={s.back}>‹</Text>
+          <View style={s.back}>
+            <ChevronLeftIcon size={22} color={colors.textOnPrimary} />
+          </View>
         </TouchableOpacity>
         <Text style={s.headerTitle}>여행카드</Text>
         {/* 카드 삭제(D12)로 들어갈 입구가 없어서 헤더 오른쪽에 두었다 */}

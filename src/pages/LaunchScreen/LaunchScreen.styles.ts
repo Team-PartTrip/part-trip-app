@@ -78,6 +78,6 @@ export const launchStyles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
   },
 });

@@ -26,7 +26,12 @@ import type {
   PlannerSchedule,
 } from '../../entities/planner/api';
 import { formatRange, planStatusLabel } from '../../entities/planner/types';
-import { PinIcon } from '../../shared/ui/icons';
+import {
+  ChevronDownIcon,
+  ChevronLeftIcon,
+  ChevronUpIcon,
+  PinIcon,
+} from '../../shared/ui/icons';
 
 /** 카카오맵 웹 링크. 앱이 깔려 있으면 앱으로, 없으면 브라우저로 열린다 */
 export function kakaoMapUrl(label: string, lat: number, lng: number): string {
@@ -129,7 +134,9 @@ const SeniorView: React.FC<Props> = ({ seniorUserId, nickName, onBack }) => {
           accessibilityRole="button"
           accessibilityLabel="뒤로"
         >
-          <Text style={s.back}>‹</Text>
+          <View style={s.back}>
+            <ChevronLeftIcon size={24} color={colors.text} />
+          </View>
         </TouchableOpacity>
         <Text style={s.title} numberOfLines={1}>
           {nickName}님의 여행
@@ -202,9 +209,13 @@ const SeniorView: React.FC<Props> = ({ seniorUserId, nickName, onBack }) => {
                     · {planStatusLabel(planner.status)}
                   </Text>
                 </View>
-                <Text style={s.chevron}>
-                  {openId === planner.plannerId ? '▴' : '▾'}
-                </Text>
+                <View style={s.chevron}>
+                  {openId === planner.plannerId ? (
+                    <ChevronUpIcon size={18} color={colors.textTertiary} />
+                  ) : (
+                    <ChevronDownIcon size={18} color={colors.textTertiary} />
+                  )}
+                </View>
               </TouchableOpacity>
               {openId === planner.plannerId &&
                 renderSchedule(planner.plannerId)}

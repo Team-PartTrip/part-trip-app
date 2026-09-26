@@ -5,12 +5,12 @@ import {
   PanResponder,
   StyleProp,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
   ViewStyle,
 } from 'react-native';
 import colors from '../tokens/colors';
+import { MinusIcon, PlusIcon } from './icons';
 
 export const MIN_SCALE = 1;
 export const MAX_SCALE = 10;
@@ -168,7 +168,7 @@ const ZoomableView: React.FC<{
           accessibilityLabel="지도 크게"
           onPress={() => zoomBy(STEP)}
         >
-          <Text style={controls.text}>+</Text>
+          <PlusIcon size={22} color={colors.text} />
         </TouchableOpacity>
         <View style={controls.line} />
         <TouchableOpacity
@@ -179,7 +179,10 @@ const ZoomableView: React.FC<{
           disabled={!zoomed}
           onPress={() => zoomBy(1 / STEP)}
         >
-          <Text style={[controls.text, !zoomed && controls.off]}>−</Text>
+          <MinusIcon
+            size={22}
+            color={zoomed ? colors.text : colors.textTertiary}
+          />
         </TouchableOpacity>
       </View>
     </View>
@@ -207,8 +210,6 @@ const controls = StyleSheet.create({
     justifyContent: 'center',
   },
   line: { height: 1, backgroundColor: colors.border },
-  text: { fontSize: 24, fontWeight: '600', color: colors.text },
-  off: { color: colors.textTertiary },
 });
 
 export default ZoomableView;

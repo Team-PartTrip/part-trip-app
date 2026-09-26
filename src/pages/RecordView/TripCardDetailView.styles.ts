@@ -9,10 +9,6 @@ export const tripCardDetailStyles = StyleSheet.create({
   back: {
     paddingHorizontal: 24,
     paddingTop: 4,
-    fontSize: 24,
-    lineHeight: 32,
-    fontWeight: '700',
-    color: colors.text,
   },
   titleBar: {
     height: 44,
@@ -64,7 +60,7 @@ export const tripCardDetailStyles = StyleSheet.create({
     width: 14,
     height: 14,
     borderRadius: 7,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
   },
 
   dateBar: {

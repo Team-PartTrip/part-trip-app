@@ -59,7 +59,7 @@ export const planBlocksStyles = StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: colors.white,
   },
-  chipOn: { borderColor: colors.primary, backgroundColor: colors.primary },
+  chipOn: { borderColor: colors.primaryFill, backgroundColor: colors.primaryFill },
   chipText: { fontSize: 15, color: colors.text },
   chipTextOn: { color: colors.textOnPrimary, fontWeight: '600' },
 
@@ -77,6 +77,7 @@ export const planBlocksStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
+  moreRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   moreText: { fontSize: 15, fontWeight: '600', color: colors.textSecondary },
 
   footer: {
@@ -93,7 +94,7 @@ export const planBlocksStyles = StyleSheet.create({
   primaryBtn: {
     minHeight: 54,
     borderRadius: 12,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
     alignItems: 'center',
     justifyContent: 'center',
   },

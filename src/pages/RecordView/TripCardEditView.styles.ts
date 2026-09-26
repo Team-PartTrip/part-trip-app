@@ -6,7 +6,7 @@ export const tripCardEditStyles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
 
   header: { paddingHorizontal: 24, paddingTop: 4 },
-  back: { fontSize: 24, lineHeight: 32, fontWeight: '700', color: colors.text },
+  back: {},
   title: { marginTop: 8, fontSize: 24, fontWeight: '700', color: colors.text },
   desc: { marginTop: 8, fontSize: 15, color: colors.textMuted },
 
@@ -38,7 +38,7 @@ export const tripCardEditStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   thumb: { width: '100%', height: '100%' },
-  addCell: { fontSize: 28, color: colors.textMuted },
+  addCell: {},
   hint: { marginTop: 10, fontSize: 12, color: colors.textMuted },
   check: {
     position: 'absolute',
@@ -50,7 +50,7 @@ export const tripCardEditStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checkOn: { backgroundColor: colors.primary },
+  checkOn: { backgroundColor: colors.primaryFill },
   checkOff: {
     borderWidth: 1,
     borderColor: colors.border,
@@ -92,7 +92,7 @@ export const tripCardEditStyles = StyleSheet.create({
   primaryBtn: {
     height: 54,
     borderRadius: 12,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
     alignItems: 'center',
     justifyContent: 'center',
   },

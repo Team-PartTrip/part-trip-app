@@ -47,6 +47,7 @@ import {
   GroupStatus,
   planStatusLabel,
 } from '../../entities/planner/types';
+import { ChevronLeftIcon } from '../../shared/ui/icons';
 
 /** 일정이 확정된 뒤의 상태. 이때부터 이 화면은 일정표가 된다 */
 export function isSchedule(status: GroupStatus): boolean {
@@ -363,7 +364,9 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
     return (
       <SafeAreaView style={s.safeArea} edges={['top']}>
         <TouchableOpacity onPress={onBack} hitSlop={12} style={s.errorBack}>
-          <Text style={s.back}>‹</Text>
+          <View style={s.back}>
+            <ChevronLeftIcon size={24} color={colors.text} />
+          </View>
         </TouchableOpacity>
         <View style={s.errorBox}>
           <Text style={s.errorText}>계획을 불러오지 못했어요</Text>
@@ -407,7 +410,9 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
       >
         <SafeAreaView edges={['top']} style={s.header}>
           <TouchableOpacity onPress={onBack} hitSlop={12}>
-            <Text style={s.back}>‹</Text>
+            <View style={s.back}>
+              <ChevronLeftIcon size={24} color={colors.text} />
+            </View>
           </TouchableOpacity>
           <View style={s.titleRow}>
             <Text style={s.title} numberOfLines={1}>
@@ -538,7 +543,7 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
               <Text style={s.editHint}>
                 {swapping !== null
                   ? '바꿀 칸을 눌러주세요'
-                  : '빈 칸을 눌러 장소를 고르고, ≡ 를 끌거나 눌러 옮겨요'}
+                  : '빈 칸을 눌러 장소를 고르고, 오른쪽 손잡이를 끌거나 눌러 옮겨요'}
               </Text>
             )}
             {swapping !== null && (

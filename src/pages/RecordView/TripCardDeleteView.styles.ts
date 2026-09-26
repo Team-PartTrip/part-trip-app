@@ -54,7 +54,7 @@ export const tripCardDeleteStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checkOn: { backgroundColor: colors.primary },
+  checkOn: { backgroundColor: colors.primaryFill },
   checkOff: { backgroundColor: colors.surface },
 
   warning: {

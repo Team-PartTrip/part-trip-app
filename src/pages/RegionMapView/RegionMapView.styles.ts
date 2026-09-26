@@ -26,11 +26,7 @@ export const regionMapStyles = StyleSheet.create({
     position: 'absolute',
     left: 0,
   },
-  back: {
-    fontSize: 28,
-    lineHeight: 32,
-    color: colors.textPrimary,
-  },
+  back: {},
   title: {
     fontSize: 16,
     fontWeight: '700',
@@ -69,7 +65,7 @@ export const regionMapStyles = StyleSheet.create({
     borderRadius: 4,
   },
   legendDotVisited: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
   },
   // 지도의 안 가본 땅과 같은 색이어야 범례가 맞는다
   legendDotIdle: {

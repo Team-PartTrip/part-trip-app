@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { notificationDetailStyles as s } from './NotificationDetailView.styles';
 import { metaOf, timeAgo } from './notificationMeta';
 import type { Notification } from '../../entities/notification/api';
-import { CheckIcon } from '../../shared/ui/icons';
+import { CheckIcon, ChevronLeftIcon } from '../../shared/ui/icons';
 import colors from '../../shared/tokens/colors';
 
 // "2026-08-21T10:24:00" → "2026.08.21  10:24"
@@ -46,7 +46,9 @@ const NotificationDetailView: React.FC<Props> = ({
     <SafeAreaView style={s.safeArea} edges={['top']}>
       <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
         <TouchableOpacity onPress={onBack} hitSlop={12}>
-          <Text style={s.back}>‹</Text>
+          <View style={s.back}>
+            <ChevronLeftIcon size={22} color={colors.text} />
+          </View>
         </TouchableOpacity>
 
         <View style={s.titleRow}>

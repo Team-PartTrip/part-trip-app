@@ -16,6 +16,7 @@ import {
   usePhotoOutput,
 } from 'react-native-vision-camera';
 import colors from '../tokens/colors';
+import { ChevronLeftIcon } from './icons';
 
 interface Props {
   title?: string;
@@ -100,7 +101,9 @@ const CameraCapture: React.FC<Props> = ({
             onPress={onClose}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Text style={s.back}>‹</Text>
+            <View style={s.back}>
+              <ChevronLeftIcon size={30} color={'#fff'} />
+            </View>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -161,7 +164,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  back: { color: '#fff', fontSize: 34, lineHeight: 36 },
+  back: {},
   shutter: {
     width: 72,
     height: 72,

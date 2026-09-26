@@ -24,7 +24,7 @@ import {
   TripCardSummary,
 } from '../../entities/record/api';
 import { formatDotDate } from '../../entities/record/types';
-import { CheckIcon } from '../../shared/ui/icons';
+import { CheckIcon, ChevronLeftIcon, PlusIcon } from '../../shared/ui/icons';
 import colors from '../../shared/tokens/colors';
 
 const MAX_LENGTH = 100;
@@ -128,7 +128,9 @@ const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
         >
           <SafeAreaView edges={['top']}>
             <TouchableOpacity onPress={onBack} hitSlop={12}>
-              <Text style={s.back}>‹</Text>
+              <View style={s.back}>
+                <ChevronLeftIcon size={22} color={colors.text} />
+              </View>
             </TouchableOpacity>
             <Text style={s.title}>사진 · 코멘트 추가</Text>
             <Text style={s.desc}>
@@ -164,7 +166,9 @@ const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
                 activeOpacity={0.85}
                 onPress={pickPhotos}
               >
-                <Text style={s.addCell}>＋</Text>
+                <View style={s.addCell}>
+                  <PlusIcon size={28} color={colors.textMuted} />
+                </View>
               </TouchableOpacity>
             )}
           </View>

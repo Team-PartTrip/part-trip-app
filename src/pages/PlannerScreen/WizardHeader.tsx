@@ -2,6 +2,8 @@ import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { wizardHeaderStyles as s } from './WizardHeader.styles';
+import { ChevronLeftIcon } from '../../shared/ui/icons';
+import colors from '../../shared/tokens/colors';
 
 interface Props {
   title: string;
@@ -15,7 +17,9 @@ interface Props {
 const WizardHeader: React.FC<Props> = ({ title, step, total = 3, onBack }) => (
   <SafeAreaView edges={['top']} style={s.header}>
     <TouchableOpacity onPress={onBack} hitSlop={12}>
-      <Text style={s.back}>‹</Text>
+      <View style={s.back}>
+        <ChevronLeftIcon size={24} color={colors.text} />
+      </View>
     </TouchableOpacity>
     <Text style={s.title}>{title}</Text>
     <Text style={s.step}>

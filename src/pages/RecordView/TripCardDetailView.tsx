@@ -19,6 +19,8 @@ import {
 } from '../../entities/record/api';
 import { formatDotDate } from '../../entities/record/types';
 import { toImageUrl } from '../../shared/api/image';
+import { ChevronLeftIcon } from '../../shared/ui/icons';
+import colors from '../../shared/tokens/colors';
 
 interface Props {
   tripCardId: number;
@@ -102,7 +104,9 @@ const TripCardDetailView: React.FC<Props> = ({
       >
         <SafeAreaView edges={['top']}>
           <TouchableOpacity onPress={onBack} hitSlop={12}>
-            <Text style={s.back}>‹</Text>
+            <View style={s.back}>
+              <ChevronLeftIcon size={22} color={colors.text} />
+            </View>
           </TouchableOpacity>
         </SafeAreaView>
 

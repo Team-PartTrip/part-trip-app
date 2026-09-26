@@ -25,7 +25,7 @@ export const planStatusStyles = StyleSheet.create({
     color: colors.textPrimary,
   },
   header: { paddingHorizontal: 24, paddingTop: 4 },
-  back: { fontSize: 28, lineHeight: 32, color: colors.text },
+  back: {},
   titleRow: {
     marginTop: 8,
     flexDirection: 'row',
@@ -130,7 +130,7 @@ export const planStatusStyles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
   },
   confirmText: { fontSize: 16, fontWeight: '600', color: colors.textOnPrimary },
   note: {
@@ -148,7 +148,7 @@ export const planStatusStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  handleText: { fontSize: 24, color: colors.textSecondary },
+  handleText: {},
   dragging: { zIndex: 1, elevation: 6, opacity: 0.9 },
   swapSource: { borderWidth: 2, borderColor: colors.primary },
   addSlot: {

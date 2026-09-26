@@ -32,7 +32,7 @@ export const planGroupStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  modeDotOn: { backgroundColor: colors.primary },
+  modeDotOn: { backgroundColor: colors.primaryFill },
   modeLabel: { fontSize: 15, fontWeight: '600', color: colors.text },
   modeLabelOn: { color: colors.primaryDark },
 
@@ -67,7 +67,7 @@ export const planGroupStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   stepperBtnOff: { opacity: 0.4 },
-  stepperSign: { fontSize: 15, fontWeight: '600', color: colors.text },
+  stepperSign: {},
   stepperValue: {
     width: 44,
     textAlign: 'center',
@@ -107,7 +107,7 @@ export const planGroupStyles = StyleSheet.create({
   primaryBtn: {
     height: 54,
     borderRadius: 12,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
     alignItems: 'center',
     justifyContent: 'center',
   },

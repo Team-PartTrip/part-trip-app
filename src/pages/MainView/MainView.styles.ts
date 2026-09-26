@@ -21,7 +21,7 @@ export const mainStyles = StyleSheet.create({
   // ── 파란 헤더 ──
   // 사진이 없을 때 파란 배경이 남게 색은 여기 그대로 둔다
   headerImage: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
   },
   // 사진이 위쪽 여백까지 꽉 차게. 아래는 카드가 덮으므로 모서리를 두지 않는다
   headerImageInner: {
@@ -124,7 +124,7 @@ export const mainStyles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
   },
   todayNumText: {
     fontSize: 17,
@@ -169,11 +169,7 @@ export const mainStyles = StyleSheet.create({
     fontSize: 12,
     color: colors.textSub,
   },
-  chevron: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.textTertiary,
-  },
+  chevron: {},
 
   // ── 이번 주 추천 ──
   placeList: {

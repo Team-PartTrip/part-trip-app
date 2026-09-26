@@ -29,6 +29,7 @@ import {
   planStatusLabel,
   today,
 } from '../../entities/planner/types';
+import { ChevronRightIcon } from '../../shared/ui/icons';
 
 type FilterKey = 'ongoing' | 'upcoming' | 'done';
 
@@ -287,7 +288,12 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
 
                     <View style={s.cardFooter}>
                       <Text style={s.cardMeta}>{metaOf(plan)}</Text>
-                      <Text style={s.chevron}>›</Text>
+                      <View style={s.chevron}>
+                        <ChevronRightIcon
+                          size={18}
+                          color={colors.textTertiary}
+                        />
+                      </View>
                     </View>
                   </View>
                 </TouchableOpacity>

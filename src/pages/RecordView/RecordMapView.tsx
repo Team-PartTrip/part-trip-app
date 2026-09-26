@@ -27,7 +27,11 @@ import {
 } from '../../entities/record/api';
 import MapView, { Marker } from 'react-native-maps';
 import { formatShortDate } from '../../entities/record/types';
-import { PinIcon } from '../../shared/ui/icons';
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  PinIcon,
+} from '../../shared/ui/icons';
 import colors from '../../shared/tokens/colors';
 
 /** 지도에 찍을 한 지점 */
@@ -250,7 +254,9 @@ const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
                   {spot.subtitle} · {formatShortDate(spot.date)}
                 </Text>
               </View>
-              <Text style={s.chevron}>›</Text>
+              <View style={s.chevron}>
+                <ChevronRightIcon size={16} color={colors.textTertiary} />
+              </View>
             </TouchableOpacity>
           ))
         )}
@@ -289,7 +295,9 @@ const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
             activeOpacity={0.8}
             onPress={onBack}
           >
-            <Text style={s.circleBtnText}>‹</Text>
+            <View style={s.circleBtnText}>
+              <ChevronLeftIcon size={18} color={colors.text} />
+            </View>
           </TouchableOpacity>
           <View style={s.placePill}>
             <Text style={s.placePillText}>{place}</Text>

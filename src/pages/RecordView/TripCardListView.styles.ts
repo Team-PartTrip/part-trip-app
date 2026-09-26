@@ -11,12 +11,7 @@ export const tripCardListStyles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 24,
   },
-  back: {
-    fontSize: 24,
-    lineHeight: 28,
-    fontWeight: '700',
-    color: colors.textOnPrimary,
-  },
+  back: {},
   headerTitle: {
     flex: 1,
     textAlign: 'center',
@@ -31,7 +26,7 @@ export const tripCardListStyles = StyleSheet.create({
     width: 320,
     height: 460,
     borderRadius: 24,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 16 },

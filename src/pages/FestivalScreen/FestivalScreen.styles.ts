@@ -8,7 +8,7 @@ export const festivalStyles = StyleSheet.create({
   content: { paddingBottom: 96 },
 
   header: { paddingHorizontal: 24, paddingTop: 4 },
-  back: { fontSize: 28, lineHeight: 32, color: colors.text },
+  back: {},
   title: { marginTop: 8, fontSize: 24, fontWeight: '700', color: colors.text },
   subtitle: { marginTop: 8, fontSize: 12, color: colors.textSecondary },
 
@@ -24,9 +24,6 @@ export const festivalStyles = StyleSheet.create({
   calMonth: { flex: 1, fontSize: 15, fontWeight: '600', color: colors.text },
   calArrow: {
     width: 28,
-    fontSize: 14,
-    textAlign: 'center',
-    color: colors.textTertiary,
   },
   // 범위 밖으로는 못 넘어간다. 눌리는 것처럼 보이지 않게 흐리게 둔다.
   calArrowOff: {
@@ -55,7 +52,7 @@ export const festivalStyles = StyleSheet.create({
   daySelected: {
     width: 28,
     borderRadius: 14,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
   },
   dayText: { fontSize: 12, color: colors.text },
   dayTextSelected: { color: colors.textOnPrimary },
@@ -96,7 +93,7 @@ export const festivalStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  chipOn: { borderColor: colors.primary, backgroundColor: colors.primary },
+  chipOn: { borderColor: colors.primaryFill, backgroundColor: colors.primaryFill },
   chipText: { fontSize: 11, fontWeight: '500', color: colors.textSecondary },
   chipTextOn: { color: colors.textOnPrimary },
 

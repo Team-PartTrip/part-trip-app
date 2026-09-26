@@ -7,7 +7,7 @@ export const profileStyles = StyleSheet.create({
   content: { paddingBottom: 32 },
 
   header: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
     paddingHorizontal: 24,
     paddingTop: 12,
     paddingBottom: 52,
@@ -97,7 +97,7 @@ export const profileStyles = StyleSheet.create({
     height: 26,
     paddingHorizontal: 14,
     borderRadius: 13,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
     alignItems: 'center',
     justifyContent: 'center',
   },

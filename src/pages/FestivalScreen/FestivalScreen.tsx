@@ -20,6 +20,8 @@ import {
 import { formatShortDate, formatTripRange } from '../../entities/record/types';
 import { toImageUrl } from '../../shared/api/image';
 import { KOREA } from '../../entities/region/regions';
+import { ChevronLeftIcon, ChevronRightIcon } from '../../shared/ui/icons';
+import colors from '../../shared/tokens/colors';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -251,7 +253,9 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
       >
         <SafeAreaView edges={['top']} style={s.header}>
           <TouchableOpacity onPress={onBack} hitSlop={12}>
-            <Text style={s.back}>‹</Text>
+            <View style={s.back}>
+              <ChevronLeftIcon size={24} color={colors.text} />
+            </View>
           </TouchableOpacity>
           <Text style={s.title}>축제 & 이벤트</Text>
           <Text style={s.subtitle}>
@@ -273,14 +277,18 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
               disabled={!canPrev}
               onPress={() => changeMonth(-1)}
             >
-              <Text style={[s.calArrow, !canPrev && s.calArrowOff]}>‹</Text>
+              <View style={[s.calArrow, !canPrev && s.calArrowOff]}>
+                <ChevronLeftIcon size={16} color={colors.textTertiary} />
+              </View>
             </TouchableOpacity>
             <TouchableOpacity
               hitSlop={10}
               disabled={!canNext}
               onPress={() => changeMonth(1)}
             >
-              <Text style={[s.calArrow, !canNext && s.calArrowOff]}>›</Text>
+              <View style={[s.calArrow, !canNext && s.calArrowOff]}>
+                <ChevronRightIcon size={16} color={colors.textTertiary} />
+              </View>
             </TouchableOpacity>
           </View>
 

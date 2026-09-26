@@ -5,6 +5,8 @@ import { planPeriodStyles as s } from './PlanPeriodView.styles';
 import WizardHeader from './WizardHeader';
 import { getPlanners } from '../../entities/planner/api';
 import { formatNights, PlanDraft } from '../../entities/planner/types';
+import { ChevronLeftIcon, ChevronRightIcon } from '../../shared/ui/icons';
+import colors from '../../shared/tokens/colors';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -203,10 +205,14 @@ const PlanPeriodView: React.FC<Props> = ({ draft, onBack, onNext }) => {
               {year}년 {monthIndex + 1}월
             </Text>
             <TouchableOpacity hitSlop={10} onPress={() => moveMonth(-1)}>
-              <Text style={s.calArrow}>‹</Text>
+              <View style={s.calArrow}>
+                <ChevronLeftIcon size={18} color={colors.chevron} />
+              </View>
             </TouchableOpacity>
             <TouchableOpacity hitSlop={10} onPress={() => moveMonth(1)}>
-              <Text style={s.calArrow}>›</Text>
+              <View style={s.calArrow}>
+                <ChevronRightIcon size={18} color={colors.chevron} />
+              </View>
             </TouchableOpacity>
           </View>
 

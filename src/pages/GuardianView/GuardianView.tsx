@@ -25,6 +25,7 @@ import {
   GuardianLink,
   unlinkGuardian,
 } from '../../entities/guardian/api';
+import { ChevronLeftIcon, ChevronRightIcon } from '../../shared/ui/icons';
 
 /** "2026-09-22T18:10:00" → "9월 22일 오후 6:10" */
 export function formatUntil(iso: string): string {
@@ -184,7 +185,9 @@ const GuardianView: React.FC<Props> = ({ onBack, onOpenSenior }) => {
           accessibilityRole="button"
           accessibilityLabel="뒤로"
         >
-          <Text style={s.back}>‹</Text>
+          <View style={s.back}>
+            <ChevronLeftIcon size={24} color={colors.text} />
+          </View>
         </TouchableOpacity>
         <Text style={s.title}>가족 연결</Text>
       </SafeAreaView>
@@ -323,7 +326,10 @@ const GuardianView: React.FC<Props> = ({ onBack, onOpenSenior }) => {
                   onPress={() => onOpenSenior?.(link)}
                 >
                   <Text style={s.rowTitle}>{link.nickName}</Text>
-                  <Text style={s.rowSub}>일정 · 위치 보기 ›</Text>
+                  <View style={s.rowSubLink}>
+                    <Text style={s.rowSub}>일정 · 위치 보기</Text>
+                    <ChevronRightIcon size={13} color={colors.textSecondary} />
+                  </View>
                 </TouchableOpacity>
                 <TouchableOpacity
                   hitSlop={touch48(24)}

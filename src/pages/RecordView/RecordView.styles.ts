@@ -32,7 +32,7 @@ export const recordStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  chipOn: { borderColor: colors.primary, backgroundColor: colors.primary },
+  chipOn: { borderColor: colors.primaryFill, backgroundColor: colors.primaryFill },
   chipText: { fontSize: 11, fontWeight: '500', color: colors.textSecondary },
   chipTextOn: { color: colors.textOnPrimary },
 

@@ -29,10 +29,6 @@ export const planPeriodStyles = StyleSheet.create({
 
   calArrow: {
     width: 32,
-    fontSize: 18,
-    fontWeight: '600',
-    textAlign: 'center',
-    color: colors.chevron,
   },
 
   calRow: { flexDirection: 'row', marginTop: 14 },
@@ -65,7 +61,7 @@ export const planPeriodStyles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  dayPillEdge: { backgroundColor: colors.primary },
+  dayPillEdge: { backgroundColor: colors.primaryFill },
 
   dayPillMid: { borderRadius: 0, backgroundColor: colors.tint },
 
@@ -92,7 +88,7 @@ export const planPeriodStyles = StyleSheet.create({
   primaryBtn: {
     height: 54,
     borderRadius: 12,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
     alignItems: 'center',
     justifyContent: 'center',
   },

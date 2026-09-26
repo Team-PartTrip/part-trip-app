@@ -3,6 +3,8 @@ import type { ColorValue } from 'react-native';
 
 export type AppColors = {
   primary: ColorValue;
+  /** 흰 글자 · 아이콘을 얹는 파란 배경 (버튼 · 헤더 · 선택된 칩) */
+  primaryFill: ColorValue;
   primaryDark: ColorValue;
   accent: ColorValue;
   success: ColorValue;
@@ -52,6 +54,7 @@ export type AppColors = {
 export const lightColors: AppColors = {
   // 브랜드
   primary: '#1a6ebf', // 메인 파랑 (DS Primary 500)
+  primaryFill: '#1a6ebf', // 흰 글자와 5.2:1
   primaryDark: '#0d4a84', // 진한 파랑 (DS Primary 700)
   accent: '#ff7a35', // 주의·타이머 (DS Accent 500)
   success: '#087f5b', // 확정·완료 (DS Success)
@@ -119,6 +122,9 @@ export const lightColors: AppColors = {
 export const darkColors: AppColors = {
   // 브랜드
   primary: '#2b8fe6', // 메인 파랑 (다크에서 약간 밝게)
+  // 글자용 primary 는 어두운 배경에서 보이게 밝히고, 흰 글자를 얹는 배경은 어둡게 둔다.
+  // #2b8fe6 위 흰 글자는 3.4:1 이라 AA(4.5:1)에 못 미친다
+  primaryFill: '#1c73c7', // 흰 글자와 4.9:1
   primaryDark: '#5aa8ec', // 진한 파랑 (다크에선 더 밝게)
   accent: '#ff9457', // 주의·타이머 (다크에서 약간 밝게)
   success: '#2bb888', // 확정·완료
@@ -192,8 +198,7 @@ export const darkColors: AppColors = {
 // 안드로이드는 앱마다 고대비 색을 받는 방법이 없다. OS 의 "고대비 텍스트" 가
 // 글자를 직접 진하게 그린다.
 //
-// ponytail: primary 는 넣지 않았다. 다크 모드에서 글자로 쓸 때와 흰 글자 버튼
-// 배경으로 쓸 때 원하는 방향이 반대라, 배경용 · 글자용 토큰을 나눠야 고칠 수 있다.
+// primary 는 넣지 않았다. 흰 글자를 얹는 배경은 primaryFill 을 쓴다.
 const highContrastLight: Partial<AppColors> = {
   textSub: '#4a5561',
   textSecondary: '#465667',

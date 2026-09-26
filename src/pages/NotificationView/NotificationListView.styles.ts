@@ -13,7 +13,7 @@ export const notificationListStyles = StyleSheet.create({
     paddingHorizontal: 24,
     marginTop: 12,
   },
-  back: { fontSize: 24, fontWeight: '700', color: colors.text },
+  back: {},
   title: { marginTop: 16, fontSize: 24, fontWeight: '700', color: colors.text },
   readAll: { fontSize: 12, color: colors.primary },
 
@@ -29,7 +29,7 @@ export const notificationListStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  chipActive: { backgroundColor: colors.primaryFill, borderColor: colors.primary },
   chipText: { fontSize: 11, fontWeight: '500', color: colors.textSecondary },
   chipTextActive: { color: colors.textOnPrimary },
 

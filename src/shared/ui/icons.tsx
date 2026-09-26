@@ -178,3 +178,20 @@ export const BagIcon = lineIcon([
   'M3.5 7h17',
   'M16 11a4 4 0 0 1-8 0',
 ]);
+
+export const ChevronLeftIcon = lineIcon(['M15 5l-7 7 7 7'], {
+  strokeWidth: 2.2,
+});
+export const ChevronRightIcon = lineIcon(['M9 5l7 7-7 7'], {
+  strokeWidth: 2.2,
+});
+export const ChevronDownIcon = lineIcon(['M5 9l7 7 7-7'], { strokeWidth: 2.2 });
+export const ChevronUpIcon = lineIcon(['M5 15l7-7 7 7'], { strokeWidth: 2.2 });
+export const PlusIcon = lineIcon(['M12 5v14M5 12h14'], { strokeWidth: 2.2 });
+export const MinusIcon = lineIcon(['M5 12h14'], { strokeWidth: 2.2 });
+export const GripIcon = lineIcon(['M5 8h14M5 12h14M5 16h14'], {
+  strokeWidth: 2,
+});
+export const MoreIcon = lineIcon(['M6 12h.01M12 12h.01M18 12h.01'], {
+  strokeWidth: 3.2,
+});

@@ -36,7 +36,7 @@ import {
   toPayload,
 } from '../../entities/planner/blocks';
 import { formatRange, PlanDraft } from '../../entities/planner/types';
-import { PinIcon } from '../../shared/ui/icons';
+import { ChevronDownIcon, ChevronUpIcon, PinIcon } from '../../shared/ui/icons';
 
 // 글자를 칠 때마다 서버를 부르지 않도록 기다리는 시간
 const SEARCH_DELAY_MS = 300;
@@ -335,11 +335,18 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
               accessibilityState={{ expanded: showAll }}
               onPress={() => setShowAll(v => !v)}
             >
-              <Text style={s.moreText}>
-                {showAll
-                  ? '간단히 보기 ▴'
-                  : `더 자세히 정하기 (${rest.length}가지) ▾`}
-              </Text>
+              <View style={s.moreRow}>
+                <Text style={s.moreText}>
+                  {showAll
+                    ? '간단히 보기'
+                    : `더 자세히 정하기 (${rest.length}가지)`}
+                </Text>
+                {showAll ? (
+                  <ChevronUpIcon size={16} color={colors.primary} />
+                ) : (
+                  <ChevronDownIcon size={16} color={colors.primary} />
+                )}
+              </View>
             </TouchableOpacity>
             {showAll && rest.map(renderBlock)}
           </>

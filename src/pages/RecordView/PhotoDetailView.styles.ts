@@ -25,11 +25,7 @@ export const photoDetailStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  circleBtnText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.textOnPrimary,
-  },
+  circleBtnText: {},
   counter: {
     flex: 1,
     textAlign: 'center',
@@ -98,7 +94,7 @@ export const photoDetailStyles = StyleSheet.create({
     minHeight: 48,
     marginLeft: 8,
     borderRadius: 8,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
     alignItems: 'center',
     justifyContent: 'center',
   },

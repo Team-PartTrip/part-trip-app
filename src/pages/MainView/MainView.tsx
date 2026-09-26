@@ -22,7 +22,11 @@ import { getUnreadCount } from '../../entities/notification/api';
 import { KOREA } from '../../entities/region/regions';
 import type { SchedulePlace, ScheduleSlot } from '../../entities/planner/api';
 import { toImageUrl } from '../../shared/api/image';
-import { BellIcon, CalendarIcon } from '../../shared/ui/icons';
+import {
+  BellIcon,
+  CalendarIcon,
+  ChevronRightIcon,
+} from '../../shared/ui/icons';
 import colors from '../../shared/tokens/colors';
 import DandiWordmark from '../../shared/ui/DandiWordmark';
 import { StarIcon } from '../../shared/ui/icons';
@@ -309,7 +313,9 @@ const MainView: React.FC<MainViewProps> = ({
             <Text style={s.eventTitle}>축제 · 이벤트 캘린더</Text>
             <Text style={s.eventSub}>이번 달 국내 축제</Text>
           </View>
-          <Text style={s.chevron}>›</Text>
+          <View style={s.chevron}>
+            <ChevronRightIcon size={18} color={colors.textTertiary} />
+          </View>
         </TouchableOpacity>
 
         <View style={s.section}>

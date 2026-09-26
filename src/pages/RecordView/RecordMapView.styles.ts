@@ -26,7 +26,7 @@ export const recordMapStyles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#0d3366',
@@ -65,7 +65,7 @@ export const recordMapStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  circleBtnText: { fontSize: 16, fontWeight: '600', color: colors.text },
+  circleBtnText: {},
   placePill: {
     height: 40,
     paddingHorizontal: 20,
@@ -130,7 +130,7 @@ export const recordMapStyles = StyleSheet.create({
   rowBody: { flex: 1, marginLeft: 12 },
   rowTitle: { fontSize: 15, fontWeight: '600', color: colors.text },
   rowMeta: { marginTop: 2, fontSize: 12, color: colors.textSecondary },
-  chevron: { fontSize: 16, fontWeight: '600', color: colors.textTertiary },
+  chevron: {},
 
   empty: { paddingVertical: 40, alignItems: 'center', gap: 6 },
   emptyText: { fontSize: 15, fontWeight: '600', color: colors.text },

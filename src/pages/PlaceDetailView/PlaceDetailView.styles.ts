@@ -49,7 +49,7 @@ export const placeDetailStyles = StyleSheet.create({
   primaryBtn: {
     height: 52,
     borderRadius: 14,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,

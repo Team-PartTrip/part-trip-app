@@ -13,7 +13,12 @@ import { planGroupStyles as s } from './PlanGroupView.styles';
 import WizardHeader from './WizardHeader';
 import colors from '../../shared/tokens/colors';
 import { PlanDraft } from '../../entities/planner/types';
-import { UserIcon, UsersIcon } from '../../shared/ui/icons';
+import {
+  MinusIcon,
+  PlusIcon,
+  UserIcon,
+  UsersIcon,
+} from '../../shared/ui/icons';
 
 const MAX_HEADCOUNT = 10;
 
@@ -97,7 +102,9 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
                 disabled={headcount <= 2}
                 onPress={() => setHeadcount(count => Math.max(2, count - 1))}
               >
-                <Text style={s.stepperSign}>−</Text>
+                <View style={s.stepperSign}>
+                  <MinusIcon size={16} color={colors.text} />
+                </View>
               </TouchableOpacity>
               <Text style={s.stepperValue}>{headcount}</Text>
               <TouchableOpacity
@@ -112,7 +119,9 @@ const PlanGroupView: React.FC<Props> = ({ onBack, onNext }) => {
                   setHeadcount(count => Math.min(MAX_HEADCOUNT, count + 1))
                 }
               >
-                <Text style={s.stepperSign}>＋</Text>
+                <View style={s.stepperSign}>
+                  <PlusIcon size={16} color={colors.text} />
+                </View>
               </TouchableOpacity>
             </View>
             <Text style={s.soloNote}>

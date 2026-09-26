@@ -12,6 +12,7 @@ import type { PlannerSchedule, ScheduleSlot } from '../../entities/planner/api';
 import { dayLabel } from '../../entities/planner/types';
 import CategoryIcon from '../../entities/planner/CategoryIcon';
 import colors from '../../shared/tokens/colors';
+import { GripIcon } from '../../shared/ui/icons';
 
 /** 리더가 카드를 고칠 때만 넘긴다 (명세 Func-011-03). 없으면 보기 전용이다 */
 export interface ScheduleEditHandlers {
@@ -166,7 +167,9 @@ const DayCards: React.FC<{
                     edit.onMenu(slot, date, index, slots.length)
                   }
                 >
-                  <Text style={s.handleText}>≡</Text>
+                  <View style={s.handleText}>
+                    <GripIcon size={24} color={colors.textSecondary} />
+                  </View>
                 </View>
               )}
             </TouchableOpacity>

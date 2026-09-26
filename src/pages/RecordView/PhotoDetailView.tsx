@@ -13,6 +13,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import { photoDetailStyles as s } from './PhotoDetailView.styles';
 import { getTripCard, TimelineItem } from '../../entities/record/api';
 import { toImageUrl } from '../../shared/api/image';
+import { ChevronLeftIcon, MoreIcon } from '../../shared/ui/icons';
+import colors from '../../shared/tokens/colors';
 
 interface Props {
   tripCardId: number;
@@ -93,7 +95,9 @@ const PhotoDetailView: React.FC<Props> = ({
     return (
       <SafeAreaView edges={['top']} style={s.safeArea}>
         <TouchableOpacity style={s.circleBtn} activeOpacity={0.8} onPress={onBack}>
-          <Text style={s.circleBtnText}>‹</Text>
+          <View style={s.circleBtnText}>
+            <ChevronLeftIcon size={18} color={colors.textOnPrimary} />
+          </View>
         </TouchableOpacity>
         <View style={s.blankBody}>
           <Text style={s.blankText}>아직 남긴 사진이 없어요</Text>
@@ -118,7 +122,9 @@ const PhotoDetailView: React.FC<Props> = ({
             activeOpacity={0.8}
             onPress={onBack}
           >
-            <Text style={s.circleBtnText}>‹</Text>
+            <View style={s.circleBtnText}>
+              <ChevronLeftIcon size={18} color={colors.textOnPrimary} />
+            </View>
           </TouchableOpacity>
           <Text style={s.counter}>
             {index + 1} / {photos.length}
@@ -128,7 +134,9 @@ const PhotoDetailView: React.FC<Props> = ({
             activeOpacity={0.8}
             onPress={() => setMenuOpen(true)}
           >
-            <Text style={s.circleBtnText}>⋯</Text>
+            <View style={s.circleBtnText}>
+              <MoreIcon size={20} color={colors.textOnPrimary} />
+            </View>
           </TouchableOpacity>
         </View>
       </SafeAreaView>

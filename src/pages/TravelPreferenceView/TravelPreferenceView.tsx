@@ -17,6 +17,7 @@ import {
   saveTravelPreference,
   TravelPreference,
 } from '../../entities/profile/api';
+import { ChevronLeftIcon, MinusIcon, PlusIcon } from '../../shared/ui/icons';
 
 const TRANSPORTS: { value: PreferredTransport; label: string }[] = [
   { value: 'WALKING', label: '걸어서' },
@@ -97,7 +98,9 @@ const TravelPreferenceView: React.FC<Props> = ({ onBack }) => {
           accessibilityRole="button"
           accessibilityLabel="뒤로"
         >
-          <Text style={s.back}>‹</Text>
+          <View style={s.back}>
+            <ChevronLeftIcon size={24} color={colors.text} />
+          </View>
         </TouchableOpacity>
         <Text style={s.title}>여행 편의 설정</Text>
       </SafeAreaView>
@@ -141,9 +144,10 @@ const TravelPreferenceView: React.FC<Props> = ({ onBack }) => {
               disabled={count <= MIN_COUNT}
               onPress={() => setCount(count - 1)}
             >
-              <Text style={[s.stepText, count <= MIN_COUNT && s.stepOff]}>
-                −
-              </Text>
+              <MinusIcon
+                size={22}
+                color={count <= MIN_COUNT ? colors.textTertiary : colors.text}
+              />
             </TouchableOpacity>
             <Text style={s.count}>{count}곳</Text>
             <TouchableOpacity
@@ -153,9 +157,10 @@ const TravelPreferenceView: React.FC<Props> = ({ onBack }) => {
               disabled={count >= MAX_COUNT}
               onPress={() => setCount(count + 1)}
             >
-              <Text style={[s.stepText, count >= MAX_COUNT && s.stepOff]}>
-                +
-              </Text>
+              <PlusIcon
+                size={22}
+                color={count >= MAX_COUNT ? colors.textTertiary : colors.text}
+              />
             </TouchableOpacity>
           </View>
           <Text style={s.hint}>
