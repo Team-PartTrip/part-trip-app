@@ -42,7 +42,8 @@ function lineOf(item: TimelineItem): { title: string; subtitle: string } {
   const where =
     item.type === 'NO_INFO_PHOTO'
       ? '위치 정보 없음 · 눌러서 지정'
-      : item.placeName ?? '';
+      : item.placeName ??
+        (item.locationSource === 'MANUAL' ? '직접 고른 위치' : '');
   return {
     title: item.comment ?? '사진',
     subtitle: [time, where].filter(Boolean).join(' · '),

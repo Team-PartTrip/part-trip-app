@@ -192,6 +192,8 @@ const PhotoDetailView: React.FC<Props> = ({
             ? '  ·  위치 정보 없음'
             : photo.placeName
             ? `  ·  ${photo.placeName}`
+            : photo.locationSource === 'MANUAL'
+            ? '  ·  직접 고른 위치'
             : ''}
         </Text>
         {canLocate && (
