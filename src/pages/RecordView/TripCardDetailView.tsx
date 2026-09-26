@@ -26,6 +26,8 @@ interface Props {
   tripCardId: number;
   onBack?: () => void;
   onAddPhoto?: () => void;
+  /** 사진을 눌러 상세(코멘트 · 위치 지정)로 간다 */
+  onOpenPhoto?: (entryId: number) => void;
 }
 
 /** 타임라인 한 줄을 화면 문구로 바꾼다 */
@@ -36,9 +38,14 @@ function lineOf(item: TimelineItem): { title: string; subtitle: string } {
       subtitle: item.address ?? '',
     };
   }
+  const time = item.takenAt ? item.takenAt.slice(11, 16) : '';
+  const where =
+    item.type === 'NO_INFO_PHOTO'
+      ? '위치 정보 없음 · 눌러서 지정'
+      : item.placeName ?? '';
   return {
     title: item.comment ?? '사진',
-    subtitle: item.takenAt ? item.takenAt.slice(11, 16) : '',
+    subtitle: [time, where].filter(Boolean).join(' · '),
   };
 }
 
@@ -46,6 +53,7 @@ const TripCardDetailView: React.FC<Props> = ({
   tripCardId,
   onBack,
   onAddPhoto,
+  onOpenPhoto,
 }) => {
   const [entries, setEntries] = useState<TimelineItem[]>([]);
   const [card, setCard] = useState<TripCardSummary | null>(null);
@@ -146,7 +154,14 @@ const TripCardDetailView: React.FC<Props> = ({
                     </View>
                   )}
 
-                  <View style={s.entry}>
+                  <TouchableOpacity
+                    style={s.entry}
+                    activeOpacity={0.85}
+                    disabled={entry.type === 'PLACE' || entry.entryId == null}
+                    onPress={() =>
+                      entry.entryId != null && onOpenPhoto?.(entry.entryId)
+                    }
+                  >
                     <View style={s.entryImage}>
                       {entry.imageUrl ? (
                         <Image
@@ -164,7 +179,7 @@ const TripCardDetailView: React.FC<Props> = ({
                       <Text style={s.entrySub}>{line.subtitle}</Text>
                     </View>
                     <View style={s.entryDot} />
-                  </View>
+                  </TouchableOpacity>
                 </React.Fragment>
               );
             })}

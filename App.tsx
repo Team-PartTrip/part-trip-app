@@ -455,6 +455,12 @@ function App() {
                   <TripCardDetailView
                     tripCardId={route.params.tripCardId}
                     onBack={() => navigation.goBack()}
+                    onOpenPhoto={entryId =>
+                      navigation.navigate('PhotoDetail', {
+                        tripCardId: route.params.tripCardId,
+                        photoId: entryId,
+                      })
+                    }
                     onAddPhoto={() =>
                       navigation.navigate('TripCardEdit', {
                         tripCardId: route.params.tripCardId,
