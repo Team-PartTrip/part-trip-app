@@ -32,8 +32,7 @@ export const planGroupStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  modeDotOn: { backgroundColor: colors.primary },
-  modeIcon: { fontSize: 18 },
+  modeDotOn: { backgroundColor: colors.primaryFill },
   modeLabel: { fontSize: 15, fontWeight: '600', color: colors.text },
   modeLabelOn: { color: colors.primaryDark },
 
@@ -68,7 +67,7 @@ export const planGroupStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   stepperBtnOff: { opacity: 0.4 },
-  stepperSign: { fontSize: 15, fontWeight: '600', color: colors.text },
+  stepperSign: {},
   stepperValue: {
     width: 44,
     textAlign: 'center',
@@ -89,43 +88,6 @@ export const planGroupStyles = StyleSheet.create({
     fontSize: 15,
     color: colors.textPrimary,
   },
-  memberEmpty: {
-    marginTop: 10,
-    fontSize: 12,
-    color: colors.textSub,
-  },
-  memberRow: {
-    height: 60,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 11,
-    marginBottom: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.white,
-  },
-  memberBody: { flex: 1, marginLeft: 12 },
-  memberName: { fontSize: 15, fontWeight: '600', color: colors.text },
-  memberSub: { marginTop: 2, fontSize: 12 },
-  // 방장이 잘못 들어온 사람을 뺄 때 쓴다 (API-005-22)
-  memberRemove: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.danger,
-  },
-  memberRemoveText: { fontSize: 12, fontWeight: '600', color: colors.danger },
-
-  inviteBtn: {
-    height: 56,
-    borderRadius: 12,
-    backgroundColor: colors.tint,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  inviteText: { fontSize: 15, fontWeight: '600', color: colors.primary },
 
   soloNote: {
     marginTop: 24,
@@ -145,7 +107,7 @@ export const planGroupStyles = StyleSheet.create({
   primaryBtn: {
     height: 54,
     borderRadius: 12,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
     alignItems: 'center',
     justifyContent: 'center',
   },

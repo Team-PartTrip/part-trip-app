@@ -4,6 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { notificationDetailStyles as s } from './NotificationDetailView.styles';
 import { metaOf, timeAgo } from './notificationMeta';
 import type { Notification } from '../../entities/notification/api';
+import { CheckIcon, ChevronLeftIcon } from '../../shared/ui/icons';
+import colors from '../../shared/tokens/colors';
 
 // "2026-08-21T10:24:00" → "2026.08.21  10:24"
 function formatStamp(iso: string): string {
@@ -19,11 +21,11 @@ function formatStamp(iso: string): string {
 
 // 알림을 눌렀을 때 갈 곳. 플래너는 아직 준비 중 화면이다.
 const LINK_LABEL: Record<string, string> = {
-  VOTE: '투표 보러가기',
+  VOTE: '플래너 보러가기',
   GROUP: '그룹 보러가기',
   TRIP_CARD: '여행카드 보러가기',
   RECORD: '기록 보러가기',
-  WORLD_MAP: '세계지도 보러가기',
+  WORLD_MAP: '다녀온 곳 보러가기',
 };
 
 interface Props {
@@ -44,14 +46,17 @@ const NotificationDetailView: React.FC<Props> = ({
     <SafeAreaView style={s.safeArea} edges={['top']}>
       <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
         <TouchableOpacity onPress={onBack} hitSlop={12}>
-          <Text style={s.back}>‹</Text>
+          <View style={s.back}>
+            <ChevronLeftIcon size={22} color={colors.text} />
+          </View>
         </TouchableOpacity>
 
         <View style={s.titleRow}>
           <Text style={s.title}>알림 상세</Text>
           {n.read && (
             <View style={s.readBadge}>
-              <Text style={s.readBadgeText}>✓ 읽음 처리</Text>
+              <CheckIcon size={11} color={colors.primary} />
+              <Text style={s.readBadgeText}>읽음 처리</Text>
             </View>
           )}
         </View>

@@ -21,13 +21,20 @@ import { recordMapStyles as s } from './RecordMapView.styles';
 import {
   getTripCard,
   getTripCards,
+  placeOf,
   TimelineItem,
   TripCardSummary,
 } from '../../entities/record/api';
-import CountryTripMap from './CountryTripMap';
+import MapView, { Marker } from 'react-native-maps';
 import { formatShortDate } from '../../entities/record/types';
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  PinIcon,
+} from '../../shared/ui/icons';
+import colors from '../../shared/tokens/colors';
 
-/** 지도에 찍을 한 지점. 위·경도는 지도와 같은 투영을 태워야 해서 그대로 둔다 */
+/** 지도에 찍을 한 지점 */
 interface Spot {
   key: string;
   entryId: number | null;
@@ -38,7 +45,7 @@ interface Spot {
   longitude: number;
 }
 
-/** 좌표가 있는 타임라인 항목을 지도 위 비율 좌표로 바꾼다 */
+/** 좌표가 있는 타임라인 항목만 지도에 찍는다 */
 function toSpots(timeline: TimelineItem[]): Spot[] {
   const located = timeline.filter(
     item => item.latitude != null && item.longitude != null,
@@ -60,6 +67,13 @@ function toSpots(timeline: TimelineItem[]): Spot[] {
   }));
 }
 
+const KOREA_REGION = {
+  latitude: 36.3,
+  longitude: 127.8,
+  latitudeDelta: 6.5,
+  longitudeDelta: 5,
+};
+
 interface Props {
   tripCardId: number;
   onBack?: () => void;
@@ -70,12 +84,9 @@ interface Props {
 const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
+  const [areaHeight, setAreaHeight] = useState(windowHeight);
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
-  // 지도를 그리려면 실제 픽셀 크기를 알아야 한다. 화면마다 다르다.
-  const [mapSize, setMapSize] = useState<{
-    width: number;
-    height: number;
-  } | null>(null);
+  const mapRef = useRef<MapView>(null);
   const [card, setCard] = useState<TripCardSummary | null>(null);
   const [loading, setLoading] = useState(true);
   // 조회 실패와 데이터 없음은 다르다. 같은 문구를 쓰면 서버가 죽어도
@@ -120,16 +131,19 @@ const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
   // 예전에는 '지도 / 목록' 을 눌러 화면을 통째로 바꿨다. 손잡이를 위아래로
   // 끌어 목록을 펼치고 접는 편이 지도를 보면서 쓰기 좋다.
   const SHEET_PEEK = 354;
-  const SHEET_FULL = Math.max(0, windowHeight - 120);
+  const SHEET_MIN = 96 + insets.bottom;
+  const SHEET_FULL = Math.max(SHEET_MIN, areaHeight - insets.top - 64);
   const SHEET_COLLAPSED = Math.min(SHEET_PEEK, SHEET_FULL);
-  // 위로 끌수록 값이 작아진다(높이가 커진다)
+  const snaps = useMemo(
+    () => [SHEET_MIN, SHEET_COLLAPSED, SHEET_FULL],
+    [SHEET_MIN, SHEET_COLLAPSED, SHEET_FULL],
+  );
   const sheetHeight = useRef(new Animated.Value(SHEET_COLLAPSED)).current;
   const startHeight = useRef(SHEET_COLLAPSED);
 
   const clampSheetHeight = useCallback(
-    (height: number) =>
-      Math.min(SHEET_FULL, Math.max(SHEET_COLLAPSED, height)),
-    [SHEET_COLLAPSED, SHEET_FULL],
+    (height: number) => Math.min(SHEET_FULL, Math.max(SHEET_MIN, height)),
+    [SHEET_MIN, SHEET_FULL],
   );
 
   useEffect(() => {
@@ -142,11 +156,15 @@ const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
 
   const settle = useCallback(
     (height: number, velocity: number) => {
-      // 빠르게 튕기면 그 방향으로, 아니면 가까운 쪽으로 붙인다
-      const middle = (SHEET_COLLAPSED + SHEET_FULL) / 2;
-      const toFull =
-        velocity < -0.5 ? true : velocity > 0.5 ? false : height > middle;
-      const target = toFull ? SHEET_FULL : SHEET_COLLAPSED;
+      // 빠르게 튕기면 그 방향의 다음 칸으로, 아니면 가까운 칸으로 붙인다
+      let target = snaps.reduce((a, b) =>
+        Math.abs(b - height) < Math.abs(a - height) ? b : a,
+      );
+      if (velocity < -0.5) {
+        target = snaps.find(v => v > height) ?? SHEET_FULL;
+      } else if (velocity > 0.5) {
+        target = [...snaps].reverse().find(v => v < height) ?? SHEET_MIN;
+      }
       startHeight.current = target;
       Animated.spring(sheetHeight, {
         toValue: target,
@@ -154,7 +172,7 @@ const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
         bounciness: 0,
       }).start();
     },
-    [SHEET_COLLAPSED, SHEET_FULL, sheetHeight],
+    [snaps, SHEET_FULL, SHEET_MIN, sheetHeight],
   );
 
   const drag = useMemo(
@@ -184,27 +202,22 @@ const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
     [clampSheetHeight, settle, sheetHeight],
   );
 
-  const onMapLayout = (e: any) => {
-    const { width, height } = e.nativeEvent.layout;
-    setMapSize(prev =>
-      prev?.width === width && prev?.height === height
-        ? prev
-        : { width, height },
-    );
-  };
-
   const spots = useMemo(() => toSpots(timeline), [timeline]);
-  const points = useMemo(
-    () =>
-      spots.map((spot, index) => ({
-        key: spot.key,
-        latitude: spot.latitude,
-        longitude: spot.longitude,
-        index,
-      })),
-    [spots],
+  const mapPadding = useMemo(
+    () => ({ top: insets.top + 64, right: 24, bottom: SHEET_COLLAPSED, left: 24 }),
+    [insets.top, SHEET_COLLAPSED],
   );
-  const place = card ? `${card.countryName} · ${card.cityName}` : '여행';
+  const fitSpots = useCallback(() => {
+    if (spots.length === 0) {
+      return;
+    }
+    mapRef.current?.fitToCoordinates(spots, {
+      edgePadding: { top: 48, right: 48, bottom: 48, left: 48 },
+      animated: false,
+    });
+  }, [spots]);
+  useEffect(fitSpots, [fitSpots]);
+  const place = card ? placeOf(card, ' · ') : '여행';
 
   const list = (
     <>
@@ -242,7 +255,7 @@ const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
               }
             >
               <View style={s.thumb}>
-                <Text style={s.thumbIcon}>📍</Text>
+                <PinIcon size={20} color={colors.primary} />
               </View>
               <View style={s.rowBody}>
                 <Text style={s.rowTitle}>{spot.title}</Text>
@@ -250,7 +263,9 @@ const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
                   {spot.subtitle} · {formatShortDate(spot.date)}
                 </Text>
               </View>
-              <Text style={s.chevron}>›</Text>
+              <View style={s.chevron}>
+                <ChevronRightIcon size={16} color={colors.textTertiary} />
+              </View>
             </TouchableOpacity>
           ))
         )}
@@ -259,22 +274,32 @@ const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
   );
 
   return (
-    <View style={s.safeArea}>
-      <View style={s.map} onLayout={onMapLayout}>
-        {mapSize ? (
-          <CountryTripMap
-            countryName={card?.countryName}
-            points={points}
-            width={mapSize.width}
-            height={mapSize.height}
-            onPressPoint={key => {
-              const spot = spots.find(item => item.key === key);
-              if (spot) {
-                onOpenSpot?.({ tripCardId, entryId: spot.entryId });
+    <View
+      style={s.safeArea}
+      onLayout={e => setAreaHeight(e.nativeEvent.layout.height)}
+    >
+      <View style={s.map}>
+        <MapView
+          ref={mapRef}
+          style={s.mapView}
+          initialRegion={KOREA_REGION}
+          mapPadding={mapPadding}
+          onMapReady={fitSpots}
+          toolbarEnabled={false}
+        >
+          {spots.map(spot => (
+            <Marker
+              key={spot.key}
+              coordinate={spot}
+              title={spot.title}
+              description={formatShortDate(spot.date)}
+              pinColor={colors.primary as string}
+              onCalloutPress={() =>
+                onOpenSpot?.({ tripCardId, entryId: spot.entryId })
               }
-            }}
-          />
-        ) : null}
+            />
+          ))}
+        </MapView>
 
         <View style={[s.topBar, { top: insets.top + 8 }]}>
           <TouchableOpacity
@@ -282,7 +307,9 @@ const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
             activeOpacity={0.8}
             onPress={onBack}
           >
-            <Text style={s.circleBtnText}>‹</Text>
+            <View style={s.circleBtnText}>
+              <ChevronLeftIcon size={18} color={colors.text} />
+            </View>
           </TouchableOpacity>
           <View style={s.placePill}>
             <Text style={s.placePillText}>{place}</Text>

@@ -21,7 +21,7 @@ export const mainStyles = StyleSheet.create({
   // ── 파란 헤더 ──
   // 사진이 없을 때 파란 배경이 남게 색은 여기 그대로 둔다
   headerImage: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
   },
   // 사진이 위쪽 여백까지 꽉 차게. 아래는 카드가 덮으므로 모서리를 두지 않는다
   headerImageInner: {
@@ -45,10 +45,6 @@ export const mainStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  brand: {
-    width: 110,
-    height: 26,
   },
   headerActions: {
     flexDirection: 'row',
@@ -107,6 +103,38 @@ export const mainStyles = StyleSheet.create({
     color: colors.text,
   },
 
+  today: {
+    marginTop: 20,
+    marginHorizontal: 24,
+    padding: 20,
+    borderRadius: 16,
+    backgroundColor: colors.white,
+  },
+  todayTitle: { fontSize: 22, fontWeight: '700', color: colors.text },
+  todayEmpty: { marginTop: 12, fontSize: 17, color: colors.textSecondary },
+  todayRow: {
+    marginTop: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  todayNum: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primaryFill,
+  },
+  todayNumText: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: colors.textOnPrimary,
+  },
+  todayBody: { flex: 1 },
+  todayName: { fontSize: 20, fontWeight: '700', color: colors.text },
+  todaySub: { marginTop: 2, fontSize: 15, color: colors.textSecondary },
+
   // ── 축제 · 이벤트 캘린더 행 (Func-002-03) ──
   eventRow: {
     marginTop: 20,
@@ -141,11 +169,7 @@ export const mainStyles = StyleSheet.create({
     fontSize: 12,
     color: colors.textSub,
   },
-  chevron: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.textTertiary,
-  },
+  chevron: {},
 
   // ── 이번 주 추천 ──
   placeList: {
@@ -179,6 +203,7 @@ export const mainStyles = StyleSheet.create({
     fontSize: 12,
     color: colors.textTertiary,
   },
+  placeRatingRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   placeRating: {
     fontSize: 12,
     fontWeight: '600',

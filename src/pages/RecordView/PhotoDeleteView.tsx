@@ -18,6 +18,8 @@ import {
   TimelineItem,
 } from '../../entities/record/api';
 import { toImageUrl } from '../../shared/api/image';
+import { CheckIcon } from '../../shared/ui/icons';
+import colors from '../../shared/tokens/colors';
 
 // 좌우 여백 20 · 칸 간격 8 을 빼고 세 칸으로 나눈 크기
 const CELL = (Dimensions.get('window').width - 20 * 2 - 8 * 2) / 3;
@@ -153,7 +155,7 @@ const PhotoDeleteView: React.FC<Props> = ({ tripCardId, onBack, onDeleted }) => 
                   )}
                   {on && <View style={s.cellVeil} />}
                   <View style={[s.check, on ? s.checkOn : s.checkOff]}>
-                    {on && <Text style={s.checkText}>✓</Text>}
+                    {on && <CheckIcon size={13} color={colors.textOnPrimary} />}
                   </View>
                 </TouchableOpacity>
               );

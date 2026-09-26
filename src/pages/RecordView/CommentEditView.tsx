@@ -20,6 +20,8 @@ import {
   updateTripCardEntryComment,
 } from '../../entities/record/api';
 import { toImageUrl } from '../../shared/api/image';
+import { ChevronLeftIcon } from '../../shared/ui/icons';
+import colors from '../../shared/tokens/colors';
 
 // 서버가 100자까지 받는다
 const MAX_LENGTH = 100;
@@ -120,7 +122,9 @@ const CommentEditView: React.FC<Props> = ({
     <SafeAreaView edges={['top']} style={s.safeArea}>
       <View style={s.header}>
         <TouchableOpacity onPress={onBack} hitSlop={12}>
-          <Text style={s.back}>‹</Text>
+          <View style={s.back}>
+            <ChevronLeftIcon size={22} color={colors.text} />
+          </View>
         </TouchableOpacity>
         <Text style={s.headerTitle}>
           {editing ? '코멘트 수정' : '코멘트 작성'}

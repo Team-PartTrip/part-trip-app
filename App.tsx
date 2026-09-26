@@ -14,9 +14,6 @@ import TabBar, { TabKey } from './src/widgets/bottom-tab-bar/TabBar';
 
 import LaunchScreen from './src/pages/LaunchScreen/LaunchScreen';
 import LoginView from './src/pages/Auth/LoginView';
-import SignUpView, { SignUpData } from './src/pages/Auth/SingUpView';
-import ConfirmEmail from './src/pages/Auth/ConfirmEmail';
-import ResetPassword from './src/pages/Auth/ResetPassword';
 import PlaceDetailView from './src/pages/PlaceDetailView/PlaceDetailView';
 import type { TourPlace } from './src/entities/main/api';
 import MainView from './src/pages/MainView/MainView';
@@ -24,16 +21,10 @@ import FestivalScreen from './src/pages/FestivalScreen/FestivalScreen';
 import ProfileView from './src/pages/ProfileView/ProfileView';
 import PlannerScreen from './src/pages/PlannerScreen/PlannerScreen';
 import PlanGroupView from './src/pages/PlannerScreen/PlanGroupView';
-import PlanDestinationView from './src/pages/PlannerScreen/PlanDestinationView';
-import PlacePickerView from './src/pages/PlannerScreen/PlacePickerView';
-import PlaceVoteView from './src/pages/PlannerScreen/PlaceVoteView';
-import PlanCartView from './src/pages/PlannerScreen/PlanCartView';
+import PlanPeriodView from './src/pages/PlannerScreen/PlanPeriodView';
+import PlanBlocksView from './src/pages/PlannerScreen/PlanBlocksView';
 import PlanStatusView from './src/pages/PlannerScreen/PlanStatusView';
-import PlanConfirmView from './src/pages/PlannerScreen/PlanConfirmView';
-import type {
-  PlaceCategory,
-  PlanDraft,
-} from './src/entities/planner/types';
+import type { PlanDraft } from './src/entities/planner/types';
 import NotificationListView from './src/pages/NotificationView/NotificationListView';
 import NotificationDetailView from './src/pages/NotificationView/NotificationDetailView';
 import type { Notification } from './src/entities/notification/api';
@@ -41,6 +32,7 @@ import RecordView from './src/pages/RecordView/RecordView';
 import RecordMapView from './src/pages/RecordView/RecordMapView';
 import PhotoDetailView from './src/pages/RecordView/PhotoDetailView';
 import CommentEditView from './src/pages/RecordView/CommentEditView';
+import PhotoLocationView from './src/pages/RecordView/PhotoLocationView';
 import PhotoDeleteView from './src/pages/RecordView/PhotoDeleteView';
 import TripCardListView from './src/pages/RecordView/TripCardListView';
 import TripCardDetailView from './src/pages/RecordView/TripCardDetailView';
@@ -49,35 +41,21 @@ import TripCardDeleteView from './src/pages/RecordView/TripCardDeleteView';
 import RecordEditView from './src/pages/RecordView/RecordEditView';
 import RecordCompleteView from './src/pages/RecordView/RecordCompleteView';
 import ProfileEditView from './src/pages/ProfileView/ProfileEditView';
-import WorldMapView from './src/pages/WorldMapView/WorldMapView';
-import CountryRecordView from './src/pages/WorldMapView/CountryRecordView';
-import CountryAcquiredView from './src/pages/WorldMapView/CountryAcquiredView';
-import AchievementView from './src/pages/WorldMapView/AchievementView';
-import type {
-  CountryAcquiredParams,
-  VisitedCountry,
-} from './src/entities/worldmap/types';
-import { sampleAcquiredParamsOf } from './src/entities/worldmap/sampleData';
-import { clearTokens } from './src/shared/api/tokenStorage';
+import GuardianView from './src/pages/GuardianView/GuardianView';
+import TravelPreferenceView from './src/pages/TravelPreferenceView/TravelPreferenceView';
+import SeniorView from './src/pages/GuardianView/SeniorView';
+import { useLocationSharing } from './src/shared/lib/locationSharing';
+import RegionMapView from './src/pages/RegionMapView/RegionMapView';
 
 export type RootStackParamList = {
   Launch: undefined;
   Login: undefined;
-  SignUp: undefined;
-  ConfirmEmail: {
-    mode: 'signup' | 'resetPassword';
-    signupData?: SignUpData;
-  };
-  ResetPassword: { email: string; resetToken: string };
   Main: undefined;
   Planner: undefined;
   PlanGroup: undefined;
-  PlanDestination: { draft: PlanDraft };
-  PlacePicker: { draft: PlanDraft };
-  PlanCart: { plannerId: number };
-  PlaceVote: { planId: number; category?: PlaceCategory };
+  PlanPeriod: { draft: PlanDraft };
+  PlanBlocks: { draft: PlanDraft };
   PlanStatus: { planId: number };
-  PlanConfirm: { planId: number };
   Notifications: undefined;
   NotificationDetail: { notification: Notification };
   PlaceDetail: { place: TourPlace };
@@ -90,6 +68,7 @@ export type RootStackParamList = {
     photoId?: number;
   };
   CommentEdit: { tripCardId: number; photoId: number; mode: 'create' | 'edit' };
+  PhotoLocation: { tripCardId: number; photoId: number };
   PhotoDelete: { tripCardId: number };
   TripCards: undefined;
   TripCardDetail: { tripCardId: number };
@@ -99,10 +78,10 @@ export type RootStackParamList = {
   RecordComplete: undefined;
   Profile: undefined;
   ProfileEdit: undefined;
-  WorldMap: undefined;
-  CountryRecord: { country: VisitedCountry };
-  CountryAcquired: CountryAcquiredParams;
-  Achievement: undefined;
+  Guardian: undefined;
+  TravelPreference: undefined;
+  Senior: { seniorUserId: string; nickName: string };
+  RegionMap: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -111,30 +90,15 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const AUTH_ROUTES = [
   'Launch',
   'Login',
-  'SignUp',
-  'ConfirmEmail',
-  'Survey',
-  'ResetPassword',
-  'Attendance',
-  'MissionList',
-  'MissionDetail',
-  'MissionVerify',
-  'PostDetail',
-  'PostCreate',
   'RecordEdit',
   'RecordComplete',
-  'WorldMap',
-  'CountryRecord',
-  'CountryAcquired',
-  'Achievement',
+  'RegionMap',
   'PlanGroup',
-  'PlanDestination',
-  'PlacePicker',
-  'PlanCart',
-  'PlaceVote',
-  'PlanConfirm',
+  'PlanPeriod',
+  'PlanBlocks',
   'PhotoDetail',
   'CommentEdit',
+  'PhotoLocation',
   'PhotoDelete',
   'TripCards',
   'TripCardDelete',
@@ -153,6 +117,9 @@ const OWN_HEADER_ROUTES = [
   'TripCardDetail',
   'TripCardEdit',
   'Profile',
+  'Guardian',
+  'TravelPreference',
+  'Senior',
   'Notifications',
   'NotificationDetail',
 ];
@@ -181,6 +148,9 @@ const TAB_BY_ROUTE: Record<string, TabKey> = {
   TripCardEdit: 'record',
   Profile: 'profile',
   ProfileEdit: 'profile',
+  Guardian: 'profile',
+  TravelPreference: 'profile',
+  Senior: 'profile',
 };
 
 function App() {
@@ -189,6 +159,8 @@ function App() {
   const [routeName, setRouteName] = useState<string | undefined>(undefined);
 
   const showChrome = !!routeName && !AUTH_ROUTES.includes(routeName);
+  // 로그인한 화면에서만. 여행 중 · 보호자 있음 · 동의했을 때 위치를 보낸다
+  useLocationSharing(showChrome);
 
   const activeTab =
     routeName && TAB_BY_ROUTE[routeName] ? TAB_BY_ROUTE[routeName] : '';
@@ -236,75 +208,16 @@ function App() {
 
               <Stack.Screen name="Login">
                 {({ navigation }) => (
-                  <LoginView
-                    onLogin={() => navigation.replace('Main')}
-                    onSignup={() => navigation.navigate('SignUp')}
-                    onResetPassword={() =>
-                      navigation.navigate('ConfirmEmail', {
-                        mode: 'resetPassword',
-                      })
-                    }
-                  />
-                )}
-              </Stack.Screen>
-
-              <Stack.Screen name="SignUp">
-                {({ navigation }) => (
-                  <SignUpView
-                    onBack={() => navigation.goBack()}
-                    onNext={data =>
-                      navigation.navigate('ConfirmEmail', {
-                        mode: 'signup',
-                        signupData: data,
-                      })
-                    }
-                  />
-                )}
-              </Stack.Screen>
-
-              <Stack.Screen name="ConfirmEmail">
-                {({ navigation, route }) => {
-                  const mode = route.params?.mode ?? 'signup';
-                  return (
-                    <ConfirmEmail
-                      mode={mode}
-                      onBack={() => navigation.goBack()}
-                      signupData={route.params?.signupData}
-                      onConfirm={(email, resetToken) =>
-                        mode === 'signup'
-                          ? navigation.navigate('Login')
-                          : navigation.navigate('ResetPassword', {
-                              email: email ?? '',
-                              resetToken: resetToken ?? '',
-                            })
-                      }
-                    />
-                  );
-                }}
-              </Stack.Screen>
-
-
-              <Stack.Screen name="ResetPassword">
-                {({ navigation, route }) => (
-                  <ResetPassword
-                    email={route.params?.email ?? ''}
-                    resetToken={route.params?.resetToken ?? ''}
-                    onBack={() => navigation.goBack()}
-                    onConfirm={async () => {
-                      await clearTokens();
-                      navigation.reset({
-                        index: 0,
-                        routes: [{ name: 'Login' }],
-                      });
-                    }}
-                  />
+                  <LoginView onLogin={() => navigation.replace('Main')} />
                 )}
               </Stack.Screen>
 
               <Stack.Screen name="Main">
                 {({ navigation }) => (
                   <MainView
-                    onOpenNotifications={() => navigation.navigate('Notifications')}
+                    onOpenNotifications={() =>
+                      navigation.navigate('Notifications')
+                    }
                     onOpenEvents={() => navigation.navigate('Festival')}
                     onOpenPlace={place =>
                       navigation.navigate('PlaceDetail', { place })
@@ -318,14 +231,10 @@ function App() {
                 {({ navigation }) => (
                   <PlannerScreen
                     onCreate={() => navigation.navigate('PlanGroup')}
-                    onOpenPlan={(planId, status) => {
-                      // 확정된 계획은 최종 확인 화면, 그 밖에는 진행 현황으로
-                      if (status === 'CONFIRMED') {
-                        navigation.navigate('PlanConfirm', { planId });
-                      } else {
-                        navigation.navigate('PlanStatus', { planId });
-                      }
-                    }}
+                    // 확정 전후 모두 같은 화면이다 (Func-005-06)
+                    onOpenPlan={planId =>
+                      navigation.navigate('PlanStatus', { planId })
+                    }
                   />
                 )}
               </Stack.Screen>
@@ -335,68 +244,38 @@ function App() {
                   <PlanGroupView
                     onBack={() => navigation.goBack()}
                     onNext={draft =>
-                      navigation.navigate('PlanDestination', { draft })
+                      navigation.navigate('PlanPeriod', { draft })
                     }
                   />
                 )}
               </Stack.Screen>
 
-              <Stack.Screen name="PlanDestination">
+              <Stack.Screen name="PlanPeriod">
                 {({ navigation, route }) => (
-                  <PlanDestinationView
+                  <PlanPeriodView
                     draft={route.params.draft}
                     onBack={() => navigation.goBack()}
                     onNext={draft =>
-                      navigation.navigate('PlacePicker', { draft })
+                      navigation.navigate('PlanBlocks', { draft })
                     }
                   />
                 )}
               </Stack.Screen>
 
-              <Stack.Screen name="PlacePicker">
+              <Stack.Screen name="PlanBlocks">
                 {({ navigation, route }) => (
-                  <PlacePickerView
+                  <PlanBlocksView
                     draft={route.params.draft}
                     onBack={() => navigation.goBack()}
-                    onPlannerCreated={plannerId =>
-                      navigation.setParams({
-                        draft: { ...route.params.draft, plannerId },
-                      })
-                    }
-                    // 플래너는 담을 때 만들어진다. 그때 받은 id 를 쓴다
-                    onOpenCart={plannerId =>
-                      navigation.navigate('PlanCart', { plannerId })
-                    }
-                    onStartVote={planId =>
-                      navigation.navigate('PlaceVote', { planId })
-                    }
-                  />
-                )}
-              </Stack.Screen>
-
-              <Stack.Screen name="PlanCart">
-                {({ navigation, route }) => (
-                  <PlanCartView
-                    plannerId={route.params.plannerId}
-                    onBack={() => navigation.goBack()}
-                    onConfirm={() =>
-                      navigation.navigate('PlanConfirm', {
-                        planId: route.params.plannerId,
-                      })
-                    }
-                  />
-                )}
-              </Stack.Screen>
-
-              <Stack.Screen name="PlaceVote">
-                {({ navigation, route }) => (
-                  <PlaceVoteView
-                    planId={route.params.planId}
-                    category={route.params.category}
-                    onBack={() => navigation.goBack()}
-                    onDone={() =>
-                      navigation.navigate('PlanConfirm', {
-                        planId: route.params.planId,
+                    // 마법사는 여기서 끝난다. 뒤로 가서 다시 만들면 플래너가
+                    // 하나 더 생기므로, 목록 위에 계획 화면만 남긴다.
+                    onCreated={planId =>
+                      navigation.reset({
+                        index: 1,
+                        routes: [
+                          { name: 'Planner' },
+                          { name: 'PlanStatus', params: { planId } },
+                        ],
                       })
                     }
                   />
@@ -408,23 +287,7 @@ function App() {
                   <PlanStatusView
                     planId={route.params.planId}
                     onBack={() => navigation.goBack()}
-                    onOpenVote={category =>
-                      navigation.navigate('PlaceVote', {
-                        planId: route.params.planId,
-                        category,
-                      })
-                    }
                     onDeleted={() => navigation.navigate('Planner')}
-                  />
-                )}
-              </Stack.Screen>
-
-              <Stack.Screen name="PlanConfirm">
-                {({ navigation, route }) => (
-                  <PlanConfirmView
-                    planId={route.params.planId}
-                    onBack={() => navigation.goBack()}
-                    onStart={() => navigation.navigate('Planner')}
                   />
                 )}
               </Stack.Screen>
@@ -434,7 +297,9 @@ function App() {
                   <NotificationListView
                     onBack={() => navigation.goBack()}
                     onOpen={notification =>
-                      navigation.navigate('NotificationDetail', { notification })
+                      navigation.navigate('NotificationDetail', {
+                        notification,
+                      })
                     }
                   />
                 )}
@@ -445,18 +310,18 @@ function App() {
                   <NotificationDetailView
                     notification={route.params.notification}
                     onBack={() => navigation.goBack()}
-                    onOpenLink={(linkType, linkId) => {
-                      // 국가 획득 알림은 축하 화면(E3)으로 바로 보낸다
-                      if (route.params.notification.type === 'COUNTRY_ACQUIRED') {
-                        navigation.navigate(
-                          'CountryAcquired',
-                          sampleAcquiredParamsOf(linkId),
-                        );
+                    onOpenLink={linkType => {
+                      // 새 지역을 다녀왔다는 알림은 지도로 보낸다.
+                      // 예전 알림(국가 획득 · WORLD_MAP)도 같은 지도로 보낸다
+                      if (
+                        linkType === 'REGION_MAP' ||
+                        linkType === 'WORLD_MAP' ||
+                        route.params.notification.type === 'COUNTRY_ACQUIRED'
+                      ) {
+                        navigation.navigate('RegionMap');
                       } else if (linkType === 'VOTE' || linkType === 'GROUP') {
                         // 어느 플래너인지까지는 아직 못 가려서 목록으로 보낸다
                         navigation.navigate('Planner');
-                      } else if (linkType === 'WORLD_MAP') {
-                        navigation.navigate('WorldMap');
                       } else {
                         navigation.navigate('Record');
                       }
@@ -491,7 +356,10 @@ function App() {
                   />
                 )}
               </Stack.Screen>
-              <Stack.Screen name="RecordMap">
+              <Stack.Screen
+                name="RecordMap"
+                options={{ gestureEnabled: false }}
+              >
                 {({ navigation, route }) => (
                   <RecordMapView
                     tripCardId={route.params.tripCardId}
@@ -525,6 +393,12 @@ function App() {
                         mode: 'edit',
                       })
                     }
+                    onLocate={photo =>
+                      navigation.navigate('PhotoLocation', {
+                        tripCardId: route.params.tripCardId,
+                        photoId: photo.entryId ?? 0,
+                      })
+                    }
                     onDeletePhotos={() =>
                       navigation.navigate('PhotoDelete', {
                         tripCardId: route.params.tripCardId,
@@ -539,6 +413,16 @@ function App() {
                     tripCardId={route.params.tripCardId}
                     photoId={route.params.photoId}
                     mode={route.params.mode}
+                    onBack={() => navigation.goBack()}
+                    onSaved={() => navigation.goBack()}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="PhotoLocation">
+                {({ navigation, route }) => (
+                  <PhotoLocationView
+                    tripCardId={route.params.tripCardId}
+                    photoId={route.params.photoId}
                     onBack={() => navigation.goBack()}
                     onSaved={() => navigation.goBack()}
                   />
@@ -571,6 +455,12 @@ function App() {
                   <TripCardDetailView
                     tripCardId={route.params.tripCardId}
                     onBack={() => navigation.goBack()}
+                    onOpenPhoto={entryId =>
+                      navigation.navigate('PhotoDetail', {
+                        tripCardId: route.params.tripCardId,
+                        photoId: entryId,
+                      })
+                    }
                     onAddPhoto={() =>
                       navigation.navigate('TripCardEdit', {
                         tripCardId: route.params.tripCardId,
@@ -623,7 +513,11 @@ function App() {
                       navigation.navigate('Notifications')
                     }
                     onEdit={() => navigation.navigate('ProfileEdit')}
-                    onOpenWorldMap={() => navigation.navigate('WorldMap')}
+                    onOpenRegionMap={() => navigation.navigate('RegionMap')}
+                    onOpenGuardian={() => navigation.navigate('Guardian')}
+                    onOpenTravelPreference={() =>
+                      navigation.navigate('TravelPreference')
+                    }
                     onLogout={() =>
                       navigation.reset({
                         index: 0,
@@ -635,51 +529,48 @@ function App() {
               </Stack.Screen>
               <Stack.Screen name="ProfileEdit">
                 {({ navigation }) => (
-                  <ProfileEditView
-                    onConfirm={() => navigation.goBack()}
+                  <ProfileEditView onConfirm={() => navigation.goBack()} />
+                )}
+              </Stack.Screen>
+
+              <Stack.Screen name="TravelPreference">
+                {({ navigation }) => (
+                  <TravelPreferenceView onBack={() => navigation.goBack()} />
+                )}
+              </Stack.Screen>
+
+              {/* 가족 연결 (Func-012) */}
+              <Stack.Screen name="Guardian">
+                {({ navigation }) => (
+                  <GuardianView
+                    onBack={() => navigation.goBack()}
+                    onOpenSenior={senior =>
+                      navigation.navigate('Senior', {
+                        seniorUserId: senior.userId,
+                        nickName: senior.nickName,
+                      })
+                    }
                   />
                 )}
               </Stack.Screen>
 
-              {/* 세계지도 */}
-              <Stack.Screen name="WorldMap">
-                {({ navigation }) => (
-                  <WorldMapView
-                    onBack={() => navigation.goBack()}
-                    onOpenCountry={country =>
-                      navigation.navigate('CountryRecord', { country })
-                    }
-                    onOpenAchievement={() => navigation.navigate('Achievement')}
-                  />
-                )}
-              </Stack.Screen>
-              <Stack.Screen name="CountryRecord">
+              <Stack.Screen name="Senior">
                 {({ navigation, route }) => (
-                  <CountryRecordView
-                    country={route.params.country}
+                  <SeniorView
+                    seniorUserId={route.params.seniorUserId}
+                    nickName={route.params.nickName}
                     onBack={() => navigation.goBack()}
-                    // 목록이 주는 것은 여행 카드 id 다. 기록 수정(RecordEditView)
-                    // 이 아니라 여행 카드 상세로 보낸다. 예전에는 여기서 수정
-                    // 화면으로 가려다 서버 연동이 없어 막아뒀었다.
-                    onOpenRecord={tripCardId =>
-                      navigation.navigate('TripCardDetail', { tripCardId })
-                    }
                   />
                 )}
               </Stack.Screen>
-              <Stack.Screen name="CountryAcquired">
-                {({ navigation, route }) => (
-                  <CountryAcquiredView
-                    params={route.params}
-                    onClose={() => navigation.goBack()}
-                    onOpenCountry={() => navigation.navigate('Record')}
-                    onOpenWorldMap={() => navigation.navigate('WorldMap')}
-                  />
-                )}
-              </Stack.Screen>
-              <Stack.Screen name="Achievement">
+
+              {/* 내가 다녀온 곳 (Func-006) */}
+              <Stack.Screen
+                name="RegionMap"
+                options={{ gestureEnabled: false }}
+              >
                 {({ navigation }) => (
-                  <AchievementView onBack={() => navigation.goBack()} />
+                  <RegionMapView onBack={() => navigation.goBack()} />
                 )}
               </Stack.Screen>
             </Stack.Navigator>

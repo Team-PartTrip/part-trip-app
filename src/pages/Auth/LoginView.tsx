@@ -3,62 +3,60 @@ import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
   Alert,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { loginStyles as styles } from './LoginView.styles';
-import { login, googleLogin } from '../../entities/auth/api';
+import { googleLogin, kakaoLogin } from '../../entities/auth/api';
 import {
   configureGoogleSignin,
   signInWithGoogle,
 } from '../../shared/lib/googleSignin';
+import {
+  signInWithKakao,
+  isKakaoCancelled,
+} from '../../shared/lib/kakaoSignin';
 import { saveTokens, saveProvider } from '../../shared/api/tokenStorage';
 import colors from '../../shared/tokens/colors';
+import DandiWordmark from '../../shared/ui/DandiWordmark';
 
 interface LoginViewProps {
   onLogin?: () => void;
-  onSignup?: () => void;
-  onResetPassword?: () => void;
 }
 
-const LoginView: React.FC<LoginViewProps> = ({
-  onLogin,
-  onSignup,
-  onResetPassword,
-}) => {
-  const [id, setId] = useState('');
-  const [password, setPassword] = useState('');
+/**
+ * 로그인은 카카오와 구글만 쓴다 (명세 Func-001).
+ *
+ * 첫 로그인이면 서버가 가입까지 한 번에 끝내므로 회원가입 화면이 따로 없다.
+ * 아이디 · 비밀번호가 없으니 비밀번호 찾기도 없다.
+ */
+const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
   const [loading, setLoading] = useState(false);
-
-
-  const handleLogin = async () => {
-    if (!id.trim() || !password) {
-      Alert.alert('알림', '아이디와 비밀번호를 모두 입력해주세요.');
-      return;
-    }
-    try {
-      setLoading(true);
-      const tokens = await login(id.trim(), password);
-      await saveTokens(tokens);
-      await saveProvider('EMAIL');
-      onLogin?.();
-    } catch (e: any) {
-      Alert.alert('로그인 실패', e?.message ?? '로그인에 실패했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
     configureGoogleSignin();
   }, []);
+
+  const handleKakaoLogin = async () => {
+    try {
+      setLoading(true);
+      const accessToken = await signInWithKakao();
+      const tokens = await kakaoLogin(accessToken);
+      await saveTokens(tokens);
+      await saveProvider('KAKAO');
+      onLogin?.();
+    } catch (e: any) {
+      // 사용자가 카카오 화면에서 그냥 닫은 것은 실패가 아니다
+      if (isKakaoCancelled(e)) {
+        return;
+      }
+      Alert.alert('카카오 로그인 실패', e?.message ?? '다시 시도해주세요.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleGoogleLogin = async () => {
     try {
@@ -77,93 +75,40 @@ const LoginView: React.FC<LoginViewProps> = ({
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <ScrollView
-          contentContainerStyle={styles.container}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          {/* 로고 + 타이틀 */}
-          <View style={styles.logoArea}>
-            <Image
-              source={require('../../shared/assets/images/logo.png')}
-              style={styles.brandLogo}
-              resizeMode="contain"
-            />
-            <Text style={styles.title}>로그인</Text>
-          </View>
+      <View style={styles.container}>
+        <View style={styles.logoArea}>
+          <DandiWordmark height={48} color={colors.primary as string} />
+          <Text style={styles.title}>로그인</Text>
+          <Text style={styles.subtitle}>
+            처음이면 로그인하면서 가입도 함께 끝나요
+          </Text>
+        </View>
 
-          {/* 입력 폼 */}
-          <View style={styles.form}>
-            <TextInput
-              style={styles.input}
-              placeholder="아이디를 입력하세요"
-              placeholderTextColor={colors.placeholder}
-              value={id}
-              onChangeText={setId}
-              autoCapitalize="none"
-              keyboardType="email-address"
-            />
-            <TextInput
-              style={[styles.input, styles.field]}
-              placeholder="비밀번호를 입력하세요"
-              placeholderTextColor={colors.placeholder}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
-            <TouchableOpacity
-              style={styles.forgotBtn}
-              onPress={onResetPassword}
-            >
-              <Text style={styles.forgotText}>비밀번호를 잊으셨나요?</Text>
-            </TouchableOpacity>
-          </View>
+        <View style={styles.actions}>
+          <TouchableOpacity
+            style={styles.kakaoBtn}
+            activeOpacity={0.85}
+            onPress={handleKakaoLogin}
+            disabled={loading}
+          >
+            <Text style={styles.kakaoBtnText}>카카오로 계속하기</Text>
+          </TouchableOpacity>
 
-          {/* 버튼 영역 */}
-          <View style={styles.actions}>
-            <TouchableOpacity
-              style={styles.loginBtn}
-              activeOpacity={0.85}
-              onPress={handleLogin}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#ffffff" />
-              ) : (
-                <Text style={styles.loginBtnText}>로그인</Text>
-              )}
-            </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.outlineBtn}
+            activeOpacity={0.85}
+            onPress={handleGoogleLogin}
+            disabled={loading}
+          >
+            <Text style={styles.googleG}>G</Text>
+            <Text style={styles.outlineBtnText}>Google로 계속하기</Text>
+          </TouchableOpacity>
 
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>또는</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
-            <TouchableOpacity
-              style={[styles.outlineBtn, styles.googleBtn]}
-              activeOpacity={0.85}
-              onPress={handleGoogleLogin}
-              disabled={loading}
-            >
-              <Text style={styles.googleG}>G</Text>
-              <Text style={styles.outlineBtnText}>Google로 계속하기</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.outlineBtn, styles.signupBtn]}
-              activeOpacity={0.85}
-              onPress={onSignup}
-            >
-              <Text style={styles.outlineBtnText}>회원가입</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+          {loading && (
+            <ActivityIndicator style={styles.loading} color={colors.primary} />
+          )}
+        </View>
+      </View>
     </SafeAreaView>
   );
 };

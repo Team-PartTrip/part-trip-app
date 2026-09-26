@@ -1,7 +1,7 @@
 import { StyleSheet } from 'react-native';
 import colors from '../../shared/tokens/colors';
 
-// 피그마 C7 · Func-008-05 투표중 진행된 계획 내용 조회하기
+// 우리 여행 계획 (Func-005-06). 확정되면 일정표
 export const planStatusStyles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
   // 탭바가 화면 위에 떠 있다. 32 로는 삭제 버튼이 탭바에 가린다.
@@ -25,7 +25,7 @@ export const planStatusStyles = StyleSheet.create({
     color: colors.textPrimary,
   },
   header: { paddingHorizontal: 24, paddingTop: 4 },
-  back: { fontSize: 28, lineHeight: 32, color: colors.text },
+  back: {},
   titleRow: {
     marginTop: 8,
     flexDirection: 'row',
@@ -44,20 +44,6 @@ export const planStatusStyles = StyleSheet.create({
   statusText: { fontSize: 11, fontWeight: '500', color: colors.textOnPrimary },
   meta: { marginTop: 8, fontSize: 12, color: colors.textSecondary },
 
-  summaryCard: {
-    marginTop: 36,
-    marginHorizontal: 24,
-    height: 84,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 14,
-    backgroundColor: colors.white,
-  },
-  summaryCol: { flex: 1, alignItems: 'center', gap: 6 },
-  summaryValue: { fontSize: 18, fontWeight: '600' },
-  summaryLabel: { fontSize: 11, fontWeight: '500', color: colors.textSecondary },
-  summaryDivider: { width: 1, height: 40, backgroundColor: colors.border },
-
   section: { marginTop: 24, paddingHorizontal: 24 },
   sectionTitle: {
     marginBottom: 10,
@@ -74,54 +60,168 @@ export const planStatusStyles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: colors.white,
   },
-  dot: { width: 10, height: 10, borderRadius: 5, marginTop: 4 },
   rowBody: { flex: 1, marginLeft: 12 },
   rowTitle: { fontSize: 15, fontWeight: '600', color: colors.text },
   rowSub: { marginTop: 2, fontSize: 12, color: colors.textSecondary },
-  track: {
+  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+
+  // ── 확정된 일정 ──
+  dayTitle: {
     marginTop: 8,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.inputBg,
-    overflow: 'hidden',
-  },
-  fill: { height: 4, borderRadius: 2 },
-  rowPill: {
-    height: 26,
-    paddingHorizontal: 16,
-    borderRadius: 13,
-    backgroundColor: colors.inputBg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  rowPillText: { fontSize: 11, fontWeight: '500' },
-
-
-  // 되돌릴 수 없는 동작이라 화면 맨 아래에 따로 둔다
-  // 독촉은 삭제 위에 놓는다. 파괴적인 버튼이 항상 맨 아래여야 잘못 누르지 않는다.
-  remindBtn: {
-    alignSelf: 'center',
-    marginTop: 32,
-    paddingVertical: 12,
-    paddingHorizontal: 28,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    minWidth: 140,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  remindBtnDisabled: {
-    borderColor: colors.textTertiary,
-  },
-  remindText: {
+    marginBottom: 8,
     fontSize: 14,
     fontWeight: '600',
-    color: colors.primary,
+    color: colors.textSecondary,
   },
-  remindTextDisabled: {
-    color: colors.textTertiary,
+  thumb: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    backgroundColor: colors.tint,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
+  empty: {
+    borderRadius: 12,
+    backgroundColor: colors.white,
+    paddingVertical: 40,
+    alignItems: 'center',
+  },
+  emptyText: { fontSize: 13, color: colors.textMuted },
+  shareBtn: {
+    marginTop: 8,
+    minHeight: 48,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  shareText: { fontSize: 14, fontWeight: '600', color: colors.primary },
+
+  inviteBtn: {
+    marginTop: 4,
+    minHeight: 52,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inviteText: { fontSize: 15, fontWeight: '700', color: colors.primary },
+  removeText: { fontSize: 14, fontWeight: '600', color: colors.danger },
+
+  // 장소를 못 정한 칸. 서버 #131 이 들어오면 + 를 붙여 누를 수 있게 한다
+  emptySlot: {
+    minHeight: 56,
+    marginBottom: 10,
+    paddingHorizontal: 16,
+    justifyContent: 'center',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: colors.border,
+  },
+  emptySlotText: { fontSize: 14, color: colors.textSecondary },
+  confirmBtn: {
+    marginTop: 16,
+    minHeight: 54,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primaryFill,
+  },
+  confirmText: { fontSize: 16, fontWeight: '600', color: colors.textOnPrimary },
+  note: {
+    marginTop: 16,
+    fontSize: 14,
+    textAlign: 'center',
+    color: colors.textSecondary,
+  },
+
+  editRow: { flexDirection: 'row', alignItems: 'center' },
+  handle: {
+    width: 40,
+    height: 40,
+    marginLeft: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  handleText: {},
+  dragging: { zIndex: 1, elevation: 6, opacity: 0.9 },
+  swapSource: { borderWidth: 2, borderColor: colors.primary },
+  addSlot: {
+    minHeight: 48,
+    marginBottom: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addSlotText: { fontSize: 15, fontWeight: '600', color: colors.primary },
+  editHint: { marginTop: 4, fontSize: 14, color: colors.textSecondary },
+  swapCancel: { marginTop: 8, minHeight: 44, justifyContent: 'center' },
+  swapCancelText: { fontSize: 15, fontWeight: '600', color: colors.danger },
+
+  sheetBackdrop: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+  },
+  sheet: {
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 36,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    backgroundColor: colors.white,
+  },
+  sheetTitle: {
+    marginBottom: 8,
+    fontSize: 17,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  sheetItem: { minHeight: 52, justifyContent: 'center' },
+  sheetItemText: { fontSize: 17, color: colors.text },
+  sheetItemDanger: { color: colors.danger },
+  sheetCancel: { fontSize: 17, color: colors.textSecondary },
+
+  pickerSafe: {
+    flex: 1,
+    paddingTop: 60,
+    paddingHorizontal: 24,
+    backgroundColor: colors.background,
+  },
+  pickerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  pickerTitle: { fontSize: 20, fontWeight: '700', color: colors.text },
+  pickerClose: { fontSize: 16, fontWeight: '600', color: colors.primary },
+  pickerInput: {
+    marginTop: 16,
+    marginBottom: 8,
+    minHeight: 48,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.white,
+    paddingHorizontal: 14,
+    fontSize: 16,
+    color: colors.textPrimary,
+  },
+  pickerRow: {
+    minHeight: 60,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+  },
+  pickerEmpty: { marginTop: 24, fontSize: 15, color: colors.textSecondary },
+
+  // 되돌릴 수 없는 동작이라 화면 맨 아래에 따로 둔다
   deleteBtn: {
     alignSelf: 'center',
     marginTop: 16,

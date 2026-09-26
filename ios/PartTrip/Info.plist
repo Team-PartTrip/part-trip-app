@@ -12,6 +12,27 @@
           <string>com.googleusercontent.apps.435960620705-3b0jrp59qdl7ek72q8m9sektthfuuths</string>
         </array>
       </dict>
+      <!-- 카카오 로그인 리다이렉트. 카카오 콘솔의 네이티브 앱 키를
+           kakao 뒤에 붙인 값이어야 한다 (안드로이드는
+           android/gradle.properties 의 KAKAO_NATIVE_APP_KEY). -->
+      <dict>
+        <key>CFBundleTypeRole</key>
+        <string>Editor</string>
+        <key>CFBundleURLSchemes</key>
+        <array>
+          <string>kakaod639d10660a1dad407c746786696cac7</string>
+        </array>
+      </dict>
+    </array>
+    <!-- 카카오 SDK 가 이 값을 읽어 스스로 초기화한다 -->
+    <key>KAKAO_APP_KEY</key>
+    <string>d639d10660a1dad407c746786696cac7</string>
+    <!-- 카카오톡이 깔려 있는지 확인하려면 스킴을 미리 밝혀야 한다.
+         없으면 카카오톡이 있어도 항상 웹 로그인으로 넘어간다. -->
+    <key>LSApplicationQueriesSchemes</key>
+    <array>
+      <string>kakaokompassauth</string>
+      <string>kakaolink</string>
     </array>
     <key>NSCameraUsageDescription</key>
     <string>미션 인증과 해설 카메라 촬영을 위해 카메라를 사용합니다.</string>
@@ -20,7 +41,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>PartTrip</string>
+	<string>단디</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -28,7 +49,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>$(PRODUCT_NAME)</string>
+	<string>단디</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -47,7 +68,7 @@
 		<true/>
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>해설 카메라와 주변 명소 추천을 위해 위치 정보가 필요합니다.</string>
+	<string>여행 중 가족(보호자)에게 지금 위치를 알려주고, 사진 위치와 주변 명소를 찾는 데 위치 정보를 사용합니다.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>

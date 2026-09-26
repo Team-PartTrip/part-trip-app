@@ -1,7 +1,7 @@
 import { StyleSheet } from 'react-native';
 import colors from '../../shared/tokens/colors';
 
-// 피그마 C1 · Func-008 여행 플래너(투표) — 제목 + 상태 필터 + 계획 카드 목록
+// 피그마 C1 · Func-008 여행 플래너 — 제목 + 상태 필터 + 계획 카드 목록
 export const plannerStyles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
 
@@ -9,10 +9,10 @@ export const plannerStyles = StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'center' },
   pageTitle: { flex: 1, fontSize: 24, fontWeight: '700', color: colors.text },
   createBtn: {
-    height: 36,
+    minHeight: 48,
     paddingHorizontal: 16,
     borderRadius: 18,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -21,7 +21,7 @@ export const plannerStyles = StyleSheet.create({
   headerBtns: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   // 참여는 생성보다 덜 쓰는 길이라 테두리만 준다
   joinBtn: {
-    height: 36,
+    minHeight: 48,
     paddingHorizontal: 14,
     borderRadius: 18,
     borderWidth: 1,
@@ -73,7 +73,7 @@ export const plannerStyles = StyleSheet.create({
     flex: 1,
     height: 44,
     borderRadius: 12,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -91,7 +91,10 @@ export const plannerStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  filterChipOn: { borderColor: colors.primary, backgroundColor: colors.primary },
+  filterChipOn: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primaryFill,
+  },
   filterText: { fontSize: 12, color: colors.textSecondary },
   filterTextOn: { color: colors.textOnPrimary },
 
@@ -135,7 +138,7 @@ export const plannerStyles = StyleSheet.create({
   cardMeta: { fontSize: 11, fontWeight: '500', color: colors.textTertiary },
   // 카드 touchable 밖에 있는 형제라서 위치를 직접 잡는다.
   // cardBody padding 20 + footer 높이를 감안해 화살표 왼쪽에 놓는다.
-  chevron: { fontSize: 18, fontWeight: '600', color: colors.textTertiary },
+  chevron: {},
 
   loading: {
     marginTop: 60,
@@ -149,5 +152,4 @@ export const plannerStyles = StyleSheet.create({
   },
   emptyText: { fontSize: 15, fontWeight: '600', color: colors.text },
   emptyDesc: { fontSize: 12, color: colors.textMuted },
-
 });

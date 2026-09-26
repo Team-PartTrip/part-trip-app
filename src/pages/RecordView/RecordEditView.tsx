@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ScreenHeader from '../../shared/ui/ScreenHeader';
 import { recordEditStyles as s } from './RecordEditView.styles';
+import { PlusIcon } from '../../shared/ui/icons';
 
 interface Props {
   onBack?: () => void;
@@ -36,7 +37,9 @@ const RecordEditView: React.FC<Props> = ({ onBack, onDone }) => {
           <View style={s.imageWrap}>
             <View style={s.image} />
             <TouchableOpacity style={s.addPhoto} activeOpacity={0.85}>
-              <Text style={s.addPhotoIcon}>＋</Text>
+              <View style={s.addPhotoIcon}>
+                <PlusIcon size={20} color={'#fff'} />
+              </View>
             </TouchableOpacity>
           </View>
           <Text style={s.meta}>오후 19:40 · 2024.05.12</Text>

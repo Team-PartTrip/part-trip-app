@@ -1,4 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react';
+import { touch48 } from '../../shared/ui/hitSlop';
 import {
   View,
   Text,
@@ -28,6 +29,7 @@ import {
   planStatusLabel,
   today,
 } from '../../entities/planner/types';
+import { ChevronRightIcon } from '../../shared/ui/icons';
 
 type FilterKey = 'ongoing' | 'upcoming' | 'done';
 
@@ -64,7 +66,7 @@ interface PlannerRow extends PlannerListItem {
   members: PlannerMember[];
 }
 
-/** 상단 띠 · 상태 배지 색. 모집 중은 파랑, 투표/여행 중은 주황, 확정은 초록 */
+/** 상단 띠 · 상태 배지 색. 모집 중은 파랑, 일정 만드는 중/여행 중은 주황, 확정은 초록 */
 function toneOf(status: GroupStatus): ColorValue {
   switch (status) {
     case 'PLANNING':
@@ -210,6 +212,7 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
             return (
               <TouchableOpacity
                 key={item.key}
+                hitSlop={touch48(34, 'vertical')}
                 style={[s.filterChip, on && s.filterChipOn]}
                 activeOpacity={0.85}
                 onPress={() => setFilter(item.key)}
@@ -285,7 +288,12 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
 
                     <View style={s.cardFooter}>
                       <Text style={s.cardMeta}>{metaOf(plan)}</Text>
-                      <Text style={s.chevron}>›</Text>
+                      <View style={s.chevron}>
+                        <ChevronRightIcon
+                          size={18}
+                          color={colors.textTertiary}
+                        />
+                      </View>
                     </View>
                   </View>
                 </TouchableOpacity>

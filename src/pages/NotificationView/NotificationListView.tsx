@@ -18,10 +18,12 @@ import {
   Notification,
   NotificationCategory,
 } from '../../entities/notification/api';
+import { ChevronLeftIcon } from '../../shared/ui/icons';
+import colors from '../../shared/tokens/colors';
 
 const FILTERS: { key: 'ALL' | NotificationCategory; label: string }[] = [
   { key: 'ALL', label: '전체' },
-  { key: 'VOTE', label: '투표' },
+  { key: 'VOTE', label: '플래너' },
   { key: 'RECORD', label: '기록' },
 ];
 
@@ -128,7 +130,9 @@ const NotificationListView: React.FC<Props> = ({ onBack, onOpen }) => {
       <ScrollView contentContainerStyle={s.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={s.headerRow}>
           <TouchableOpacity onPress={onBack} hitSlop={12}>
-            <Text style={s.back}>‹</Text>
+            <View style={s.back}>
+              <ChevronLeftIcon size={22} color={colors.text} />
+            </View>
           </TouchableOpacity>
         </View>
         <View style={s.headerRow}>

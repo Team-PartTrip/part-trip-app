@@ -9,13 +9,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { CountryShapeSvg } from '../WorldMapView/WorldMapSvg';
-import {
-  getWorldMap,
-  VisitedCountryResponse,
-} from '../../entities/worldmap/api';
+import { RegionShapeSvg } from '../RegionMapView/KoreaMapSvg';
+import { getRegionMap, VisitedRegion } from '../../entities/region/api';
 import { profileStyles as s } from './ProfileView.styles';
 import {
+  deleteAccount,
   getMyProfile,
   getProfileStats,
   ProfileStats,
@@ -24,6 +22,8 @@ import {
 import { logout } from '../../entities/auth/api';
 import { getRefreshToken, clearTokens } from '../../shared/api/tokenStorage';
 import { toImageUrl } from '../../shared/api/image';
+import { BellIcon } from '../../shared/ui/icons';
+import colors from '../../shared/tokens/colors';
 
 // 세계지도 미리보기 칸 수 (피그마 E1 은 6칸)
 const MAP_CELLS = 6;
@@ -35,18 +35,23 @@ interface Props {
   /** 상단 종 버튼 — 알림 목록 */
   onOpenNotifications?: () => void;
   onLogout?: () => void;
-  onOpenWorldMap?: () => void;
+  onOpenRegionMap?: () => void;
+  /** 가족 연결 (보호자, Func-012) */
+  onOpenGuardian?: () => void;
+  onOpenTravelPreference?: () => void;
 }
 
 const ProfileView: React.FC<Props> = ({
   onEdit,
   onOpenNotifications,
   onLogout,
-  onOpenWorldMap,
+  onOpenRegionMap,
+  onOpenGuardian,
+  onOpenTravelPreference,
 }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [stats, setStats] = useState<ProfileStats | null>(null);
-  const [visited, setVisited] = useState<VisitedCountryResponse[]>([]);
+  const [visited, setVisited] = useState<VisitedRegion[]>([]);
 
   useFocusEffect(
     useCallback(() => {
@@ -58,8 +63,8 @@ const ProfileView: React.FC<Props> = ({
       getProfileStats()
         .then(setStats)
         .catch(() => setStats(null));
-      // 미리보기 칸에 채울 나라들
-      getWorldMap()
+      // 미리보기 칸에 채울 시·도
+      getRegionMap()
         .then(map => {
           if (alive) {
             setVisited(map.visited);
@@ -97,6 +102,33 @@ const ProfileView: React.FC<Props> = ({
     ]);
   };
 
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      '회원 탈퇴',
+      '여행 계획, 여행카드, 사진이 모두 지워지고 되살릴 수 없어요. 함께 가는 여행은 다른 일행에게 넘어가요.',
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '탈퇴하기',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteAccount();
+            } catch (e: any) {
+              Alert.alert(
+                '탈퇴하지 못했어요',
+                e?.message ?? '잠시 후 다시 시도해주세요.',
+              );
+              return;
+            }
+            await clearTokens();
+            onLogout?.();
+          },
+        },
+      ],
+    );
+  };
+
   // 아직 화면이 없는 항목은 조용히 무반응으로 두지 않고 준비 중임을 알린다
   const notReady = (what: string) =>
     Alert.alert('준비 중', `${what} 화면은 아직 준비 중이에요.`);
@@ -107,14 +139,14 @@ const ProfileView: React.FC<Props> = ({
   const statText = (n: number | undefined) =>
     n === undefined ? '-' : String(n);
 
-  // 어느 나라를 갔는지 알려주는 API 가 아직 없다(server feat/67).
-  // 예시 국기를 개수만큼 잘라 쓰면 가보지도 않은 나라 국기가 뜬다.
-  // 그래서 국기는 안 그리고 통계 API 의 개수만 보여준다.
-  const countryCount = stats?.countryCount ?? null;
+  const regionCount = stats?.regionCount ?? null;
 
   return (
     <View style={s.safeArea}>
-      <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={s.content}
+        showsVerticalScrollIndicator={false}
+      >
         <SafeAreaView edges={['top']} style={s.header}>
           <View style={s.headerTop}>
             <Text style={s.headerTitle}>마이</Text>
@@ -125,7 +157,7 @@ const ProfileView: React.FC<Props> = ({
               disabled={!onOpenNotifications}
               onPress={onOpenNotifications}
             >
-              <Text style={s.headerCircleEmoji}>🔔</Text>
+              <BellIcon size={18} color={colors.primary} />
             </TouchableOpacity>
           </View>
 
@@ -147,7 +179,11 @@ const ProfileView: React.FC<Props> = ({
               <Text style={s.handle}>@{profile?.userId ?? ''}</Text>
             </View>
 
-            <TouchableOpacity style={s.editBtn} activeOpacity={0.85} onPress={onEdit}>
+            <TouchableOpacity
+              style={s.editBtn}
+              activeOpacity={0.85}
+              onPress={onEdit}
+            >
               <Text style={s.editBtnText}>프로필 수정</Text>
             </TouchableOpacity>
           </View>
@@ -156,7 +192,7 @@ const ProfileView: React.FC<Props> = ({
         <View style={s.statsCard}>
           {[
             { value: statText(stats?.tripCount), label: '여행' },
-            { value: statText(stats?.countryCount), label: '국가' },
+            { value: statText(stats?.regionCount), label: '지역' },
             { value: statText(stats?.recordCount), label: '기록' },
           ].map((stat, i) => (
             <React.Fragment key={stat.label}>
@@ -170,18 +206,18 @@ const ProfileView: React.FC<Props> = ({
         </View>
 
         <View style={s.section}>
-          <Text style={s.sectionTitle}>내 세계지도</Text>
+          <Text style={s.sectionTitle}>내가 다녀온 곳</Text>
           <View style={s.mapCard}>
             <View style={s.mapGrid}>
-              {/* 획득한 나라를 앞에서부터 채우고, 남는 칸은 비워 둔다.
+              {/* 다녀온 시·도를 앞에서부터 채우고, 남는 칸은 비워 둔다.
                   칸이 다 비어 있으면 지도가 고장 난 것처럼 보인다. */}
               {Array.from({ length: MAP_CELLS }).map((_, i) => {
-                const country = visited[i];
+                const region = visited[i];
                 return (
                   <View key={i} style={s.mapCell}>
-                    {country ? (
-                      <CountryShapeSvg
-                        countryCode={country.countryCode}
+                    {region ? (
+                      <RegionShapeSvg
+                        code={region.regionCode}
                         size={MAP_CELL_SIZE}
                       />
                     ) : null}
@@ -191,16 +227,16 @@ const ProfileView: React.FC<Props> = ({
             </View>
             <View style={s.mapFooter}>
               <Text style={s.mapSummary}>
-                {countryCount === null
-                  ? '국가 정보를 불러오지 못했어요'
-                  : countryCount === 0
-                  ? '아직 획득한 국가가 없어요'
-                  : `${countryCount}개국 획득`}
+                {regionCount === null
+                  ? '지역 정보를 불러오지 못했어요'
+                  : regionCount === 0
+                  ? '아직 다녀온 곳이 없어요'
+                  : `시·도 ${regionCount}곳을 다녀왔어요`}
               </Text>
               <TouchableOpacity
                 style={s.moreBtn}
                 activeOpacity={0.85}
-                onPress={onOpenWorldMap ?? (() => notReady('세계지도'))}
+                onPress={onOpenRegionMap ?? (() => notReady('내가 다녀온 곳'))}
               >
                 <Text style={s.moreBtnText}>더보기</Text>
               </TouchableOpacity>
@@ -212,8 +248,38 @@ const ProfileView: React.FC<Props> = ({
           <Text style={s.sectionTitle}>설정</Text>
 
           {/* 여행 타입 · 계정 보안은 뺐다. 프로필 수정은 위 버튼으로 간다 */}
-          <TouchableOpacity style={s.settingsRow} activeOpacity={0.85} onPress={handleLogout}>
-            <Text style={[s.settingsRowText, s.settingsRowDanger]}>로그아웃</Text>
+          <TouchableOpacity
+            style={s.settingsRow}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            onPress={onOpenGuardian}
+          >
+            <Text style={s.settingsRowText}>가족 연결 (보호자)</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={s.settingsRow}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            onPress={onOpenTravelPreference}
+          >
+            <Text style={s.settingsRowText}>여행 편의 설정</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={s.settingsRow}
+            activeOpacity={0.85}
+            onPress={handleLogout}
+          >
+            <Text style={[s.settingsRowText, s.settingsRowDanger]}>
+              로그아웃
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={s.settingsRow}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            onPress={handleDeleteAccount}
+          >
+            <Text style={s.settingsRowMuted}>회원 탈퇴</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

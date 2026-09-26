@@ -7,7 +7,7 @@ export const profileStyles = StyleSheet.create({
   content: { paddingBottom: 32 },
 
   header: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
     paddingHorizontal: 24,
     paddingTop: 12,
     paddingBottom: 52,
@@ -27,7 +27,6 @@ export const profileStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   // 알림(🔔) — 쓸 만한 아이콘 이미지가 없어 이모지로 둔다
-  headerCircleEmoji: { fontSize: 17 },
 
   profileRow: { marginTop: 24, flexDirection: 'row', alignItems: 'flex-start' },
   avatar: {
@@ -98,7 +97,7 @@ export const profileStyles = StyleSheet.create({
     height: 26,
     paddingHorizontal: 14,
     borderRadius: 13,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -106,7 +105,7 @@ export const profileStyles = StyleSheet.create({
 
   settingsRow: {
     marginTop: 8,
-    height: 44,
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -115,5 +114,6 @@ export const profileStyles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   settingsRowText: { fontSize: 15, color: colors.text },
+  settingsRowMuted: { fontSize: 14, color: colors.textTertiary },
   settingsRowDanger: { color: colors.badge },
 });

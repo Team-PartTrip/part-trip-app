@@ -19,10 +19,13 @@ import { tripCardEditStyles as s } from './TripCardEditView.styles';
 import {
   addTripCardEntry,
   getTripCards,
+  placeOf,
   PickedPhoto,
   TripCardSummary,
 } from '../../entities/record/api';
 import { formatDotDate } from '../../entities/record/types';
+import { CheckIcon, ChevronLeftIcon, PlusIcon } from '../../shared/ui/icons';
+import colors from '../../shared/tokens/colors';
 
 const MAX_LENGTH = 100;
 // 좌우 여백 24 · 칸 간격 12 를 빼고 세 칸으로 나눈 크기
@@ -110,7 +113,7 @@ const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
     }
   };
 
-  const title = card ? `${card.countryName} ${card.cityName}` : '여행';
+  const title = card ? placeOf(card) : '여행';
 
   return (
     <View style={s.safeArea}>
@@ -125,7 +128,9 @@ const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
         >
           <SafeAreaView edges={['top']}>
             <TouchableOpacity onPress={onBack} hitSlop={12}>
-              <Text style={s.back}>‹</Text>
+              <View style={s.back}>
+                <ChevronLeftIcon size={22} color={colors.text} />
+              </View>
             </TouchableOpacity>
             <Text style={s.title}>사진 · 코멘트 추가</Text>
             <Text style={s.desc}>
@@ -134,7 +139,7 @@ const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
             {card && (
               <View style={s.tripBar}>
                 <Text style={s.tripBarText}>
-                  {title}  ·  {formatDotDate(card.startDate)} 시작
+                  {title} · {formatDotDate(card.startDate)} 시작
                 </Text>
               </View>
             )}
@@ -151,7 +156,7 @@ const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
               >
                 <Image source={{ uri: photo.uri }} style={s.thumb} />
                 <View style={[s.check, s.checkOn]}>
-                  <Text style={s.checkText}>✓</Text>
+                  <CheckIcon size={13} color={colors.textOnPrimary} />
                 </View>
               </TouchableOpacity>
             ))}
@@ -161,7 +166,9 @@ const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
                 activeOpacity={0.85}
                 onPress={pickPhotos}
               >
-                <Text style={s.addCell}>＋</Text>
+                <View style={s.addCell}>
+                  <PlusIcon size={28} color={colors.textMuted} />
+                </View>
               </TouchableOpacity>
             )}
           </View>

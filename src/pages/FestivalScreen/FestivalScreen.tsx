@@ -5,6 +5,9 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Modal,
+  Pressable,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { festivalStyles as s } from './FestivalScreen.styles';
@@ -15,12 +18,15 @@ import {
   Festival,
 } from '../../entities/main/api';
 import { formatShortDate, formatTripRange } from '../../entities/record/types';
+import { toImageUrl } from '../../shared/api/image';
+import { KOREA } from '../../entities/region/regions';
+import { ChevronLeftIcon, ChevronRightIcon } from '../../shared/ui/icons';
+import colors from '../../shared/tokens/colors';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
-/** 날짜와 나라가 모두 있는 여행 일정 ("쉬는 중" 응답을 걸러낸 뒤의 모습) */
+/** 날짜가 있는 여행 일정 ("쉬는 중" 응답을 걸러낸 뒤의 모습) */
 type TripDday = DdayInfo & {
-  countryName: string;
   startDate: string;
   endDate: string;
 };
@@ -32,6 +38,17 @@ function toIso(year: number, monthIndex: number, day: number): string {
 
 /** 여행 기간 앞뒤로 함께 보여줄 날수 */
 const WINDOW_DAYS = 7;
+
+/** from~to 사이에 하루라도 열리는가 */
+export function isOpenDuring(event: Festival, from: string, to: string) {
+  return event.startDate <= to && (event.endDate ?? event.startDate) >= from;
+}
+
+function periodOf(event: Festival): string {
+  return event.endDate && event.endDate !== event.startDate
+    ? `${formatShortDate(event.startDate)} ~ ${formatShortDate(event.endDate)}`
+    : formatShortDate(event.startDate);
+}
 
 /** YYYY-MM-DD 를 days 만큼 옮긴다. Date 가 달·해 넘김을 알아서 처리한다 */
 export function shiftIso(iso: string, days: number): string {
@@ -73,6 +90,8 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
   const [cursor, setCursor] = useState(() => new Date());
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  // 상세를 보고 있는 축제. null 이면 모달이 닫힌 것이다
+  const [detail, setDetail] = useState<Festival | null>(null);
   // 조회 실패와 일정 없음은 다르다. 같은 문구를 쓰면 서버가 죽어도
   // 그 달에 축제가 없는 것처럼 보인다.
   const [failed, setFailed] = useState(false);
@@ -89,8 +108,8 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
       try {
         const info = await getDday();
         // 일정이 없으면 서버가 200 으로 "쉬는 중"(전 필드 null)을 준다.
-        // 맞출 달도 물어볼 나라도 없으니 일정 없음으로 둔다.
-        if (!info.startDate || !info.endDate || !info.countryName) {
+        // 맞출 달이 없으니 일정 없음으로 둔다.
+        if (!info.startDate || !info.endDate) {
           setDday(null);
           return;
         }
@@ -136,22 +155,26 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
     // 보통 1~2번이다.
     Promise.all(
       monthsBetween(range.from, range.to).map(month =>
-        getFestivals(dday.countryName, month),
+        getFestivals(KOREA, month),
       ),
     )
       .then(lists => {
         if (!alive) {
           return;
         }
-        // 달 전체가 오므로 범위 밖은 여기서 버린다
-        setEvents(
-          lists
-            .flat()
-            .filter(
-              event =>
-                event.startDate >= range.from && event.startDate <= range.to,
-            ),
-        );
+        // 달 전체가 오므로 범위 밖과 다른 도시는 여기서 버린다.
+        // 두 달에 걸친 축제는 두 번 오니 하나만 남긴다
+        const city = dday.cityName;
+        const byId = new Map<number, Festival>();
+        for (const event of lists.flat()) {
+          if (
+            isOpenDuring(event, range.from, range.to) &&
+            (!city || event.location.includes(city))
+          ) {
+            byId.set(event.festivalId, event);
+          }
+        }
+        setEvents([...byId.values()]);
       })
       .catch(() => alive && (setEvents([]), setFailed(true)))
       .finally(() => alive && setLoading(false));
@@ -175,11 +198,6 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
     );
   }, [year, monthIndex]);
 
-  const eventDates = useMemo(
-    () => new Set(events.map(event => event.startDate)),
-    [events],
-  );
-
   const chips = useMemo(
     () => Array.from(new Set(events.map(event => event.category))),
     [events],
@@ -190,7 +208,9 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
   const visible = useMemo(() => {
     let list = events;
     if (selectedDate) {
-      list = list.filter(event => event.startDate === selectedDate);
+      list = list.filter(event =>
+        isOpenDuring(event, selectedDate, selectedDate),
+      );
     }
     if (categories.length > 0) {
       list = list.filter(event => categories.includes(event.category));
@@ -233,12 +253,14 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
       >
         <SafeAreaView edges={['top']} style={s.header}>
           <TouchableOpacity onPress={onBack} hitSlop={12}>
-            <Text style={s.back}>‹</Text>
+            <View style={s.back}>
+              <ChevronLeftIcon size={24} color={colors.text} />
+            </View>
           </TouchableOpacity>
           <Text style={s.title}>축제 & 이벤트</Text>
           <Text style={s.subtitle}>
             {dday
-              ? `${dday.countryName} · 여행 기간 앞뒤 1주`
+              ? `${dday.cityName ?? '국내'} · 여행 기간 앞뒤 1주`
               : ddayFailed
               ? '여행 일정을 불러오지 못했어요'
               : '등록된 여행 일정이 없어요'}
@@ -255,14 +277,18 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
               disabled={!canPrev}
               onPress={() => changeMonth(-1)}
             >
-              <Text style={[s.calArrow, !canPrev && s.calArrowOff]}>‹</Text>
+              <View style={[s.calArrow, !canPrev && s.calArrowOff]}>
+                <ChevronLeftIcon size={16} color={colors.textTertiary} />
+              </View>
             </TouchableOpacity>
             <TouchableOpacity
               hitSlop={10}
               disabled={!canNext}
               onPress={() => changeMonth(1)}
             >
-              <Text style={[s.calArrow, !canNext && s.calArrowOff]}>›</Text>
+              <View style={[s.calArrow, !canNext && s.calArrowOff]}>
+                <ChevronRightIcon size={16} color={colors.textTertiary} />
+              </View>
             </TouchableOpacity>
           </View>
 
@@ -308,9 +334,10 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
                         {day}
                       </Text>
                     </View>
-                    {eventDates.has(date) && (
-                      <View style={[s.dot, on && s.dotOnSelected]} />
-                    )}
+                    {!outsideRange &&
+                      events.some(event => isOpenDuring(event, date, date)) && (
+                        <View style={[s.dot, on && s.dotOnSelected]} />
+                      )}
                   </TouchableOpacity>
                 );
               })}
@@ -364,13 +391,18 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
         ) : (
           <View style={s.list}>
             {visible.map(event => (
-              <View key={`${event.title}-${event.startDate}`} style={s.card}>
+              <TouchableOpacity
+                key={event.festivalId}
+                style={s.card}
+                activeOpacity={0.85}
+                onPress={() => setDetail(event)}
+              >
                 <View style={s.cardStripe} />
                 <View style={s.cardBody}>
                   <Text style={s.cardTitle}>{event.title}</Text>
                   <Text style={s.cardMeta}>
                     {/* 시작 시각이 없는 축제는 날짜만 보여준다 */}
-                    {formatShortDate(event.startDate)}
+                    {periodOf(event)}
                     {event.startTime ? ` · ${event.startTime}` : ''}
                   </Text>
                   <Text style={s.cardPlace}>{event.location}</Text>
@@ -378,11 +410,58 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
                 <View style={s.cardPill}>
                   <Text style={s.cardPillText}>{event.category}</Text>
                 </View>
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
         )}
       </ScrollView>
+
+      {/* 상세는 서버가 이미 내려주고 있었다. 화면에서 안 쓰고 있었을 뿐이다 */}
+      <Modal
+        visible={!!detail}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDetail(null)}
+      >
+        <Pressable
+          accessible={false}
+          style={s.dim}
+          onPress={() => setDetail(null)}
+        >
+          {/* 안쪽을 눌렀을 때 닫히지 않도록 이벤트를 여기서 멈춘다 */}
+          <Pressable accessible={false} style={s.sheet} onPress={() => {}}>
+            {detail?.imageUrl ? (
+              <Image
+                source={{ uri: toImageUrl(detail.imageUrl) }}
+                style={s.sheetImage}
+              />
+            ) : null}
+            <ScrollView
+              style={s.sheetBody}
+              contentContainerStyle={s.sheetContent}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={s.sheetPill}>
+                <Text style={s.cardPillText}>{detail?.category}</Text>
+              </View>
+              <Text style={s.sheetTitle}>{detail?.title}</Text>
+              <Text style={s.sheetMeta}>
+                {detail ? periodOf(detail) : ''}
+                {detail?.startTime ? ` · ${detail.startTime}` : ''}
+              </Text>
+              <Text style={s.sheetPlace}>{detail?.location}</Text>
+              <Text style={s.sheetDesc}>{detail?.description}</Text>
+            </ScrollView>
+            <TouchableOpacity
+              style={s.sheetClose}
+              activeOpacity={0.85}
+              onPress={() => setDetail(null)}
+            >
+              <Text style={s.sheetCloseText}>닫기</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 };

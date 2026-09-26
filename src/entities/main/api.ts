@@ -1,21 +1,27 @@
 import { authRequest } from '../../shared/api/http';
+import type { ScheduleSlot } from '../planner/api';
+
+/** 첫 화면 상태. 문구는 이걸 보고 앱이 정한다 (서버 #141) */
+export type TripPhase = 'NO_TRIP' | 'BEFORE' | 'DURING' | 'ENDED';
 
 /**
- * 등록된 여행 일정이 없으면 서버가 에러 대신
- * 모든 값이 null 이고 dday 만 "쉬는 중" 인 응답을 내려준다.
+ * 등록된 여행 일정이 없으면 서버가 에러 대신 모든 값이 null 이고
+ * status 가 'NO_TRIP' 인 응답을 내려준다.
  * (TravelPlanService.getDday 참고) — 그래서 날짜까지 null 이 될 수 있다.
  */
 export interface DdayInfo {
-  countryName: string | null;
+  regionName: string | null;
   cityName: string | null;
   startDate: string | null;
   endDate: string | null;
   /** 여행 그룹 인원. 일정이 없으면 null */
   headcount: number | null;
   dday: string;
+  status?: TripPhase;
+  todaySchedule?: ScheduleSlot[];
 }
 
-/** D-Day 조회. 일정이 없으면 "쉬는 중" 응답이 온다 */
+/** D-Day 조회. 일정이 없으면 status 가 'NO_TRIP' 인 응답이 온다 */
 export function getDday(): Promise<DdayInfo> {
   return authRequest<DdayInfo>('/api/main/dday', { method: 'GET' });
 }
@@ -68,11 +74,28 @@ export function getTourPlaces(
   });
 }
 
+export interface MoreTourPlaces {
+  /** 새로 받은 장소만 온다. 이미 있던 곳은 빠진다 */
+  places: TourPlace[];
+  /** 다음에 그대로 보낼 값. null 이면 구글이 더 줄 게 없다 */
+  cursor: string | null;
+}
 
-
-
-
-
+export function getMoreTourPlaces(
+  countryName: string,
+  cityName: string,
+  category: TourPlaceCategory,
+  cursor: string | null,
+): Promise<MoreTourPlaces> {
+  const params = new URLSearchParams({ countryName, cityName, category });
+  if (cursor) {
+    params.append('cursor', cursor);
+  }
+  return authRequest<MoreTourPlaces>(
+    `/api/main/tour-place/more?${params.toString()}`,
+    { method: 'GET' },
+  );
+}
 
 export interface CountryInfo {
   /** DB 에 있는 여행지면 id 가 있고, ISO 목록에서만 온 나라는 null */
@@ -100,12 +123,43 @@ export function getCountries(keyword: string): Promise<CountryInfo[]> {
   );
 }
 
+export interface City {
+  cityName: string;
+  countryName: string;
+  regionName?: string | null;
+}
+
+/**
+ * 도시 검색.
+ *
+ * countries 는 나라당 대표 도시(수도) 하나만 준다. 오사카·교토처럼 수도가
+ * 아닌 도시는 여기서 찾는다. 서버가 구글 자동완성을 대신 불러준다.
+ *
+ * countryName 을 주면 그 나라 안에서만 찾는다. 생략하면 전 세계에서 찾는다.
+ * 두 글자 미만이면 서버가 빈 목록을 준다. 요청마다 돈이 나가서다.
+ */
+export function getCities(
+  keyword: string,
+  countryName?: string,
+): Promise<City[]> {
+  const params = new URLSearchParams({ keyword });
+  if (countryName) {
+    params.append('countryName', countryName);
+  }
+  return authRequest<City[]>(`/api/main/cities?${params.toString()}`, {
+    method: 'GET',
+  });
+}
+
 export interface Festival {
+  festivalId: number;
   title: string;
   category: string;
   description: string;
   startDate: string;
-  /** 시작 시각이 정해지지 않은 축제가 많다 */
+  /** 하루짜리면 null */
+  endDate: string | null;
+  /** 시작 시각 정해지지 않은 축제가 많다 */
   startTime: string | null;
   location: string;
   /** 확보한 이미지가 없으면 null */

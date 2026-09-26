@@ -13,16 +13,25 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { tripCardListStyles as s } from './TripCardListView.styles';
-import { getTripCards, TripCardSummary } from '../../entities/record/api';
+import {
+  getTripCards,
+  placeOf,
+  TripCardSummary,
+} from '../../entities/record/api';
 import { formatTripRange } from '../../entities/record/types';
+import { ChevronLeftIcon, StarIcon } from '../../shared/ui/icons';
+import colors from '../../shared/tokens/colors';
 
 const PAGE_WIDTH = Dimensions.get('window').width;
 
 // 목록 응답에는 사진 수만 있다. 동행 인원·방문 장소·이동 거리는 서버가 주지 않아
 // 지어내지 않고 뺐다. 대신 날짜로 계산되는 여행 기간을 보여준다.
 function statsOf(card: TripCardSummary): { label: string; value: string }[] {
-  const ms = new Date(card.endDate).getTime() - new Date(card.startDate).getTime();
-  const nights = Number.isNaN(ms) ? 0 : Math.max(0, Math.round(ms / 86_400_000));
+  const ms =
+    new Date(card.endDate).getTime() - new Date(card.startDate).getTime();
+  const nights = Number.isNaN(ms)
+    ? 0
+    : Math.max(0, Math.round(ms / 86_400_000));
   return [
     { label: '여행 기간', value: `${nights}박 ${nights + 1}일` },
     { label: '남긴 사진', value: `${card.photoCount ?? 0}장` },
@@ -60,10 +69,7 @@ const TripCardListView: React.FC<Props> = ({
       scrollRef.current?.scrollTo({ x: 0, animated: false });
       getTripCards()
         .then(list => alive && setCards(list))
-        .catch(
-          () =>
-            alive && (setCards([]), setIndex(0), setFailed(true)),
-        )
+        .catch(() => alive && (setCards([]), setIndex(0), setFailed(true)))
         .finally(() => alive && setLoading(false));
       return () => {
         alive = false;
@@ -81,7 +87,7 @@ const TripCardListView: React.FC<Props> = ({
     }
     Share.share({
       message: [
-        `${card.cityName} — ${card.countryName}`,
+        placeOf(card),
         formatTripRange(card.startDate, card.endDate),
         ...statsOf(card).map(stat => `${stat.label} ${stat.value}`),
       ].join('\n'),
@@ -92,7 +98,9 @@ const TripCardListView: React.FC<Props> = ({
     <SafeAreaView edges={['top', 'bottom']} style={s.safeArea}>
       <View style={s.header}>
         <TouchableOpacity onPress={onBack} hitSlop={12}>
-          <Text style={s.back}>‹</Text>
+          <View style={s.back}>
+            <ChevronLeftIcon size={22} color={colors.textOnPrimary} />
+          </View>
         </TouchableOpacity>
         <Text style={s.headerTitle}>여행카드</Text>
         {/* 카드 삭제(D12)로 들어갈 입구가 없어서 헤더 오른쪽에 두었다 */}
@@ -137,9 +145,11 @@ const TripCardListView: React.FC<Props> = ({
                     <Text style={s.coverText}>{card.cityName}</Text>
                   </View>
                   <View style={s.body}>
-                    <Text style={s.cityName}>{card.cityName.toUpperCase()}</Text>
+                    <Text style={s.cityName}>
+                      {card.cityName.toUpperCase()}
+                    </Text>
                     <Text style={s.tripMeta}>
-                      {card.countryName} ·{' '}
+                      {card.regionName ?? '국내'} ·{' '}
                       {formatTripRange(card.startDate, card.endDate)}
                     </Text>
                     <View style={s.divider} />
@@ -151,7 +161,7 @@ const TripCardListView: React.FC<Props> = ({
                     ))}
                   </View>
                   <View style={s.badge}>
-                    <Text style={s.badgeText}>★</Text>
+                    <StarIcon size={18} color={colors.textOnPrimary} />
                   </View>
                 </View>
               </TouchableOpacity>
@@ -160,10 +170,7 @@ const TripCardListView: React.FC<Props> = ({
 
           <View style={s.dots}>
             {cards.map((card, i) => (
-              <View
-                key={card.cardId}
-                style={[s.dot, i === index && s.dotOn]}
-              />
+              <View key={card.cardId} style={[s.dot, i === index && s.dotOn]} />
             ))}
           </View>
         </>

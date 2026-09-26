@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { screenHeaderStyles as s } from './ScreenHeader.styles';
+import { ChevronLeftIcon } from './icons';
+import colors from '../tokens/colors';
 
 interface Props {
   title: string;
@@ -16,7 +18,9 @@ const ScreenHeader: React.FC<Props> = ({ title, onBack, right }) => (
       activeOpacity={0.6}
       hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
     >
-      <Text style={s.back}>‹</Text>
+      <View style={s.back}>
+        <ChevronLeftIcon size={24} color={colors.textPrimary} />
+      </View>
     </TouchableOpacity>
     <Text style={s.title} numberOfLines={1}>
       {title}
