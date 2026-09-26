@@ -32,6 +32,7 @@ import RecordView from './src/pages/RecordView/RecordView';
 import RecordMapView from './src/pages/RecordView/RecordMapView';
 import PhotoDetailView from './src/pages/RecordView/PhotoDetailView';
 import CommentEditView from './src/pages/RecordView/CommentEditView';
+import PhotoLocationView from './src/pages/RecordView/PhotoLocationView';
 import PhotoDeleteView from './src/pages/RecordView/PhotoDeleteView';
 import TripCardListView from './src/pages/RecordView/TripCardListView';
 import TripCardDetailView from './src/pages/RecordView/TripCardDetailView';
@@ -67,6 +68,7 @@ export type RootStackParamList = {
     photoId?: number;
   };
   CommentEdit: { tripCardId: number; photoId: number; mode: 'create' | 'edit' };
+  PhotoLocation: { tripCardId: number; photoId: number };
   PhotoDelete: { tripCardId: number };
   TripCards: undefined;
   TripCardDetail: { tripCardId: number };
@@ -96,6 +98,7 @@ const AUTH_ROUTES = [
   'PlanBlocks',
   'PhotoDetail',
   'CommentEdit',
+  'PhotoLocation',
   'PhotoDelete',
   'TripCards',
   'TripCardDelete',
@@ -390,6 +393,12 @@ function App() {
                         mode: 'edit',
                       })
                     }
+                    onLocate={photo =>
+                      navigation.navigate('PhotoLocation', {
+                        tripCardId: route.params.tripCardId,
+                        photoId: photo.entryId ?? 0,
+                      })
+                    }
                     onDeletePhotos={() =>
                       navigation.navigate('PhotoDelete', {
                         tripCardId: route.params.tripCardId,
@@ -404,6 +413,16 @@ function App() {
                     tripCardId={route.params.tripCardId}
                     photoId={route.params.photoId}
                     mode={route.params.mode}
+                    onBack={() => navigation.goBack()}
+                    onSaved={() => navigation.goBack()}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="PhotoLocation">
+                {({ navigation, route }) => (
+                  <PhotoLocationView
+                    tripCardId={route.params.tripCardId}
+                    photoId={route.params.photoId}
                     onBack={() => navigation.goBack()}
                     onSaved={() => navigation.goBack()}
                   />

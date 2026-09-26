@@ -66,6 +66,18 @@ export const photoDetailStyles = StyleSheet.create({
   },
   title: { fontSize: 16, fontWeight: '600', color: colors.text },
   meta: { marginTop: 6, fontSize: 12, color: colors.textSecondary },
+  locateBtn: {
+    alignSelf: 'flex-start',
+    minHeight: 44,
+    marginTop: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    borderRadius: 22,
+    backgroundColor: colors.tint,
+  },
+  locateText: { fontSize: 14, fontWeight: '600', color: colors.primary },
 
 
   label: {

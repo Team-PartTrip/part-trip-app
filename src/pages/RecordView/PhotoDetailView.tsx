@@ -13,7 +13,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { photoDetailStyles as s } from './PhotoDetailView.styles';
 import { getTripCard, TimelineItem } from '../../entities/record/api';
 import { toImageUrl } from '../../shared/api/image';
-import { ChevronLeftIcon, MoreIcon } from '../../shared/ui/icons';
+import { ChevronLeftIcon, MoreIcon, PinIcon } from '../../shared/ui/icons';
 import colors from '../../shared/tokens/colors';
 
 interface Props {
@@ -24,6 +24,8 @@ interface Props {
   /** 코멘트 작성(D4) · 수정(D5) */
   onWriteComment?: (photo: TimelineItem) => void;
   onEditComment?: (photo: TimelineItem) => void;
+  /** 촬영 위치 · 날짜 직접 지정 */
+  onLocate?: (photo: TimelineItem) => void;
   /** 사진 삭제(D6) */
   onDeletePhotos?: () => void;
 }
@@ -42,6 +44,7 @@ const PhotoDetailView: React.FC<Props> = ({
   onBack,
   onWriteComment,
   onEditComment,
+  onLocate,
   onDeletePhotos,
 }) => {
   const [photos, setPhotos] = useState<TimelineItem[]>([]);
@@ -107,6 +110,11 @@ const PhotoDetailView: React.FC<Props> = ({
   }
   const comment = photo.comment ?? '';
   const hasComment = comment.length > 0;
+  const canLocate =
+    'locationSource' in photo &&
+    (photo.locationSource !== 'EXIF' || photo.takenAtSource !== 'EXIF');
+  const locateLabel =
+    photo.type === 'NO_INFO_PHOTO' ? '위치 지정' : '위치 · 날짜 다시 고르기';
 
   const openMenu = (action: () => void) => {
     setMenuOpen(false);
@@ -180,8 +188,23 @@ const PhotoDetailView: React.FC<Props> = ({
         <Text style={s.title}>{hasComment ? comment : '사진'}</Text>
         <Text style={s.meta}>
           {formatTakenAt(photo.takenAt)}
-          {photo.type === 'NO_INFO_PHOTO' ? '  ·  위치 정보 없음' : ''}
+          {photo.type === 'NO_INFO_PHOTO'
+            ? '  ·  위치 정보 없음'
+            : photo.placeName
+            ? `  ·  ${photo.placeName}`
+            : ''}
         </Text>
+        {canLocate && (
+          <TouchableOpacity
+            style={s.locateBtn}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            onPress={() => onLocate?.(photo)}
+          >
+            <PinIcon size={16} color={colors.primary} />
+            <Text style={s.locateText}>{locateLabel}</Text>
+          </TouchableOpacity>
+        )}
 
         <Text style={s.label}>코멘트</Text>
         <View style={s.commentRow}>

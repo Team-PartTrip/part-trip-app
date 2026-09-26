@@ -53,7 +53,11 @@ export interface TimelineItem {
   takenAt: string | null;
   latitude: number | null;
   longitude: number | null;
+  locationSource?: MetadataSource | null;
+  takenAtSource?: MetadataSource | null;
 }
+
+export type MetadataSource = 'EXIF' | 'MANUAL';
 
 export interface TripCardDetail {
   cardId: number;
@@ -176,5 +180,23 @@ export function updateTripCardEntryComment(
   return authRequest<TripCardEntry>(
     `/api/travel-cards/${cardId}/entries/${entryId}`,
     { method: 'PATCH', body: { comment } },
+  );
+}
+
+export interface EntryMetadata {
+  latitude?: number;
+  longitude?: number;
+  placeName?: string;
+  takenAt?: string;
+}
+
+export function updateTripCardEntryMetadata(
+  cardId: number,
+  entryId: number,
+  metadata: EntryMetadata,
+): Promise<TripCardEntry> {
+  return authRequest<TripCardEntry>(
+    `/api/travel-cards/${cardId}/entries/${entryId}/metadata`,
+    { method: 'PATCH', body: metadata },
   );
 }
