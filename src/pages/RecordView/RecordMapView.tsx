@@ -130,15 +130,19 @@ const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
   // 예전에는 '지도 / 목록' 을 눌러 화면을 통째로 바꿨다. 손잡이를 위아래로
   // 끌어 목록을 펼치고 접는 편이 지도를 보면서 쓰기 좋다.
   const SHEET_PEEK = 354;
-  const SHEET_FULL = Math.max(0, windowHeight - 120);
+  const SHEET_MIN = 96 + insets.bottom;
+  const SHEET_FULL = Math.max(SHEET_MIN, windowHeight - insets.top - 64);
   const SHEET_COLLAPSED = Math.min(SHEET_PEEK, SHEET_FULL);
-  // 위로 끌수록 값이 작아진다(높이가 커진다)
+  const snaps = useMemo(
+    () => [SHEET_MIN, SHEET_COLLAPSED, SHEET_FULL],
+    [SHEET_MIN, SHEET_COLLAPSED, SHEET_FULL],
+  );
   const sheetHeight = useRef(new Animated.Value(SHEET_COLLAPSED)).current;
   const startHeight = useRef(SHEET_COLLAPSED);
 
   const clampSheetHeight = useCallback(
-    (height: number) => Math.min(SHEET_FULL, Math.max(SHEET_COLLAPSED, height)),
-    [SHEET_COLLAPSED, SHEET_FULL],
+    (height: number) => Math.min(SHEET_FULL, Math.max(SHEET_MIN, height)),
+    [SHEET_MIN, SHEET_FULL],
   );
 
   useEffect(() => {
@@ -151,11 +155,15 @@ const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
 
   const settle = useCallback(
     (height: number, velocity: number) => {
-      // 빠르게 튕기면 그 방향으로, 아니면 가까운 쪽으로 붙인다
-      const middle = (SHEET_COLLAPSED + SHEET_FULL) / 2;
-      const toFull =
-        velocity < -0.5 ? true : velocity > 0.5 ? false : height > middle;
-      const target = toFull ? SHEET_FULL : SHEET_COLLAPSED;
+      // 빠르게 튕기면 그 방향의 다음 칸으로, 아니면 가까운 칸으로 붙인다
+      let target = snaps.reduce((a, b) =>
+        Math.abs(b - height) < Math.abs(a - height) ? b : a,
+      );
+      if (velocity < -0.5) {
+        target = snaps.find(v => v > height) ?? SHEET_FULL;
+      } else if (velocity > 0.5) {
+        target = [...snaps].reverse().find(v => v < height) ?? SHEET_MIN;
+      }
       startHeight.current = target;
       Animated.spring(sheetHeight, {
         toValue: target,
@@ -163,7 +171,7 @@ const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
         bounciness: 0,
       }).start();
     },
-    [SHEET_COLLAPSED, SHEET_FULL, sheetHeight],
+    [snaps, SHEET_FULL, SHEET_MIN, sheetHeight],
   );
 
   const drag = useMemo(
