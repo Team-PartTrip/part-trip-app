@@ -29,3 +29,9 @@ jest.mock('@react-native-community/geolocation', () => ({
   getCurrentPosition: jest.fn(),
   requestAuthorization: jest.fn(),
 }));
+
+jest.mock('react-native-maps', () => {
+  const { View } = require('react-native');
+  const MapView = require('react').forwardRef((props, _ref) => <View {...props} />);
+  return { __esModule: true, default: MapView, Marker: View };
+});
