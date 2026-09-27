@@ -195,3 +195,23 @@ export const GripIcon = lineIcon(['M5 8h14M5 12h14M5 16h14'], {
 export const MoreIcon = lineIcon(['M6 12h.01M12 12h.01M18 12h.01'], {
   strokeWidth: 3.2,
 });
+
+export const BusIcon = lineIcon([
+  'M6 4h12a2 2 0 0 1 2 2v10H4V6a2 2 0 0 1 2-2Z',
+  'M4 11h16',
+  'M7 19v-3M17 19v-3',
+  'M8 14h.01M16 14h.01',
+]);
+
+export const CarIcon = lineIcon([
+  'M5 16l1.5-5.5A2 2 0 0 1 8.4 9h7.2a2 2 0 0 1 1.9 1.5L19 16',
+  'M4 16h16v3H4z',
+  'M7 19v1M17 19v1',
+]);
+
+export const WalkIcon = lineIcon([
+  'M13 5.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z',
+  'M10 21l2-6 3 3v3',
+  'M12 15l-1-5 4 2 2 3',
+  'M11 10l-3 2v3',
+]);

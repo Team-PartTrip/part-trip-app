@@ -8,11 +8,62 @@ import {
 } from 'react-native';
 import { planStatusStyles as s } from './PlanStatusView.styles';
 import { touch48 } from '../../shared/ui/hitSlop';
-import type { PlannerSchedule, ScheduleSlot } from '../../entities/planner/api';
+import type {
+  PlannerSchedule,
+  RouteLeg,
+  ScheduleSlot,
+} from '../../entities/planner/api';
 import { dayLabel } from '../../entities/planner/types';
 import CategoryIcon from '../../entities/planner/CategoryIcon';
 import colors from '../../shared/tokens/colors';
-import { GripIcon } from '../../shared/ui/icons';
+import { BusIcon, CarIcon, GripIcon, WalkIcon } from '../../shared/ui/icons';
+
+function routeLines(route: RouteLeg): string[] {
+  const total = route.durationMinutes ?? 0;
+  if (route.transportMode !== 'PUBLIC_TRANSIT') {
+    const how =
+      route.transportMode === 'WALKING'
+        ? '걸어서'
+        : route.transportMode === 'TAXI'
+        ? '택시로'
+        : '자동차로';
+    return [`${how} ${total}분`];
+  }
+  const rides = route.steps
+    .filter(step => step.type === 'BUS' || step.type === 'SUBWAY')
+    .map(step => {
+      const kind = step.type === 'BUS' ? '버스' : '지하철';
+      const stops = step.stopCount ? ` (${step.stopCount}정거장)` : '';
+      return `${kind} ${step.name ?? ''} · ${step.boardingStop ?? ''} → ${
+        step.alightingStop ?? ''
+      }${stops}`;
+    });
+  const walk = route.walkingMinutes ? ` · 도보 ${route.walkingMinutes}분` : '';
+  return rides.length > 0
+    ? [...rides, `총 ${total}분${walk}`]
+    : [`걸어서 ${total}분`];
+}
+
+const RouteLine: React.FC<{ route: RouteLeg }> = ({ route }) => {
+  const Icon =
+    route.transportMode === 'PUBLIC_TRANSIT'
+      ? BusIcon
+      : route.transportMode === 'WALKING'
+      ? WalkIcon
+      : CarIcon;
+  return (
+    <View style={s.route}>
+      <Icon size={16} color={colors.textSecondary} />
+      <View style={s.routeBody}>
+        {routeLines(route).map(line => (
+          <Text key={line} style={s.routeText}>
+            {line}
+          </Text>
+        ))}
+      </View>
+    </View>
+  );
+};
 
 /** 리더가 카드를 고칠 때만 넘긴다 (명세 Func-011-03). 없으면 보기 전용이다 */
 export interface ScheduleEditHandlers {
@@ -184,6 +235,11 @@ const DayCards: React.FC<{
               dragging === index && s.dragging,
             ]}
           >
+            {!edit &&
+              slot.routeStatus === 'READY' &&
+              slot.routeFromPrevious && (
+                <RouteLine route={slot.routeFromPrevious} />
+              )}
             <TouchableOpacity
               style={[
                 slot.place ? s.row : s.emptySlot,

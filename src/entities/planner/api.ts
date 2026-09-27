@@ -101,6 +101,7 @@ export interface GeneratePlannerPayload {
   startDate: string;
   endDate: string;
   blocks: { type: string; value: string }[];
+  departurePoint?: DeparturePoint;
 }
 
 export interface SchedulePlace {
@@ -120,6 +121,30 @@ export interface ScheduleSlot {
   order: number;
   /** AI 가 못 채운 칸은 null. 앱은 + 버튼을 띄운다 */
   place: SchedulePlace | null;
+  routeStatus?: string | null;
+  routeFromPrevious?: RouteLeg | null;
+}
+
+export interface RouteStep {
+  type: string;
+  name: string | null;
+  boardingStop: string | null;
+  alightingStop: string | null;
+  stopCount: number | null;
+  durationMinutes: number | null;
+}
+
+export interface RouteLeg {
+  transportMode: string;
+  durationMinutes: number | null;
+  walkingMinutes: number | null;
+  steps: RouteStep[];
+}
+
+export interface DeparturePoint {
+  placeName: string;
+  latitude: number;
+  longitude: number;
 }
 
 export interface PlannerSchedule {

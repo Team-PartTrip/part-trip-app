@@ -65,6 +65,15 @@ export const planStatusStyles = StyleSheet.create({
   rowSub: { marginTop: 2, fontSize: 12, color: colors.textSecondary },
   ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
 
+  route: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 6,
+    marginBottom: 8,
+  },
+  routeBody: { flex: 1 },
+  routeText: { fontSize: 13, lineHeight: 19, color: colors.textSecondary },
+
   // ── 확정된 일정 ──
   dayTitle: {
     marginTop: 8,
