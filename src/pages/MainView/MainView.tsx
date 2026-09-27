@@ -34,8 +34,8 @@ import { StarIcon } from '../../shared/ui/icons';
 /**
  * 가볼 만한 곳.
  *
- * 홈에 들어올 때마다 별점 4.0 이상에서 무작위로 새로 뽑는다. 늘 같은
- * 네 곳이면 한 번 보고 나면 볼 게 없다. 카테고리마다 하나씩 먼저 뽑아
+ * 별점 4.0 이상에서 무작위로 뽑는다. 새로고침 버튼을 누를 때만 다시 뽑고,
+ * 홈에 돌아올 때는 보던 네 곳을 그대로 둔다. 카테고리마다 하나씩 먼저 뽑아
  * 한쪽에 몰리지 않게 하고, 4.0 이상이 모자라면 나머지에서 별점순으로 채운다.
  */
 export const MIN_RATING = 4;
@@ -203,7 +203,16 @@ const MainView: React.FC<MainViewProps> = ({
 
   const hero = heroImageOf(places);
   const [recommended, setRecommended] = useState<TourPlace[]>([]);
-  useEffect(() => setRecommended(pickRecommendations(places, 4)), [places]);
+  useEffect(
+    () =>
+      setRecommended(prev => {
+        const ids = new Set(places.map(p => p.tourPlaceId));
+        return prev.length > 0 && prev.every(p => ids.has(p.tourPlaceId))
+          ? prev
+          : pickRecommendations(places, 4);
+      }),
+    [places],
+  );
 
   if (loading) {
     return (
