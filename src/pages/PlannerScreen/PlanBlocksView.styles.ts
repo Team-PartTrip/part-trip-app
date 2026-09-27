@@ -61,6 +61,13 @@ export const planBlocksStyles = StyleSheet.create({
   },
   chipOn: { borderColor: colors.primaryFill, backgroundColor: colors.primaryFill },
   chipText: { fontSize: 15, color: colors.text },
+  locate: {
+    alignSelf: 'flex-start',
+    marginTop: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   chipTextOn: { color: colors.textOnPrimary, fontWeight: '600' },
 
   empty: { marginTop: 8, fontSize: 14, color: colors.textSecondary },

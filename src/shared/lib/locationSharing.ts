@@ -57,7 +57,10 @@ export function shouldSend(state: {
   );
 }
 
-function currentPosition(): Promise<{ latitude: number; longitude: number }> {
+export function currentPosition(): Promise<{
+  latitude: number;
+  longitude: number;
+}> {
   return new Promise((resolve, reject) =>
     Geolocation.getCurrentPosition(
       p =>

@@ -13,6 +13,8 @@ import { planBlocksStyles as s } from './PlanBlocksView.styles';
 import WizardHeader from './WizardHeader';
 import colors from '../../shared/tokens/colors';
 import { touch48 } from '../../shared/ui/hitSlop';
+import Geolocation from '@react-native-community/geolocation';
+import { currentPosition } from '../../shared/lib/locationSharing';
 import { getCities } from '../../entities/main/api';
 import {
   isMetro,
@@ -62,6 +64,11 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
   const [placeNames, setPlaceNames] = useState<Record<string, string>>({});
   const [showAll, setShowAll] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [departure, setDeparture] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+  const [locating, setLocating] = useState(false);
   // 버튼 disabled 는 렌더 값이라 연타를 다 막지 못한다
   const generatingRef = useRef(false);
 
@@ -138,6 +145,10 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
         startDate: draft.startDate,
         endDate: draft.endDate,
         blocks: toPayload(picked, placeNames),
+        departurePoint:
+          departure && picked.DEPARTURE_PLACE?.[0]
+            ? { placeName: picked.DEPARTURE_PLACE[0], ...departure }
+            : undefined,
       });
       onCreated(schedule.plannerId);
     } catch (e: any) {
@@ -198,8 +209,48 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
             );
           })}
         </View>
+        {block.type === 'DEPARTURE_PLACE' && values.length > 0 && (
+          <TouchableOpacity
+            style={[s.chip, s.locate, !!departure && s.chipOn]}
+            activeOpacity={0.8}
+            disabled={locating}
+            accessibilityRole="button"
+            accessibilityState={{ selected: !!departure }}
+            onPress={locateDeparture}
+          >
+            <PinIcon
+              size={16}
+              color={departure ? colors.textOnPrimary : colors.primary}
+            />
+            <Text style={[s.chipText, !!departure && s.chipTextOn]}>
+              {locating
+                ? '위치 찾는 중…'
+                : departure
+                ? '지금 있는 곳에서 출발해요'
+                : '지금 있는 곳을 출발지로'}
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
     );
+  };
+
+  const locateDeparture = () => {
+    if (departure) {
+      setDeparture(null);
+      return;
+    }
+    setLocating(true);
+    Geolocation.requestAuthorization();
+    currentPosition()
+      .then(setDeparture)
+      .catch(() =>
+        Alert.alert(
+          '알림',
+          '지금 위치를 찾지 못했어요. 위치 권한을 확인해주세요.',
+        ),
+      )
+      .finally(() => setLocating(false));
   };
 
   const featured = (blocks ?? []).filter(
