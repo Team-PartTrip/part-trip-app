@@ -319,7 +319,7 @@ const MainView: React.FC<MainViewProps> = ({
         </TouchableOpacity>
 
         <View style={s.section}>
-          <Text style={s.sectionTitle}>이번 주 추천</Text>
+          <Text style={s.sectionTitle}>가볼 만한 곳</Text>
 
           {places.length === 0 ? (
             // 관광지 데이터가 없는 나라도 많다. 빈 화면 대신 이유를 알려준다.
