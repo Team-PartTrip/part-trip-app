@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { touch48 } from '../../shared/ui/hitSlop';
 import {
   View,
@@ -35,7 +36,7 @@ import { StarIcon } from '../../shared/ui/icons';
  * 가볼 만한 곳.
  *
  * 별점 4.0 이상에서 무작위로 뽑는다. 새로고침 버튼을 누를 때만 다시 뽑고,
- * 홈에 돌아올 때는 보던 네 곳을 그대로 둔다. 카테고리마다 하나씩 먼저 뽑아
+ * 뽑은 네 곳은 도시별로 기기에 저장해 두어 앱을 다시 켜도 그대로 둔다. 카테고리마다 하나씩 먼저 뽑아
  * 한쪽에 몰리지 않게 하고, 4.0 이상이 모자라면 나머지에서 별점순으로 채운다.
  */
 export const MIN_RATING = 4;
@@ -71,6 +72,25 @@ export function pickRecommendations(
     }
   }
   return picked;
+}
+
+const PICKED_KEY = 'dandi.recommended.';
+
+async function loadPicked(city: string): Promise<number[]> {
+  try {
+    const raw = await AsyncStorage.getItem(PICKED_KEY + city);
+    const ids = raw ? JSON.parse(raw) : [];
+    return Array.isArray(ids) ? ids : [];
+  } catch {
+    return [];
+  }
+}
+
+function savePicked(city: string, places: TourPlace[]) {
+  AsyncStorage.setItem(
+    PICKED_KEY + city,
+    JSON.stringify(places.map(p => p.tourPlaceId)),
+  ).catch(() => {});
 }
 
 /**
@@ -203,16 +223,36 @@ const MainView: React.FC<MainViewProps> = ({
 
   const hero = heroImageOf(places);
   const [recommended, setRecommended] = useState<TourPlace[]>([]);
-  useEffect(
-    () =>
-      setRecommended(prev => {
-        const ids = new Set(places.map(p => p.tourPlaceId));
-        return prev.length > 0 && prev.every(p => ids.has(p.tourPlaceId))
-          ? prev
+  const city = dday?.cityName ?? '';
+  useEffect(() => {
+    let alive = true;
+    loadPicked(city).then(ids => {
+      if (!alive) {
+        return;
+      }
+      if (places.length === 0) {
+        setRecommended([]);
+        return;
+      }
+      const byId = new Map(places.map(p => [p.tourPlaceId, p]));
+      const kept = ids.flatMap(id => byId.get(id) ?? []);
+      const next =
+        kept.length > 0 && kept.length === ids.length
+          ? kept
           : pickRecommendations(places, 4);
-      }),
-    [places],
-  );
+      setRecommended(next);
+      savePicked(city, next);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [places, city]);
+
+  const refreshRecommended = () => {
+    const next = pickRecommendations(places, 4);
+    setRecommended(next);
+    savePicked(city, next);
+  };
 
   if (loading) {
     return (
@@ -341,7 +381,7 @@ const MainView: React.FC<MainViewProps> = ({
             <Text style={s.sectionTitle}>가볼 만한 곳</Text>
             {places.length > 4 && (
               <TouchableOpacity
-                onPress={() => setRecommended(pickRecommendations(places, 4))}
+                onPress={refreshRecommended}
                 hitSlop={12}
                 accessibilityRole="button"
                 accessibilityLabel="가볼 만한 곳 새로고침"
