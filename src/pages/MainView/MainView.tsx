@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { touch48 } from '../../shared/ui/hitSlop';
 import {
   View,
@@ -202,11 +202,8 @@ const MainView: React.FC<MainViewProps> = ({
   );
 
   const hero = heroImageOf(places);
-  const [round, setRound] = useState(0);
-  const recommended = useMemo(
-    () => pickRecommendations(places, 4),
-    [places, round],
-  );
+  const [recommended, setRecommended] = useState<TourPlace[]>([]);
+  useEffect(() => setRecommended(pickRecommendations(places, 4)), [places]);
 
   if (loading) {
     return (
@@ -331,7 +328,19 @@ const MainView: React.FC<MainViewProps> = ({
         </TouchableOpacity>
 
         <View style={s.section}>
-          <Text style={s.sectionTitle}>가볼 만한 곳</Text>
+          <View style={s.sectionHead}>
+            <Text style={s.sectionTitle}>가볼 만한 곳</Text>
+            {places.length > 4 && (
+              <TouchableOpacity
+                onPress={() => setRecommended(pickRecommendations(places, 4))}
+                hitSlop={12}
+                accessibilityRole="button"
+                accessibilityLabel="가볼 만한 곳 새로고침"
+              >
+                <Text style={s.sectionAction}>새로고침</Text>
+              </TouchableOpacity>
+            )}
+          </View>
 
           {places.length === 0 ? (
             // 관광지 데이터가 없는 나라도 많다. 빈 화면 대신 이유를 알려준다.

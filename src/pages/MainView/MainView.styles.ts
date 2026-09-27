@@ -102,6 +102,12 @@ export const mainStyles = StyleSheet.create({
     fontWeight: '600',
     color: colors.text,
   },
+  sectionHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  sectionAction: { fontSize: 15, fontWeight: '600', color: colors.primary },
 
   today: {
     marginTop: 20,
