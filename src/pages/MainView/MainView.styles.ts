@@ -14,8 +14,7 @@ export const mainStyles = StyleSheet.create({
     marginTop: 60,
   },
   scrollContent: {
-    // 탭바가 화면 위에 떠 있다. 32 로는 마지막 카드가 탭바에 가린다.
-    paddingBottom: 96,
+    paddingBottom: 32,
   },
 
   // ── 파란 헤더 ──
