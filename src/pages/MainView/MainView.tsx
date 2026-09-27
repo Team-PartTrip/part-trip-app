@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { touch48 } from '../../shared/ui/hitSlop';
 import {
   View,
@@ -32,29 +32,37 @@ import DandiWordmark from '../../shared/ui/DandiWordmark';
 import { StarIcon } from '../../shared/ui/icons';
 
 /**
- * 추천 목록.
+ * 가볼 만한 곳.
  *
- * 서버는 평점 내림차순으로 준다. 그대로 앞에서 자르면 평점이 같은
- * 한 카테고리가 자리를 다 차지한다 — 오사카에서 액티비티 네 개가 나왔다.
- * 카테고리마다 1등을 먼저 뽑아 골고루 보이게 하고, 그래도 자리가 남으면
- * 남은 것에서 평점순으로 채운다.
+ * 홈에 들어올 때마다 별점 4.0 이상에서 무작위로 새로 뽑는다. 늘 같은
+ * 네 곳이면 한 번 보고 나면 볼 게 없다. 카테고리마다 하나씩 먼저 뽑아
+ * 한쪽에 몰리지 않게 하고, 4.0 이상이 모자라면 나머지에서 별점순으로 채운다.
  */
-function pickRecommendations(places: TourPlace[], count: number): TourPlace[] {
+export const MIN_RATING = 4;
+
+export function pickRecommendations(
+  places: TourPlace[],
+  count: number,
+  random: () => number = Math.random,
+): TourPlace[] {
+  const good = places
+    .filter(p => (p.rating ?? 0) >= MIN_RATING)
+    .map(p => ({ p, k: random() }))
+    .sort((a, b) => a.k - b.k)
+    .map(x => x.p);
+  const rest = places.filter(p => !good.includes(p));
+  const pool = [...good, ...rest];
+
   const picked: TourPlace[] = [];
   const seen = new Set<string>();
-
-  for (const place of places) {
+  for (const place of good) {
     const key = place.category ?? '';
-    if (picked.length >= count) {
-      break;
-    }
-    if (!seen.has(key)) {
+    if (picked.length < count && !seen.has(key)) {
       seen.add(key);
       picked.push(place);
     }
   }
-
-  for (const place of places) {
+  for (const place of pool) {
     if (picked.length >= count) {
       break;
     }
@@ -194,7 +202,11 @@ const MainView: React.FC<MainViewProps> = ({
   );
 
   const hero = heroImageOf(places);
-  const recommended = pickRecommendations(places, 4);
+  const [round, setRound] = useState(0);
+  const recommended = useMemo(
+    () => pickRecommendations(places, 4),
+    [places, round],
+  );
 
   if (loading) {
     return (
