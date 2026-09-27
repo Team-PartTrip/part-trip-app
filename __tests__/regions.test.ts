@@ -19,8 +19,8 @@ test('같은 숫자라도 서버와 지도에서 다른 곳이다 (26 = 부산 /
 });
 
 test('강원 · 전북은 서버가 옛 코드(42 · 45)를 쓴다', () => {
-  expect(regionOf('42')?.name).toBe('강원특별자치도');
-  expect(regionOf('45')?.name).toBe('전북특별자치도');
+  expect(regionOf('51')?.name).toBe('강원특별자치도');
+  expect(regionOf('52')?.name).toBe('전북특별자치도');
 });
 
 test('짧은 이름', () => {
@@ -51,8 +51,8 @@ test('지도 파일의 시·도 17개가 모두 서버 코드로 이어지고, �
 
 test('구글 시·도 이름을 옛 이름까지 맞춘다', () => {
   expect(isSameRegion('경상북도', '47')).toBe(true);
-  expect(isSameRegion('강원도', '42')).toBe(true);
-  expect(isSameRegion('전라북도', '45')).toBe(true);
+  expect(isSameRegion('강원도', '51')).toBe(true);
+  expect(isSameRegion('전라북도', '52')).toBe(true);
   expect(isSameRegion('경기도', '47')).toBe(false);
   expect(isSameRegion('광주광역시', '41')).toBe(false);
 });
