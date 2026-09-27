@@ -9,7 +9,9 @@ export type NotificationType =
   | 'GROUP_INVITE_ACCEPTED'
   | 'COUNTRY_ACQUIRED'
   | 'REGION_VISITED'
-  | 'TRIP_CARD_CREATED';
+  | 'TRIP_CARD_CREATED'
+  | 'TRIP_DAY_BEFORE'
+  | 'TODAY_SCHEDULE';
 
 export type NotificationCategory = 'VOTE' | 'RECORD';
 

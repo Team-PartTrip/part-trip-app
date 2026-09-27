@@ -12,6 +12,8 @@ const META: Record<NotificationType, { badge: string; color: ColorValue }> = {
   COUNTRY_ACQUIRED: { badge: '지역', color: colors.primary },
   REGION_VISITED: { badge: '지역', color: colors.primary },
   TRIP_CARD_CREATED: { badge: '여행카드', color: colors.accent },
+  TRIP_DAY_BEFORE: { badge: '출발 전날', color: colors.primary },
+  TODAY_SCHEDULE: { badge: '오늘 일정', color: colors.success },
 };
 
 export function metaOf(type: NotificationType) {

@@ -310,7 +310,7 @@ function App() {
                   <NotificationDetailView
                     notification={route.params.notification}
                     onBack={() => navigation.goBack()}
-                    onOpenLink={linkType => {
+                    onOpenLink={(linkType, linkId) => {
                       // 새 지역을 다녀왔다는 알림은 지도로 보낸다.
                       // 예전 알림(국가 획득 · WORLD_MAP)도 같은 지도로 보낸다
                       if (
@@ -319,7 +319,13 @@ function App() {
                         route.params.notification.type === 'COUNTRY_ACQUIRED'
                       ) {
                         navigation.navigate('RegionMap');
-                      } else if (linkType === 'VOTE' || linkType === 'GROUP') {
+                      } else if (linkType === 'PLANNER' && linkId != null) {
+                        navigation.navigate('PlanStatus', { planId: linkId });
+                      } else if (
+                        linkType === 'VOTE' ||
+                        linkType === 'GROUP' ||
+                        linkType === 'PLANNER'
+                      ) {
                         // 어느 플래너인지까지는 아직 못 가려서 목록으로 보낸다
                         navigation.navigate('Planner');
                       } else {
