@@ -45,6 +45,25 @@ export const placeDetailStyles = StyleSheet.create({
     marginTop: 16,
   },
 
+  access: {
+    marginTop: 24,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  accessTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
+  accessEmpty: { marginTop: 10, fontSize: 14, color: colors.textSecondary },
+  accessRow: { flexDirection: 'row', gap: 10, marginTop: 14 },
+  accessBody: { flex: 1 },
+  accessLabel: { fontSize: 15, fontWeight: '600', color: colors.text },
+  accessText: {
+    marginTop: 2,
+    fontSize: 14,
+    lineHeight: 20,
+    color: colors.textSecondary,
+  },
+  accessSource: { marginTop: 16, fontSize: 11, color: colors.textTertiary },
+
   footer: { paddingHorizontal: 24, backgroundColor: colors.background },
   primaryBtn: {
     height: 52,

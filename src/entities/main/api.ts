@@ -189,3 +189,17 @@ export function getFestivals(
     method: 'GET',
   });
 }
+
+export interface AccessibilityItem {
+  key: string;
+  label: string;
+  text: string;
+}
+
+export function getAccessibility(
+  tourPlaceId: number,
+): Promise<{ matched: boolean; items: AccessibilityItem[] }> {
+  return authRequest(`/api/main/tour-place/${tourPlaceId}/accessibility`, {
+    method: 'GET',
+  });
+}
