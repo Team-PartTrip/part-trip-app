@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { PlaceResult, searchPlaces } from '../../entities/main/api';
 import colors from '../tokens/colors';
 import { ChevronLeftIcon, PinIcon } from './icons';
@@ -70,62 +70,64 @@ const PlaceSearchModal: React.FC<Props> = ({
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <SafeAreaView style={st.safe} edges={['top', 'bottom']}>
-        <View style={st.header}>
-          <TouchableOpacity
-            onPress={onClose}
-            hitSlop={12}
-            accessibilityRole="button"
-            accessibilityLabel="닫기"
-          >
-            <ChevronLeftIcon size={24} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={st.title}>{title}</Text>
-        </View>
-        <View style={[voiceStyles.row, st.inputRow]}>
-          <TextInput
-            style={[st.input, voiceStyles.input]}
-            value={query}
-            onChangeText={setQuery}
-            placeholder={placeholder}
-            placeholderTextColor={colors.placeholder}
-            autoFocus
-            returnKeyType="search"
-            maxLength={50}
-          />
-          <VoiceButton onText={setQuery} />
-        </View>
-        <ScrollView keyboardShouldPersistTaps="handled">
-          {loading && <ActivityIndicator style={st.loading} />}
-          {!loading && failed && (
-            <Text style={st.empty}>
-              검색이 잠시 안 돼요. 조금 뒤에 다시 찾아보세요.
-            </Text>
-          )}
-          {!loading && results?.length === 0 && (
-            <Text style={st.empty}>
-              찾는 곳이 없어요. 다른 이름으로 찾아보세요.
-            </Text>
-          )}
-          {results?.map((place, i) => (
+      <SafeAreaProvider>
+        <SafeAreaView style={st.safe} edges={['top', 'bottom']}>
+          <View style={st.header}>
             <TouchableOpacity
-              key={`${place.name}-${i}`}
-              style={st.row}
-              activeOpacity={0.8}
+              onPress={onClose}
+              hitSlop={12}
               accessibilityRole="button"
-              onPress={() => onSelect(place)}
+              accessibilityLabel="닫기"
             >
-              <PinIcon size={20} color={colors.primary} />
-              <View style={st.rowBody}>
-                <Text style={st.name}>{place.name}</Text>
-                {!!place.address && (
-                  <Text style={st.address}>{place.address}</Text>
-                )}
-              </View>
+              <ChevronLeftIcon size={24} color={colors.text} />
             </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </SafeAreaView>
+            <Text style={st.title}>{title}</Text>
+          </View>
+          <View style={[voiceStyles.row, st.inputRow]}>
+            <TextInput
+              style={[st.input, voiceStyles.input]}
+              value={query}
+              onChangeText={setQuery}
+              placeholder={placeholder}
+              placeholderTextColor={colors.placeholder}
+              autoFocus
+              returnKeyType="search"
+              maxLength={50}
+            />
+            <VoiceButton onText={setQuery} />
+          </View>
+          <ScrollView keyboardShouldPersistTaps="handled">
+            {loading && <ActivityIndicator style={st.loading} />}
+            {!loading && failed && (
+              <Text style={st.empty}>
+                검색이 잠시 안 돼요. 조금 뒤에 다시 찾아보세요.
+              </Text>
+            )}
+            {!loading && results?.length === 0 && (
+              <Text style={st.empty}>
+                찾는 곳이 없어요. 다른 이름으로 찾아보세요.
+              </Text>
+            )}
+            {results?.map((place, i) => (
+              <TouchableOpacity
+                key={`${place.name}-${i}`}
+                style={st.row}
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                onPress={() => onSelect(place)}
+              >
+                <PinIcon size={20} color={colors.primary} />
+                <View style={st.rowBody}>
+                  <Text style={st.name}>{place.name}</Text>
+                  {!!place.address && (
+                    <Text style={st.address}>{place.address}</Text>
+                  )}
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </SafeAreaView>
+      </SafeAreaProvider>
     </Modal>
   );
 };

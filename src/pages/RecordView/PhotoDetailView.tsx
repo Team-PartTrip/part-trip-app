@@ -8,7 +8,10 @@ import {
   Image,
   ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  SafeAreaProvider,
+  SafeAreaView,
+} from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { photoDetailStyles as s } from './PhotoDetailView.styles';
 import { getTripCard, TimelineItem } from '../../entities/record/api';
@@ -234,6 +237,7 @@ const PhotoDetailView: React.FC<Props> = ({
         animationType="fade"
         onRequestClose={() => setMenuOpen(false)}
       >
+        <SafeAreaProvider>
         <TouchableOpacity
           style={s.overlay}
           activeOpacity={1}
@@ -261,6 +265,7 @@ const PhotoDetailView: React.FC<Props> = ({
             </TouchableOpacity>
           </SafeAreaView>
         </TouchableOpacity>
+        </SafeAreaProvider>
       </Modal>
     </View>
   );
