@@ -32,6 +32,7 @@ const PlaceSearchModal: React.FC<Props> = ({
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<PlaceResult[] | null>(null);
   const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     if (!visible) {
@@ -49,9 +50,15 @@ const PlaceSearchModal: React.FC<Props> = ({
     let alive = true;
     const timer = setTimeout(() => {
       setLoading(true);
+      setFailed(false);
       searchPlaces(q)
         .then(found => alive && setResults(found))
-        .catch(() => alive && setResults([]))
+        .catch(() => {
+          if (alive) {
+            setResults(null);
+            setFailed(true);
+          }
+        })
         .finally(() => alive && setLoading(false));
     }, 400);
     return () => {
@@ -86,6 +93,11 @@ const PlaceSearchModal: React.FC<Props> = ({
         />
         <ScrollView keyboardShouldPersistTaps="handled">
           {loading && <ActivityIndicator style={st.loading} />}
+          {!loading && failed && (
+            <Text style={st.empty}>
+              검색이 잠시 안 돼요. 조금 뒤에 다시 찾아보세요.
+            </Text>
+          )}
           {!loading && results?.length === 0 && (
             <Text style={st.empty}>
               찾는 곳이 없어요. 다른 이름으로 찾아보세요.
