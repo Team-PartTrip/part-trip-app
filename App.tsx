@@ -3,6 +3,7 @@ import { StatusBar, useColorScheme, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import {
   NavigationContainer,
+  StackActions,
   useNavigationContainerRef,
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -586,7 +587,9 @@ function App() {
           {showChrome && (
             <TabBar
               active={activeTab}
-              onTabPress={key => navRef.navigate(ROUTE_BY_TAB[key] as never)}
+              onTabPress={key =>
+                navRef.dispatch(StackActions.popTo(ROUTE_BY_TAB[key]))
+              }
             />
           )}
         </View>
