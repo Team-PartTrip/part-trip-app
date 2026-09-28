@@ -49,7 +49,7 @@ const PlaceDetailView: React.FC<Props> = ({ place, onBack }) => {
   useEffect(() => {
     let alive = true;
     getAccessibility(place.tourPlaceId)
-      .then(res => alive && setAccess(res.matched ? res.items : []))
+      .then(res => alive && setAccess(res.matched ? res.items : null))
       .catch(() => alive && setAccess(null));
     return () => {
       alive = false;
@@ -99,24 +99,18 @@ const PlaceDetailView: React.FC<Props> = ({ place, onBack }) => {
           <Text style={s.description}>{place.description}</Text>
         )}
 
-        {access && (
+        {!!access && access.length > 0 && (
           <View style={s.access}>
             <Text style={s.accessTitle}>편의 시설</Text>
-            {access.length === 0 ? (
-              <Text style={s.accessEmpty}>
-                이 장소는 편의 시설 정보가 없어요.
-              </Text>
-            ) : (
-              access.map(item => (
-                <View key={item.key} style={s.accessRow}>
-                  <CheckCircleIcon size={20} color={colors.primary} />
-                  <View style={s.accessBody}>
-                    <Text style={s.accessLabel}>{item.label}</Text>
-                    <Text style={s.accessText}>{item.text}</Text>
-                  </View>
+            {access.map(item => (
+              <View key={item.key} style={s.accessRow}>
+                <CheckCircleIcon size={20} color={colors.primary} />
+                <View style={s.accessBody}>
+                  <Text style={s.accessLabel}>{item.label}</Text>
+                  <Text style={s.accessText}>{item.text}</Text>
                 </View>
-              ))
-            )}
+              </View>
+            ))}
             <Text style={s.accessSource}>
               출처: 한국관광공사 무장애 여행 정보
             </Text>

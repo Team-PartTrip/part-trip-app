@@ -52,7 +52,6 @@ export const placeDetailStyles = StyleSheet.create({
     borderTopColor: colors.border,
   },
   accessTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
-  accessEmpty: { marginTop: 10, fontSize: 14, color: colors.textSecondary },
   accessRow: { flexDirection: 'row', gap: 10, marginTop: 14 },
   accessBody: { flex: 1 },
   accessLabel: { fontSize: 15, fontWeight: '600', color: colors.text },
