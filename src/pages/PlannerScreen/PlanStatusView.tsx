@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -152,7 +152,8 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
           const confirmed = isSchedule(detail.status);
           const [final, cards, people] = await Promise.all([
             confirmed ? getConfirmedPlaces(planId).catch(() => null) : null,
-            confirmed ? null : getSchedule(planId).catch(() => null),
+            // 확정 뒤에도 받는다. 이동 경로가 이 카드에만 붙어 온다
+            getSchedule(planId).catch(() => null),
             // 초대 링크를 보내고 돌아오면 화면이 다시 포커스되며 새로 받는다
             getPlannerMembers(planId).catch(() => []),
           ]);
@@ -177,6 +178,31 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
       };
     }, [planId]),
   );
+
+  // 서버가 경로를 뒤에서 계산한다(CALCULATING). 끝날 때까지 3초마다 다시 받는다
+  const polls = useRef(0);
+  useEffect(() => {
+    const calculating = draft?.days.some(day =>
+      day.slots.some(slot => slot.routeStatus === 'CALCULATING'),
+    );
+    if (!calculating || saving) {
+      polls.current = 0;
+      return;
+    }
+    if (polls.current >= 20) {
+      return;
+    }
+    const before = draft;
+    const timer = setTimeout(async () => {
+      polls.current += 1;
+      const next = await getSchedule(planId).catch(() => null);
+      // 그 사이 고친 게 있으면 덮지 않는다
+      if (next) {
+        setDraft(cur => (cur === before ? next : cur));
+      }
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [draft, saving, planId]);
 
   const applyEdit = async (next: PlannerSchedule) => {
     const before = draft;
@@ -498,6 +524,8 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
               <View style={s.empty}>
                 <Text style={s.emptyText}>확정된 장소가 없어요</Text>
               </View>
+            ) : draft ? (
+              <ScheduleDays schedule={draft} />
             ) : (
               days.map(day => (
                 <View key={day.key}>

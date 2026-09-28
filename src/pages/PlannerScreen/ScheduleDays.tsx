@@ -235,7 +235,10 @@ const DayCards: React.FC<{
               dragging === index && s.dragging,
             ]}
           >
-            {!edit &&
+            {/* 끌거나 바꾸거나 저장하는 동안은 순서가 맞지 않아 숨긴다 */}
+            {dragging === null &&
+              edit?.swapping == null &&
+              !edit?.disabled &&
               slot.routeStatus === 'READY' &&
               slot.routeFromPrevious && (
                 <RouteLine route={slot.routeFromPrevious} />
