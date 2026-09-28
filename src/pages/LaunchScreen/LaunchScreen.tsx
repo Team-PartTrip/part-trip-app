@@ -68,6 +68,11 @@ const LaunchScreen: React.FC<LaunchScreenProps> = ({ onFinish }) => {
   const dot2 = useRef(new Animated.Value(0)).current;
   const dot3 = useRef(new Animated.Value(0)).current;
 
+  const finishRef = useRef(onFinish);
+  useEffect(() => {
+    finishRef.current = onFinish;
+  }, [onFinish]);
+
   useEffect(() => {
     // 1) 로고 등장
     Animated.parallel([
@@ -147,7 +152,7 @@ const LaunchScreen: React.FC<LaunchScreenProps> = ({ onFinish }) => {
         easing: Easing.in(Easing.quad),
         useNativeDriver: true,
       }).start(({ finished }) => {
-        if (finished) onFinish?.();
+        if (finished) finishRef.current?.();
       });
     }, TOTAL_DISPLAY_TIME);
 
@@ -157,7 +162,7 @@ const LaunchScreen: React.FC<LaunchScreenProps> = ({ onFinish }) => {
       clearTimeout(finishTimer);
       shimmerLoop.stop();
     };
-  }, []);
+  }, [dot1, dot2, dot3, fadeAnim, scaleAnim, screenFade, shimmerAnim, sloganFade, sloganSlide]);
 
   return (
     <Animated.View style={[styles.container, { opacity: screenFade }]}>
@@ -188,8 +193,7 @@ const LaunchScreen: React.FC<LaunchScreenProps> = ({ onFinish }) => {
               transform: [{ translateY: sloganSlide }],
             },
           ]}
-        >
-        </Animated.Text>
+        />
       </Animated.View>
 
       <View style={styles.dotsRow}>
