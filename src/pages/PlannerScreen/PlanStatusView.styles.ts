@@ -73,6 +73,14 @@ export const planStatusStyles = StyleSheet.create({
   },
   routeBody: { flex: 1 },
   routeText: { fontSize: 13, lineHeight: 19, color: colors.textSecondary },
+  routeMap: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: colors.tint,
+  },
+  routeMapText: { fontSize: 13, fontWeight: '600', color: colors.primary },
 
   // ── 확정된 일정 ──
   dayTitle: {

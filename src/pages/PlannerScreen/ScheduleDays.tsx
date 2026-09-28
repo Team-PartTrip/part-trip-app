@@ -5,6 +5,8 @@ import {
   TouchableOpacity,
   PanResponder,
   Animated,
+  Linking,
+  Alert,
 } from 'react-native';
 import { planStatusStyles as s } from './PlanStatusView.styles';
 import { touch48 } from '../../shared/ui/hitSlop';
@@ -12,6 +14,7 @@ import type {
   PlannerSchedule,
   RouteLeg,
   ScheduleSlot,
+  SchedulePlace,
 } from '../../entities/planner/api';
 import { dayLabel } from '../../entities/planner/types';
 import CategoryIcon from '../../entities/planner/CategoryIcon';
@@ -44,7 +47,21 @@ function routeLines(route: RouteLeg): string[] {
     : [`걸어서 ${total}분`];
 }
 
-const RouteLine: React.FC<{ route: RouteLeg }> = ({ route }) => {
+function openDirections(place: SchedulePlace) {
+  if (place.latitude == null || place.longitude == null) {
+    return;
+  }
+  Linking.openURL(
+    `https://map.kakao.com/link/to/${encodeURIComponent(place.name)},${
+      place.latitude
+    },${place.longitude}`,
+  ).catch(() => Alert.alert('알림', '지도를 열 수 없어요.'));
+}
+
+const RouteLine: React.FC<{ route: RouteLeg; to: SchedulePlace | null }> = ({
+  route,
+  to,
+}) => {
   const Icon =
     route.transportMode === 'PUBLIC_TRANSIT'
       ? BusIcon
@@ -61,6 +78,17 @@ const RouteLine: React.FC<{ route: RouteLeg }> = ({ route }) => {
           </Text>
         ))}
       </View>
+      {to?.latitude != null && (
+        <TouchableOpacity
+          style={s.routeMap}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={`${to.name}까지 지도 앱으로 길 안내`}
+          onPress={() => openDirections(to)}
+        >
+          <Text style={s.routeMapText}>길 안내</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
@@ -241,7 +269,7 @@ const DayCards: React.FC<{
               !edit?.disabled &&
               slot.routeStatus === 'READY' &&
               slot.routeFromPrevious && (
-                <RouteLine route={slot.routeFromPrevious} />
+                <RouteLine route={slot.routeFromPrevious} to={slot.place} />
               )}
             <TouchableOpacity
               style={[
