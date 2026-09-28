@@ -114,6 +114,11 @@ android {
     }
 }
 
+// @react-native-voice/voice 가 옛 지원 라이브러리를 끌어와 AndroidX 와 충돌한다. 코드는 AndroidX 만 쓴다
+configurations.all {
+    exclude group: "com.android.support"
+}
+
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")

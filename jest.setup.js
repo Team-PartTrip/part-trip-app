@@ -35,3 +35,13 @@ jest.mock('react-native-maps', () => {
   const MapView = require('react').forwardRef((props, _ref) => <View {...props} />);
   return { __esModule: true, default: MapView, Marker: View };
 });
+
+jest.mock('@react-native-voice/voice', () => ({
+  __esModule: true,
+  default: {
+    start: jest.fn().mockResolvedValue(undefined),
+    stop: jest.fn().mockResolvedValue(undefined),
+    destroy: jest.fn().mockResolvedValue(undefined),
+    removeAllListeners: jest.fn(),
+  },
+}));

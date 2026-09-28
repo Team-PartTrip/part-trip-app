@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { PlaceResult, searchPlaces } from '../../entities/main/api';
 import colors from '../tokens/colors';
 import { ChevronLeftIcon, PinIcon } from './icons';
+import VoiceButton, { voiceStyles } from './VoiceButton';
 
 interface Props {
   visible: boolean;
@@ -81,16 +82,19 @@ const PlaceSearchModal: React.FC<Props> = ({
           </TouchableOpacity>
           <Text style={st.title}>{title}</Text>
         </View>
-        <TextInput
-          style={st.input}
-          value={query}
-          onChangeText={setQuery}
-          placeholder={placeholder}
-          placeholderTextColor={colors.placeholder}
-          autoFocus
-          returnKeyType="search"
-          maxLength={50}
-        />
+        <View style={[voiceStyles.row, st.inputRow]}>
+          <TextInput
+            style={[st.input, voiceStyles.input]}
+            value={query}
+            onChangeText={setQuery}
+            placeholder={placeholder}
+            placeholderTextColor={colors.placeholder}
+            autoFocus
+            returnKeyType="search"
+            maxLength={50}
+          />
+          <VoiceButton onText={setQuery} />
+        </View>
         <ScrollView keyboardShouldPersistTaps="handled">
           {loading && <ActivityIndicator style={st.loading} />}
           {!loading && failed && (
@@ -136,9 +140,8 @@ const st = StyleSheet.create({
     paddingVertical: 12,
   },
   title: { fontSize: 20, fontWeight: '700', color: colors.text },
+  inputRow: { marginHorizontal: 24, marginBottom: 8 },
   input: {
-    marginHorizontal: 24,
-    marginBottom: 8,
     minHeight: 52,
     paddingHorizontal: 16,
     fontSize: 17,

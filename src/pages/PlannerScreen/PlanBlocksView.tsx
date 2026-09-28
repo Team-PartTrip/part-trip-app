@@ -16,6 +16,7 @@ import { touch48 } from '../../shared/ui/hitSlop';
 import Geolocation from '@react-native-community/geolocation';
 import { currentPosition } from '../../shared/lib/locationSharing';
 import PlaceSearchModal from '../../shared/ui/PlaceSearchModal';
+import VoiceButton, { voiceStyles } from '../../shared/ui/VoiceButton';
 import { getTravelPreference, Home } from '../../entities/profile/api';
 import { getCities } from '../../entities/main/api';
 import {
@@ -365,14 +366,17 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
               </TouchableOpacity>
             </View>
             <Text style={s.sectionHint}>어느 도시로 가세요?</Text>
-            <TextInput
-              style={s.input}
-              placeholder="도시 이름으로 찾기 (예: 강릉)"
-              placeholderTextColor={colors.placeholder}
-              value={query}
-              onChangeText={setQuery}
-              accessibilityLabel="여행할 도시 찾기"
-            />
+            <View style={voiceStyles.row}>
+              <TextInput
+                style={[s.input, voiceStyles.input]}
+                placeholder="도시 이름으로 찾기 (예: 강릉)"
+                placeholderTextColor={colors.placeholder}
+                value={query}
+                onChangeText={setQuery}
+                accessibilityLabel="여행할 도시 찾기"
+              />
+              <VoiceButton onText={setQuery} />
+            </View>
             <View style={s.chips}>
               {(found ?? SUGGESTED_CITIES[regionCode] ?? []).map(name => (
                 <TouchableOpacity

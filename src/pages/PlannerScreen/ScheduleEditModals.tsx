@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { planStatusStyles as s } from './PlanStatusView.styles';
 import colors from '../../shared/tokens/colors';
+import VoiceButton, { voiceStyles } from '../../shared/ui/VoiceButton';
 import {
   getScheduleCandidates,
   SchedulePlace,
@@ -127,14 +128,17 @@ export const PlacePicker: React.FC<{
             <Text style={s.pickerClose}>닫기</Text>
           </TouchableOpacity>
         </View>
-        <TextInput
-          style={s.pickerInput}
-          placeholder="장소 이름으로 찾기"
-          placeholderTextColor={colors.placeholder}
-          value={query}
-          onChangeText={setQuery}
-          accessibilityLabel="장소 찾기"
-        />
+        <View style={voiceStyles.row}>
+          <TextInput
+            style={[s.pickerInput, voiceStyles.input]}
+            placeholder="장소 이름으로 찾기"
+            placeholderTextColor={colors.placeholder}
+            value={query}
+            onChangeText={setQuery}
+            accessibilityLabel="장소 찾기"
+          />
+          <VoiceButton onText={setQuery} />
+        </View>
         {failed ? (
           <Text style={s.pickerEmpty}>장소를 불러오지 못했어요</Text>
         ) : places === null ? (

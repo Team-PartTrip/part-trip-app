@@ -215,3 +215,9 @@ export const WalkIcon = lineIcon([
   'M12 15l-1-5 4 2 2 3',
   'M11 10l-3 2v3',
 ]);
+
+export const MicIcon = lineIcon([
+  'M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z',
+  'M5 11a7 7 0 0 0 14 0',
+  'M12 18v3',
+]);
