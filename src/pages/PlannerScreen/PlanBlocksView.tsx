@@ -217,7 +217,12 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
                 hitSlop={touch48(44, 'vertical')}
                 accessibilityRole="button"
                 accessibilityState={{ selected: on }}
-                onPress={() => setPicked(prev => toggle(prev, block, option))}
+                onPress={() => {
+                  setPicked(prev => toggle(prev, block, option));
+                  if (block.type === 'DEPARTURE_PLACE' && option !== CUSTOM) {
+                    setDeparture(null);
+                  }
+                }}
               >
                 <Text style={[s.chipText, on && s.chipTextOn]}>{option}</Text>
               </TouchableOpacity>
@@ -260,7 +265,12 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
                   style={[s.chip, s.locate]}
                   activeOpacity={0.8}
                   accessibilityRole="button"
-                  onPress={() => setDeparture(null)}
+                  onPress={() => {
+                    setDeparture(null);
+                    if (home) {
+                      pickDeparture(HOME);
+                    }
+                  }}
                 >
                   <Text style={s.chipText}>
                     {home ? '우리 집으로' : '지우기'}
@@ -274,11 +284,17 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
     );
   };
 
+  const pickDeparture = (value: string) =>
+    setPicked(prev => ({ ...prev, DEPARTURE_PLACE: [value] }));
+
   const locateDeparture = () => {
     setLocating(true);
     Geolocation.requestAuthorization();
     currentPosition()
-      .then(p => setDeparture({ name: '지금 있는 곳', ...p }))
+      .then(p => {
+        setDeparture({ name: '지금 있는 곳', ...p });
+        pickDeparture(CUSTOM);
+      })
       .catch(() =>
         Alert.alert(
           '알림',
@@ -476,6 +492,7 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
         onSelect={place => {
           setSearchingDeparture(false);
           setDeparture(place);
+          pickDeparture(CUSTOM);
         }}
         onClose={() => setSearchingDeparture(false)}
       />
@@ -483,8 +500,11 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
   );
 };
 
+const HOME = '집 근처';
+const CUSTOM = '직접 지정';
+
 function usesHome(value: string | undefined): boolean {
-  return !value || value === '집 근처';
+  return !value || value === HOME;
 }
 
 export default PlanBlocksView;
