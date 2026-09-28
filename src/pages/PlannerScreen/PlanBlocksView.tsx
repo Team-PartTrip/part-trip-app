@@ -15,6 +15,8 @@ import colors from '../../shared/tokens/colors';
 import { touch48 } from '../../shared/ui/hitSlop';
 import Geolocation from '@react-native-community/geolocation';
 import { currentPosition } from '../../shared/lib/locationSharing';
+import PlaceSearchModal from '../../shared/ui/PlaceSearchModal';
+import { getTravelPreference, Home } from '../../entities/profile/api';
 import { getCities } from '../../entities/main/api';
 import {
   isMetro,
@@ -65,10 +67,19 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
   const [showAll, setShowAll] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [departure, setDeparture] = useState<{
+    name: string;
     latitude: number;
     longitude: number;
   } | null>(null);
   const [locating, setLocating] = useState(false);
+  const [searchingDeparture, setSearchingDeparture] = useState(false);
+  const [home, setHome] = useState<Home | null>(null);
+
+  useEffect(() => {
+    getTravelPreference()
+      .then(p => setHome(p.home ?? null))
+      .catch(() => {});
+  }, []);
   // 버튼 disabled 는 렌더 값이라 연타를 다 막지 못한다
   const generatingRef = useRef(false);
 
@@ -145,10 +156,13 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
         startDate: draft.startDate,
         endDate: draft.endDate,
         blocks: toPayload(picked, placeNames),
-        departurePoint:
-          departure && picked.DEPARTURE_PLACE?.[0]
-            ? { placeName: picked.DEPARTURE_PLACE[0], ...departure }
-            : undefined,
+        departurePoint: departure
+          ? {
+              placeName: departure.name,
+              latitude: departure.latitude,
+              longitude: departure.longitude,
+            }
+          : undefined,
       });
       onCreated(schedule.plannerId);
     } catch (e: any) {
@@ -209,41 +223,61 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
             );
           })}
         </View>
-        {block.type === 'DEPARTURE_PLACE' && values.length > 0 && (
-          <TouchableOpacity
-            style={[s.chip, s.locate, !!departure && s.chipOn]}
-            activeOpacity={0.8}
-            disabled={locating}
-            accessibilityRole="button"
-            accessibilityState={{ selected: !!departure }}
-            onPress={locateDeparture}
-          >
-            <PinIcon
-              size={16}
-              color={departure ? colors.textOnPrimary : colors.primary}
-            />
-            <Text style={[s.chipText, !!departure && s.chipTextOn]}>
-              {locating
-                ? '위치 찾는 중…'
-                : departure
-                ? '지금 있는 곳에서 출발해요'
-                : '지금 있는 곳을 출발지로'}
+        {block.type === 'DEPARTURE_PLACE' && (
+          <View style={s.departure}>
+            <Text style={s.departureText}>
+              출발지:{' '}
+              {departure
+                ? departure.name
+                : home && usesHome(values[0])
+                ? `우리 집 (${home.name})`
+                : '정하지 않음'}
             </Text>
-          </TouchableOpacity>
+            <View style={s.chips}>
+              <TouchableOpacity
+                style={[s.chip, s.locate]}
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                onPress={() => setSearchingDeparture(true)}
+              >
+                <PinIcon size={16} color={colors.primary} />
+                <Text style={s.chipText}>다른 곳 찾기</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[s.chip, s.locate]}
+                activeOpacity={0.8}
+                disabled={locating}
+                accessibilityRole="button"
+                onPress={locateDeparture}
+              >
+                <Text style={s.chipText}>
+                  {locating ? '위치 찾는 중…' : '지금 있는 곳'}
+                </Text>
+              </TouchableOpacity>
+              {!!departure && (
+                <TouchableOpacity
+                  style={[s.chip, s.locate]}
+                  activeOpacity={0.8}
+                  accessibilityRole="button"
+                  onPress={() => setDeparture(null)}
+                >
+                  <Text style={s.chipText}>
+                    {home ? '우리 집으로' : '지우기'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
         )}
       </View>
     );
   };
 
   const locateDeparture = () => {
-    if (departure) {
-      setDeparture(null);
-      return;
-    }
     setLocating(true);
     Geolocation.requestAuthorization();
     currentPosition()
-      .then(setDeparture)
+      .then(p => setDeparture({ name: '지금 있는 곳', ...p }))
       .catch(() =>
         Alert.alert(
           '알림',
@@ -431,8 +465,22 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
           )}
         </TouchableOpacity>
       </SafeAreaView>
+      <PlaceSearchModal
+        visible={searchingDeparture}
+        title="출발지 찾기"
+        placeholder="예) 동대구역, 우리 동네"
+        onSelect={place => {
+          setSearchingDeparture(false);
+          setDeparture(place);
+        }}
+        onClose={() => setSearchingDeparture(false)}
+      />
     </View>
   );
 };
+
+function usesHome(value: string | undefined): boolean {
+  return !value || value === '집 근처';
+}
 
 export default PlanBlocksView;

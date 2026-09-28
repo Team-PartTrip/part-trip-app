@@ -12,12 +12,21 @@ import { travelPreferenceStyles as s } from './TravelPreferenceView.styles';
 import colors from '../../shared/tokens/colors';
 import { touch48 } from '../../shared/ui/hitSlop';
 import {
+  deleteHome,
   getTravelPreference,
   PreferredTransport,
+  saveHome,
   saveTravelPreference,
   TravelPreference,
 } from '../../entities/profile/api';
-import { ChevronLeftIcon, MinusIcon, PlusIcon } from '../../shared/ui/icons';
+import {
+  ChevronLeftIcon,
+  MinusIcon,
+  PinIcon,
+  PlusIcon,
+} from '../../shared/ui/icons';
+import PlaceSearchModal from '../../shared/ui/PlaceSearchModal';
+import type { PlaceResult } from '../../entities/main/api';
 
 const TRANSPORTS: { value: PreferredTransport; label: string }[] = [
   { value: 'WALKING', label: '걸어서' },
@@ -36,6 +45,7 @@ interface Props {
 const TravelPreferenceView: React.FC<Props> = ({ onBack }) => {
   const [pref, setPref] = useState<TravelPreference | null>(null);
   const [saving, setSaving] = useState(false);
+  const [searching, setSearching] = useState(false);
 
   useEffect(() => {
     getTravelPreference()
@@ -64,6 +74,39 @@ const TravelPreferenceView: React.FC<Props> = ({ onBack }) => {
       setSaving(false);
     }
   };
+
+  const pickHome = async (place: PlaceResult) => {
+    setSearching(false);
+    try {
+      const next = await saveHome(place);
+      setPref(p => (p ? { ...p, home: next.home } : next));
+    } catch (e: any) {
+      Alert.alert(
+        '집을 저장하지 못했어요',
+        e?.message ?? '잠시 후 다시 시도해주세요.',
+      );
+    }
+  };
+
+  const removeHome = () =>
+    Alert.alert('우리 집 지우기', '등록한 집을 지울까요?', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '지우기',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await deleteHome();
+            setPref(p => (p ? { ...p, home: null } : p));
+          } catch (e: any) {
+            Alert.alert(
+              '지우지 못했어요',
+              e?.message ?? '잠시 후 다시 시도해주세요.',
+            );
+          }
+        },
+      },
+    ]);
 
   const chip = (label: string, on: boolean, onPress: () => void) => (
     <TouchableOpacity
@@ -115,6 +158,28 @@ const TravelPreferenceView: React.FC<Props> = ({ onBack }) => {
           <Text style={s.lead}>
             AI가 일정을 짤 때 참고해요. 정하지 않아도 괜찮아요.
           </Text>
+
+          <Text style={s.section}>우리 집</Text>
+          <Text style={s.hint}>
+            여행 첫날, 집에서 첫 장소까지 가는 길을 알려드려요.
+          </Text>
+          {pref.home ? (
+            <View style={s.home}>
+              <PinIcon size={20} color={colors.primary} />
+              <View style={s.homeBody}>
+                <Text style={s.homeName}>{pref.home.name}</Text>
+                {!!pref.home.address && (
+                  <Text style={s.homeAddress}>{pref.home.address}</Text>
+                )}
+              </View>
+            </View>
+          ) : null}
+          <View style={[s.chips, s.homeActions]}>
+            {chip(pref.home ? '바꾸기' : '우리 집 등록하기', false, () =>
+              setSearching(true),
+            )}
+            {!!pref.home && chip('지우기', false, removeHome)}
+          </View>
 
           <Text style={s.section}>주로 어떻게 다니세요?</Text>
           <View style={s.chips}>
@@ -168,6 +233,14 @@ const TravelPreferenceView: React.FC<Props> = ({ onBack }) => {
           </Text>
         </ScrollView>
       )}
+
+      <PlaceSearchModal
+        visible={searching}
+        title="우리 집 찾기"
+        placeholder="예) ○○아파트, 동네 이름"
+        onSelect={pickHome}
+        onClose={() => setSearching(false)}
+      />
 
       <SafeAreaView edges={['bottom']} style={s.footer}>
         <TouchableOpacity

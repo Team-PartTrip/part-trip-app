@@ -54,6 +54,15 @@ export interface TravelPreference {
   preferredTransport: PreferredTransport;
   dailyScheduleCount: number;
   canUseStairs: boolean;
+  /** 여행 첫날 출발지 기본값. 등록하지 않았으면 null */
+  home?: Home | null;
+}
+
+export interface Home {
+  name: string;
+  address: string | null;
+  latitude: number;
+  longitude: number;
 }
 
 export function getTravelPreference(): Promise<TravelPreference> {
@@ -68,5 +77,19 @@ export function saveTravelPreference(
   return authRequest<TravelPreference>('/api/profile/travel-preferences', {
     method: 'PUT',
     body: payload,
+  });
+}
+
+/** 집 등록 · 변경. 이동수단 등 다른 설정은 그대로 둔다 */
+export function saveHome(home: Home): Promise<TravelPreference> {
+  return authRequest<TravelPreference>('/api/profile/home', {
+    method: 'PUT',
+    body: home,
+  });
+}
+
+export function deleteHome(): Promise<TravelPreference> {
+  return authRequest<TravelPreference>('/api/profile/home', {
+    method: 'DELETE',
   });
 }

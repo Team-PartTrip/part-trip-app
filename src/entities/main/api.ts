@@ -203,3 +203,18 @@ export function getAccessibility(
     method: 'GET',
   });
 }
+
+export interface PlaceResult {
+  name: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+}
+
+/** 출발지 · 집으로 고를 국내 장소 검색 */
+export function searchPlaces(q: string): Promise<PlaceResult[]> {
+  return authRequest<PlaceResult[]>(
+    `/api/places/search?q=${encodeURIComponent(q)}`,
+    { method: 'GET' },
+  );
+}
