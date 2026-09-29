@@ -26,9 +26,9 @@ export function placeOf(
   card: Pick<TripCardSummary, 'regionName' | 'cityName'>,
   sep = ' ',
 ): string {
-  return [card.regionName ? shortName(card.regionName) : null, card.cityName]
-    .filter(Boolean)
-    .join(sep);
+  const region = card.regionName ? shortName(card.regionName) : null;
+  const city = card.cityName === region ? null : card.cityName;
+  return [region, city].filter(Boolean).join(sep);
 }
 
 /** 여행 카드 목록 (D2) — 서버가 최근 여행순으로 준다 */

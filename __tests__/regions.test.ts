@@ -56,3 +56,10 @@ test('구글 시·도 이름을 옛 이름까지 맞춘다', () => {
   expect(isSameRegion('경기도', '47')).toBe(false);
   expect(isSameRegion('광주광역시', '41')).toBe(false);
 });
+
+test('광역시 여행 카드는 도시 이름을 한 번만 쓴다', () => {
+  expect(placeOf({ regionName: '대구광역시', cityName: '대구' })).toBe('대구');
+  expect(placeOf({ regionName: '경상북도', cityName: '경주' }, ' · ')).toBe(
+    '경북 · 경주',
+  );
+});
