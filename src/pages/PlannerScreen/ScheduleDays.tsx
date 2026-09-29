@@ -48,21 +48,36 @@ function routeLines(route: RouteLeg): string[] {
     : [`걸어서 ${total}분`];
 }
 
-function openDirections(place: SchedulePlace) {
-  if (place.latitude == null || place.longitude == null) {
+const KAKAO_MODE: Record<string, string> = {
+  PUBLIC_TRANSIT: 'traffic',
+  WALKING: 'walk',
+};
+
+const kakaoPoint = (p: SchedulePlace) =>
+  `${encodeURIComponent(p.name)},${p.latitude},${p.longitude}`;
+
+function openDirections(
+  to: SchedulePlace,
+  from: SchedulePlace | null,
+  mode: string,
+) {
+  if (to.latitude == null || to.longitude == null) {
     return;
   }
-  Linking.openURL(
-    `https://map.kakao.com/link/to/${encodeURIComponent(place.name)},${
-      place.latitude
-    },${place.longitude}`,
-  ).catch(() => Alert.alert('알림', '지도를 열 수 없어요.'));
+  const url =
+    from?.latitude != null && from.longitude != null
+      ? `https://map.kakao.com/link/by/${
+          KAKAO_MODE[mode] ?? 'car'
+        }/${kakaoPoint(from)}/${kakaoPoint(to)}`
+      : `https://map.kakao.com/link/to/${kakaoPoint(to)}`;
+  Linking.openURL(url).catch(() => Alert.alert('알림', '지도를 열 수 없어요.'));
 }
 
-const RouteLine: React.FC<{ route: RouteLeg; to: SchedulePlace | null }> = ({
-  route,
-  to,
-}) => {
+const RouteLine: React.FC<{
+  route: RouteLeg;
+  from: SchedulePlace | null;
+  to: SchedulePlace | null;
+}> = ({ route, from, to }) => {
   const Icon =
     route.transportMode === 'PUBLIC_TRANSIT'
       ? BusIcon
@@ -85,7 +100,7 @@ const RouteLine: React.FC<{ route: RouteLeg; to: SchedulePlace | null }> = ({
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel={`${to.name}까지 지도 앱으로 길 안내`}
-          onPress={() => openDirections(to)}
+          onPress={() => openDirections(to, from, route.transportMode)}
         >
           <Text style={s.routeMapText}>길 안내</Text>
         </TouchableOpacity>
@@ -270,7 +285,16 @@ const DayCards: React.FC<{
               !edit?.disabled &&
               slot.routeStatus === 'READY' &&
               slot.routeFromPrevious && (
-                <RouteLine route={slot.routeFromPrevious} to={slot.place} />
+                <RouteLine
+                  route={slot.routeFromPrevious}
+                  from={
+                    slots
+                      .slice(0, index)
+                      .reverse()
+                      .find(prev => prev.place)?.place ?? null
+                  }
+                  to={slot.place}
+                />
               )}
             <TouchableOpacity
               style={[
