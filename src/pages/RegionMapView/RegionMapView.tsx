@@ -14,7 +14,7 @@ import KoreaMapSvg, { mapHeight } from './KoreaMapSvg';
 import { DISTRICTS, visitedDistricts } from './districts';
 import ZoomableView from '../../shared/ui/ZoomableView';
 import { getRegionMap, RegionMap } from '../../entities/region/api';
-import { shortName } from '../../entities/region/regions';
+import { isMetro, shortName } from '../../entities/region/regions';
 import { ChevronLeftIcon } from '../../shared/ui/icons';
 import colors from '../../shared/tokens/colors';
 
@@ -168,11 +168,13 @@ const RegionMapView: React.FC<Props> = ({ onBack }) => {
                     <Text style={s.regionName}>{region.regionName}</Text>
                     <Text style={s.regionMeta}>
                       {[
-                        ...DISTRICTS.filter(
-                          d =>
-                            d.regionCode === region.regionCode &&
-                            districtIds.has(d.id),
-                        ).map(d => d.name),
+                        ...(isMetro(region.regionCode)
+                          ? []
+                          : DISTRICTS.filter(
+                              d =>
+                                d.regionCode === region.regionCode &&
+                                districtIds.has(d.id),
+                            ).map(d => d.name)),
                         `여행 ${region.tripCount}번`,
                       ].join(' · ')}
                     </Text>
