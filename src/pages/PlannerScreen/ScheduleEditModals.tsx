@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import {
   View,
-  Text,
   Modal,
   TouchableOpacity,
-  TextInput,
   FlatList,
   ActivityIndicator,
 } from 'react-native';
+import { Text, TextInput } from '../../shared/ui/Text';
 import { planStatusStyles as s } from './PlanStatusView.styles';
 import colors from '../../shared/tokens/colors';
 import VoiceButton, { voiceStyles } from '../../shared/ui/VoiceButton';

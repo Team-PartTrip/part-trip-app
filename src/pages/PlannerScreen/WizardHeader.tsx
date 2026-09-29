@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
+import { Text } from '../../shared/ui/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { wizardHeaderStyles as s } from './WizardHeader.styles';
 import { ChevronLeftIcon } from '../../shared/ui/icons';

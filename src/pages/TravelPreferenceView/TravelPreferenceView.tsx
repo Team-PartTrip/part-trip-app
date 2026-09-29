@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import {
   View,
-  Text,
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { Text } from '../../shared/ui/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { travelPreferenceStyles as s } from './TravelPreferenceView.styles';
 import colors from '../../shared/tokens/colors';

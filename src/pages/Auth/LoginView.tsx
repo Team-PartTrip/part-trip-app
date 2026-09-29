@@ -1,12 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
+import { View, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { Text } from '../../shared/ui/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { loginStyles as styles } from './LoginView.styles';
 import { googleLogin, kakaoLogin } from '../../entities/auth/api';

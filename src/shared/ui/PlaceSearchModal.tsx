@@ -2,13 +2,12 @@ import React, { useEffect, useState } from 'react';
 import {
   Modal,
   View,
-  Text,
-  TextInput,
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
+import { Text, TextInput } from './Text';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { PlaceResult, searchPlaces } from '../../entities/main/api';
 import colors from '../tokens/colors';

@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
+import { Text } from './Text';
 import { screenHeaderStyles as s } from './ScreenHeader.styles';
 import { ChevronLeftIcon } from './icons';
 import colors from '../tokens/colors';

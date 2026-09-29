@@ -7,7 +7,6 @@ import React, {
 } from 'react';
 import {
   View,
-  Text,
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
@@ -15,6 +14,7 @@ import {
   PanResponder,
   useWindowDimensions,
 } from 'react-native';
+import { Text } from '../../shared/ui/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { recordMapStyles as s } from './RecordMapView.styles';

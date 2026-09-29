@@ -2,14 +2,13 @@ import React, { useCallback, useRef, useState } from 'react';
 import { touch48 } from '../../shared/ui/hitSlop';
 import {
   View,
-  Text,
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
   Modal,
-  TextInput,
   Alert,
 } from 'react-native';
+import { Text, TextInput } from '../../shared/ui/Text';
 import type { ColorValue } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';

@@ -3,13 +3,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { touch48 } from '../../shared/ui/hitSlop';
 import {
   View,
-  Text,
   ScrollView,
   TouchableOpacity,
   Image,
   ImageBackground,
   ActivityIndicator,
 } from 'react-native';
+import { Text } from '../../shared/ui/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { mainStyles as s } from './MainView.styles';

@@ -1,13 +1,7 @@
 import React, { useState } from 'react';
 import { touch48 } from '../../shared/ui/hitSlop';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
-  Alert,
-} from 'react-native';
+import { View, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { Text, TextInput } from '../../shared/ui/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { planGroupStyles as s } from './PlanGroupView.styles';
 import WizardHeader from './WizardHeader';

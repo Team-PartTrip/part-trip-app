@@ -1,13 +1,13 @@
 import React, { useCallback, useState } from 'react';
 import {
   View,
-  Text,
   ScrollView,
   TouchableOpacity,
   Modal,
   Image,
   ActivityIndicator,
 } from 'react-native';
+import { Text } from '../../shared/ui/Text';
 import {
   SafeAreaProvider,
   SafeAreaView,

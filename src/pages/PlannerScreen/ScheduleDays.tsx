@@ -1,7 +1,6 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import {
   View,
-  Text,
   TouchableOpacity,
   PanResponder,
   Animated,
@@ -9,6 +8,7 @@ import {
   Alert,
   Image,
 } from 'react-native';
+import { Text } from '../../shared/ui/Text';
 import { planStatusStyles as s } from './PlanStatusView.styles';
 import { touch48 } from '../../shared/ui/hitSlop';
 import type {

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
   View,
-  Text,
   Image,
   ScrollView,
   TouchableOpacity,
@@ -9,6 +8,7 @@ import {
   Alert,
   Platform,
 } from 'react-native';
+import { Text } from '../../shared/ui/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ScreenHeader from '../../shared/ui/ScreenHeader';
 import { placeDetailStyles as s } from './PlaceDetailView.styles';

@@ -1,13 +1,12 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
-  Text,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { Text, TextInput } from '../../shared/ui/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { planBlocksStyles as s } from './PlanBlocksView.styles';
 import WizardHeader from './WizardHeader';

@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
   ScrollView,
-  TextInput,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { Text, TextInput } from '../../shared/ui/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ScreenHeader from '../../shared/ui/ScreenHeader';
 import { recordEditStyles as s } from './RecordEditView.styles';

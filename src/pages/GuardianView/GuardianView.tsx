@@ -1,15 +1,14 @@
 import React, { useCallback, useState } from 'react';
 import {
   View,
-  Text,
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
   Alert,
   Share,
-  TextInput,
   Switch,
 } from 'react-native';
+import { Text, TextInput } from '../../shared/ui/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { guardianStyles as s } from './GuardianView.styles';

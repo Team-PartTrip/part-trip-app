@@ -6,12 +6,12 @@ import { launchStyles as styles } from './LaunchScreen.styles';
 
 import {
   View,
-  Text,
   Animated,
   Easing,
   StatusBar,
   useColorScheme,
 } from 'react-native';
+import { Text } from '../../shared/ui/Text';
 
 // ─── 타이밍 상수 (ms) ────────────────────────────────────────────
 const LOGO_FADE_DURATION   = 700;   // 로고 페이드인 시간
