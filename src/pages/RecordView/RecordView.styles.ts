@@ -52,7 +52,15 @@ export const recordStyles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: colors.inputBg,
   },
-  stripTile: { flex: 1, backgroundColor: colors.tint },
+  stripCover: { flex: 1 },
+  stripEmpty: {
+    flex: 1,
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    lineHeight: 96,
+    fontSize: 14,
+    color: colors.textTertiary,
+  },
   travelBadge: {
     position: 'absolute',
     top: 12,
