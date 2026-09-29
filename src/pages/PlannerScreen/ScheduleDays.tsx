@@ -343,6 +343,15 @@ const ScheduleDays: React.FC<{
         <DayCards date={day.date} slots={day.slots} edit={edit} />
       </View>
     ))}
+    {schedule.days.some(d =>
+      d.slots.some(
+        slot => slot.routeFromPrevious?.transportMode === 'PUBLIC_TRANSIT',
+      ),
+    ) && (
+      <Text style={[s.routeText, s.routeCredit]}>
+        대중교통 경로 제공: ODsay · 아로정보기술 컨텐츠
+      </Text>
+    )}
   </>
 );
 
