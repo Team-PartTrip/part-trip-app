@@ -204,8 +204,8 @@ const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
 
   const spots = useMemo(() => toSpots(timeline), [timeline]);
   const mapPadding = useMemo(
-    () => ({ top: insets.top + 64, right: 24, bottom: SHEET_COLLAPSED, left: 24 }),
-    [insets.top, SHEET_COLLAPSED],
+    () => ({ top: insets.top + 64, right: 24, bottom: 16, left: 24 }),
+    [insets.top],
   );
   const fitSpots = useCallback(() => {
     if (spots.length === 0) {
