@@ -15,6 +15,7 @@ import TabBar, { TabKey } from './src/widgets/bottom-tab-bar/TabBar';
 
 import LaunchScreen from './src/pages/LaunchScreen/LaunchScreen';
 import LoginView from './src/pages/Auth/LoginView';
+import { getRefreshToken } from './src/shared/api/tokenStorage';
 import PlaceDetailView from './src/pages/PlaceDetailView/PlaceDetailView';
 import type { TourPlace } from './src/entities/main/api';
 import MainView from './src/pages/MainView/MainView';
@@ -203,7 +204,12 @@ function App() {
             >
               <Stack.Screen name="Launch">
                 {({ navigation }) => (
-                  <LaunchScreen onFinish={() => navigation.replace('Login')} />
+                  <LaunchScreen
+                    onFinish={async () => {
+                      const signedIn = !!(await getRefreshToken());
+                      navigation.replace(signedIn ? 'Main' : 'Login');
+                    }}
+                  />
                 )}
               </Stack.Screen>
 
