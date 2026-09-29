@@ -1,4 +1,5 @@
 import {
+  inCity,
   isOpenDuring,
   monthsBetween,
   shiftIso,
@@ -55,4 +56,10 @@ test('기간이 겹치면 열린 것으로 본다', () => {
   expect(isOpenDuring(biennale, '2026-11-01', '2026-11-07')).toBe(false);
   expect(isOpenDuring(oneDay, '2026-10-05', '2026-10-05')).toBe(true);
   expect(isOpenDuring(oneDay, '2026-10-06', '2026-10-10')).toBe(false);
+});
+
+test('해운대구는 대구가 아니다', () => {
+  expect(inCity('부산광역시 해운대구 APEC로 55', '대구')).toBe(false);
+  expect(inCity('대구광역시 중구 동성로 1', '대구')).toBe(true);
+  expect(inCity('경상북도 경주시 첨성로 1', '경주')).toBe(true);
 });

@@ -82,6 +82,13 @@ interface Props {
   onBack?: () => void;
 }
 
+export function inCity(address: string, city: string): boolean {
+  return address
+    .split(' ')
+    .slice(0, 2)
+    .some(word => word.startsWith(city));
+}
+
 const FestivalScreen: React.FC<Props> = ({ onBack }) => {
   const [loading, setLoading] = useState(true);
   // 날짜와 나라가 확정된 일정만 담는다. 그래야 아래에서 매번 null 검사를 안 한다.
@@ -169,7 +176,7 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
         for (const event of lists.flat()) {
           if (
             isOpenDuring(event, range.from, range.to) &&
-            (!city || event.location.includes(city))
+            (!city || inCity(event.location, city))
           ) {
             byId.set(event.festivalId, event);
           }
