@@ -4,7 +4,7 @@ import { geoMercator, geoPath } from 'd3-geo';
 import { feature } from 'topojson-client';
 import provincesTopo from '../../shared/assets/maps/skorea-provinces-topo.json';
 import colors from '../../shared/tokens/colors';
-import { codeOfMapCode } from '../../entities/region/regions';
+import { codeOfMapCode, isMetro } from '../../entities/region/regions';
 import { visibleBox, Zoom } from '../../shared/ui/ZoomableView';
 import { DISTRICTS } from './districts';
 
@@ -96,7 +96,8 @@ const KoreaMapSvg: React.FC<Props> = ({
           key={shape.id}
           d={shape.d}
           fill={
-            visitedDistrictIds?.has(shape.id)
+            visitedDistrictIds?.has(shape.id) ||
+            (isMetro(shape.code) && visited.has(shape.code))
               ? colors.primary
               : visited.has(shape.code)
               ? colors.mapRegion
