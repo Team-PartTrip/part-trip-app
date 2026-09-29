@@ -73,7 +73,14 @@ export const planStatusStyles = StyleSheet.create({
   },
   routeBody: { flex: 1 },
   routeText: { fontSize: 13, lineHeight: 19, color: colors.textSecondary },
-  routeCredit: { marginTop: 16, textAlign: 'center' },
+  routeCredit: { marginTop: 16, alignItems: 'center', gap: 6 },
+  odsayMark: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  odsayMarkImage: { width: 105, height: 14 },
   routeMap: {
     alignSelf: 'flex-start',
     paddingHorizontal: 10,

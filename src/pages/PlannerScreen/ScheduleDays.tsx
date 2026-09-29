@@ -7,6 +7,7 @@ import {
   Animated,
   Linking,
   Alert,
+  Image,
 } from 'react-native';
 import { planStatusStyles as s } from './PlanStatusView.styles';
 import { touch48 } from '../../shared/ui/hitSlop';
@@ -348,9 +349,16 @@ const ScheduleDays: React.FC<{
         slot => slot.routeFromPrevious?.transportMode === 'PUBLIC_TRANSIT',
       ),
     ) && (
-      <Text style={[s.routeText, s.routeCredit]}>
-        대중교통 경로 제공: ODsay · 아로정보기술 컨텐츠
-      </Text>
+      <View style={s.routeCredit}>
+        <Text style={s.routeText}>대중교통 정보: 아로정보기술 컨텐츠</Text>
+        <View style={s.odsayMark}>
+          <Image
+            source={require('../../shared/assets/images/powered-by-odsay.png')}
+            style={s.odsayMarkImage}
+            accessibilityLabel="powered by ODsay"
+          />
+        </View>
+      </View>
     )}
   </>
 );
