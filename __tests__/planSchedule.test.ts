@@ -6,6 +6,7 @@ jest.mock('@react-navigation/native', () => ({ useFocusEffect: jest.fn() }));
 jest.mock('react-native-safe-area-context', () => ({ SafeAreaView: 'View' }));
 
 import { dayLabel } from '../src/entities/planner/types';
+import { dayOrigins } from '../src/pages/PlannerScreen/ScheduleDays';
 import {
   filledCount,
   groupByDay,
@@ -92,4 +93,62 @@ test('빈 칸은 확정할 장소로 세지 않는다', () => {
   };
   expect(filledCount(schedule)).toBe(1);
   expect(filledCount(null)).toBe(0);
+});
+
+describe('날짜별 출발지 (0번째 칸)', () => {
+  const spot = (name: string, category: string | null) => ({
+    tourPlaceId: 1,
+    name,
+    category,
+    categoryLabel: null,
+    imageUrl: null,
+    address: null,
+    rating: null,
+    latitude: 35.8,
+    longitude: 128.6,
+  });
+  const slot = (p: ReturnType<typeof spot> | null) =>
+    ({ slotId: 1, order: 1, place: p } as never);
+
+  test('첫날은 출발지, 전날이 숙소로 끝나면 숙소, 아니면 다시 출발지', () => {
+    const origins = dayOrigins({
+      plannerId: 1,
+      title: '',
+      cityName: '대구',
+      startDate: '2026-11-10',
+      endDate: '2026-11-12',
+      departure: { name: '우리 집', latitude: 35.9, longitude: 128.5 },
+      days: [
+        {
+          date: '2026-11-10',
+          slots: [
+            slot(spot('서문시장', 'ATTRACTION')),
+            slot(spot('메리어트', 'ACCOMMODATION')),
+            slot(null),
+          ],
+        },
+        { date: '2026-11-11', slots: [slot(spot('수목원', 'ATTRACTION'))] },
+        { date: '2026-11-12', slots: [] },
+      ],
+    });
+    expect(origins.map(o => o?.name)).toEqual([
+      '우리 집',
+      '메리어트',
+      '우리 집',
+    ]);
+    expect(origins[1]?.lodging).toBe(true);
+  });
+
+  test('출발지를 안 정한 옛 일정은 첫날 칸이 없다', () => {
+    expect(
+      dayOrigins({
+        plannerId: 1,
+        title: '',
+        cityName: '대구',
+        startDate: '2026-11-10',
+        endDate: '2026-11-10',
+        days: [{ date: '2026-11-10', slots: [] }],
+      }),
+    ).toEqual([null]);
+  });
 });

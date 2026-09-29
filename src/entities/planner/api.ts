@@ -154,6 +154,11 @@ export interface PlannerSchedule {
   startDate: string;
   endDate: string;
   days: { date: string; slots: ScheduleSlot[] }[];
+  departure?: {
+    name: string;
+    latitude: number | null;
+    longitude: number | null;
+  } | null;
 }
 
 export function generatePlanner(

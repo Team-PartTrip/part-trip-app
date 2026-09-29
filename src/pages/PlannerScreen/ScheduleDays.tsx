@@ -20,7 +20,16 @@ import type {
 import { dayLabel } from '../../entities/planner/types';
 import CategoryIcon from '../../entities/planner/CategoryIcon';
 import colors from '../../shared/tokens/colors';
-import { BusIcon, CarIcon, GripIcon, WalkIcon } from '../../shared/ui/icons';
+import {
+  BedIcon,
+  BusIcon,
+  CarIcon,
+  GripIcon,
+  HomeIcon,
+  PinIcon,
+  TrainIcon,
+  WalkIcon,
+} from '../../shared/ui/icons';
 
 function routeLines(route: RouteLeg): string[] {
   const total = route.durationMinutes ?? 0;
@@ -53,14 +62,12 @@ const KAKAO_MODE: Record<string, string> = {
   WALKING: 'walk',
 };
 
-const kakaoPoint = (p: SchedulePlace) =>
+type Spot = Pick<SchedulePlace, 'name' | 'latitude' | 'longitude'>;
+
+const kakaoPoint = (p: Spot) =>
   `${encodeURIComponent(p.name)},${p.latitude},${p.longitude}`;
 
-function openDirections(
-  to: SchedulePlace,
-  from: SchedulePlace | null,
-  mode: string,
-) {
+function openDirections(to: SchedulePlace, from: Spot | null, mode: string) {
   if (to.latitude == null || to.longitude == null) {
     return;
   }
@@ -75,7 +82,7 @@ function openDirections(
 
 const RouteLine: React.FC<{
   route: RouteLeg;
-  from: SchedulePlace | null;
+  from: Spot | null;
   to: SchedulePlace | null;
 }> = ({ route, from, to }) => {
   const Icon =
@@ -146,8 +153,9 @@ export function dropIndex(from: number, dy: number, heights: number[]): number {
 const DayCards: React.FC<{
   date: string;
   slots: ScheduleSlot[];
+  origin: Origin | null;
   edit?: ScheduleEditHandlers;
-}> = ({ date, slots, edit }) => {
+}> = ({ date, slots, origin, edit }) => {
   const heights = useRef<number[]>([]);
   const tops = useRef<number[]>([]);
   const dy = useRef(new Animated.Value(0)).current;
@@ -291,7 +299,7 @@ const DayCards: React.FC<{
                     slots
                       .slice(0, index)
                       .reverse()
-                      .find(prev => prev.place)?.place ?? null
+                      .find(prev => prev.place)?.place ?? origin
                   }
                   to={slot.place}
                 />
@@ -357,34 +365,94 @@ const DayCards: React.FC<{
   );
 };
 
+export interface Origin extends Spot {
+  lodging: boolean;
+}
+
+export function dayOrigins(schedule: PlannerSchedule): (Origin | null)[] {
+  const departure = schedule.departure
+    ? { ...schedule.departure, lodging: false }
+    : null;
+  return schedule.days.map((day, i) => {
+    if (i === 0) {
+      return departure;
+    }
+    const last = [...schedule.days[i - 1].slots]
+      .reverse()
+      .find(slot => slot.place)?.place;
+    return last?.category === 'ACCOMMODATION'
+      ? {
+          name: last.name,
+          latitude: last.latitude,
+          longitude: last.longitude,
+          lodging: true,
+        }
+      : departure;
+  });
+}
+
+const OriginRow: React.FC<{ origin: Origin }> = ({ origin }) => {
+  const Icon = origin.lodging
+    ? BedIcon
+    : origin.name.includes('집')
+    ? HomeIcon
+    : origin.name.endsWith('역')
+    ? TrainIcon
+    : PinIcon;
+  return (
+    <View style={s.row}>
+      <View style={s.thumb}>
+        <Icon size={22} color={colors.primary} />
+      </View>
+      <View style={s.rowBody}>
+        <Text style={s.rowSub}>
+          0번째 · {origin.lodging ? '숙소에서 출발' : '출발'}
+        </Text>
+        <Text style={s.rowTitle}>{origin.name}</Text>
+      </View>
+    </View>
+  );
+};
+
 const ScheduleDays: React.FC<{
   schedule: PlannerSchedule;
   edit?: ScheduleEditHandlers;
-}> = ({ schedule, edit }) => (
-  <>
-    {schedule.days.map(day => (
-      <View key={day.date}>
-        <Text style={s.dayTitle}>{dayLabel(schedule.startDate, day.date)}</Text>
-        <DayCards date={day.date} slots={day.slots} edit={edit} />
-      </View>
-    ))}
-    {schedule.days.some(d =>
-      d.slots.some(
-        slot => slot.routeFromPrevious?.transportMode === 'PUBLIC_TRANSIT',
-      ),
-    ) && (
-      <View style={s.routeCredit}>
-        <Text style={s.routeText}>대중교통 정보: 아로정보기술 컨텐츠</Text>
-        <View style={s.odsayMark}>
-          <Image
-            source={require('../../shared/assets/images/powered-by-odsay.png')}
-            style={s.odsayMarkImage}
-            accessibilityLabel="powered by ODsay"
+}> = ({ schedule, edit }) => {
+  const origins = dayOrigins(schedule);
+  return (
+    <>
+      {schedule.days.map((day, i) => (
+        <View key={day.date}>
+          <Text style={s.dayTitle}>
+            {dayLabel(schedule.startDate, day.date)}
+          </Text>
+          {origins[i] && <OriginRow origin={origins[i]} />}
+          <DayCards
+            date={day.date}
+            slots={day.slots}
+            origin={origins[i]}
+            edit={edit}
           />
         </View>
-      </View>
-    )}
-  </>
-);
+      ))}
+      {schedule.days.some(d =>
+        d.slots.some(
+          slot => slot.routeFromPrevious?.transportMode === 'PUBLIC_TRANSIT',
+        ),
+      ) && (
+        <View style={s.routeCredit}>
+          <Text style={s.routeText}>대중교통 정보: 아로정보기술 컨텐츠</Text>
+          <View style={s.odsayMark}>
+            <Image
+              source={require('../../shared/assets/images/powered-by-odsay.png')}
+              style={s.odsayMarkImage}
+              accessibilityLabel="powered by ODsay"
+            />
+          </View>
+        </View>
+      )}
+    </>
+  );
+};
 
 export default ScheduleDays;

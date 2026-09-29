@@ -196,6 +196,19 @@ export const MoreIcon = lineIcon(['M6 12h.01M12 12h.01M18 12h.01'], {
   strokeWidth: 3.2,
 });
 
+export const HomeIcon = lineIcon([
+  'M3 11l9-7 9 7',
+  'M5 10v10h14V10',
+  'M10 20v-6h4v6',
+]);
+
+export const TrainIcon = lineIcon([
+  'M7 3h10a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3Z',
+  'M4 10h16',
+  'M8 21l2-4M16 21l-2-4',
+  'M8 13.5h.01M16 13.5h.01',
+]);
+
 export const BusIcon = lineIcon([
   'M6 4h12a2 2 0 0 1 2 2v10H4V6a2 2 0 0 1 2-2Z',
   'M4 11h16',
