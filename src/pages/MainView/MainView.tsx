@@ -28,9 +28,18 @@ import {
   CalendarIcon,
   ChevronRightIcon,
 } from '../../shared/ui/icons';
+import CategoryIcon from '../../entities/planner/CategoryIcon';
+import { CATEGORY_LABEL } from '../../entities/planner/types';
+import type { PlaceCategory } from '../../entities/planner/types';
 import colors from '../../shared/tokens/colors';
 import DandiWordmark from '../../shared/ui/DandiWordmark';
 import { StarIcon } from '../../shared/ui/icons';
+
+// 추천 장소는 카테고리를 "맛집" 같은 한글로 준다
+const categoryOf = (label: string | null) =>
+  (Object.keys(CATEGORY_LABEL) as PlaceCategory[]).find(
+    key => CATEGORY_LABEL[key] === label,
+  );
 
 /**
  * 가볼 만한 곳.
@@ -369,7 +378,7 @@ const MainView: React.FC<MainViewProps> = ({
           </View>
           <View style={s.eventBody}>
             <Text style={s.eventTitle}>축제 · 이벤트 캘린더</Text>
-            <Text style={s.eventSub}>이번 달 국내 축제</Text>
+            <Text style={s.eventSub}>다음 여행 기간 앞뒤 축제</Text>
           </View>
           <View style={s.chevron}>
             <ChevronRightIcon size={18} color={colors.textTertiary} />
@@ -418,7 +427,12 @@ const MainView: React.FC<MainViewProps> = ({
                       style={s.placeThumb}
                     />
                   ) : (
-                    <View style={s.placeThumb} />
+                    <View style={[s.placeThumb, s.placeThumbEmpty]}>
+                      <CategoryIcon
+                        category={categoryOf(p.category)}
+                        color={colors.primary}
+                      />
+                    </View>
                   )}
                   <View style={s.placeInfo}>
                     <Text style={s.placeName} numberOfLines={1}>

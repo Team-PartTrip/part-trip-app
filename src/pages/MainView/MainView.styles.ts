@@ -195,6 +195,7 @@ export const mainStyles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: colors.tint,
   },
+  placeThumbEmpty: { alignItems: 'center', justifyContent: 'center' },
   placeInfo: {
     flex: 1,
     gap: 4,
