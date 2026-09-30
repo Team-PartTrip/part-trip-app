@@ -8,7 +8,10 @@ export type NotificationType =
   | 'GROUP_INVITED'
   | 'GROUP_INVITE_ACCEPTED'
   | 'COUNTRY_ACQUIRED'
-  | 'TRIP_CARD_CREATED';
+  | 'REGION_VISITED'
+  | 'TRIP_CARD_CREATED'
+  | 'TRIP_DAY_BEFORE'
+  | 'TODAY_SCHEDULE';
 
 export type NotificationCategory = 'VOTE' | 'RECORD';
 
@@ -35,7 +38,6 @@ export interface NotificationPage {
 export interface UnreadCount {
   unreadCount: number;
 }
-
 
 /** Func-004-01 알림 목록 (커서 방식) */
 export function getNotifications(params?: {

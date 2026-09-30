@@ -18,11 +18,11 @@ export const recordEditStyles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  addPhotoIcon: { color: '#fff', fontSize: 20, lineHeight: 22 },
+  addPhotoIcon: {},
   meta: { fontSize: 12, color: colors.textMuted, marginBottom: 10 },
   titleInput: {
     fontSize: 20,
@@ -53,7 +53,7 @@ export const recordEditStyles = StyleSheet.create({
     paddingVertical: 15,
     alignItems: 'center',
   },
-  primary: { backgroundColor: colors.primary },
+  primary: { backgroundColor: colors.primaryFill },
   primaryText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   ghost: {
     backgroundColor: colors.white,

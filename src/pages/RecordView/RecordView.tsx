@@ -1,21 +1,26 @@
 import React, { useCallback, useState } from 'react';
 import {
   View,
-  Text,
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Image,
 } from 'react-native';
+import { Text } from '../../shared/ui/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { recordStyles as s } from './RecordView.styles';
-import { getTripCards, TripCardSummary } from '../../entities/record/api';
+import {
+  getTripCards,
+  placeOf,
+  TripCardSummary,
+} from '../../entities/record/api';
 import { formatTripRange, today } from '../../entities/record/types';
 import { CardIcon } from '../../shared/ui/icons';
+import { toImageUrl } from '../../shared/api/image';
 import colors from '../../shared/tokens/colors';
 
 /** 카드 위쪽 사진 띠 — 실제 썸네일이 붙기 전까지 옅어지는 네 칸으로 둔다 */
-const STRIP_OPACITY = [1, 0.88, 0.76, 0.64];
 
 interface Props {
   /** 여행 하나를 열어 촬영 위치를 본다 (D1) */
@@ -23,10 +28,7 @@ interface Props {
   onOpenTripCards?: () => void;
 }
 
-const RecordView: React.FC<Props> = ({
-  onOpenTrip,
-  onOpenTripCards,
-}) => {
+const RecordView: React.FC<Props> = ({ onOpenTrip, onOpenTripCards }) => {
   const [year, setYear] = useState('전체');
   const [all, setAll] = useState<TripCardSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -122,9 +124,14 @@ const RecordView: React.FC<Props> = ({
               onPress={() => onOpenTrip?.(card.cardId)}
             >
               <View style={s.strip}>
-                {STRIP_OPACITY.map((opacity, i) => (
-                  <View key={i} style={[s.stripTile, { opacity }]} />
-                ))}
+                {card.coverImageUrl ? (
+                  <Image
+                    source={{ uri: toImageUrl(card.coverImageUrl) }}
+                    style={s.stripCover}
+                  />
+                ) : (
+                  <Text style={s.stripEmpty}>아직 사진이 없어요</Text>
+                )}
               </View>
               {card.startDate <= today() && today() <= card.endDate && (
                 <View style={s.travelBadge}>
@@ -134,9 +141,7 @@ const RecordView: React.FC<Props> = ({
 
               <View style={s.cardBottom}>
                 <View style={s.cardBody}>
-                  <Text style={s.cardTitle}>
-                    {card.countryName} {card.cityName}
-                  </Text>
+                  <Text style={s.cardTitle}>{placeOf(card)}</Text>
                   <Text style={s.cardDate}>
                     {formatTripRange(card.startDate, card.endDate)}
                   </Text>

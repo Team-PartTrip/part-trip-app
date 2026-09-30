@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { Text } from '../../shared/ui/Text';
 import colors from '../../shared/tokens/colors';
 import { avatarTone, initialOf } from '../../entities/planner/types';
 

@@ -24,3 +24,24 @@ jest.mock('react-native-image-picker', () => ({
   launchImageLibrary: jest.fn().mockResolvedValue({ didCancel: true }),
   launchCamera: jest.fn().mockResolvedValue({ didCancel: true }),
 }));
+
+jest.mock('@react-native-community/geolocation', () => ({
+  getCurrentPosition: jest.fn(),
+  requestAuthorization: jest.fn(),
+}));
+
+jest.mock('react-native-maps', () => {
+  const { View } = require('react-native');
+  const MapView = require('react').forwardRef((props, _ref) => <View {...props} />);
+  return { __esModule: true, default: MapView, Marker: View };
+});
+
+jest.mock('@react-native-voice/voice', () => ({
+  __esModule: true,
+  default: {
+    start: jest.fn().mockResolvedValue(undefined),
+    stop: jest.fn().mockResolvedValue(undefined),
+    destroy: jest.fn().mockResolvedValue(undefined),
+    removeAllListeners: jest.fn(),
+  },
+}));

@@ -1,15 +1,17 @@
 import React, { useEffect, useRef } from 'react';
 import colors from '../../shared/tokens/colors';
+import DandiWordmark from '../../shared/ui/DandiWordmark';
+import DandiLogoMark from '../../shared/ui/DandiLogoMark';
 import { launchStyles as styles } from './LaunchScreen.styles';
 
 import {
   View,
-  Text,
   Animated,
   Easing,
   StatusBar,
   useColorScheme,
 } from 'react-native';
+import { Text } from '../../shared/ui/Text';
 
 // ─── 타이밍 상수 (ms) ────────────────────────────────────────────
 const LOGO_FADE_DURATION   = 700;   // 로고 페이드인 시간
@@ -24,13 +26,13 @@ interface LaunchScreenProps {
   onFinish?: () => void; // 완료 시 메인뷰로 전환 콜백
 }
 
-const PartTripLogo: React.FC<{ animValue: Animated.Value }> = ({ animValue }) => {
+const DandiLogo: React.FC<{ animValue: Animated.Value }> = ({ animValue }) => {
   return (
     <View style={styles.logoContainer}>
+      <DandiLogoMark size={96} />
       <View style={styles.logoRow}>
-        <Text style={[styles.logoText, styles.logoPart]}>Part</Text>
         <View style={styles.tripWrapper}>
-          <Text style={[styles.logoText, styles.logoTrip]}>Trip</Text>
+          <DandiWordmark height={40} color={colors.primary as string} />
           <Animated.View
             style={[
               styles.shimmer,
@@ -65,6 +67,11 @@ const LaunchScreen: React.FC<LaunchScreenProps> = ({ onFinish }) => {
   const dot1 = useRef(new Animated.Value(0)).current;
   const dot2 = useRef(new Animated.Value(0)).current;
   const dot3 = useRef(new Animated.Value(0)).current;
+
+  const finishRef = useRef(onFinish);
+  useEffect(() => {
+    finishRef.current = onFinish;
+  }, [onFinish]);
 
   useEffect(() => {
     // 1) 로고 등장
@@ -145,7 +152,7 @@ const LaunchScreen: React.FC<LaunchScreenProps> = ({ onFinish }) => {
         easing: Easing.in(Easing.quad),
         useNativeDriver: true,
       }).start(({ finished }) => {
-        if (finished) onFinish?.();
+        if (finished) finishRef.current?.();
       });
     }, TOTAL_DISPLAY_TIME);
 
@@ -155,7 +162,7 @@ const LaunchScreen: React.FC<LaunchScreenProps> = ({ onFinish }) => {
       clearTimeout(finishTimer);
       shimmerLoop.stop();
     };
-  }, []);
+  }, [dot1, dot2, dot3, fadeAnim, scaleAnim, screenFade, shimmerAnim, sloganFade, sloganSlide]);
 
   return (
     <Animated.View style={[styles.container, { opacity: screenFade }]}>
@@ -176,7 +183,7 @@ const LaunchScreen: React.FC<LaunchScreenProps> = ({ onFinish }) => {
           },
         ]}
       >
-        <PartTripLogo animValue={shimmerAnim} />
+        <DandiLogo animValue={shimmerAnim} />
 
         <Animated.Text
           style={[
@@ -186,8 +193,7 @@ const LaunchScreen: React.FC<LaunchScreenProps> = ({ onFinish }) => {
               transform: [{ translateY: sloganSlide }],
             },
           ]}
-        >
-        </Animated.Text>
+        />
       </Animated.View>
 
       <View style={styles.dotsRow}>

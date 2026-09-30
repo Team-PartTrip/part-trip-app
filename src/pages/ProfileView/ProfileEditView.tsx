@@ -1,16 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import {
   View,
-  Text,
   Image,
   ScrollView,
-  TextInput,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { Text, TextInput } from '../../shared/ui/Text';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { profileEditStyles as s } from './ProfileEditView.styles';
 import { getMyProfile, updateProfile } from '../../entities/profile/api';

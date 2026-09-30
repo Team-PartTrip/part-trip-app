@@ -1,13 +1,15 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { touch48 } from '../../shared/ui/hitSlop';
 import {
   View,
-  Text,
   ScrollView,
   TouchableOpacity,
   Image,
   ImageBackground,
   ActivityIndicator,
 } from 'react-native';
+import { Text } from '../../shared/ui/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { mainStyles as s } from './MainView.styles';
@@ -18,34 +20,59 @@ import {
   TourPlace,
 } from '../../entities/main/api';
 import { getUnreadCount } from '../../entities/notification/api';
+import { KOREA } from '../../entities/region/regions';
+import type { SchedulePlace, ScheduleSlot } from '../../entities/planner/api';
 import { toImageUrl } from '../../shared/api/image';
-import { BellIcon, CalendarIcon } from '../../shared/ui/icons';
+import {
+  BellIcon,
+  CalendarIcon,
+  ChevronRightIcon,
+} from '../../shared/ui/icons';
+import CategoryIcon from '../../entities/planner/CategoryIcon';
+import { CATEGORY_LABEL } from '../../entities/planner/types';
+import type { PlaceCategory } from '../../entities/planner/types';
 import colors from '../../shared/tokens/colors';
+import DandiWordmark from '../../shared/ui/DandiWordmark';
+import { StarIcon } from '../../shared/ui/icons';
+
+// 추천 장소는 카테고리를 "맛집" 같은 한글로 준다
+const categoryOf = (label: string | null) =>
+  (Object.keys(CATEGORY_LABEL) as PlaceCategory[]).find(
+    key => CATEGORY_LABEL[key] === label,
+  );
 
 /**
- * 추천 목록.
+ * 가볼 만한 곳.
  *
- * 서버는 평점 내림차순으로 준다. 그대로 앞에서 자르면 평점이 같은
- * 한 카테고리가 자리를 다 차지한다 — 오사카에서 액티비티 네 개가 나왔다.
- * 카테고리마다 1등을 먼저 뽑아 골고루 보이게 하고, 그래도 자리가 남으면
- * 남은 것에서 평점순으로 채운다.
+ * 별점 4.0 이상에서 무작위로 뽑는다. 새로고침 버튼을 누를 때만 다시 뽑고,
+ * 뽑은 네 곳은 도시별로 기기에 저장해 두어 앱을 다시 켜도 그대로 둔다. 카테고리마다 하나씩 먼저 뽑아
+ * 한쪽에 몰리지 않게 하고, 4.0 이상이 모자라면 나머지에서 별점순으로 채운다.
  */
-function pickRecommendations(places: TourPlace[], count: number): TourPlace[] {
+export const MIN_RATING = 4;
+
+export function pickRecommendations(
+  places: TourPlace[],
+  count: number,
+  random: () => number = Math.random,
+): TourPlace[] {
+  const good = places
+    .filter(p => (p.rating ?? 0) >= MIN_RATING)
+    .map(p => ({ p, k: random() }))
+    .sort((a, b) => a.k - b.k)
+    .map(x => x.p);
+  const rest = places.filter(p => !good.includes(p));
+  const pool = [...good, ...rest];
+
   const picked: TourPlace[] = [];
   const seen = new Set<string>();
-
-  for (const place of places) {
+  for (const place of good) {
     const key = place.category ?? '';
-    if (picked.length >= count) {
-      break;
-    }
-    if (!seen.has(key)) {
+    if (picked.length < count && !seen.has(key)) {
       seen.add(key);
       picked.push(place);
     }
   }
-
-  for (const place of places) {
+  for (const place of pool) {
     if (picked.length >= count) {
       break;
     }
@@ -54,6 +81,25 @@ function pickRecommendations(places: TourPlace[], count: number): TourPlace[] {
     }
   }
   return picked;
+}
+
+const PICKED_KEY = 'dandi.recommended.';
+
+async function loadPicked(city: string): Promise<number[]> {
+  try {
+    const raw = await AsyncStorage.getItem(PICKED_KEY + city);
+    const ids = raw ? JSON.parse(raw) : [];
+    return Array.isArray(ids) ? ids : [];
+  } catch {
+    return [];
+  }
+}
+
+function savePicked(city: string, places: TourPlace[]) {
+  AsyncStorage.setItem(
+    PICKED_KEY + city,
+    JSON.stringify(places.map(p => p.tourPlaceId)),
+  ).catch(() => {});
 }
 
 /**
@@ -65,7 +111,8 @@ function pickRecommendations(places: TourPlace[], count: number): TourPlace[] {
  */
 function heroImageOf(places: TourPlace[]): string | null {
   const withImage = places.filter(place => place.imageUrl);
-  const picked = withImage.find(place => place.category === '명소') ?? withImage[0];
+  const picked =
+    withImage.find(place => place.category === '명소') ?? withImage[0];
   return picked?.imageUrl ? toImageUrl(picked.imageUrl) : null;
 }
 
@@ -97,6 +144,31 @@ interface MainViewProps {
   onOpenPlace?: (place: TourPlace) => void;
 }
 
+/** 날짜가 모두 있는 여행 일정 (NO_TRIP 응답을 걸러낸 뒤의 모습) */
+type TripDday = DdayInfo & {
+  startDate: string;
+  endDate: string;
+};
+
+/** 오늘 카드 중 장소를 정한 것만. 빈 칸은 갈 곳이 아니다 */
+export function todayPlaces(
+  slots: DdayInfo['todaySchedule'],
+): (ScheduleSlot & { place: SchedulePlace })[] {
+  return (slots ?? []).filter(
+    (slot): slot is ScheduleSlot & { place: SchedulePlace } => !!slot.place,
+  );
+}
+
+export function hasTrip(dday: DdayInfo | null): dday is TripDday {
+  if (!dday || !dday.startDate || !dday.endDate) {
+    return false;
+  }
+  if (!dday.status) {
+    return true;
+  }
+  return dday.status !== 'NO_TRIP' && dday.status !== 'ENDED';
+}
+
 const MainView: React.FC<MainViewProps> = ({
   onOpenNotifications,
   onOpenEvents,
@@ -107,7 +179,7 @@ const MainView: React.FC<MainViewProps> = ({
   const [places, setPlaces] = useState<TourPlace[]>([]);
   const [unread, setUnread] = useState(0);
   // 조회가 실패한 것과 일정이 없는 것은 다르다. 같은 화면을 보여주면
-  // 서버가 죽어도 "쉬는 중" 으로 읽힌다.
+  // 서버가 죽어도 여행이 없는 것으로 읽힌다.
   const [failed, setFailed] = useState(false);
 
   useFocusEffect(
@@ -129,13 +201,13 @@ const MainView: React.FC<MainViewProps> = ({
           setDday(d);
           setUnread(count);
 
-          // 일정이 없으면 countryName 도 null 이라 추천 장소를 물어볼 게 없다
-          if (!d.countryName) {
+          // 일정이 없으면 도시도 null 이라 추천 장소를 물어볼 게 없다
+          if (!d.cityName) {
             return;
           }
-          // 도시를 안 넘기면 나라 전체에서 뽑혀, 오사카 여행에 도쿄 장소가
+          // 도시를 안 넘기면 나라 전체에서 뽑혀, 강릉 여행에 부산 장소가
           // 섞여 나온다.
-          const tour = await getTourPlaces(d.countryName, {
+          const tour = await getTourPlaces(KOREA, {
             cityName: d.cityName ?? undefined,
           }).catch(() => []);
           if (alive) {
@@ -159,7 +231,37 @@ const MainView: React.FC<MainViewProps> = ({
   );
 
   const hero = heroImageOf(places);
-  const recommended = pickRecommendations(places, 4);
+  const [recommended, setRecommended] = useState<TourPlace[]>([]);
+  const city = dday?.cityName ?? '';
+  useEffect(() => {
+    let alive = true;
+    loadPicked(city).then(ids => {
+      if (!alive) {
+        return;
+      }
+      if (places.length === 0) {
+        setRecommended([]);
+        return;
+      }
+      const byId = new Map(places.map(p => [p.tourPlaceId, p]));
+      const kept = ids.flatMap(id => byId.get(id) ?? []);
+      const next =
+        kept.length > 0 && kept.length === ids.length
+          ? kept
+          : pickRecommendations(places, 4);
+      setRecommended(next);
+      savePicked(city, next);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [places, city]);
+
+  const refreshRecommended = () => {
+    const next = pickRecommendations(places, 4);
+    setRecommended(next);
+    savePicked(city, next);
+  };
 
   if (loading) {
     return (
@@ -169,9 +271,8 @@ const MainView: React.FC<MainViewProps> = ({
     );
   }
 
-  // 서버는 일정이 없을 때도 200 으로 "쉬는 중" 을 주는데, 그때는 날짜가 null 이다.
-  // 날짜가 없으면 D-Day 를 그릴 수 없으니 일정 없음 화면과 똑같이 다룬다.
-  if (!dday || !dday.startDate || !dday.endDate) {
+  // 서버는 일정이 없을 때도 200 으로 status 'NO_TRIP' 을 준다.
+  if (!hasTrip(dday)) {
     return (
       <SafeAreaView style={s.safeArea} edges={['top']}>
         <View style={s.empty}>
@@ -179,7 +280,7 @@ const MainView: React.FC<MainViewProps> = ({
           <Text style={s.emptyText}>
             {failed
               ? '여행 정보를 불러오지 못했어요\n잠시 후 다시 시도해주세요'
-              : '쉬는 중\n플래너에서 여행을 만들면 D-day 를 보여드려요'}
+              : '다음 여행이 아직 없어요\n플래너에서 여행을 만들어보세요'}
           </Text>
         </View>
       </SafeAreaView>
@@ -203,47 +304,67 @@ const MainView: React.FC<MainViewProps> = ({
           {/* 사진 위에서도 흰 글씨가 읽히게 어둡게 덮는다 */}
           {!!hero && <View style={s.headerScrim} />}
           <SafeAreaView edges={['top']} style={s.header}>
-          <View style={s.headerTop}>
-            {/* 헤더가 파란 배경이라 흰색 로고를 쓴다 */}
-            <Image
-              source={require('../../shared/assets/images/logo-white.png')}
-              style={s.brand}
-              resizeMode="contain"
-              accessibilityRole="image"
-              accessibilityLabel="PartTrip"
-            />
-            <View style={s.headerActions}>
-              <TouchableOpacity
-                style={s.circleBtn}
-                activeOpacity={0.85}
-                disabled={!onOpenNotifications}
-                onPress={onOpenNotifications}
-                // 아이콘만 있는 버튼이라 읽어줄 글자가 없다
-                accessibilityRole="button"
-                accessibilityLabel={
-                  unread > 0 ? `알림 ${unread}건` : '알림'
-                }
-              >
-                <BellIcon size={17} color={colors.primary} />
-                {unread > 0 && <View style={s.badge} />}
-              </TouchableOpacity>
+            <View style={s.headerTop}>
+              {/* 헤더가 파란 배경이라 흰색 로고를 쓴다 */}
+              <DandiWordmark
+                height={26}
+                color={colors.textOnPrimary as string}
+              />
+              <View style={s.headerActions}>
+                <TouchableOpacity
+                  hitSlop={touch48(32)}
+                  style={s.circleBtn}
+                  activeOpacity={0.85}
+                  disabled={!onOpenNotifications}
+                  onPress={onOpenNotifications}
+                  // 아이콘만 있는 버튼이라 읽어줄 글자가 없다
+                  accessibilityRole="button"
+                  accessibilityLabel={unread > 0 ? `알림 ${unread}건` : '알림'}
+                >
+                  <BellIcon size={17} color={colors.primary} />
+                  {unread > 0 && <View style={s.badge} />}
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
 
-          {/* Func-002-01 은 D-day 를 보여주기만 한다. 누르는 동작은 없다 */}
-          <View>
-            <Text style={s.eyebrow}>다가오는 여행</Text>
-            <Text style={s.dday}>{dday.dday}</Text>
-            <Text style={s.tripTitle}>
-              {nights ? `${dday.cityName} · ${nights}` : dday.cityName}
-            </Text>
-            <Text style={s.tripMeta}>
-              {formatRange(dday.startDate, dday.endDate)}
-              {dday.headcount ? ` · ${dday.headcount}명` : ''}
-            </Text>
-          </View>
+            {/* Func-002-01 은 D-day 를 보여주기만 한다. 누르는 동작은 없다 */}
+            <View>
+              <Text style={s.eyebrow}>다가오는 여행</Text>
+              <Text style={s.dday}>{dday.dday}</Text>
+              <Text style={s.tripTitle}>
+                {nights ? `${dday.cityName} · ${nights}` : dday.cityName}
+              </Text>
+              <Text style={s.tripMeta}>
+                {formatRange(dday.startDate, dday.endDate)}
+                {dday.headcount ? ` · ${dday.headcount}명` : ''}
+              </Text>
+            </View>
           </SafeAreaView>
         </ImageBackground>
+
+        {/* 여행 중에는 오늘 갈 곳이 가장 먼저다 (Func-002-02) */}
+        {dday.status === 'DURING' && (
+          <View style={s.today}>
+            <Text style={s.todayTitle}>오늘 갈 곳</Text>
+            {todayPlaces(dday.todaySchedule).length === 0 ? (
+              <Text style={s.todayEmpty}>오늘은 정해진 일정이 없어요</Text>
+            ) : (
+              todayPlaces(dday.todaySchedule).map((slot, i) => (
+                <View key={slot.slotId} style={s.todayRow}>
+                  <View style={s.todayNum}>
+                    <Text style={s.todayNumText}>{i + 1}</Text>
+                  </View>
+                  <View style={s.todayBody}>
+                    <Text style={s.todayName}>{slot.place.name}</Text>
+                    {!!slot.place.categoryLabel && (
+                      <Text style={s.todaySub}>{slot.place.categoryLabel}</Text>
+                    )}
+                  </View>
+                </View>
+              ))
+            )}
+          </View>
+        )}
 
         {/* 축제 · 이벤트 캘린더 (Func-002-03) — 메인에서 들어갈 유일한 입구 */}
         <TouchableOpacity
@@ -257,24 +378,37 @@ const MainView: React.FC<MainViewProps> = ({
           </View>
           <View style={s.eventBody}>
             <Text style={s.eventTitle}>축제 · 이벤트 캘린더</Text>
-            <Text style={s.eventSub}>
-              {dday.countryName ?? '여행지'}의 이번 달 일정
-            </Text>
+            <Text style={s.eventSub}>다음 여행 기간 앞뒤 축제</Text>
           </View>
-          <Text style={s.chevron}>›</Text>
+          <View style={s.chevron}>
+            <ChevronRightIcon size={18} color={colors.textTertiary} />
+          </View>
         </TouchableOpacity>
 
         <View style={s.section}>
-          <Text style={s.sectionTitle}>이번 주 추천</Text>
+          <View style={s.sectionHead}>
+            <Text style={s.sectionTitle}>가볼 만한 곳</Text>
+            {places.length > 4 && (
+              <TouchableOpacity
+                onPress={refreshRecommended}
+                hitSlop={12}
+                accessibilityRole="button"
+                accessibilityLabel="가볼 만한 곳 새로고침"
+              >
+                <Text style={s.sectionAction}>새로고침</Text>
+              </TouchableOpacity>
+            )}
+          </View>
 
           {places.length === 0 ? (
             // 관광지 데이터가 없는 나라도 많다. 빈 화면 대신 이유를 알려준다.
             <View style={s.noPlaces}>
               <Text style={s.noPlacesText}>
-                아직 {dday.countryName} 추천 장소가 없어요
+                아직 {dday.cityName} 추천 장소가 없어요
               </Text>
               <Text style={s.noPlacesDesc}>
-                추천 장소가 준비된 여행지를 고르면{'\n'}가볼 만한 곳을 모아서 보여드려요.
+                추천 장소가 준비된 여행지를 고르면{'\n'}가볼 만한 곳을 모아서
+                보여드려요.
               </Text>
             </View>
           ) : (
@@ -293,7 +427,12 @@ const MainView: React.FC<MainViewProps> = ({
                       style={s.placeThumb}
                     />
                   ) : (
-                    <View style={s.placeThumb} />
+                    <View style={[s.placeThumb, s.placeThumbEmpty]}>
+                      <CategoryIcon
+                        category={categoryOf(p.category)}
+                        color={colors.primary}
+                      />
+                    </View>
                   )}
                   <View style={s.placeInfo}>
                     <Text style={s.placeName} numberOfLines={1}>
@@ -308,7 +447,10 @@ const MainView: React.FC<MainViewProps> = ({
                     )}
                   </View>
                   {p.rating !== null && (
-                    <Text style={s.placeRating}>★ {p.rating.toFixed(1)}</Text>
+                    <View style={s.placeRatingRow}>
+                      <StarIcon size={12} color={colors.textSecondary} />
+                      <Text style={s.placeRating}>{p.rating.toFixed(1)}</Text>
+                    </View>
                   )}
                 </TouchableOpacity>
               ))}

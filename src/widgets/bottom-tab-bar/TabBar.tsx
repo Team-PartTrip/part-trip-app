@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity } from 'react-native';
+import { View, Image, TouchableOpacity } from 'react-native';
+import { Text } from '../../shared/ui/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { tabBarStyles as styles } from './TabBar.styles';
 import colors from '../../shared/tokens/colors';

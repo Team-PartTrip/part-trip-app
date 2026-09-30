@@ -22,6 +22,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     return true
   }
 
+  /// 열린 URL 이 SceneDelegate 가 아니라 여기로 오는 구성도 있다. 카카오톡
+  /// 로그인이 돌아오는 경로를 놓치지 않도록 양쪽에서 받는다.
+  func application(
+    _ app: UIApplication,
+    open url: URL,
+    options: [UIApplication.OpenURLOptionsKey: Any] = [:]
+  ) -> Bool {
+    KakaoURLHandler.handle(url)
+  }
+
   // MARK: UISceneSession Lifecycle
 
   func application(

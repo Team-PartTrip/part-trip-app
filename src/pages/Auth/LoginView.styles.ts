@@ -1,32 +1,15 @@
 import { StyleSheet } from 'react-native';
 import colors from '../../shared/tokens/colors';
 
-// 인증 화면(A2~A6) 공통 스타일.
-// 피그마 "A. 인증 · Func-001" 프레임(402pt 기준) 값을 그대로 옮겼다.
-// 본문 폭 298 · 좌우 여백 52 · 입력 높이 36 · 버튼 높이 40 · 라운드 10.
+// 로그인 화면(A2). 카카오 · 구글 버튼만 있다.
+// 피그마 "A. 인증 · Func-001" 프레임(402pt 기준). 좌우 여백 52 · 라운드 10.
 export const loginStyles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.white,
   },
-  flex: {
-    flex: 1,
-  },
-  // 회원가입 화면의 뒤로가기. 이 스택은 headerShown 이 false 라
-  // 화면이 직접 그려주지 않으면 나갈 방법이 없다.
-  backBtn: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    alignSelf: 'flex-start',
-  },
-  back: {
-    fontSize: 24,
-    lineHeight: 28,
-    fontWeight: '700',
-    color: colors.text,
-  },
   container: {
-    flexGrow: 1,
+    flex: 1,
     justifyContent: 'center',
     paddingHorizontal: 52,
     paddingVertical: 40,
@@ -36,95 +19,42 @@ export const loginStyles = StyleSheet.create({
   logoArea: {
     alignItems: 'center',
   },
-  // 재디자인 전과 같은 브랜드 로고 이미지 크기 (170x40)
-  brandLogo: {
-    width: 170,
-    height: 40,
-  },
   title: {
     marginTop: 20,
     fontSize: 24,
     fontWeight: '700',
     color: colors.text,
   },
-
-  // 폼
-  form: {
-    marginTop: 72,
-  },
-  input: {
-    height: 36,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 0,
+  subtitle: {
+    marginTop: 8,
     fontSize: 13,
-    color: colors.text,
-    backgroundColor: colors.inputBg,
-  },
-  // 입력창 사이 기본 간격
-  field: {
-    marginTop: 12,
-  },
-  // 도움말 바로 뒤에 오는 입력창은 조금 좁게 붙는다
-  fieldAfterHelper: {
-    marginTop: 9,
-  },
-  // 입력 규칙 안내 ("6~20자 · 영문 소문자와 숫자")
-  helper: {
-    marginTop: 4,
-    marginLeft: 2,
-    fontSize: 11,
     color: colors.textMuted,
+    textAlign: 'center',
   },
 
-  forgotBtn: {
-    marginTop: 12,
-    alignSelf: 'flex-end',
-  },
-  forgotText: {
-    fontSize: 11,
-    color: colors.forgotText,
-  },
-
-  // 주 버튼
   actions: {
-    marginTop: 32,
+    marginTop: 56,
+    gap: 12,
   },
-  loginBtn: {
-    height: 40,
-    backgroundColor: colors.primary,
-    borderRadius: 10,
+
+  // 카카오 — 주 로그인 경로다. 카카오 브랜드 색을 그대로 쓴다
+  kakaoBtn: {
+    minHeight: 48,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: 10,
+    backgroundColor: '#FEE500',
   },
-  loginBtnText: {
-    color: colors.textOnPrimary,
+  kakaoBtnText: {
     fontSize: 14,
     fontWeight: '600',
+    // 노란 배경에 검정 85% — 카카오가 정한 조합이고 명도대비도 넉넉하다
+    color: 'rgba(0, 0, 0, 0.85)',
   },
 
-  // 구분선
-  divider: {
-    marginTop: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.border,
-  },
-  dividerText: {
-    fontSize: 11,
-    color: colors.textMuted,
-  },
-
-  // 보조 버튼 (Google · 회원가입) — 흰 배경에 테두리
+  // 구글 — 흰 배경에 테두리
   outlineBtn: {
-    height: 40,
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -139,15 +69,13 @@ export const loginStyles = StyleSheet.create({
     fontWeight: '600',
     color: colors.text,
   },
-  googleBtn: {
-    marginTop: 20,
-  },
   googleG: {
     fontSize: 18,
     fontWeight: '800',
     color: colors.google,
   },
-  signupBtn: {
-    marginTop: 4,
+
+  loading: {
+    marginTop: 8,
   },
 });

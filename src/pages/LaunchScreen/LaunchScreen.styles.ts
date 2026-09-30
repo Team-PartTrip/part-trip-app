@@ -38,24 +38,13 @@ export const launchStyles = StyleSheet.create({
     alignItems: 'center',
   },
   logoRow: {
+    marginTop: 20,
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  logoText: {
-    fontSize: 52,
-    fontWeight: '800',
-    fontStyle: 'italic',
-    letterSpacing: -1,
-  },
-  logoPart: {
-    color: colors.primary,
   },
   tripWrapper: {
     position: 'relative',
     overflow: 'hidden',
-  },
-  logoTrip: {
-    color: colors.primaryDark,
   },
   shimmer: {
     position: 'absolute',
@@ -90,6 +79,6 @@ export const launchStyles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
   },
 });

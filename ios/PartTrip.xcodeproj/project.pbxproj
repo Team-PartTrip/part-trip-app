@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		03A3E74F97444F189C09AABF /* KakaoURLHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5389867A02E14FEA9B4E59D8 /* KakaoURLHandler.swift */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		61C78E8B024066C3738F4C86 /* libPods-PartTrip.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BD3868A46BE1001B0D968BD /* libPods-PartTrip.a */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
@@ -21,6 +22,7 @@
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = PartTrip/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = PartTrip/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		2DD0577EF1802F827E535401 /* Pods-PartTrip.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PartTrip.debug.xcconfig"; path = "Target Support Files/Pods-PartTrip/Pods-PartTrip.debug.xcconfig"; sourceTree = "<group>"; };
+		5389867A02E14FEA9B4E59D8 /* KakaoURLHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = KakaoURLHandler.swift; path = PartTrip/KakaoURLHandler.swift; sourceTree = "<group>"; };
 		6BD3868A46BE1001B0D968BD /* libPods-PartTrip.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-PartTrip.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = PartTrip/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = PartTrip/LaunchScreen.storyboard; sourceTree = "<group>"; };
@@ -47,6 +49,7 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				761780EC2CA45674006654EE /* AppDelegate.swift */,
 				A1B2C3D400000000000000A1 /* SceneDelegate.swift */,
+				5389867A02E14FEA9B4E59D8 /* KakaoURLHandler.swift */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
@@ -251,6 +254,7 @@
 			files = (
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
 				A1B2C3D400000000000000A2 /* SceneDelegate.swift in Sources */,
+				03A3E74F97444F189C09AABF /* KakaoURLHandler.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -281,6 +285,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.chanwoo.parttrip;
 				PRODUCT_NAME = PartTrip;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_OBJC_BRIDGING_HEADER = "PartTrip/PartTrip-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -311,6 +316,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.chanwoo.parttrip;
 				PRODUCT_NAME = PartTrip;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_OBJC_BRIDGING_HEADER = "PartTrip/PartTrip-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
