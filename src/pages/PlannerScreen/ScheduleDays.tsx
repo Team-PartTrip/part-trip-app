@@ -91,27 +91,36 @@ const RouteLine: React.FC<{
       : route.transportMode === 'WALKING'
       ? WalkIcon
       : CarIcon;
+  const lines = routeLines(route);
+  const last = lines.pop();
   return (
     <View style={s.route}>
       <Icon size={16} color={colors.textSecondary} />
       <View style={s.routeBody}>
-        {routeLines(route).map(line => (
+        {lines.map(line => (
           <Text key={line} style={s.routeText}>
             {line}
           </Text>
         ))}
+        <View style={s.routeLast}>
+          <Text style={s.routeText}>{last}</Text>
+          {to?.latitude != null && (
+            <TouchableOpacity
+              style={s.routeMap}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={`${to.name}까지 카카오맵으로 길 안내`}
+              onPress={() => openDirections(to, from, route.transportMode)}
+            >
+              <Image
+                source={require('../../shared/assets/images/kakaomap.png')}
+                style={s.routeMapLogo}
+              />
+              <Text style={s.routeMapText}>길 안내</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
-      {to?.latitude != null && (
-        <TouchableOpacity
-          style={s.routeMap}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel={`${to.name}까지 지도 앱으로 길 안내`}
-          onPress={() => openDirections(to, from, route.transportMode)}
-        >
-          <Text style={s.routeMapText}>길 안내</Text>
-        </TouchableOpacity>
-      )}
     </View>
   );
 };

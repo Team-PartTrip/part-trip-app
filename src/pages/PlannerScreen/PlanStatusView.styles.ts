@@ -81,13 +81,23 @@ export const planStatusStyles = StyleSheet.create({
     paddingVertical: 4,
   },
   odsayMarkImage: { width: 105, height: 14 },
+  routeLast: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 8,
+  },
   routeMap: {
-    alignSelf: 'flex-start',
+    marginLeft: 'auto',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
     backgroundColor: colors.tint,
   },
+  routeMapLogo: { width: 18, height: 18 },
   routeMapText: { fontSize: 13, fontWeight: '600', color: colors.primary },
 
   // ── 확정된 일정 ──
