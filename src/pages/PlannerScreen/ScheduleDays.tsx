@@ -31,6 +31,15 @@ import {
   WalkIcon,
 } from '../../shared/ui/icons';
 
+const RIDE_KIND: Record<string, string> = {
+  BUS: '버스',
+  SUBWAY: '지하철',
+  TRAIN: '기차',
+  EXPRESS_BUS: '고속버스',
+  INTERCITY_BUS: '시외버스',
+  AIR: '비행기',
+};
+
 function routeLines(route: RouteLeg): string[] {
   const total = route.durationMinutes ?? 0;
   if (route.transportMode !== 'PUBLIC_TRANSIT') {
@@ -43,11 +52,11 @@ function routeLines(route: RouteLeg): string[] {
     return [`${how} ${total}분`];
   }
   const rides = route.steps
-    .filter(step => step.type === 'BUS' || step.type === 'SUBWAY')
+    .filter(step => RIDE_KIND[step.type])
     .map(step => {
-      const kind = step.type === 'BUS' ? '버스' : '지하철';
+      const kind = [RIDE_KIND[step.type], step.name].filter(Boolean).join(' ');
       const stops = step.stopCount ? ` (${step.stopCount}정거장)` : '';
-      return `${kind} ${step.name ?? ''} · ${step.boardingStop ?? ''} → ${
+      return `${kind} · ${step.boardingStop ?? ''} → ${
         step.alightingStop ?? ''
       }${stops}`;
     });
