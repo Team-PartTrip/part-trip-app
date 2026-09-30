@@ -282,13 +282,14 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
             try {
               await confirmPlanner(planId);
               // 확정되면 같은 화면이 일정표로 바뀐다
-              const [detail, final] = await Promise.all([
+              const [detail, final, cards] = await Promise.all([
                 getPlanner(planId),
                 getConfirmedPlaces(planId).catch(() => null),
+                getSchedule(planId).catch(() => null),
               ]);
               setPlan(detail);
               setSchedule(final?.places ?? null);
-              setDraft(null);
+              setDraft(cards);
             } catch (e: any) {
               Alert.alert(
                 '확정하지 못했어요',
