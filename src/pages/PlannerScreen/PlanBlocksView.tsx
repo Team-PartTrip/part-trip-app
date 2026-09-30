@@ -177,7 +177,74 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
     }
   };
 
+  const renderDeparture = (block: PlannerBlock) => {
+    const here = departure?.name === HERE;
+    const atHome =
+      !departure && !!home && usesHome(picked.DEPARTURE_PLACE?.[0]);
+    const chip = (
+      label: string,
+      on: boolean,
+      onPress: () => void,
+      icon?: React.ReactNode,
+    ) => (
+      <TouchableOpacity
+        key={label}
+        style={[s.chip, s.locate, on && s.chipOn]}
+        activeOpacity={0.8}
+        disabled={locating}
+        hitSlop={touch48(44, 'vertical')}
+        accessibilityRole="button"
+        accessibilityState={{ selected: on }}
+        onPress={onPress}
+      >
+        {icon}
+        <Text style={[s.chipText, on && s.chipTextOn]}>{label}</Text>
+      </TouchableOpacity>
+    );
+    return (
+      <View key={block.type} style={s.block}>
+        <Text style={s.blockLabel}>{block.label}</Text>
+        <View style={s.chips}>
+          {chip(
+            '장소 찾기',
+            !!departure && !here,
+            () => setSearchingDeparture(true),
+            <PinIcon
+              size={16}
+              color={!!departure && !here ? colors.textOnPrimary : colors.primary}
+            />,
+          )}
+          {chip('우리 집', atHome, () => {
+            if (!home) {
+              Alert.alert(
+                '알림',
+                '마이 > 여행 편의 설정에서 우리 집을 먼저 등록해주세요.',
+              );
+              return;
+            }
+            setDeparture(null);
+            pickDeparture(HOME);
+          })}
+          {chip(locating ? '위치 찾는 중…' : HERE, here, locateDeparture)}
+        </View>
+        <View style={s.departure}>
+          <Text style={s.departureText}>
+            출발지:{' '}
+            {departure
+              ? departure.name
+              : atHome
+              ? `우리 집 (${home?.name})`
+              : '정하지 않음'}
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
   const renderBlock = (block: PlannerBlock) => {
+    if (block.type === 'DEPARTURE_PLACE') {
+      return renderDeparture(block);
+    }
     if (PLACE_NAME_BLOCKS.includes(block.type)) {
       return (
         <View key={block.type} style={s.block}>
@@ -218,9 +285,6 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
                 accessibilityState={{ selected: on }}
                 onPress={() => {
                   setPicked(prev => toggle(prev, block, option));
-                  if (block.type === 'DEPARTURE_PLACE' && option !== CUSTOM) {
-                    setDeparture(null);
-                  }
                 }}
               >
                 <Text style={[s.chipText, on && s.chipTextOn]}>{option}</Text>
@@ -228,57 +292,6 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
             );
           })}
         </View>
-        {block.type === 'DEPARTURE_PLACE' && (
-          <View style={s.departure}>
-            <Text style={s.departureText}>
-              출발지:{' '}
-              {departure
-                ? departure.name
-                : home && usesHome(values[0])
-                ? `우리 집 (${home.name})`
-                : '정하지 않음'}
-            </Text>
-            <View style={s.chips}>
-              <TouchableOpacity
-                style={[s.chip, s.locate]}
-                activeOpacity={0.8}
-                accessibilityRole="button"
-                onPress={() => setSearchingDeparture(true)}
-              >
-                <PinIcon size={16} color={colors.primary} />
-                <Text style={s.chipText}>다른 곳 찾기</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[s.chip, s.locate]}
-                activeOpacity={0.8}
-                disabled={locating}
-                accessibilityRole="button"
-                onPress={locateDeparture}
-              >
-                <Text style={s.chipText}>
-                  {locating ? '위치 찾는 중…' : '지금 있는 곳'}
-                </Text>
-              </TouchableOpacity>
-              {!!departure && (
-                <TouchableOpacity
-                  style={[s.chip, s.locate]}
-                  activeOpacity={0.8}
-                  accessibilityRole="button"
-                  onPress={() => {
-                    setDeparture(null);
-                    if (home) {
-                      pickDeparture(HOME);
-                    }
-                  }}
-                >
-                  <Text style={s.chipText}>
-                    {home ? '우리 집으로' : '지우기'}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          </View>
-        )}
       </View>
     );
   };
@@ -291,7 +304,7 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
     Geolocation.requestAuthorization();
     currentPosition()
       .then(p => {
-        setDeparture({ name: '지금 있는 곳', ...p });
+        setDeparture({ name: HERE, ...p });
         pickDeparture(CUSTOM);
       })
       .catch(() =>
@@ -501,6 +514,7 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
 
 const HOME = '집 근처';
 const CUSTOM = '직접 지정';
+const HERE = '지금 있는 곳';
 
 function usesHome(value: string | undefined): boolean {
   return !value || value === HOME;
