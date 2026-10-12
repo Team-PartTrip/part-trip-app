@@ -193,6 +193,30 @@ const TravelPreferenceView: React.FC<Props> = ({ onBack }) => {
             )}
           </View>
 
+          <Text style={s.section}>휠체어를 쓰세요?</Text>
+          <Text style={s.hint}>
+            쓰시면 계단·비탈이 많은 곳을 빼고, 무장애 정보가 있는 곳을 먼저
+            골라요.
+          </Text>
+          <View style={s.chips}>
+            {chip('써요', pref.usesWheelchair === true, () =>
+              setPref({ ...pref, usesWheelchair: true, canUseStairs: false }),
+            )}
+            {chip('안 써요', pref.usesWheelchair === false, () =>
+              setPref({ ...pref, usesWheelchair: false }),
+            )}
+          </View>
+
+          <Text style={s.section}>오래 걸어도 괜찮으세요?</Text>
+          <View style={s.chips}>
+            {chip('괜찮아요', pref.limitedWalking === false, () =>
+              setPref({ ...pref, limitedWalking: false }),
+            )}
+            {chip('어려워요', pref.limitedWalking === true, () =>
+              setPref({ ...pref, limitedWalking: true }),
+            )}
+          </View>
+
           <Text style={s.section}>계단을 오르내리기 괜찮으세요?</Text>
           <View style={s.chips}>
             {chip('괜찮아요', pref.canUseStairs, () =>

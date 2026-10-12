@@ -96,6 +96,9 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
       .catch(() => {});
   }, []);
   const askFoods = !!pref && pref.avoidFoods == null;
+  const [mobility, setMobility] = useState<Mobility[] | null>(null);
+  const askMobility =
+    !!pref && pref.usesWheelchair == null && pref.limitedWalking == null;
   // 버튼 disabled 는 렌더 값이라 연타를 다 막지 못한다
   const generatingRef = useRef(false);
 
@@ -163,8 +166,19 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
     generatingRef.current = true;
     setGenerating(true);
     try {
-      if (askFoods && pref && avoidFoods) {
-        await saveTravelPreference({ ...pref, avoidFoods }).catch(() => {});
+      // 고른 것만 저장한다. 그냥 넘어가면 다음 일정 때 다시 묻는다
+      const answers: Partial<TravelPreference> = {};
+      if (askFoods && avoidFoods) {
+        answers.avoidFoods = avoidFoods;
+      }
+      if (askMobility && mobility) {
+        const wheelchair = mobility.includes('WHEELCHAIR');
+        answers.usesWheelchair = wheelchair;
+        answers.limitedWalking = mobility.includes('WALKING');
+        answers.canUseStairs = !wheelchair && !mobility.includes('STAIRS');
+      }
+      if (pref && Object.keys(answers).length > 0) {
+        await saveTravelPreference({ ...pref, ...answers }).catch(() => {});
       }
       const schedule = await generatePlanner({
         title: draft.title,
@@ -444,6 +458,49 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
           </>
         )}
 
+        {askMobility && (
+          <>
+            <Text style={s.section}>다니실 때 불편한 점이 있으세요?</Text>
+            <Text style={s.sectionHint}>
+              AI가 장소를 고를 때 참고해요. 여행 편의 설정에서 언제든 바꿀 수
+              있어요.
+            </Text>
+            <View style={[s.chips, s.block]}>
+              {[...MOBILITY, { value: null, label: '괜찮아요' }].map(m => {
+                const on =
+                  m.value === null
+                    ? mobility?.length === 0
+                    : !!mobility?.includes(m.value);
+                return (
+                  <TouchableOpacity
+                    key={m.label}
+                    style={[s.chip, on && s.chipOn]}
+                    activeOpacity={0.8}
+                    hitSlop={touch48(44, 'vertical')}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: on }}
+                    onPress={() =>
+                      setMobility(prev => {
+                        if (m.value === null) {
+                          return [];
+                        }
+                        const list = prev ?? [];
+                        return list.includes(m.value)
+                          ? list.filter(v => v !== m.value)
+                          : [...list, m.value];
+                      })
+                    }
+                  >
+                    <Text style={[s.chipText, on && s.chipTextOn]}>
+                      {m.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </>
+        )}
+
         {askFoods && (
           <>
             <Text style={s.section}>피하는 음식이 있으세요?</Text>
@@ -567,6 +624,13 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
     </View>
   );
 };
+
+type Mobility = 'WHEELCHAIR' | 'WALKING' | 'STAIRS';
+const MOBILITY: { value: Mobility; label: string }[] = [
+  { value: 'WHEELCHAIR', label: '휠체어를 써요' },
+  { value: 'WALKING', label: '오래 걷기 어려워요' },
+  { value: 'STAIRS', label: '계단이 어려워요' },
+];
 
 const HOME = '집 근처';
 const CUSTOM = '직접 지정';

@@ -58,6 +58,9 @@ export interface TravelPreference {
   home?: Home | null;
   /** AI 가 맛집을 고를 때 피한다. null 이면 아직 묻지 않았고, 빼고 보내면 서버가 그대로 둔다 */
   avoidFoods?: AvoidFood[] | null;
+  /** 둘 다 null 이면 아직 묻지 않았다. 빼고 보내면 서버가 그대로 둔다 */
+  usesWheelchair?: boolean | null;
+  limitedWalking?: boolean | null;
 }
 
 export type AvoidFood = 'SEAFOOD' | 'SPICY' | 'HARD' | 'MEAT' | 'DAIRY';
