@@ -26,6 +26,7 @@ const RegionMapView: React.FC<Props> = ({ onBack }) => {
   const { width } = useWindowDimensions();
   const [map, setMap] = useState<RegionMap | null>(null);
   const [zoomed, setZoomed] = useState(false);
+  const [touchingMap, setTouchingMap] = useState(false);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
@@ -71,7 +72,7 @@ const RegionMapView: React.FC<Props> = ({ onBack }) => {
   return (
     <View style={s.safeArea}>
       <ScrollView
-        scrollEnabled={!zoomed}
+        scrollEnabled={!touchingMap}
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
       >
@@ -92,7 +93,20 @@ const RegionMapView: React.FC<Props> = ({ onBack }) => {
           </View>
         </SafeAreaView>
 
-        <View style={s.map}>
+        <View
+          style={s.map}
+          onTouchStart={e => {
+            if (zoomed || e.nativeEvent.touches.length > 1) {
+              setTouchingMap(true);
+            }
+          }}
+          onTouchEnd={e => {
+            if (e.nativeEvent.touches.length === 0) {
+              setTouchingMap(false);
+            }
+          }}
+          onTouchCancel={() => setTouchingMap(false)}
+        >
           <ZoomableView
             width={width - 48}
             height={mapHeight(width - 48)}
