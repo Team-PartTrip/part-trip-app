@@ -35,7 +35,7 @@ import { CATEGORY_LABEL } from '../../entities/planner/types';
 import type { PlaceCategory } from '../../entities/planner/types';
 import colors from '../../shared/tokens/colors';
 import DandiWordmark from '../../shared/ui/DandiWordmark';
-import { StarIcon } from '../../shared/ui/icons';
+import { CheckIcon, StarIcon } from '../../shared/ui/icons';
 
 // 추천 장소는 카테고리를 "맛집" 같은 한글로 준다
 const categoryOf = (label: string | null) =>
@@ -86,6 +86,21 @@ export function pickRecommendations(
 }
 
 const PICKED_KEY = 'dandi.recommended.';
+const VISITED_KEY = 'dandi.visited';
+
+async function loadVisited(): Promise<Set<number>> {
+  try {
+    const raw = await AsyncStorage.getItem(VISITED_KEY);
+    const ids = raw ? JSON.parse(raw) : [];
+    return new Set(Array.isArray(ids) ? ids : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveVisited(ids: Set<number>) {
+  AsyncStorage.setItem(VISITED_KEY, JSON.stringify([...ids])).catch(() => {});
+}
 
 async function loadPicked(city: string): Promise<number[]> {
   try {
@@ -183,6 +198,19 @@ const MainView: React.FC<MainViewProps> = ({
   // 조회가 실패한 것과 일정이 없는 것은 다르다. 같은 화면을 보여주면
   // 서버가 죽어도 여행이 없는 것으로 읽힌다.
   const [failed, setFailed] = useState(false);
+  const [visited, setVisited] = useState<Set<number>>(new Set());
+  useEffect(() => {
+    loadVisited().then(setVisited);
+  }, []);
+  const toggleVisited = (slotId: number) =>
+    setVisited(prev => {
+      const next = new Set(prev);
+      if (!next.delete(slotId)) {
+        next.add(slotId);
+      }
+      saveVisited(next);
+      return next;
+    });
 
   useFocusEffect(
     useCallback(() => {
@@ -352,11 +380,17 @@ const MainView: React.FC<MainViewProps> = ({
               <Text style={s.todayEmpty}>오늘은 정해진 일정이 없어요</Text>
             ) : (
               todayPlaces(dday.todaySchedule).map((slot, i, list) => {
+                const done = visited.has(slot.slotId);
+                const isNext =
+                  !done &&
+                  list.findIndex(item => !visited.has(item.slotId)) === i;
                 const route =
-                  slot.routeStatus === 'READY' ? slot.routeFromPrevious : null;
+                  !done && slot.routeStatus === 'READY'
+                    ? slot.routeFromPrevious
+                    : null;
                 return (
                   <View key={slot.slotId}>
-                    {route && (
+                    {route ? (
                       <View style={s.todayRoute}>
                         {/* 첫 장소는 지금 있는 곳에서 길을 찾는다 */}
                         <RouteLine
@@ -365,23 +399,11 @@ const MainView: React.FC<MainViewProps> = ({
                           to={slot.place}
                         />
                       </View>
-                    )}
-                    <View style={s.todayRow}>
-                      <View style={s.todayNum}>
-                        <Text style={s.todayNumText}>{i + 1}</Text>
-                      </View>
-                      <View style={s.todayBody}>
-                        <Text style={s.todayName}>{slot.place.name}</Text>
-                        {!!slot.place.categoryLabel && (
-                          <Text style={s.todaySub}>
-                            {slot.place.categoryLabel}
-                          </Text>
-                        )}
-                        <RestroomNote tourPlaceId={slot.place.tourPlaceId} />
-                      </View>
-                      {!route && slot.place.latitude != null && (
+                    ) : (
+                      isNext &&
+                      slot.place.latitude != null && (
                         <TouchableOpacity
-                          style={s.todayMap}
+                          style={[s.todayRoute, s.todayMap]}
                           hitSlop={touch48(32)}
                           accessibilityRole="button"
                           accessibilityLabel={`${slot.place.name}까지 길 안내`}
@@ -391,7 +413,51 @@ const MainView: React.FC<MainViewProps> = ({
                         >
                           <Text style={s.todayMapText}>길 안내</Text>
                         </TouchableOpacity>
-                      )}
+                      )
+                    )}
+                    <View style={[s.todayRow, isNext && s.todayRowNext]}>
+                      <View style={[s.todayNum, done && s.todayNumDone]}>
+                        {done ? (
+                          <CheckIcon size={18} color={colors.textSecondary} />
+                        ) : (
+                          <Text style={s.todayNumText}>{i + 1}</Text>
+                        )}
+                      </View>
+                      <View style={s.todayBody}>
+                        {isNext && <Text style={s.todayNext}>다음 갈 곳</Text>}
+                        <Text style={[s.todayName, done && s.todayNameDone]}>
+                          {slot.place.name}
+                        </Text>
+                        {!!slot.place.categoryLabel && (
+                          <Text style={s.todaySub}>
+                            {slot.place.categoryLabel}
+                          </Text>
+                        )}
+                        {!done && (
+                          <RestroomNote tourPlaceId={slot.place.tourPlaceId} />
+                        )}
+                      </View>
+                      <TouchableOpacity
+                        style={[s.todayCheck, done && s.todayCheckDone]}
+                        hitSlop={touch48(32)}
+                        accessibilityRole="button"
+                        accessibilityState={{ checked: done }}
+                        accessibilityLabel={
+                          done
+                            ? `${slot.place.name} 다녀옴 취소`
+                            : `${slot.place.name} 다녀왔어요`
+                        }
+                        onPress={() => toggleVisited(slot.slotId)}
+                      >
+                        <Text
+                          style={[
+                            s.todayCheckText,
+                            done && s.todayCheckTextDone,
+                          ]}
+                        >
+                          {done ? '취소' : '다녀왔어요'}
+                        </Text>
+                      </TouchableOpacity>
                     </View>
                   </View>
                 );
