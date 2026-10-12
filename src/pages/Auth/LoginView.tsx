@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 import { View, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import { Text } from '../../shared/ui/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { loginStyles as styles } from './LoginView.styles';
@@ -86,6 +87,12 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
             onPress={handleKakaoLogin}
             disabled={loading}
           >
+            <Svg width={18} height={18} viewBox="0 0 24 24">
+              <Path
+                fill="#000000"
+                d="M12 3C6.48 3 2 6.48 2 10.78c0 2.75 1.84 5.17 4.62 6.55-.2.74-.74 2.69-.85 3.11-.13.52.19.51.4.37.17-.11 2.62-1.78 3.68-2.5.7.1 1.42.16 2.15.16 5.52 0 10-3.48 10-7.78S17.52 3 12 3z"
+              />
+            </Svg>
             <Text style={styles.kakaoBtnText}>카카오로 계속하기</Text>
           </TouchableOpacity>
 

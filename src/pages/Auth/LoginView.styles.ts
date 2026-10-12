@@ -40,6 +40,8 @@ export const loginStyles = StyleSheet.create({
   // 카카오 — 주 로그인 경로다. 카카오 브랜드 색을 그대로 쓴다
   kakaoBtn: {
     minHeight: 48,
+    flexDirection: 'row',
+    gap: 8,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 10,
