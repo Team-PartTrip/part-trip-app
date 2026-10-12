@@ -56,6 +56,32 @@ export interface TravelPreference {
   canUseStairs: boolean;
   /** 여행 첫날 출발지 기본값. 등록하지 않았으면 null */
   home?: Home | null;
+  /** AI 가 맛집을 고를 때 피한다. null 이면 아직 묻지 않았고, 빼고 보내면 서버가 그대로 둔다 */
+  avoidFoods?: AvoidFood[] | null;
+}
+
+export type AvoidFood = 'SEAFOOD' | 'SPICY' | 'HARD' | 'MEAT' | 'DAIRY';
+
+export const AVOID_FOODS: { value: AvoidFood; label: string }[] = [
+  { value: 'SEAFOOD', label: '해산물' },
+  { value: 'SPICY', label: '매운 음식' },
+  { value: 'HARD', label: '딱딱하거나 질긴 음식' },
+  { value: 'MEAT', label: '고기' },
+  { value: 'DAIRY', label: '유제품' },
+];
+
+/** 메뉴 정보 없이 식당 이름으로만 거르므로 늘 함께 보여준다 */
+export const AVOID_FOODS_NOTICE =
+  '식당 종류만 참고해요. 알레르기가 있으면 식당에 꼭 확인하세요.';
+
+export function toggleAvoidFood(
+  list: AvoidFood[] | null | undefined,
+  food: AvoidFood,
+): AvoidFood[] {
+  const current = list ?? [];
+  return current.includes(food)
+    ? current.filter(f => f !== food)
+    : [...current, food];
 }
 
 export interface Home {

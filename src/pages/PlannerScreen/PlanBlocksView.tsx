@@ -16,7 +16,16 @@ import Geolocation from '@react-native-community/geolocation';
 import { currentPosition } from '../../shared/lib/locationSharing';
 import PlaceSearchModal from '../../shared/ui/PlaceSearchModal';
 import VoiceButton, { voiceStyles } from '../../shared/ui/VoiceButton';
-import { getTravelPreference, Home } from '../../entities/profile/api';
+import {
+  AVOID_FOODS,
+  AVOID_FOODS_NOTICE,
+  AvoidFood,
+  getTravelPreference,
+  Home,
+  saveTravelPreference,
+  toggleAvoidFood,
+  TravelPreference,
+} from '../../entities/profile/api';
 import { getCities } from '../../entities/main/api';
 import {
   isMetro,
@@ -74,12 +83,19 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
   const [locating, setLocating] = useState(false);
   const [searchingDeparture, setSearchingDeparture] = useState(false);
   const [home, setHome] = useState<Home | null>(null);
+  // 아직 피하는 음식을 묻지 않은 사람에게만 한 번 묻는다
+  const [pref, setPref] = useState<TravelPreference | null>(null);
+  const [avoidFoods, setAvoidFoods] = useState<AvoidFood[] | null>(null);
 
   useEffect(() => {
     getTravelPreference()
-      .then(p => setHome(p.home ?? null))
+      .then(p => {
+        setHome(p.home ?? null);
+        setPref(p);
+      })
       .catch(() => {});
   }, []);
+  const askFoods = !!pref && pref.avoidFoods == null;
   // 버튼 disabled 는 렌더 값이라 연타를 다 막지 못한다
   const generatingRef = useRef(false);
 
@@ -147,6 +163,9 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
     generatingRef.current = true;
     setGenerating(true);
     try {
+      if (askFoods && pref && avoidFoods) {
+        await saveTravelPreference({ ...pref, avoidFoods }).catch(() => {});
+      }
       const schedule = await generatePlanner({
         title: draft.title,
         memberCount: draft.headcount,
@@ -422,6 +441,43 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
             {found?.length === 0 && (
               <Text style={s.empty}>찾는 도시가 없어요</Text>
             )}
+          </>
+        )}
+
+        {askFoods && (
+          <>
+            <Text style={s.section}>피하는 음식이 있으세요?</Text>
+            <Text style={s.sectionHint}>
+              AI가 맛집을 고를 때 빼요. {AVOID_FOODS_NOTICE} 여행 편의
+              설정에서 언제든 바꿀 수 있어요.
+            </Text>
+            <View style={[s.chips, s.block]}>
+              {[...AVOID_FOODS, { value: null, label: '없어요' }].map(f => {
+                const on =
+                  f.value === null
+                    ? avoidFoods?.length === 0
+                    : !!avoidFoods?.includes(f.value);
+                return (
+                  <TouchableOpacity
+                    key={f.label}
+                    style={[s.chip, on && s.chipOn]}
+                    activeOpacity={0.8}
+                    hitSlop={touch48(44, 'vertical')}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: on }}
+                    onPress={() =>
+                      setAvoidFoods(prev =>
+                        f.value === null ? [] : toggleAvoidFood(prev, f.value),
+                      )
+                    }
+                  >
+                    <Text style={[s.chipText, on && s.chipTextOn]}>
+                      {f.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </>
         )}
 

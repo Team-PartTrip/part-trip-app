@@ -12,11 +12,14 @@ import { travelPreferenceStyles as s } from './TravelPreferenceView.styles';
 import colors from '../../shared/tokens/colors';
 import { touch48 } from '../../shared/ui/hitSlop';
 import {
+  AVOID_FOODS,
+  AVOID_FOODS_NOTICE,
   deleteHome,
   getTravelPreference,
   PreferredTransport,
   saveHome,
   saveTravelPreference,
+  toggleAvoidFood,
   TravelPreference,
 } from '../../entities/profile/api';
 import {
@@ -197,6 +200,19 @@ const TravelPreferenceView: React.FC<Props> = ({ onBack }) => {
             )}
             {chip('어려워요', !pref.canUseStairs, () =>
               setPref({ ...pref, canUseStairs: false }),
+            )}
+          </View>
+
+          <Text style={s.section}>피하는 음식이 있으세요?</Text>
+          <Text style={s.hint}>여러 개 고를 수 있어요. {AVOID_FOODS_NOTICE}</Text>
+          <View style={s.chips}>
+            {AVOID_FOODS.map(f =>
+              chip(f.label, !!pref.avoidFoods?.includes(f.value), () =>
+                setPref({
+                  ...pref,
+                  avoidFoods: toggleAvoidFood(pref.avoidFoods, f.value),
+                }),
+              ),
             )}
           </View>
 
