@@ -52,15 +52,13 @@ export const profileEditStyles = StyleSheet.create({
     color: colors.textPrimary,
   },
 
-
-
   confirmBtn: {
     marginTop: 28,
     marginHorizontal: 20,
-    backgroundColor: '#5b4fd4',
+    backgroundColor: colors.primaryFill,
     borderRadius: 14,
     paddingVertical: 17,
     alignItems: 'center',
   },
-  confirmText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  confirmText: { color: colors.textOnPrimary, fontSize: 16, fontWeight: '700' },
 });
