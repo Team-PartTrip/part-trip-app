@@ -29,6 +29,8 @@ import {
   ChevronRightIcon,
 } from '../../shared/ui/icons';
 import CategoryIcon from '../../entities/planner/CategoryIcon';
+import RestroomNote from '../../entities/main/RestroomNote';
+import { openDirections, RouteLine } from '../PlannerScreen/ScheduleDays';
 import { CATEGORY_LABEL } from '../../entities/planner/types';
 import type { PlaceCategory } from '../../entities/planner/types';
 import colors from '../../shared/tokens/colors';
@@ -349,19 +351,51 @@ const MainView: React.FC<MainViewProps> = ({
             {todayPlaces(dday.todaySchedule).length === 0 ? (
               <Text style={s.todayEmpty}>오늘은 정해진 일정이 없어요</Text>
             ) : (
-              todayPlaces(dday.todaySchedule).map((slot, i) => (
-                <View key={slot.slotId} style={s.todayRow}>
-                  <View style={s.todayNum}>
-                    <Text style={s.todayNumText}>{i + 1}</Text>
-                  </View>
-                  <View style={s.todayBody}>
-                    <Text style={s.todayName}>{slot.place.name}</Text>
-                    {!!slot.place.categoryLabel && (
-                      <Text style={s.todaySub}>{slot.place.categoryLabel}</Text>
+              todayPlaces(dday.todaySchedule).map((slot, i, list) => {
+                const route =
+                  slot.routeStatus === 'READY' ? slot.routeFromPrevious : null;
+                return (
+                  <View key={slot.slotId}>
+                    {route && (
+                      <View style={s.todayRoute}>
+                        {/* 첫 장소는 지금 있는 곳에서 길을 찾는다 */}
+                        <RouteLine
+                          route={route}
+                          from={i > 0 ? list[i - 1].place : null}
+                          to={slot.place}
+                        />
+                      </View>
                     )}
+                    <View style={s.todayRow}>
+                      <View style={s.todayNum}>
+                        <Text style={s.todayNumText}>{i + 1}</Text>
+                      </View>
+                      <View style={s.todayBody}>
+                        <Text style={s.todayName}>{slot.place.name}</Text>
+                        {!!slot.place.categoryLabel && (
+                          <Text style={s.todaySub}>
+                            {slot.place.categoryLabel}
+                          </Text>
+                        )}
+                        <RestroomNote tourPlaceId={slot.place.tourPlaceId} />
+                      </View>
+                      {!route && slot.place.latitude != null && (
+                        <TouchableOpacity
+                          style={s.todayMap}
+                          hitSlop={touch48(32)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`${slot.place.name}까지 길 안내`}
+                          onPress={() =>
+                            openDirections(slot.place, null, 'PUBLIC_TRANSIT')
+                          }
+                        >
+                          <Text style={s.todayMapText}>길 안내</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
                   </View>
-                </View>
-              ))
+                );
+              })
             )}
           </View>
         )}

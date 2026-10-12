@@ -204,6 +204,20 @@ export function getAccessibility(
   });
 }
 
+const restrooms = new Map<number, Promise<string | null>>();
+
+export function getRestroom(tourPlaceId: number): Promise<string | null> {
+  let hit = restrooms.get(tourPlaceId);
+  if (!hit) {
+    hit = getAccessibility(tourPlaceId).then(
+      a => a.items.find(item => item.key === 'RESTROOM')?.text ?? null,
+    );
+    hit.catch(() => restrooms.delete(tourPlaceId));
+    restrooms.set(tourPlaceId, hit);
+  }
+  return hit;
+}
+
 export interface PlaceResult {
   name: string;
   address: string;

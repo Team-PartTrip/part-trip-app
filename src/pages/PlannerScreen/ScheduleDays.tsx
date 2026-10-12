@@ -19,6 +19,7 @@ import type {
 } from '../../entities/planner/api';
 import { dayLabel } from '../../entities/planner/types';
 import CategoryIcon from '../../entities/planner/CategoryIcon';
+import RestroomNote from '../../entities/main/RestroomNote';
 import colors from '../../shared/tokens/colors';
 import {
   BedIcon,
@@ -76,7 +77,7 @@ type Spot = Pick<SchedulePlace, 'name' | 'latitude' | 'longitude'>;
 const kakaoPoint = (p: Spot) =>
   `${encodeURIComponent(p.name)},${p.latitude},${p.longitude}`;
 
-function openDirections(to: SchedulePlace, from: Spot | null, mode: string) {
+export function openDirections(to: SchedulePlace, from: Spot | null, mode: string) {
   if (to.latitude == null || to.longitude == null) {
     return;
   }
@@ -89,7 +90,7 @@ function openDirections(to: SchedulePlace, from: Spot | null, mode: string) {
   Linking.openURL(url).catch(() => Alert.alert('알림', '지도를 열 수 없어요.'));
 }
 
-const RouteLine: React.FC<{
+export const RouteLine: React.FC<{
   route: RouteLeg;
   from: Spot | null;
   to: SchedulePlace | null;
@@ -281,6 +282,8 @@ const DayCards: React.FC<{
               <Text style={s.rowTitle} numberOfLines={1}>
                 {slot.place.name}
               </Text>
+              {/* 고치는 동안에는 카드마다 부르지 않는다 */}
+              {!edit && <RestroomNote tourPlaceId={slot.place.tourPlaceId} />}
             </View>
           </>
         ) : (

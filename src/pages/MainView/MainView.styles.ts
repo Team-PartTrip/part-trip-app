@@ -139,6 +139,14 @@ export const mainStyles = StyleSheet.create({
   todayBody: { flex: 1 },
   todayName: { fontSize: 20, fontWeight: '700', color: colors.text },
   todaySub: { marginTop: 2, fontSize: 15, color: colors.textSecondary },
+  todayRoute: { marginTop: 14, marginLeft: 50 },
+  todayMap: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: colors.tint,
+  },
+  todayMapText: { fontSize: 15, fontWeight: '700', color: colors.primary },
 
   // ── 축제 · 이벤트 캘린더 행 (Func-002-03) ──
   eventRow: {
