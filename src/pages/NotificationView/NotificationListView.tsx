@@ -103,7 +103,7 @@ const NotificationListView: React.FC<Props> = ({ onBack, onOpen }) => {
       await markAllAsRead();
       setItems(prev => prev.map(n => ({ ...n, read: true })));
     } catch (e: any) {
-      Alert.alert('실패', e?.message ?? '모두 읽음 처리에 실패했습니다.');
+      Alert.alert('읽음 처리를 못 했어요', e?.message ?? '잠시 후 다시 시도해주세요.');
     }
   };
 
@@ -181,7 +181,14 @@ const NotificationListView: React.FC<Props> = ({ onBack, onOpen }) => {
                     onPress={() => handleOpen(n)}
                   >
                     <View style={[s.badge, { backgroundColor: meta.color }]}>
-                      <Text style={s.badgeText}>{meta.badge}</Text>
+                      <Text
+                        style={s.badgeText}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                        maxFontSizeMultiplier={1}
+                      >
+                        {meta.badge}
+                      </Text>
                     </View>
                     <View style={s.cardBody}>
                       <Text

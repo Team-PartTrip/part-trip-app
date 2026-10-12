@@ -135,7 +135,7 @@ export async function addTripCardEntry(
       body: formData,
     });
   } catch {
-    throw new ApiError(0, '서버에 연결할 수 없습니다.');
+    throw new ApiError(0, '서버에 연결하지 못했어요. 인터넷 연결을 확인해주세요.');
   }
 
   const text = await res.text();

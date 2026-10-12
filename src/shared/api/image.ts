@@ -31,7 +31,7 @@ export async function uploadImage(
         body: formData,
       });
     } catch {
-      throw new ApiError(0, '서버에 연결할 수 없습니다.');
+      throw new ApiError(0, '서버에 연결하지 못했어요. 인터넷 연결을 확인해주세요.');
     }
   };
 
@@ -70,7 +70,7 @@ export async function uploadImage(
     const message =
       typeof data === 'string' && data
         ? data
-        : (data && data.message) || '이미지 업로드에 실패했습니다.';
+        : (data && data.message) || '사진을 올리지 못했어요.';
     throw new ApiError(res.status, message);
   }
 
@@ -79,7 +79,7 @@ export async function uploadImage(
   // 읽어서 늘 undefined 가 나왔고, 그래서 사진을 골라도 아무 일이 없었다.
   const url = typeof data === 'string' ? data.trim() : data?.url;
   if (!url) {
-    throw new ApiError(res.status, '업로드 응답을 이해할 수 없습니다.');
+    throw new ApiError(res.status, '사진을 올리지 못했어요. 잠시 후 다시 시도해주세요.');
   }
   return url as string;
 }

@@ -58,6 +58,7 @@ export const notificationListStyles = StyleSheet.create({
   badge: {
     width: 44,
     height: 44,
+    paddingHorizontal: 4,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',

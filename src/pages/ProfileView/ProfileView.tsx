@@ -170,7 +170,11 @@ const ProfileView: React.FC<Props> = ({
 
             <View style={s.profileInfo}>
               <Text style={s.nickname}>{profile?.nickName ?? '...'}</Text>
-              <Text style={s.handle}>@{profile?.userId ?? ''}</Text>
+              {!!profile?.userId?.includes('@') && (
+                <Text style={s.handle} numberOfLines={1} ellipsizeMode="middle">
+                  {profile.userId}
+                </Text>
+              )}
             </View>
 
             <TouchableOpacity

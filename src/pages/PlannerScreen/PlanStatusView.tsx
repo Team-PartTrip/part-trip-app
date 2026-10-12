@@ -412,7 +412,7 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
       // 날짜가 없으면 제목 없이 장소만 나열한다
       (day.label ? [day.label] : []).concat(
         day.places.map(
-          item => `· ${CATEGORY_LABEL[item.category]} — ${item.placeName}`,
+          item => `· ${item.placeName} (${CATEGORY_LABEL[item.category]})`,
         ),
       ),
     );

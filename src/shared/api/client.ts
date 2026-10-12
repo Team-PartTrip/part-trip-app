@@ -61,7 +61,7 @@ export async function request<T = unknown>(
     // 네트워크 자체가 실패한 경우 (서버 꺼짐, 주소 오류, 와이파이 등)
     throw new ApiError(
       0,
-      '서버에 연결할 수 없습니다. 네트워크와 서버 주소(BASE_URL)를 확인해주세요.',
+      '서버에 연결하지 못했어요. 인터넷 연결을 확인해주세요.',
     );
   }
 
@@ -71,7 +71,7 @@ export async function request<T = unknown>(
     const message =
       typeof data === 'string' && data
         ? data
-        : (data && (data as any).message) || '요청에 실패했습니다.';
+        : (data && (data as any).message) || '요청을 처리하지 못했어요.';
     throw new ApiError(res.status, message);
   }
 

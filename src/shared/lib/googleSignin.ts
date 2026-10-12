@@ -21,7 +21,7 @@ export async function signInWithGoogle(): Promise<string> {
   const res: any = await GoogleSignin.signIn();
   const idToken = res?.data?.idToken ?? res?.idToken;
   if (!idToken) {
-    throw new Error('Google 인증 토큰을 가져오지 못했습니다.');
+    throw new Error('구글 로그인을 마치지 못했어요. 다시 시도해주세요.');
   }
   return idToken;
 }

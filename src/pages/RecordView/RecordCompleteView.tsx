@@ -16,8 +16,8 @@ const RecordCompleteView: React.FC<Props> = ({ onConfirm, onHome }) => (
     <View style={s.doneIcon}>
       <CheckCircleIcon size={88} color={colors.primary} />
     </View>
-    <Text style={s.title}>수정 완료!</Text>
-    <Text style={s.desc}>여행 기록이 성공적으로 저장되었습니다!</Text>
+    <Text style={s.title}>저장했어요</Text>
+    <Text style={s.desc}>여행 기록을 고쳤어요.</Text>
     <View style={s.btns}>
       <TouchableOpacity
         style={[s.btn, s.primary]}
