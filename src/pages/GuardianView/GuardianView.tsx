@@ -42,8 +42,15 @@ export function formatUntil(iso: string): string {
 }
 
 /** 받는 사람이 무엇을 해야 하는지까지 적는다. 코드만 보내면 어디에 넣는지 모른다 */
+/** 받은 메시지를 통째로 붙여넣어도 코드 6자리만 남긴다 */
+export function codeFrom(text: string): string {
+  const upper = text.toUpperCase();
+  const found = upper.match(/(?:^|[^A-Z0-9])([A-Z0-9]{6})(?![A-Z0-9])/);
+  return found ? found[1] : upper.replace(/[^A-Z0-9]/g, '').slice(0, 6);
+}
+
 export function inviteMessage(code: string): string {
-  return `단디 보호자 초대 코드: ${code}\n앱의 프로필 → 가족 연결에서 코드를 넣어주세요. (24시간 동안 쓸 수 있어요)`;
+  return `단디 보호자 초대 코드: ${code}\n앱의 마이 → 가족 연결에서 코드를 넣어주세요. (24시간 동안 쓸 수 있어요)`;
 }
 
 interface Props {
@@ -291,10 +298,9 @@ const GuardianView: React.FC<Props> = ({ onBack, onOpenSenior }) => {
             placeholder="코드 6자리"
             placeholderTextColor={colors.placeholder}
             value={code}
-            onChangeText={text => setCode(text.toUpperCase())}
+            onChangeText={text => setCode(codeFrom(text))}
             autoCapitalize="characters"
             autoCorrect={false}
-            maxLength={6}
             accessibilityLabel="보호자 초대 코드"
           />
           <TouchableOpacity

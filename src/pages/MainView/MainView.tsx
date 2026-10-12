@@ -394,12 +394,13 @@ const MainView: React.FC<MainViewProps> = ({
                 !done &&
                 list.findIndex(item => !visited.has(item.slotId)) === i;
               const route =
-                !done && slot.routeStatus === 'READY'
+                !done && i > 0 && slot.routeStatus === 'READY'
                   ? slot.routeFromPrevious
                   : null;
-              const routeMessage = slot.routeStatus
-                ? ROUTE_STATUS_MESSAGE[slot.routeStatus]
-                : undefined;
+              const routeMessage =
+                i > 0 && slot.routeStatus
+                  ? ROUTE_STATUS_MESSAGE[slot.routeStatus]
+                  : undefined;
               return (
                 <View key={slot.slotId}>
                   {route ? (
@@ -407,7 +408,7 @@ const MainView: React.FC<MainViewProps> = ({
                       {/* 첫 장소는 지금 있는 곳에서 길을 찾는다 */}
                       <RouteLine
                         route={route}
-                        from={i > 0 ? list[i - 1].place : null}
+                        from={list[i - 1].place}
                         to={slot.place}
                       />
                     </View>

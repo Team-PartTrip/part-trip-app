@@ -175,7 +175,9 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
         const wheelchair = mobility.includes('WHEELCHAIR');
         answers.usesWheelchair = wheelchair;
         answers.limitedWalking = mobility.includes('WALKING');
-        answers.canUseStairs = !wheelchair && !mobility.includes('STAIRS');
+        if (wheelchair || mobility.includes('STAIRS')) {
+          answers.canUseStairs = false;
+        }
       }
       if (pref && Object.keys(answers).length > 0) {
         await saveTravelPreference({ ...pref, ...answers }).catch(() => {});
@@ -244,7 +246,9 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
             () => setSearchingDeparture(true),
             <PinIcon
               size={16}
-              color={!!departure && !here ? colors.textOnPrimary : colors.primary}
+              color={
+                !!departure && !here ? colors.textOnPrimary : colors.primary
+              }
             />,
           )}
           {chip('우리 집', atHome, () => {
@@ -505,8 +509,8 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
           <>
             <Text style={s.section}>피하는 음식이 있으세요?</Text>
             <Text style={s.sectionHint}>
-              AI가 맛집을 고를 때 빼요. {AVOID_FOODS_NOTICE} 여행 편의
-              설정에서 언제든 바꿀 수 있어요.
+              AI가 맛집을 고를 때 빼요. {AVOID_FOODS_NOTICE} 여행 편의 설정에서
+              언제든 바꿀 수 있어요.
             </Text>
             <View style={[s.chips, s.block]}>
               {[...AVOID_FOODS, { value: null, label: '없어요' }].map(f => {

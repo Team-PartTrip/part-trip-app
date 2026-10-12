@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   ScrollView,
@@ -55,11 +55,19 @@ const SeniorView: React.FC<Props> = ({ seniorUserId, nickName, onBack }) => {
     Record<number, PlannerSchedule | 'failed'>
   >({});
 
+  const mounted = useRef(true);
+  useEffect(
+    () => () => {
+      mounted.current = false;
+    },
+    [],
+  );
+
   const loadLocation = useCallback(() => {
     setLocationFailed(false);
     getSeniorLocation(seniorUserId)
-      .then(setLocation)
-      .catch(() => setLocationFailed(true));
+      .then(found => mounted.current && setLocation(found))
+      .catch(() => mounted.current && setLocationFailed(true));
   }, [seniorUserId]);
 
   useFocusEffect(
@@ -81,7 +89,12 @@ const SeniorView: React.FC<Props> = ({ seniorUserId, nickName, onBack }) => {
       return;
     }
     setOpenId(plannerId);
-    if (!schedules[plannerId]) {
+    if (!schedules[plannerId] || schedules[plannerId] === 'failed') {
+      setSchedules(prev => {
+        const next = { ...prev };
+        delete next[plannerId];
+        return next;
+      });
       getSeniorSchedule(seniorUserId, plannerId)
         .then(schedule =>
           setSchedules(prev => ({ ...prev, [plannerId]: schedule })),

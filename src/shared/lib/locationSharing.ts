@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Alert, AppState } from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LOCATION_CONSENT_KEY } from '../api/tokenStorage';
 import { getDday, TripPhase } from '../../entities/main/api';
 import {
   getMyGuardians,
@@ -12,7 +13,7 @@ import {
 /** 보내는 간격. 보호자 화면의 "○분 전" 이 2분을 넘지 않게 */
 export const SEND_EVERY_MS = 90_000;
 
-const CONSENT_KEY = 'partTrip.locationSharing';
+const CONSENT_KEY = LOCATION_CONSENT_KEY;
 export type Consent = 'yes' | 'no' | null;
 
 // 동의는 이 기기의 선택이라 기기에 둔다. 저장이 막힌 환경이면 "안 물어본 상태" 로 본다
@@ -72,11 +73,22 @@ export function currentPosition(): Promise<{
   );
 }
 
+let asking: Promise<boolean> | null = null;
+
 function askConsent(): Promise<boolean> {
+  if (!asking) {
+    asking = showConsent().finally(() => {
+      asking = null;
+    });
+  }
+  return asking;
+}
+
+function showConsent(): Promise<boolean> {
   return new Promise(resolve =>
     Alert.alert(
       '가족에게 위치를 알려줄까요?',
-      '여행하는 동안 연결된 가족(보호자)이 내 위치를 볼 수 있어요.\n앱을 켜 둔 동안만 1~2분마다 보내고, 여행이 끝나면 지워져요.\n프로필 → 가족 연결에서 언제든 끌 수 있어요.',
+      '여행하는 동안 연결된 가족(보호자)이 내 위치를 볼 수 있어요.\n앱을 켜 둔 동안만 1~2분마다 보내고, 여행이 끝나면 지워져요.\n마이 → 가족 연결에서 언제든 끌 수 있어요.',
       [
         { text: '안 할래요', style: 'cancel', onPress: () => resolve(false) },
         { text: '알려줄게요', onPress: () => resolve(true) },

@@ -4,6 +4,7 @@ import type { TokenResponse } from '../../entities/auth/api';
 const ACCESS_KEY = 'parttrip.accessToken';
 const REFRESH_KEY = 'parttrip.refreshToken';
 const PROVIDER_KEY = 'parttrip.provider';
+export const LOCATION_CONSENT_KEY = 'partTrip.locationSharing';
 
 // 로그인·로그아웃마다 올라간다. "누가 쓰고 있는가" 를 가리키는 번호다.
 // 토큰 갱신은 같은 세션이라 올리지 않는다.
@@ -61,6 +62,7 @@ export async function saveTokens(
   await serialize(async () => {
     if (newSession) {
       sessionGeneration += 1;
+      await AsyncStorage.removeItem(LOCATION_CONSENT_KEY);
     } else if (
       options.generation !== undefined &&
       options.generation !== sessionGeneration
@@ -88,6 +90,11 @@ export async function getRefreshToken(): Promise<string | null> {
 export async function clearTokens(): Promise<void> {
   await serialize(async () => {
     sessionGeneration += 1;
-    await AsyncStorage.removeMany([ACCESS_KEY, REFRESH_KEY, PROVIDER_KEY]);
+    await AsyncStorage.removeMany([
+      ACCESS_KEY,
+      REFRESH_KEY,
+      PROVIDER_KEY,
+      LOCATION_CONSENT_KEY,
+    ]);
   });
 }

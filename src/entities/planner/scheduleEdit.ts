@@ -4,7 +4,6 @@ import type {
   SchedulePlace,
 } from './api';
 
-
 // 아직 저장 안 한 새 칸. 서버 id 와 겹치지 않게 음수를 쓴다
 let nextTempId = -1;
 export function newSlotId(): number {
@@ -38,7 +37,14 @@ export function moveSlot(
   to: number,
 ): PlannerSchedule {
   return mapDays(schedule, (slots, d) => {
-    if (d !== date || from === to || to < 0 || to >= slots.length) {
+    if (
+      d !== date ||
+      from === to ||
+      from < 0 ||
+      from >= slots.length ||
+      to < 0 ||
+      to >= slots.length
+    ) {
       return slots;
     }
     const next = [...slots];

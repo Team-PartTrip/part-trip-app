@@ -5,6 +5,7 @@ jest.mock('react-native-safe-area-context', () => ({ SafeAreaView: 'View' }));
 
 import {
   formatUntil,
+  codeFrom,
   inviteMessage,
 } from '../src/pages/GuardianView/GuardianView';
 import { kakaoMapUrl } from '../src/pages/GuardianView/SeniorView';
@@ -27,4 +28,11 @@ test('카카오맵 링크는 이름을 인코딩하고 위도 · 경도 순서�
       '어머니님',
     )},35.83,129.21`,
   );
+});
+
+test('받은 메시지를 통째로 붙여넣어도 코드만 남긴다', () => {
+  expect(codeFrom(inviteMessage('K7PX3M'))).toBe('K7PX3M');
+  expect(codeFrom('k7px3m')).toBe('K7PX3M');
+  expect(codeFrom('K7P')).toBe('K7P');
+  expect(codeFrom(' K7-PX ')).toBe('K7PX');
 });

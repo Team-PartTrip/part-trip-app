@@ -30,10 +30,9 @@ const RegionMapView: React.FC<Props> = ({ onBack }) => {
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
-  const districtIds = useMemo(
-    () => visitedDistricts(map?.trips ?? []),
-    [map],
-  );
+  const districtIds = useMemo(() => visitedDistricts(map?.trips ?? []), [map]);
+
+  useFocusEffect(useCallback(() => () => setTouchingMap(false), []));
 
   useFocusEffect(
     useCallback(() => {

@@ -59,6 +59,7 @@ test('옮기면 순서 번호를 다시 매긴다', () => {
 
 test('범위를 벗어나게 옮기면 아무것도 안 바뀐다', () => {
   expect(ids(moveSlot(schedule, '2026-10-10', 0, 5), 0)).toEqual([1, 2, 3]);
+  expect(ids(moveSlot(schedule, '2026-10-10', 5, 0), 0)).toEqual([1, 2, 3]);
 });
 
 test('다른 날 칸과 장소를 바꿀 수 있고, 빈 칸과 바꾸면 옮겨진다', () => {
