@@ -140,6 +140,7 @@ export const mainStyles = StyleSheet.create({
   todayName: { fontSize: 20, fontWeight: '700', color: colors.text },
   todaySub: { marginTop: 2, fontSize: 15, color: colors.textSecondary },
   todayRoute: { marginTop: 14, marginLeft: 50 },
+  todayRouteMessage: { fontSize: 14, lineHeight: 20, color: colors.textSecondary },
   todayRowNext: {
     marginHorizontal: -12,
     paddingHorizontal: 12,
