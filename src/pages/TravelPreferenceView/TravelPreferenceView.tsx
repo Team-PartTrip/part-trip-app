@@ -195,8 +195,8 @@ const TravelPreferenceView: React.FC<Props> = ({ onBack }) => {
 
           <Text style={s.section}>휠체어를 쓰세요?</Text>
           <Text style={s.hint}>
-            쓰시면 계단·비탈이 많은 곳을 빼고, 무장애 정보가 있는 곳을 먼저
-            골라요.
+            쓰시면 계단·비탈이 많은 곳을 빼고, 편의 시설 정보가 있는 곳을
+            먼저 골라요.
           </Text>
           <View style={s.chips}>
             {chip('써요', pref.usesWheelchair === true, () =>
