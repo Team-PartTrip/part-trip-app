@@ -281,6 +281,15 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
             setConfirming(true);
             try {
               await confirmPlanner(planId);
+            } catch (e: any) {
+              Alert.alert(
+                '확정하지 못했어요',
+                e?.message ?? '잠시 후 다시 시도해주세요.',
+              );
+              setConfirming(false);
+              return;
+            }
+            try {
               // 확정되면 같은 화면이 일정표로 바뀐다
               const [detail, final, cards] = await Promise.all([
                 getPlanner(planId),
@@ -290,10 +299,10 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
               setPlan(detail);
               setSchedule(final?.places ?? null);
               setDraft(cards);
-            } catch (e: any) {
+            } catch {
               Alert.alert(
-                '확정하지 못했어요',
-                e?.message ?? '잠시 후 다시 시도해주세요.',
+                '확정했어요',
+                '화면을 새로 불러오지 못했어요. 잠시 후 다시 들어와 주세요.',
               );
             } finally {
               setConfirming(false);
@@ -627,7 +636,8 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
                 style={s.confirmBtn}
                 activeOpacity={0.85}
                 accessibilityRole="button"
-                disabled={confirming}
+                // 칸을 고친 게 저장되는 중이면 그 저장이 끝난 뒤에 확정한다
+                disabled={confirming || saving}
                 onPress={confirmSchedule}
               >
                 {confirming ? (

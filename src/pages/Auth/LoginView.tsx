@@ -58,6 +58,9 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
     try {
       setLoading(true);
       const idToken = await signInWithGoogle();
+      if (!idToken) {
+        return;
+      }
       const tokens = await googleLogin(idToken);
       await saveTokens(tokens);
       await saveProvider('GOOGLE');

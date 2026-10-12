@@ -1,4 +1,6 @@
 import React, { useCallback, useState } from 'react';
+import { signOutGoogle } from '../../shared/lib/googleSignin';
+import { signOutKakao } from '../../shared/lib/kakaoSignin';
 import { View, Image, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { Text } from '../../shared/ui/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -88,6 +90,7 @@ const ProfileView: React.FC<Props> = ({
               await logout(refreshToken).catch(() => {});
             }
           } finally {
+            await Promise.all([signOutGoogle(), signOutKakao()]);
             await clearTokens();
             onLogout?.();
           }
@@ -115,6 +118,7 @@ const ProfileView: React.FC<Props> = ({
               );
               return;
             }
+            await Promise.all([signOutGoogle(), signOutKakao()]);
             await clearTokens();
             onLogout?.();
           },

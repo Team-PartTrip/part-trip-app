@@ -85,6 +85,9 @@ android {
         versionCode 1
         versionName "1.0"
 
+        if (!project.hasProperty("GOOGLE_MAPS_API_KEY")) {
+            logger.warn("GOOGLE_MAPS_API_KEY 가 없습니다. ~/.gradle/gradle.properties 에 넣어야 안드로이드 지도가 보입니다.")
+        }
         manifestPlaceholders = [
             KAKAO_NATIVE_APP_KEY: project.properties.get("KAKAO_NATIVE_APP_KEY", ""),
             GOOGLE_MAPS_API_KEY: project.properties.get("GOOGLE_MAPS_API_KEY", "")

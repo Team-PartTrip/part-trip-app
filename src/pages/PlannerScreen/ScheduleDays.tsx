@@ -77,7 +77,11 @@ type Spot = Pick<SchedulePlace, 'name' | 'latitude' | 'longitude'>;
 const kakaoPoint = (p: Spot) =>
   `${encodeURIComponent(p.name)},${p.latitude},${p.longitude}`;
 
-export function openDirections(to: SchedulePlace, from: Spot | null, mode: string) {
+export function openDirections(
+  to: SchedulePlace,
+  from: Spot | null,
+  mode: string,
+) {
   if (to.latitude == null || to.longitude == null) {
     return;
   }
@@ -229,14 +233,22 @@ const DayCards: React.FC<{
       },
       onPanResponderMove: (_, g) => {
         dy.setValue(g.dy);
-        const to = dropIndex(index, g.dy, heights.current);
+        const to = dropIndex(
+          index,
+          g.dy,
+          heights.current.slice(0, slots.length),
+        );
         if (to !== hoverTo.current) {
           hoverTo.current = to;
           shiftOthers(index, to);
         }
       },
       onPanResponderRelease: (_, g) => {
-        const to = dropIndex(index, g.dy, heights.current);
+        const to = dropIndex(
+          index,
+          g.dy,
+          heights.current.slice(0, slots.length),
+        );
         setDragging(null);
         dy.setValue(0);
         // 옮길 때는 새 순서가 그려진 뒤에 푼다(아래 useEffect). 먼저 풀면 한 번 튄다

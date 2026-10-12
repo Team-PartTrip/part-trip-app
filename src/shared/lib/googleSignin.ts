@@ -15,13 +15,20 @@ export function configureGoogleSignin() {
   });
 }
 
-/** 구글 로그인 → idToken 반환 */
-export async function signInWithGoogle(): Promise<string> {
+/** 구글 로그인 → idToken. 사용자가 창을 닫으면 null */
+export async function signInWithGoogle(): Promise<string | null> {
   await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
   const res: any = await GoogleSignin.signIn();
+  if (res?.type === 'cancelled') {
+    return null;
+  }
   const idToken = res?.data?.idToken ?? res?.idToken;
   if (!idToken) {
     throw new Error('구글 로그인을 마치지 못했어요. 다시 시도해주세요.');
   }
   return idToken;
+}
+
+export async function signOutGoogle(): Promise<void> {
+  await GoogleSignin.signOut().catch(() => {});
 }

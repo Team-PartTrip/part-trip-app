@@ -1,4 +1,7 @@
-import { login as kakaoSdkLogin } from '@react-native-seoul/kakao-login';
+import {
+  login as kakaoSdkLogin,
+  logout as kakaoSdkLogout,
+} from '@react-native-seoul/kakao-login';
 
 export async function signInWithKakao(): Promise<string> {
   const token = await kakaoSdkLogin();
@@ -11,4 +14,8 @@ export async function signInWithKakao(): Promise<string> {
 export function isKakaoCancelled(error: unknown): boolean {
   const message = (error as { message?: string } | null)?.message;
   return typeof message === 'string' && /cancel/i.test(message);
+}
+
+export async function signOutKakao(): Promise<void> {
+  await kakaoSdkLogout().catch(() => {});
 }

@@ -119,6 +119,7 @@ const OWN_HEADER_ROUTES = [
   'TripCardDetail',
   'TripCardEdit',
   'Profile',
+  'ProfileEdit',
   'Guardian',
   'TravelPreference',
   'Senior',
@@ -161,8 +162,11 @@ function App() {
   const [routeName, setRouteName] = useState<string | undefined>(undefined);
 
   const showChrome = !!routeName && !AUTH_ROUTES.includes(routeName);
-  // 로그인한 화면에서만. 여행 중 · 보호자 있음 · 동의했을 때 위치를 보낸다
-  useLocationSharing(showChrome);
+  // 로그인한 동안 계속. 탭바가 없는 화면(일정 만들기 · 사진 보기 등)에서도 멈추지 않는다.
+  // 여행 중 · 보호자 있음 · 동의했을 때만 실제로 보낸다
+  const loggedIn =
+    !!routeName && routeName !== 'Launch' && routeName !== 'Login';
+  useLocationSharing(loggedIn);
 
   const activeTab =
     routeName && TAB_BY_ROUTE[routeName] ? TAB_BY_ROUTE[routeName] : '';
@@ -542,7 +546,10 @@ function App() {
               </Stack.Screen>
               <Stack.Screen name="ProfileEdit">
                 {({ navigation }) => (
-                  <ProfileEditView onConfirm={() => navigation.goBack()} />
+                  <ProfileEditView
+                    onConfirm={() => navigation.goBack()}
+                    onBack={() => navigation.goBack()}
+                  />
                 )}
               </Stack.Screen>
 
