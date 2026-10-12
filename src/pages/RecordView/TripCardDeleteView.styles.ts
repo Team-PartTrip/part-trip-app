@@ -54,9 +54,8 @@ export const tripCardDeleteStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checkOn: { backgroundColor: colors.primary },
+  checkOn: { backgroundColor: colors.primaryFill },
   checkOff: { backgroundColor: colors.surface },
-  checkText: { fontSize: 12, fontWeight: '700', color: colors.textOnPrimary },
 
   warning: {
     marginTop: 8,
@@ -94,7 +93,7 @@ export const tripCardDeleteStyles = StyleSheet.create({
   dangerBtnOff: { backgroundColor: colors.chevron },
   dangerText: { fontSize: 16, fontWeight: '600', color: colors.textOnPrimary },
   cancelBtn: {
-    height: 44,
+    minHeight: 48,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: colors.border,

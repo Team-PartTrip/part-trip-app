@@ -1,9 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import {
   View,
-  Text,
   ScrollView,
-  TextInput,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
@@ -11,6 +9,7 @@ import {
   Image,
   ActivityIndicator,
 } from 'react-native';
+import { Text, TextInput } from '../../shared/ui/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { commentEditStyles as s } from './CommentEditView.styles';
@@ -20,6 +19,8 @@ import {
   updateTripCardEntryComment,
 } from '../../entities/record/api';
 import { toImageUrl } from '../../shared/api/image';
+import { ChevronLeftIcon } from '../../shared/ui/icons';
+import colors from '../../shared/tokens/colors';
 
 // 서버가 100자까지 받는다
 const MAX_LENGTH = 100;
@@ -120,7 +121,9 @@ const CommentEditView: React.FC<Props> = ({
     <SafeAreaView edges={['top']} style={s.safeArea}>
       <View style={s.header}>
         <TouchableOpacity onPress={onBack} hitSlop={12}>
-          <Text style={s.back}>‹</Text>
+          <View style={s.back}>
+            <ChevronLeftIcon size={22} color={colors.text} />
+          </View>
         </TouchableOpacity>
         <Text style={s.headerTitle}>
           {editing ? '코멘트 수정' : '코멘트 작성'}

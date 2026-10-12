@@ -1,21 +1,24 @@
 import React, { useCallback, useState } from 'react';
 import {
   View,
-  Text,
   ScrollView,
   TouchableOpacity,
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { Text } from '../../shared/ui/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { tripCardDeleteStyles as s } from './TripCardDeleteView.styles';
 import {
   deleteTripCards,
   getTripCards,
+  placeOf,
   TripCardSummary,
 } from '../../entities/record/api';
 import { formatTripRange } from '../../entities/record/types';
+import { CheckIcon } from '../../shared/ui/icons';
+import colors from '../../shared/tokens/colors';
 
 interface Props {
   onBack?: () => void;
@@ -119,16 +122,14 @@ const TripCardDeleteView: React.FC<Props> = ({ onBack, onDeleted }) => {
                   <Text style={s.thumbText}>IMG</Text>
                 </View>
                 <View style={s.body}>
-                  <Text style={s.title}>
-                    {card.countryName} {card.cityName}
-                  </Text>
+                  <Text style={s.title}>{placeOf(card)}</Text>
                   <Text style={s.meta}>
-                    {formatTripRange(card.startDate, card.endDate)}  ·  사진{' '}
+                    {formatTripRange(card.startDate, card.endDate)} · 사진{' '}
                     {card.photoCount ?? 0}장
                   </Text>
                 </View>
                 <View style={[s.check, on ? s.checkOn : s.checkOff]}>
-                  {on && <Text style={s.checkText}>✓</Text>}
+                  {on && <CheckIcon size={13} color={colors.textOnPrimary} />}
                 </View>
               </TouchableOpacity>
             );

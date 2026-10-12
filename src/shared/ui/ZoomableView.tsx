@@ -1,0 +1,215 @@
+import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  Animated,
+  GestureResponderEvent,
+  PanResponder,
+  StyleProp,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+  ViewStyle,
+} from 'react-native';
+import colors from '../tokens/colors';
+import { MinusIcon, PlusIcon } from './icons';
+
+export const MIN_SCALE = 1;
+export const MAX_SCALE = 10;
+const STEP = 1.6;
+
+const clamp = (v: number, lo: number, hi: number) =>
+  Math.min(hi, Math.max(lo, v));
+
+export function clampPan(
+  scale: number,
+  width: number,
+  height: number,
+  x: number,
+  y: number,
+) {
+  const maxX = ((scale - 1) * width) / 2;
+  const maxY = ((scale - 1) * height) / 2;
+  return { x: clamp(x, -maxX, maxX), y: clamp(y, -maxY, maxY) };
+}
+
+export interface Zoom {
+  scale: number;
+  x: number;
+  y: number;
+}
+
+export function visibleBox(
+  z: Zoom,
+  width: number,
+  height: number,
+  baseWidth: number,
+  baseHeight: number,
+) {
+  const k = baseWidth / width;
+  return {
+    x: ((width / 2) * (1 - 1 / z.scale) - z.x / z.scale) * k,
+    y:
+      ((height / 2) * (1 - 1 / z.scale) - z.y / z.scale) *
+      (baseHeight / height),
+    width: baseWidth / z.scale,
+    height: baseHeight / z.scale,
+  };
+}
+
+const distance = (e: GestureResponderEvent) => {
+  const [a, b] = e.nativeEvent.touches;
+  return Math.hypot(a.pageX - b.pageX, a.pageY - b.pageY);
+};
+
+const ZoomableView: React.FC<{
+  width: number;
+  height: number;
+  children: (zoom: Zoom) => React.ReactNode;
+  controlsStyle?: StyleProp<ViewStyle>;
+  onZoomedChange?: (zoomed: boolean) => void;
+}> = ({ width, height, children, controlsStyle, onZoomedChange }) => {
+  const now = useRef<Zoom>({ scale: 1, x: 0, y: 0 });
+  const [zoom, setZoom] = useState<Zoom>(now.current);
+  const drawn = useRef<Zoom>(zoom);
+  const liveScale = useRef(new Animated.Value(1)).current;
+  const livePan = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
+  useLayoutEffect(() => {
+    drawn.current = zoom;
+    liveScale.setValue(1);
+    livePan.setValue({ x: 0, y: 0 });
+  }, [zoom, liveScale, livePan]);
+  const start = useRef({ scale: 1, x: 0, y: 0, dist: 0 });
+  const [zoomed, setZoomed] = useState(false);
+
+  const apply = (next: { scale: number; x: number; y: number }) => {
+    const s = clamp(next.scale, MIN_SCALE, MAX_SCALE);
+    const p = clampPan(s, width, height, next.x, next.y);
+    now.current = { scale: s, ...p };
+    const k = s / drawn.current.scale;
+    liveScale.setValue(k);
+    livePan.setValue({
+      x: p.x - drawn.current.x * k,
+      y: p.y - drawn.current.y * k,
+    });
+  };
+  const settle = () => {
+    const isZoomed = now.current.scale > 1.02;
+    if (!isZoomed) {
+      apply({ scale: 1, x: 0, y: 0 });
+    }
+    setZoom(now.current);
+    if (isZoomed !== zoomed) {
+      setZoomed(isZoomed);
+      onZoomedChange?.(isZoomed);
+    }
+  };
+
+  const responder = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (e, g) =>
+          e.nativeEvent.touches.length >= 2 ||
+          (now.current.scale > 1 && Math.hypot(g.dx, g.dy) > 6),
+        onPanResponderGrant: e => {
+          start.current = {
+            ...now.current,
+            dist: e.nativeEvent.touches.length >= 2 ? distance(e) : 0,
+          };
+        },
+        onPanResponderMove: (e, g) => {
+          const base = start.current;
+          let nextScale = base.scale;
+          if (e.nativeEvent.touches.length >= 2) {
+            if (!base.dist) {
+              start.current = { ...now.current, dist: distance(e) };
+              return;
+            }
+            nextScale = (base.scale * distance(e)) / base.dist;
+          }
+          apply({ scale: nextScale, x: base.x + g.dx, y: base.y + g.dy });
+        },
+        onPanResponderRelease: settle,
+        onPanResponderTerminate: settle,
+        onPanResponderTerminationRequest: () => false,
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [width, height, zoomed],
+  );
+
+  const zoomBy = (factor: number) => {
+    apply({
+      scale: now.current.scale * factor,
+      x: now.current.x * factor,
+      y: now.current.y * factor,
+    });
+    settle();
+  };
+
+  return (
+    <View style={[controls.frame, { width, height }]}>
+      <Animated.View
+        {...responder.panHandlers}
+        style={{
+          width,
+          height,
+          transform: [
+            { translateX: livePan.x },
+            { translateY: livePan.y },
+            { scale: liveScale },
+          ],
+        }}
+      >
+        {children(zoom)}
+      </Animated.View>
+      <View style={[controls.box, controlsStyle]}>
+        <TouchableOpacity
+          style={controls.btn}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="지도 크게"
+          onPress={() => zoomBy(STEP)}
+        >
+          <PlusIcon size={22} color={colors.text} />
+        </TouchableOpacity>
+        <View style={controls.line} />
+        <TouchableOpacity
+          style={controls.btn}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="지도 작게"
+          disabled={!zoomed}
+          onPress={() => zoomBy(1 / STEP)}
+        >
+          <MinusIcon
+            size={22}
+            color={zoomed ? colors.text : colors.textTertiary}
+          />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+const controls = StyleSheet.create({
+  frame: { overflow: 'hidden' },
+  box: {
+    position: 'absolute',
+    right: 12,
+    bottom: 12,
+    borderRadius: 12,
+    backgroundColor: colors.white,
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+  },
+  btn: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  line: { height: 1, backgroundColor: colors.border },
+});
+
+export default ZoomableView;

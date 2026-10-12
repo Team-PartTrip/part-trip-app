@@ -13,7 +13,7 @@ export const commentEditStyles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  back: { fontSize: 24, lineHeight: 28, fontWeight: '700', color: colors.text },
+  back: {},
   headerTitle: {
     flex: 1,
     textAlign: 'center',
@@ -84,7 +84,7 @@ export const commentEditStyles = StyleSheet.create({
   primaryBtn: {
     height: 54,
     borderRadius: 12,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
     alignItems: 'center',
     justifyContent: 'center',
   },

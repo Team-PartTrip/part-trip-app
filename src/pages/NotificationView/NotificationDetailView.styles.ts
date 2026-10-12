@@ -6,7 +6,7 @@ export const notificationDetailStyles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
   content: { paddingBottom: 32 },
 
-  back: { marginTop: 12, paddingHorizontal: 24, fontSize: 24, fontWeight: '700', color: colors.text },
+  back: { marginTop: 12, paddingHorizontal: 24 },
   titleRow: {
     marginTop: 16,
     paddingHorizontal: 24,
@@ -20,6 +20,8 @@ export const notificationDetailStyles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 12,
     backgroundColor: colors.tint,
+    flexDirection: 'row',
+    gap: 4,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -55,7 +57,7 @@ export const notificationDetailStyles = StyleSheet.create({
     marginHorizontal: 24,
     height: 50,
     borderRadius: 14,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
     alignItems: 'center',
     justifyContent: 'center',
   },

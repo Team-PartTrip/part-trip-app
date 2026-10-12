@@ -7,6 +7,7 @@ export const recordMapStyles = StyleSheet.create({
 
   // 지도 자리. 지도 SDK 를 붙이기 전까지 격자 + 육지 모양으로 대신한다
   map: { flex: 1, backgroundColor: colors.tint, overflow: 'hidden' },
+  mapView: StyleSheet.absoluteFill,
   gridLine: { position: 'absolute', backgroundColor: colors.white, opacity: 0.7 },
   gridRow: { left: 0, right: 0, height: 1 },
   gridCol: { top: 0, bottom: 0, width: 1 },
@@ -25,7 +26,7 @@ export const recordMapStyles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#0d3366',
@@ -64,7 +65,7 @@ export const recordMapStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  circleBtnText: { fontSize: 16, fontWeight: '600', color: colors.text },
+  circleBtnText: {},
   placePill: {
     height: 40,
     paddingHorizontal: 20,
@@ -126,11 +127,10 @@ export const recordMapStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  thumbIcon: { fontSize: 18 },
   rowBody: { flex: 1, marginLeft: 12 },
   rowTitle: { fontSize: 15, fontWeight: '600', color: colors.text },
   rowMeta: { marginTop: 2, fontSize: 12, color: colors.textSecondary },
-  chevron: { fontSize: 16, fontWeight: '600', color: colors.textTertiary },
+  chevron: {},
 
   empty: { paddingVertical: 40, alignItems: 'center', gap: 6 },
   emptyText: { fontSize: 15, fontWeight: '600', color: colors.text },

@@ -9,8 +9,11 @@ const META: Record<NotificationType, { badge: string; color: ColorValue }> = {
   VOTE_REMINDER: { badge: '투표', color: colors.accent },
   GROUP_INVITED: { badge: '그룹', color: colors.primary },
   GROUP_INVITE_ACCEPTED: { badge: '그룹', color: colors.success },
-  COUNTRY_ACQUIRED: { badge: '국가', color: colors.primary },
+  COUNTRY_ACQUIRED: { badge: '지역', color: colors.primary },
+  REGION_VISITED: { badge: '지역', color: colors.primary },
   TRIP_CARD_CREATED: { badge: '여행카드', color: colors.accent },
+  TRIP_DAY_BEFORE: { badge: '출발 전날', color: colors.primary },
+  TODAY_SCHEDULE: { badge: '오늘 일정', color: colors.success },
 };
 
 export function metaOf(type: NotificationType) {

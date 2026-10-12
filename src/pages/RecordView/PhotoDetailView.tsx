@@ -1,18 +1,23 @@
 import React, { useCallback, useState } from 'react';
 import {
   View,
-  Text,
   ScrollView,
   TouchableOpacity,
   Modal,
   Image,
   ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Text } from '../../shared/ui/Text';
+import {
+  SafeAreaProvider,
+  SafeAreaView,
+} from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { photoDetailStyles as s } from './PhotoDetailView.styles';
 import { getTripCard, TimelineItem } from '../../entities/record/api';
 import { toImageUrl } from '../../shared/api/image';
+import { ChevronLeftIcon, MoreIcon, PinIcon } from '../../shared/ui/icons';
+import colors from '../../shared/tokens/colors';
 
 interface Props {
   tripCardId: number;
@@ -22,6 +27,8 @@ interface Props {
   /** 코멘트 작성(D4) · 수정(D5) */
   onWriteComment?: (photo: TimelineItem) => void;
   onEditComment?: (photo: TimelineItem) => void;
+  /** 촬영 위치 · 날짜 직접 지정 */
+  onLocate?: (photo: TimelineItem) => void;
   /** 사진 삭제(D6) */
   onDeletePhotos?: () => void;
 }
@@ -40,6 +47,7 @@ const PhotoDetailView: React.FC<Props> = ({
   onBack,
   onWriteComment,
   onEditComment,
+  onLocate,
   onDeletePhotos,
 }) => {
   const [photos, setPhotos] = useState<TimelineItem[]>([]);
@@ -93,7 +101,9 @@ const PhotoDetailView: React.FC<Props> = ({
     return (
       <SafeAreaView edges={['top']} style={s.safeArea}>
         <TouchableOpacity style={s.circleBtn} activeOpacity={0.8} onPress={onBack}>
-          <Text style={s.circleBtnText}>‹</Text>
+          <View style={s.circleBtnText}>
+            <ChevronLeftIcon size={18} color={colors.textOnPrimary} />
+          </View>
         </TouchableOpacity>
         <View style={s.blankBody}>
           <Text style={s.blankText}>아직 남긴 사진이 없어요</Text>
@@ -103,6 +113,11 @@ const PhotoDetailView: React.FC<Props> = ({
   }
   const comment = photo.comment ?? '';
   const hasComment = comment.length > 0;
+  const canLocate =
+    'locationSource' in photo &&
+    (photo.locationSource !== 'EXIF' || photo.takenAtSource !== 'EXIF');
+  const locateLabel =
+    photo.type === 'NO_INFO_PHOTO' ? '위치 지정' : '위치 · 날짜 다시 고르기';
 
   const openMenu = (action: () => void) => {
     setMenuOpen(false);
@@ -118,7 +133,9 @@ const PhotoDetailView: React.FC<Props> = ({
             activeOpacity={0.8}
             onPress={onBack}
           >
-            <Text style={s.circleBtnText}>‹</Text>
+            <View style={s.circleBtnText}>
+              <ChevronLeftIcon size={18} color={colors.textOnPrimary} />
+            </View>
           </TouchableOpacity>
           <Text style={s.counter}>
             {index + 1} / {photos.length}
@@ -128,7 +145,9 @@ const PhotoDetailView: React.FC<Props> = ({
             activeOpacity={0.8}
             onPress={() => setMenuOpen(true)}
           >
-            <Text style={s.circleBtnText}>⋯</Text>
+            <View style={s.circleBtnText}>
+              <MoreIcon size={20} color={colors.textOnPrimary} />
+            </View>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -172,8 +191,25 @@ const PhotoDetailView: React.FC<Props> = ({
         <Text style={s.title}>{hasComment ? comment : '사진'}</Text>
         <Text style={s.meta}>
           {formatTakenAt(photo.takenAt)}
-          {photo.type === 'NO_INFO_PHOTO' ? '  ·  위치 정보 없음' : ''}
+          {photo.type === 'NO_INFO_PHOTO'
+            ? '  ·  위치 정보 없음'
+            : photo.placeName
+            ? `  ·  ${photo.placeName}`
+            : photo.locationSource === 'MANUAL'
+            ? '  ·  직접 고른 위치'
+            : ''}
         </Text>
+        {canLocate && (
+          <TouchableOpacity
+            style={s.locateBtn}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            onPress={() => onLocate?.(photo)}
+          >
+            <PinIcon size={16} color={colors.primary} />
+            <Text style={s.locateText}>{locateLabel}</Text>
+          </TouchableOpacity>
+        )}
 
         <Text style={s.label}>코멘트</Text>
         <View style={s.commentRow}>
@@ -201,6 +237,7 @@ const PhotoDetailView: React.FC<Props> = ({
         animationType="fade"
         onRequestClose={() => setMenuOpen(false)}
       >
+        <SafeAreaProvider>
         <TouchableOpacity
           style={s.overlay}
           activeOpacity={1}
@@ -228,6 +265,7 @@ const PhotoDetailView: React.FC<Props> = ({
             </TouchableOpacity>
           </SafeAreaView>
         </TouchableOpacity>
+        </SafeAreaProvider>
       </Modal>
     </View>
   );

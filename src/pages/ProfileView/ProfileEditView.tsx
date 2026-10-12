@@ -1,30 +1,30 @@
 import React, { useEffect, useState } from 'react';
 import {
   View,
-  Text,
   Image,
   ScrollView,
-  TextInput,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { Text, TextInput } from '../../shared/ui/Text';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { profileEditStyles as s } from './ProfileEditView.styles';
 import { getMyProfile, updateProfile } from '../../entities/profile/api';
 import { uploadImage, toImageUrl } from '../../shared/api/image';
 
+import { SafeAreaView } from 'react-native-safe-area-context';
+import ScreenHeader from '../../shared/ui/ScreenHeader';
 const DEFAULT_AVATAR = require('../../shared/assets/images/profile-character.jpg');
 
 interface Props {
   onConfirm?: () => void;
+  onBack?: () => void;
 }
 
-const ProfileEditView: React.FC<Props> = ({
-  onConfirm,
-}) => {
+const ProfileEditView: React.FC<Props> = ({ onConfirm, onBack }) => {
   const [nickname, setNickname] = useState('');
   const [imgUrl, setImgUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -123,6 +123,9 @@ const ProfileEditView: React.FC<Props> = ({
 
   return (
     <View style={s.safeArea}>
+      <SafeAreaView edges={['top']}>
+        <ScreenHeader title="프로필 수정" onBack={onBack} />
+      </SafeAreaView>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -173,7 +176,6 @@ const ProfileEditView: React.FC<Props> = ({
               placeholder="닉네임"
               placeholderTextColor="#aab4be"
             />
-
           </View>
 
           <TouchableOpacity

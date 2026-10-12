@@ -1,12 +1,12 @@
 import React, { useCallback, useState } from 'react';
 import {
   View,
-  Text,
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { Text } from '../../shared/ui/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { notificationListStyles as s } from './NotificationListView.styles';
@@ -18,10 +18,12 @@ import {
   Notification,
   NotificationCategory,
 } from '../../entities/notification/api';
+import { ChevronLeftIcon } from '../../shared/ui/icons';
+import colors from '../../shared/tokens/colors';
 
 const FILTERS: { key: 'ALL' | NotificationCategory; label: string }[] = [
   { key: 'ALL', label: '전체' },
-  { key: 'VOTE', label: '투표' },
+  { key: 'VOTE', label: '플래너' },
   { key: 'RECORD', label: '기록' },
 ];
 
@@ -101,7 +103,7 @@ const NotificationListView: React.FC<Props> = ({ onBack, onOpen }) => {
       await markAllAsRead();
       setItems(prev => prev.map(n => ({ ...n, read: true })));
     } catch (e: any) {
-      Alert.alert('실패', e?.message ?? '모두 읽음 처리에 실패했습니다.');
+      Alert.alert('읽음 처리를 못 했어요', e?.message ?? '잠시 후 다시 시도해주세요.');
     }
   };
 
@@ -128,7 +130,9 @@ const NotificationListView: React.FC<Props> = ({ onBack, onOpen }) => {
       <ScrollView contentContainerStyle={s.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={s.headerRow}>
           <TouchableOpacity onPress={onBack} hitSlop={12}>
-            <Text style={s.back}>‹</Text>
+            <View style={s.back}>
+              <ChevronLeftIcon size={22} color={colors.text} />
+            </View>
           </TouchableOpacity>
         </View>
         <View style={s.headerRow}>
@@ -177,7 +181,14 @@ const NotificationListView: React.FC<Props> = ({ onBack, onOpen }) => {
                     onPress={() => handleOpen(n)}
                   >
                     <View style={[s.badge, { backgroundColor: meta.color }]}>
-                      <Text style={s.badgeText}>{meta.badge}</Text>
+                      <Text
+                        style={s.badgeText}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                        maxFontSizeMultiplier={1}
+                      >
+                        {meta.badge}
+                      </Text>
                     </View>
                     <View style={s.cardBody}>
                       <Text

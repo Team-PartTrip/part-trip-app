@@ -29,6 +29,7 @@ export const placeDetailStyles = StyleSheet.create({
     backgroundColor: colors.tint,
   },
   chipText: { fontSize: 12, fontWeight: '600', color: colors.primary },
+  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   rating: { fontSize: 13, fontWeight: '600', color: colors.textSecondary },
 
   address: {
@@ -44,11 +45,29 @@ export const placeDetailStyles = StyleSheet.create({
     marginTop: 16,
   },
 
+  access: {
+    marginTop: 24,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  accessTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
+  accessRow: { flexDirection: 'row', gap: 10, marginTop: 14 },
+  accessBody: { flex: 1 },
+  accessLabel: { fontSize: 15, fontWeight: '600', color: colors.text },
+  accessText: {
+    marginTop: 2,
+    fontSize: 14,
+    lineHeight: 20,
+    color: colors.textSecondary,
+  },
+  accessSource: { marginTop: 16, fontSize: 11, color: colors.textTertiary },
+
   footer: { paddingHorizontal: 24, backgroundColor: colors.background },
   primaryBtn: {
     height: 52,
     borderRadius: 14,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryFill,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,

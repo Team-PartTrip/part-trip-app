@@ -4,6 +4,7 @@ import type { TokenResponse } from '../../entities/auth/api';
 const ACCESS_KEY = 'parttrip.accessToken';
 const REFRESH_KEY = 'parttrip.refreshToken';
 const PROVIDER_KEY = 'parttrip.provider';
+export const LOCATION_CONSENT_KEY = 'partTrip.locationSharing';
 
 // 로그인·로그아웃마다 올라간다. "누가 쓰고 있는가" 를 가리키는 번호다.
 // 토큰 갱신은 같은 세션이라 올리지 않는다.
@@ -36,13 +37,13 @@ function serialize<T>(job: () => Promise<T>): Promise<T> {
 }
 
 /**
- * 로그인 제공자 저장 ('EMAIL' | 'GOOGLE')
+ * 로그인 제공자 저장 ('GOOGLE' | 'KAKAO')
  *
  * clearTokens 가 이 키도 지우므로 같은 줄에 세운다. 안 그러면 로그인
  * 직후 로그아웃했을 때 저장이 삭제 뒤에 끝나 제공자만 남는다.
  */
 export async function saveProvider(
-  provider: 'EMAIL' | 'GOOGLE',
+  provider: 'GOOGLE' | 'KAKAO',
 ): Promise<void> {
   await serialize(() => AsyncStorage.setItem(PROVIDER_KEY, provider));
 }
@@ -61,6 +62,7 @@ export async function saveTokens(
   await serialize(async () => {
     if (newSession) {
       sessionGeneration += 1;
+      await AsyncStorage.removeItem(LOCATION_CONSENT_KEY);
     } else if (
       options.generation !== undefined &&
       options.generation !== sessionGeneration
@@ -88,6 +90,11 @@ export async function getRefreshToken(): Promise<string | null> {
 export async function clearTokens(): Promise<void> {
   await serialize(async () => {
     sessionGeneration += 1;
-    await AsyncStorage.removeMany([ACCESS_KEY, REFRESH_KEY, PROVIDER_KEY]);
+    await AsyncStorage.removeMany([
+      ACCESS_KEY,
+      REFRESH_KEY,
+      PROVIDER_KEY,
+      LOCATION_CONSENT_KEY,
+    ]);
   });
 }

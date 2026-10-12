@@ -10,7 +10,7 @@ export const recordStyles = StyleSheet.create({
   pageTitle: { flex: 1, fontSize: 24, fontWeight: '700', color: colors.text },
   headerBtn: {
     width: 36,
-    height: 36,
+    minHeight: 48,
     borderRadius: 18,
     marginLeft: 8,
     borderWidth: 1,
@@ -32,7 +32,7 @@ export const recordStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  chipOn: { borderColor: colors.primary, backgroundColor: colors.primary },
+  chipOn: { borderColor: colors.primaryFill, backgroundColor: colors.primaryFill },
   chipText: { fontSize: 11, fontWeight: '500', color: colors.textSecondary },
   chipTextOn: { color: colors.textOnPrimary },
 
@@ -52,7 +52,15 @@ export const recordStyles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: colors.inputBg,
   },
-  stripTile: { flex: 1, backgroundColor: colors.tint },
+  stripCover: { flex: 1 },
+  stripEmpty: {
+    flex: 1,
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    lineHeight: 96,
+    fontSize: 14,
+    color: colors.textTertiary,
+  },
   travelBadge: {
     position: 'absolute',
     top: 12,

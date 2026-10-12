@@ -9,10 +9,6 @@ export const appHeaderStyles = StyleSheet.create({
     paddingBottom: 12,
     backgroundColor: colors.background,
   },
-  logo: {
-    width: 100,
-    height: 24,
-  },
   title: {
     fontSize: 18,
     fontWeight: '800',
