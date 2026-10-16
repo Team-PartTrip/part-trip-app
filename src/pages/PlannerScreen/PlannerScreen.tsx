@@ -30,11 +30,11 @@ import {
 } from '../../entities/planner/types';
 import { ChevronRightIcon } from '../../shared/ui/icons';
 
-type FilterKey = 'ongoing' | 'upcoming' | 'done';
+type FilterKey = 'upcoming' | 'traveling' | 'done';
 
 const FILTERS: { key: FilterKey; label: string }[] = [
-  { key: 'ongoing', label: '진행 중' },
   { key: 'upcoming', label: '예정' },
+  { key: 'traveling', label: '여행 중' },
   { key: 'done', label: '완료' },
 ];
 
@@ -91,16 +91,23 @@ function metaOf(plan: PlannerRow): string {
   return `${plan.joinedMemberCount}/${plan.memberCount} 참여`;
 }
 
-/** 진행 중 = 아직 끝나지 않은 계획, 예정 = 출발 전, 완료 = 끝난 계획 */
-function matches(plan: PlannerRow, filter: FilterKey): boolean {
-  // 여행지·기간을 아직 안 정한 플래너는 끝났다고 볼 수 없다
+/** 세 칸은 겹치지 않는다. 기간을 아직 안 정한 계획은 예정에 둔다 */
+export function matches(
+  plan: Pick<PlannerListItem, 'status' | 'startDate' | 'endDate'>,
+  filter: FilterKey,
+  now = today(),
+): boolean {
   const isDone =
-    plan.status === 'DONE' || (!!plan.endDate && plan.endDate < today());
+    plan.status === 'DONE' || (!!plan.endDate && plan.endDate < now);
+  const isTraveling =
+    !isDone &&
+    (plan.status === 'TRAVELING' ||
+      (!!plan.startDate && plan.startDate <= now));
   switch (filter) {
-    case 'ongoing':
-      return !isDone;
+    case 'traveling':
+      return isTraveling;
     case 'upcoming':
-      return !isDone && !!plan.startDate && plan.startDate > today();
+      return !isDone && !isTraveling;
     default:
       return isDone;
   }
@@ -112,7 +119,7 @@ interface Props {
 }
 
 const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
-  const [filter, setFilter] = useState<FilterKey>('ongoing');
+  const [filter, setFilter] = useState<FilterKey>('upcoming');
   const [rows, setRows] = useState<PlannerRow[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
