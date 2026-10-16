@@ -294,7 +294,8 @@ const GuardianView: React.FC<Props> = ({ onBack, onOpenSenior }) => {
         <Text style={s.lead}>가족에게 받은 6자리 코드를 넣어주세요.</Text>
         <View style={[s.acceptRow, s.locationBtn]}>
           <TextInput
-            style={s.codeInput}
+            // 글자 간격은 입력한 코드에만 준다. 안내 문구까지 벌어지면 읽기 어렵다
+            style={[s.codeInput, !!code && s.codeInputFilled]}
             placeholder="코드 6자리"
             placeholderTextColor={colors.placeholder}
             value={code}

@@ -100,9 +100,9 @@ export const guardianStyles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 22,
     fontWeight: '700',
-    letterSpacing: 4,
     color: colors.textPrimary,
   },
+  codeInputFilled: { letterSpacing: 4 },
   acceptRow: { flexDirection: 'row', gap: 8 },
   acceptBtn: {
     minHeight: 54,
