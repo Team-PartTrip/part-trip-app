@@ -6,25 +6,32 @@ export const tripCardDetailStyles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
   content: { paddingBottom: 32 },
 
-  back: {
-    paddingHorizontal: 24,
-    paddingTop: 4,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    backgroundColor: colors.background,
   },
-  titleBar: {
-    height: 44,
-    marginTop: 8,
-    backgroundColor: colors.white,
+  back: {
+    width: 48,
+    height: 48,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  titleBarText: { fontSize: 15, fontWeight: '600', color: colors.text },
+  headerTitle: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 17,
+    fontWeight: '600',
+    color: colors.text,
+  },
 
   timeline: { paddingTop: 8, paddingBottom: 8 },
   // 왼쪽을 세로로 잇는 선. 날짜 구분 띠는 이 선 위로 지나간다
   rail: {
     position: 'absolute',
     left: 26,
-    top: 6,
+    top: 8,
     bottom: 6,
     width: 3,
     borderRadius: 2,

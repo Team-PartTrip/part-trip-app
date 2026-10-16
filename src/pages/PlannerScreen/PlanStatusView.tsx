@@ -439,17 +439,25 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
 
   return (
     <View style={s.safeArea}>
+      {/* 뒤로 가기는 스크롤해도 남긴다. 상태바 아래도 이 띠가 가린다 */}
+      <SafeAreaView edges={['top']} style={s.topBar}>
+        <TouchableOpacity
+          onPress={onBack}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel="뒤로 가기"
+        >
+          <View style={s.back}>
+            <ChevronLeftIcon size={24} color={colors.text} />
+          </View>
+        </TouchableOpacity>
+      </SafeAreaView>
       <ScrollView
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
         scrollEnabled={!scrollLocked}
       >
-        <SafeAreaView edges={['top']} style={s.header}>
-          <TouchableOpacity onPress={onBack} hitSlop={12}>
-            <View style={s.back}>
-              <ChevronLeftIcon size={24} color={colors.text} />
-            </View>
-          </TouchableOpacity>
+        <View style={s.header}>
           <View style={s.titleRow}>
             <Text style={s.title} numberOfLines={1}>
               {plan.title}
@@ -471,7 +479,7 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
               : ''}
             {members.length || plan.joinedMemberCount}/{plan.memberCount}명
           </Text>
-        </SafeAreaView>
+        </View>
 
         {/* 혼자 여행이면 초대할 사람이 없다 */}
         {plan.memberCount > 1 && (

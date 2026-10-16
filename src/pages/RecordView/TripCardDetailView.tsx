@@ -107,22 +107,25 @@ const TripCardDetailView: React.FC<Props> = ({
 
   return (
     <View style={s.safeArea}>
+      <SafeAreaView edges={['top']} style={s.header}>
+        <TouchableOpacity
+          style={s.back}
+          onPress={onBack}
+          accessibilityRole="button"
+          accessibilityLabel="뒤로 가기"
+        >
+          <ChevronLeftIcon size={22} color={colors.text} />
+        </TouchableOpacity>
+        <Text style={s.headerTitle} numberOfLines={1}>
+          {place} 여행카드
+        </Text>
+        <View style={s.back} />
+      </SafeAreaView>
+
       <ScrollView
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
       >
-        <SafeAreaView edges={['top']}>
-          <TouchableOpacity onPress={onBack} hitSlop={12}>
-            <View style={s.back}>
-              <ChevronLeftIcon size={22} color={colors.text} />
-            </View>
-          </TouchableOpacity>
-        </SafeAreaView>
-
-        <View style={s.titleBar}>
-          <Text style={s.titleBarText}>{place} 여행팟</Text>
-        </View>
-
         {loading ? (
           <ActivityIndicator style={s.loading} />
         ) : entries.length === 0 ? (

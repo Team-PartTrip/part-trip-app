@@ -116,6 +116,18 @@ const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
 
   return (
     <View style={s.safeArea}>
+      <SafeAreaView edges={['top']} style={s.topBar}>
+        <TouchableOpacity
+          onPress={onBack}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel="뒤로 가기"
+        >
+          <View style={s.back}>
+            <ChevronLeftIcon size={22} color={colors.text} />
+          </View>
+        </TouchableOpacity>
+      </SafeAreaView>
       <KeyboardAvoidingView
         style={s.safeArea}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -125,24 +137,17 @@ const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <SafeAreaView edges={['top']}>
-            <TouchableOpacity onPress={onBack} hitSlop={12}>
-              <View style={s.back}>
-                <ChevronLeftIcon size={22} color={colors.text} />
-              </View>
-            </TouchableOpacity>
-            <Text style={s.title}>사진 · 코멘트 추가</Text>
-            <Text style={s.desc}>
-              여행 카드는 여행 시작과 함께 자동으로 만들어져요
-            </Text>
-            {card && (
-              <View style={s.tripBar}>
-                <Text style={s.tripBarText}>
-                  {title} · {formatDotDate(card.startDate)} 시작
-                </Text>
-              </View>
-            )}
-          </SafeAreaView>
+          <Text style={s.title}>사진 · 코멘트 추가</Text>
+          <Text style={s.desc}>
+            여행카드는 여행 시작과 함께 자동으로 만들어져요
+          </Text>
+          {card && (
+            <View style={s.tripBar}>
+              <Text style={s.tripBarText}>
+                {title} · {formatDotDate(card.startDate)} 시작
+              </Text>
+            </View>
+          )}
 
           <Text style={s.label}>사진 선택</Text>
           <View style={s.grid}>

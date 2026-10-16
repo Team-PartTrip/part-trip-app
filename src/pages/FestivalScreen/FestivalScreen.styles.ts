@@ -7,9 +7,15 @@ export const festivalStyles = StyleSheet.create({
   // 탭바가 화면 위에 떠 있다. 32 로는 마지막 카드가 탭바에 가린다.
   content: { paddingBottom: 96 },
 
-  header: { paddingHorizontal: 24, paddingTop: 4 },
+  topBar: {
+    paddingHorizontal: 24,
+    paddingTop: 4,
+    paddingBottom: 4,
+    backgroundColor: colors.background,
+  },
+  header: { paddingHorizontal: 24 },
   back: {},
-  title: { marginTop: 8, fontSize: 24, fontWeight: '700', color: colors.text },
+  title: { marginTop: 4, fontSize: 24, fontWeight: '700', color: colors.text },
   subtitle: { marginTop: 8, fontSize: 12, color: colors.textSecondary },
 
   // 달력
