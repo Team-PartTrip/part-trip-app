@@ -36,6 +36,8 @@ import {
   ROUTE_STATUS_MESSAGE,
 } from '../../entities/planner/types';
 import type { PlaceCategory } from '../../entities/planner/types';
+import { formatNights } from '../../entities/planner/types';
+import { formatTripRange } from '../../entities/record/types';
 import colors from '../../shared/tokens/colors';
 import DandiWordmark from '../../shared/ui/DandiWordmark';
 import { CheckIcon, RefreshIcon, StarIcon } from '../../shared/ui/icons';
@@ -134,25 +136,6 @@ function heroImageOf(places: TourPlace[]): string | null {
   const picked =
     withImage.find(place => place.category === '명소') ?? withImage[0];
   return picked?.imageUrl ? toImageUrl(picked.imageUrl) : null;
-}
-
-// "2026-08-23" + "2026-08-27" → "2026.08.23 – 08.27"
-// 해가 바뀌면 끝 날짜에도 연도를 남긴다 → "2026.06.10 – 2027.03.27"
-function formatRange(start: string, end: string): string {
-  const from = start.split('-');
-  const to = end.split('-');
-  const sameYear = from[0] === to[0];
-  return `${from.join('.')} – ${(sameYear ? to.slice(1) : to).join('.')}`;
-}
-
-// "3박 4일"
-function formatNights(start: string, end: string): string {
-  const ms = new Date(end).getTime() - new Date(start).getTime();
-  if (Number.isNaN(ms)) {
-    return '';
-  }
-  const nights = Math.max(0, Math.round(ms / 86_400_000));
-  return `${nights}박 ${nights + 1}일`;
 }
 
 interface MainViewProps {
@@ -368,8 +351,7 @@ const MainView: React.FC<MainViewProps> = ({
                 {nights ? `${dday.cityName} · ${nights}` : dday.cityName}
               </Text>
               <Text style={s.tripMeta}>
-                {formatRange(dday.startDate, dday.endDate)}
-                {dday.headcount ? ` · ${dday.headcount}명` : ''}
+                {formatTripRange(dday.startDate, dday.endDate)}
               </Text>
             </View>
           </SafeAreaView>

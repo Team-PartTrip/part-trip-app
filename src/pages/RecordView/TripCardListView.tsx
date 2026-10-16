@@ -19,6 +19,7 @@ import {
   TripCardSummary,
 } from '../../entities/record/api';
 import { formatTripRange } from '../../entities/record/types';
+import { formatNights } from '../../entities/planner/types';
 import { ChevronLeftIcon, StarIcon } from '../../shared/ui/icons';
 import colors from '../../shared/tokens/colors';
 
@@ -27,13 +28,8 @@ const PAGE_WIDTH = Dimensions.get('window').width;
 // 목록 응답에는 사진 수만 있다. 동행 인원·방문 장소·이동 거리는 서버가 주지 않아
 // 지어내지 않고 뺐다. 대신 날짜로 계산되는 여행 기간을 보여준다.
 function statsOf(card: TripCardSummary): { label: string; value: string }[] {
-  const ms =
-    new Date(card.endDate).getTime() - new Date(card.startDate).getTime();
-  const nights = Number.isNaN(ms)
-    ? 0
-    : Math.max(0, Math.round(ms / 86_400_000));
   return [
-    { label: '여행 기간', value: `${nights}박 ${nights + 1}일` },
+    { label: '여행 기간', value: formatNights(card.startDate, card.endDate) },
     { label: '남긴 사진', value: `${card.photoCount ?? 0}장` },
   ];
 }

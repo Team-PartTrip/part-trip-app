@@ -14,6 +14,9 @@ export function formatShortDate(date: string): string {
 
 /** 시작·종료를 "2026.08.23 – 08.27" 로. 해가 바뀌면 뒤에도 연도를 붙인다 */
 export function formatTripRange(startDate: string, endDate: string): string {
+  if (startDate === endDate) {
+    return formatDotDate(startDate);
+  }
   const tail =
     startDate.slice(0, 4) === endDate.slice(0, 4)
       ? formatShortDate(endDate)

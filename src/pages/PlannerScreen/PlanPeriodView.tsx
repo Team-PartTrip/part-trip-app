@@ -287,9 +287,13 @@ const PlanPeriodView: React.FC<Props> = ({ draft, onBack, onNext }) => {
 
         {ready && (
           <Text style={s.summary}>
-            {labelOf(startDate, false)} –{' '}
-            {labelOf(endDate, startDate.slice(0, 7) === endDate.slice(0, 7))} ·{' '}
-            {formatNights(startDate, endDate)}
+            {startDate === endDate
+              ? labelOf(startDate, false)
+              : `${labelOf(startDate, false)} – ${labelOf(
+                  endDate,
+                  startDate.slice(0, 7) === endDate.slice(0, 7),
+                )}`}{' '}
+            · {formatNights(startDate, endDate)}
           </Text>
         )}
       </ScrollView>
