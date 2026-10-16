@@ -365,7 +365,8 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
           </Text>
         )}
 
-        {chips.length > 0 && (
+        {/* 분류가 하나뿐이면 고를 게 없다 */}
+        {chips.length > 1 && (
           <View style={s.chipRow}>
             {chips.map(category => {
               const on = categories.includes(category);

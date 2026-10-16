@@ -75,8 +75,9 @@ export const festivalStyles = StyleSheet.create({
 
   tripRange: {
     marginTop: 12,
+    marginBottom: 12,
     paddingHorizontal: 24,
-    fontSize: 11,
+    fontSize: 13,
     fontWeight: '500',
     color: colors.primary,
   },
@@ -86,7 +87,7 @@ export const festivalStyles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 8,
     paddingHorizontal: 24,
-    marginTop: 16,
+    marginTop: 4,
     marginBottom: 12,
   },
   chip: {
