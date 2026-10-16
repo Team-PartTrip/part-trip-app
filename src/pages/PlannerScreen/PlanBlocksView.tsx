@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  BackHandler,
 } from 'react-native';
 import { Text, TextInput } from '../../shared/ui/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -101,6 +102,14 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
     !!pref && pref.usesWheelchair == null && pref.limitedWalking == null;
   // 버튼 disabled 는 렌더 값이라 연타를 다 막지 못한다
   const generatingRef = useRef(false);
+
+  useEffect(() => {
+    if (!generating) {
+      return;
+    }
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
+    return () => sub.remove();
+  }, [generating]);
 
   const loadBlocks = useCallback(() => {
     setBlocksFailed(false);
@@ -363,7 +372,11 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
 
   return (
     <View style={s.safeArea}>
-      <WizardHeader title="여행 지침" step={3} onBack={onBack} />
+      <WizardHeader
+        title="여행지와 취향"
+        step={3}
+        onBack={generating ? undefined : onBack}
+      />
 
       <ScrollView
         contentContainerStyle={s.content}

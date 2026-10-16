@@ -17,7 +17,14 @@ interface Props {
 /** 여행 만들기 마법사(C2 · C3)의 공통 상단 */
 const WizardHeader: React.FC<Props> = ({ title, step, total = 3, onBack }) => (
   <SafeAreaView edges={['top']} style={s.header}>
-    <TouchableOpacity onPress={onBack} hitSlop={12}>
+    <TouchableOpacity
+      onPress={onBack}
+      disabled={!onBack}
+      style={!onBack && s.backOff}
+      hitSlop={12}
+      accessibilityRole="button"
+      accessibilityLabel="뒤로 가기"
+    >
       <View style={s.back}>
         <ChevronLeftIcon size={24} color={colors.text} />
       </View>
