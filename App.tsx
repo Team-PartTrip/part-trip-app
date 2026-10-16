@@ -40,8 +40,6 @@ import TripCardListView from './src/pages/RecordView/TripCardListView';
 import TripCardDetailView from './src/pages/RecordView/TripCardDetailView';
 import TripCardEditView from './src/pages/RecordView/TripCardEditView';
 import TripCardDeleteView from './src/pages/RecordView/TripCardDeleteView';
-import RecordEditView from './src/pages/RecordView/RecordEditView';
-import RecordCompleteView from './src/pages/RecordView/RecordCompleteView';
 import ProfileEditView from './src/pages/ProfileView/ProfileEditView';
 import GuardianView from './src/pages/GuardianView/GuardianView';
 import TravelPreferenceView from './src/pages/TravelPreferenceView/TravelPreferenceView';
@@ -76,8 +74,6 @@ export type RootStackParamList = {
   TripCardDetail: { tripCardId: number };
   TripCardEdit: { tripCardId: number };
   TripCardDelete: undefined;
-  RecordEdit: { id?: string };
-  RecordComplete: undefined;
   Profile: undefined;
   ProfileEdit: undefined;
   Guardian: undefined;
@@ -92,8 +88,6 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const AUTH_ROUTES = [
   'Launch',
   'Login',
-  'RecordEdit',
-  'RecordComplete',
   'RegionMap',
   'PlanGroup',
   'PlanPeriod',
@@ -500,23 +494,6 @@ function App() {
                   <TripCardDeleteView
                     onBack={() => navigation.goBack()}
                     onDeleted={() => navigation.goBack()}
-                  />
-                )}
-              </Stack.Screen>
-
-              <Stack.Screen name="RecordEdit">
-                {({ navigation }) => (
-                  <RecordEditView
-                    onBack={() => navigation.goBack()}
-                    onDone={() => navigation.navigate('RecordComplete')}
-                  />
-                )}
-              </Stack.Screen>
-              <Stack.Screen name="RecordComplete">
-                {({ navigation }) => (
-                  <RecordCompleteView
-                    onConfirm={() => navigation.navigate('Record')}
-                    onHome={() => navigation.navigate('Main')}
                   />
                 )}
               </Stack.Screen>
