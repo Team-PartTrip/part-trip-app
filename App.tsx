@@ -555,6 +555,7 @@ function App() {
                 {({ navigation }) => (
                   <GuardianView
                     onBack={() => navigation.goBack()}
+                    onEditProfile={() => navigation.navigate('ProfileEdit')}
                     onOpenSenior={senior =>
                       navigation.navigate('Senior', {
                         seniorUserId: senior.userId,
