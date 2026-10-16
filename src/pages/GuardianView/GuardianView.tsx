@@ -308,12 +308,14 @@ const GuardianView: React.FC<Props> = ({
                 여행하는 동안, 앱을 켜 둔 동안만 1~2분마다 보내요
               </Text>
             </View>
-            <Switch
-              value={sharing}
-              onValueChange={toggleSharing}
-              trackColor={{ true: colors.primary }}
-              accessibilityLabel="여행 중 위치 알려주기"
-            />
+            <View style={s.switchBox}>
+              <Switch
+                value={sharing}
+                onValueChange={toggleSharing}
+                trackColor={{ true: colors.primary }}
+                accessibilityLabel="여행 중 위치 알려주기"
+              />
+            </View>
           </View>
         )}
 

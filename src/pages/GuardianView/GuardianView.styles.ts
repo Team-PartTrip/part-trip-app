@@ -78,6 +78,12 @@ export const guardianStyles = StyleSheet.create({
   rowSub: { marginTop: 2, fontSize: 13, color: colors.textSecondary },
   unlink: { fontSize: 15, fontWeight: '600', color: colors.danger },
 
+  switchBox: {
+    width: 64,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   shareRow: {
     minHeight: 72,
     marginTop: 6,
