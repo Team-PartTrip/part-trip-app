@@ -439,7 +439,7 @@ const OriginRow: React.FC<{ origin: Origin }> = ({ origin }) => {
       </View>
       <View style={s.rowBody}>
         <Text style={s.rowSub}>
-          0번째 · {origin.lodging ? '숙소에서 출발' : '출발'}
+          {origin.lodging ? '숙소에서 출발' : '출발'}
         </Text>
         <Text style={s.rowTitle}>{origin.name}</Text>
       </View>

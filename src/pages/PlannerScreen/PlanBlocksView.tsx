@@ -567,7 +567,7 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
             accessibilityRole="button"
           >
             <Text style={s.retryText}>
-              지침을 불러오지 못했어요. 다시 불러오기
+              선택지를 불러오지 못했어요. 다시 불러오기
             </Text>
           </TouchableOpacity>
         ) : !blocks ? (
@@ -620,7 +620,7 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
             <Text style={s.primaryText}>
               {city
                 ? `AI로 일정 만들기${
-                    pickedCount > 0 ? ` · 지침 ${pickedCount}개` : ''
+                    pickedCount > 0 ? ` · ${pickedCount}개 반영` : ''
                   }`
                 : '어디로 갈지 먼저 골라주세요'}
             </Text>

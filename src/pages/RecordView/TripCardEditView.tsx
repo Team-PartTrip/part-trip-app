@@ -224,7 +224,7 @@ const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
               <ActivityIndicator color="#fff" />
             ) : (
               <Text style={s.primaryText}>
-                여행 카드에 담기{picked.length > 0 ? ` (${picked.length})` : ''}
+                여행카드에 담기{picked.length > 0 ? ` (${picked.length})` : ''}
               </Text>
             )}
           </TouchableOpacity>

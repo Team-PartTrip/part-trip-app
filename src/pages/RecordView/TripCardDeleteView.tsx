@@ -67,7 +67,7 @@ const TripCardDeleteView: React.FC<Props> = ({ onBack, onDeleted }) => {
 
   const confirm = () =>
     Alert.alert(
-      '여행 카드 삭제',
+      '여행카드 삭제',
       `${selected.length}개를 삭제할까요? 담긴 사진과 코멘트도 함께 지워져요.`,
       [
         { text: '취소', style: 'cancel' },
@@ -106,7 +106,7 @@ const TripCardDeleteView: React.FC<Props> = ({ onBack, onDeleted }) => {
           <ActivityIndicator style={s.loading} />
         ) : cards.length === 0 ? (
           <View style={s.empty}>
-            <Text style={s.emptyText}>지울 여행 카드가 없어요.</Text>
+            <Text style={s.emptyText}>지울 여행카드가 없어요.</Text>
           </View>
         ) : (
           cards.map(card => {

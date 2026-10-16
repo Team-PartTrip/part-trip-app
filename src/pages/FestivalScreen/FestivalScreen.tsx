@@ -46,7 +46,7 @@ export function isOpenDuring(event: Festival, from: string, to: string) {
 
 function periodOf(event: Festival): string {
   return event.endDate && event.endDate !== event.startDate
-    ? `${formatShortDate(event.startDate)} ~ ${formatShortDate(event.endDate)}`
+    ? `${formatShortDate(event.startDate)} – ${formatShortDate(event.endDate)}`
     : formatShortDate(event.startDate);
 }
 
