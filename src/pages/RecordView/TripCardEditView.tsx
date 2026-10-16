@@ -100,8 +100,11 @@ const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
       // 서버는 한 장씩 받는다. 고른 순서대로 올린다.
       // 중간에 실패하면 올라간 사진은 목록에서 빼야 한다.
       // 안 그러면 다시 누를 때 앞의 사진이 한 번 더 올라간다.
+      // 코멘트는 한 장만 고를 때 받는다. 여러 장에 같은 글이 붙지 않게
+      const note =
+        picked.length === 1 ? comment.trim() || undefined : undefined;
       for (const photo of picked) {
-        await addTripCardEntry(tripCardId, photo, comment.trim() || undefined);
+        await addTripCardEntry(tripCardId, photo, note);
         setPicked(prev => prev.filter(item => item.uri !== photo.uri));
       }
       onSaved?.();
@@ -183,21 +186,28 @@ const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
           </Text>
 
           <Text style={s.label}>코멘트</Text>
-          <View style={s.commentBox}>
-            <TextInput
-              style={s.commentInput}
-              value={comment}
-              onChangeText={setComment}
-              placeholder="이 사진에 대해 짧게 남겨보세요"
-              placeholderTextColor="#9aa7b4"
-              maxLength={MAX_LENGTH}
-              multiline
-              textAlignVertical="top"
-            />
-            <Text style={s.counter}>
-              {comment.length} / {MAX_LENGTH}
+          {picked.length > 1 ? (
+            <Text style={s.commentNote}>
+              여러 장을 고르면 코멘트는 사진마다 따로 남겨요. 담은 뒤 사진을
+              눌러 적어주세요.
             </Text>
-          </View>
+          ) : (
+            <View style={s.commentBox}>
+              <TextInput
+                style={s.commentInput}
+                value={comment}
+                onChangeText={setComment}
+                placeholder="이 사진에 대해 짧게 남겨보세요"
+                placeholderTextColor="#9aa7b4"
+                maxLength={MAX_LENGTH}
+                multiline
+                textAlignVertical="top"
+              />
+              <Text style={s.counter}>
+                {comment.length} / {MAX_LENGTH}
+              </Text>
+            </View>
+          )}
         </ScrollView>
 
         <SafeAreaView edges={['bottom']} style={s.footer}>
