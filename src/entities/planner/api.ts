@@ -63,6 +63,7 @@ export function joinPlanner(inviteCode: string): Promise<PlannerJoined> {
 export interface PlannerMember {
   userId: string;
   nickName: string;
+  imgUrl?: string | null;
   role: GroupRole;
   /** ISO-8601 */
   joinedAt: string;

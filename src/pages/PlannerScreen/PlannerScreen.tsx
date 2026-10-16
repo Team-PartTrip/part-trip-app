@@ -289,6 +289,7 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
                           <MemberAvatar
                             key={member.userId}
                             nickname={member.nickName}
+                            imgUrl={member.imgUrl}
                             index={i}
                             style={i > 0 && s.avatarOverlap}
                           />

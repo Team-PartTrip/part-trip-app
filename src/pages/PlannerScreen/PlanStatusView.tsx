@@ -509,7 +509,12 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
             </Text>
             {members.map((member, i) => (
               <View key={member.userId} style={s.row}>
-                <MemberAvatar nickname={member.nickName} index={i} size={36} />
+                <MemberAvatar
+                  nickname={member.nickName}
+                  imgUrl={member.imgUrl}
+                  index={i}
+                  size={36}
+                />
                 <View style={s.rowBody}>
                   <Text style={s.rowTitle}>{member.nickName}</Text>
                   <Text style={s.rowSub}>
