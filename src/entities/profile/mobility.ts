@@ -10,7 +10,11 @@ export const MOBILITY: { value: Mobility; label: string }[] = [
 
 /** 저장된 설정을 칩 선택으로. 아직 안 물었으면 null */
 export function mobilityOf(pref: TravelPreference): Mobility[] | null {
-  if (pref.usesWheelchair == null && pref.limitedWalking == null) {
+  if (
+    pref.usesWheelchair == null &&
+    pref.limitedWalking == null &&
+    pref.canUseStairs
+  ) {
     return null;
   }
   const list: Mobility[] = [];
