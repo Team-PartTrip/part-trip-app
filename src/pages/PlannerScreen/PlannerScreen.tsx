@@ -122,39 +122,38 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
   const [joining, setJoining] = useState(false);
   // 잠금은 ref 로 건다. state 는 화면이 다시 그려져야 바뀐다.
   const joiningRef = useRef(false);
-  useFocusEffect(
-    useCallback(() => {
-      let alive = true;
-      (async () => {
-        setLoading(true);
-        setFailed(false);
-        try {
-          const planners = await getPlanners();
-          // 목록 응답에는 멤버가 없어서 아바타를 그리려면 따로 받아야 한다.
-          // 내 플래너 수만큼이라 병렬로 한 번에 받는다.
-          const members = await Promise.all(
-            planners.map(p => getPlannerMembers(p.plannerId).catch(() => [])),
-          );
-          if (!alive) {
-            return;
-          }
-          setRows(planners.map((p, i) => ({ ...p, members: members[i] })));
-        } catch {
-          if (alive) {
-            setRows(null);
-            setFailed(true);
-          }
-        } finally {
-          if (alive) {
-            setLoading(false);
-          }
+  const load = useCallback(() => {
+    let alive = true;
+    (async () => {
+      setLoading(true);
+      setFailed(false);
+      try {
+        const planners = await getPlanners();
+        // 목록 응답에는 멤버가 없어서 아바타를 그리려면 따로 받아야 한다.
+        // 내 플래너 수만큼이라 병렬로 한 번에 받는다.
+        const members = await Promise.all(
+          planners.map(p => getPlannerMembers(p.plannerId).catch(() => [])),
+        );
+        if (!alive) {
+          return;
         }
-      })();
-      return () => {
-        alive = false;
-      };
-    }, []),
-  );
+        setRows(planners.map((p, i) => ({ ...p, members: members[i] })));
+      } catch {
+        if (alive) {
+          setRows(null);
+          setFailed(true);
+        }
+      } finally {
+        if (alive) {
+          setLoading(false);
+        }
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+  useFocusEffect(load);
 
   // 잘못된 코드 · 이미 참여 · 정원 초과는 모두 서버가 문구까지 준다.
   // 여기서 다시 쓰면 서버가 거절한 진짜 이유를 덮어버린다.
@@ -234,9 +233,14 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
         ) : failed ? (
           <View style={s.empty}>
             <Text style={s.emptyText}>계획을 불러오지 못했어요</Text>
-            <Text style={s.emptyDesc}>
-              네트워크를 확인하고 다시 들어와 주세요.
-            </Text>
+            <Text style={s.emptyDesc}>네트워크를 확인해 주세요.</Text>
+            <TouchableOpacity
+              style={s.retry}
+              accessibilityRole="button"
+              onPress={() => load()}
+            >
+              <Text style={s.retryText}>다시 시도</Text>
+            </TouchableOpacity>
           </View>
         ) : plans.length === 0 ? (
           <View style={s.empty}>

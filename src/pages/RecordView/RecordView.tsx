@@ -37,22 +37,21 @@ const RecordView: React.FC<Props> = ({ onOpenTrip, onOpenTripCards }) => {
   // 기록이 없는 것처럼 보인다.
   const [failed, setFailed] = useState(false);
 
-  useFocusEffect(
-    useCallback(() => {
-      let alive = true;
-      // 다시 들어올 때마다 초기화한다. 안 그러면 한 번 실패한 뒤로는
-      // 정상으로 빈 목록을 받아도 오류 문구가 그대로 남는다.
-      setLoading(true);
-      setFailed(false);
-      getTripCards()
-        .then(list => alive && setAll(list))
-        .catch(() => alive && (setAll([]), setFailed(true)))
-        .finally(() => alive && setLoading(false));
-      return () => {
-        alive = false;
-      };
-    }, []),
-  );
+  const load = useCallback(() => {
+    let alive = true;
+    // 다시 들어올 때마다 초기화한다. 안 그러면 한 번 실패한 뒤로는
+    // 정상으로 빈 목록을 받아도 오류 문구가 그대로 남는다.
+    setLoading(true);
+    setFailed(false);
+    getTripCards()
+      .then(list => alive && setAll(list))
+      .catch(() => alive && (setAll([]), setFailed(true)))
+      .finally(() => alive && setLoading(false));
+    return () => {
+      alive = false;
+    };
+  }, []);
+  useFocusEffect(load);
 
   // 연도 칩은 가지고 있는 여행에서 뽑는다
   const years = Array.from(
@@ -115,9 +114,18 @@ const RecordView: React.FC<Props> = ({ onOpenTrip, onOpenTripCards }) => {
             </Text>
             <Text style={s.emptyDesc}>
               {failed
-                ? '잠시 후 다시 시도해주세요.'
+                ? '네트워크를 확인해 주세요.'
                 : '여행을 시작하면 기록이 여기에 쌓여요.'}
             </Text>
+            {failed && (
+              <TouchableOpacity
+                style={s.retry}
+                accessibilityRole="button"
+                onPress={() => load()}
+              >
+                <Text style={s.retryText}>다시 시도</Text>
+              </TouchableOpacity>
+            )}
           </View>
         ) : (
           cards.map(card => (

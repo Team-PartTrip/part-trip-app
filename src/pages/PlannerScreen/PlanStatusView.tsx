@@ -142,42 +142,41 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
     date: string;
   } | null>(null);
 
-  useFocusEffect(
-    useCallback(() => {
-      let alive = true;
-      (async () => {
-        setLoading(true);
-        try {
-          const detail = await getPlanner(planId);
-          const confirmed = isSchedule(detail.status);
-          const [final, cards, people] = await Promise.all([
-            confirmed ? getConfirmedPlaces(planId).catch(() => null) : null,
-            // 확정 뒤에도 받는다. 이동 경로가 이 카드에만 붙어 온다
-            getSchedule(planId).catch(() => null),
-            // 초대 링크를 보내고 돌아오면 화면이 다시 포커스되며 새로 받는다
-            getPlannerMembers(planId).catch(() => []),
-          ]);
-          if (alive) {
-            setPlan(detail);
-            setSchedule(final?.places ?? null);
-            setDraft(cards);
-            setMembers(people);
-          }
-        } catch {
-          if (alive) {
-            setPlan(null);
-          }
-        } finally {
-          if (alive) {
-            setLoading(false);
-          }
+  const load = useCallback(() => {
+    let alive = true;
+    (async () => {
+      setLoading(true);
+      try {
+        const detail = await getPlanner(planId);
+        const confirmed = isSchedule(detail.status);
+        const [final, cards, people] = await Promise.all([
+          confirmed ? getConfirmedPlaces(planId).catch(() => null) : null,
+          // 확정 뒤에도 받는다. 이동 경로가 이 카드에만 붙어 온다
+          getSchedule(planId).catch(() => null),
+          // 초대 링크를 보내고 돌아오면 화면이 다시 포커스되며 새로 받는다
+          getPlannerMembers(planId).catch(() => []),
+        ]);
+        if (alive) {
+          setPlan(detail);
+          setSchedule(final?.places ?? null);
+          setDraft(cards);
+          setMembers(people);
         }
-      })();
-      return () => {
-        alive = false;
-      };
-    }, [planId]),
-  );
+      } catch {
+        if (alive) {
+          setPlan(null);
+        }
+      } finally {
+        if (alive) {
+          setLoading(false);
+        }
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [planId]);
+  useFocusEffect(load);
 
   // 서버가 경로를 뒤에서 계산한다(CALCULATING). 끝날 때까지 3초마다 다시 받는다
   const polls = useRef(0);
@@ -406,6 +405,13 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
         </TouchableOpacity>
         <View style={s.errorBox}>
           <Text style={s.errorText}>계획을 불러오지 못했어요</Text>
+          <TouchableOpacity
+            style={s.retry}
+            accessibilityRole="button"
+            onPress={() => load()}
+          >
+            <Text style={s.retryText}>다시 시도</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
