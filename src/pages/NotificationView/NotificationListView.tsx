@@ -183,7 +183,7 @@ const NotificationListView: React.FC<Props> = ({ onBack, onOpen }) => {
                     <View style={[s.badge, { backgroundColor: meta.color }]}>
                       <Text
                         style={s.badgeText}
-                        numberOfLines={1}
+                        numberOfLines={2}
                         adjustsFontSizeToFit
                         maxFontSizeMultiplier={1}
                       >
@@ -193,7 +193,7 @@ const NotificationListView: React.FC<Props> = ({ onBack, onOpen }) => {
                     <View style={s.cardBody}>
                       <Text
                         style={[s.cardTitle, n.read && s.cardTitleRead]}
-                        numberOfLines={1}
+                        numberOfLines={2}
                       >
                         {n.body ?? n.title}
                       </Text>
