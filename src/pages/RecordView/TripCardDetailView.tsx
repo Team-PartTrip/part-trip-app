@@ -166,23 +166,31 @@ const TripCardDetailView: React.FC<Props> = ({
                       entry.entryId != null && onOpenPhoto?.(entry.entryId)
                     }
                   >
-                    <View style={s.entryImage}>
-                      {entry.imageUrl ? (
-                        <Image
-                          source={{ uri: toImageUrl(entry.imageUrl) }}
-                          style={s.entryPhoto}
-                        />
-                      ) : (
-                        <Text style={s.entryImageText}>
-                          {entry.type === 'PLACE' ? '방문 장소' : '사진'}
-                        </Text>
-                      )}
-                    </View>
+                    {/* 사진이 없는 방문 장소는 빈 칸을 그리지 않는다 */}
+                    {(entry.imageUrl || entry.type !== 'PLACE') && (
+                      <View style={s.entryImage}>
+                        {entry.imageUrl ? (
+                          <Image
+                            source={{ uri: toImageUrl(entry.imageUrl) }}
+                            style={s.entryPhoto}
+                          />
+                        ) : (
+                          <Text style={s.entryImageText}>사진</Text>
+                        )}
+                      </View>
+                    )}
                     <View style={s.entryInfo}>
                       <Text style={s.entryTitle}>{line.title}</Text>
                       <Text style={s.entrySub}>{line.subtitle}</Text>
                     </View>
-                    <View style={s.entryDot} />
+                    <View
+                      style={[
+                        s.entryDot,
+                        !entry.imageUrl &&
+                          entry.type === 'PLACE' &&
+                          s.entryDotNoImage,
+                      ]}
+                    />
                   </TouchableOpacity>
                 </React.Fragment>
               );

@@ -69,6 +69,7 @@ export const tripCardDetailStyles = StyleSheet.create({
     borderRadius: 7,
     backgroundColor: colors.primaryFill,
   },
+  entryDotNoImage: { top: 19 },
 
   dateBar: {
     height: 36,
