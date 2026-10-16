@@ -191,7 +191,7 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
         answers.avoidFoods = avoidFoods;
       }
       if (pref && mobility) {
-        const next = mobilityAnswers(mobility);
+        const next = mobilityAnswers(mobility, pref);
         if (
           next.usesWheelchair !== pref.usesWheelchair ||
           next.limitedWalking !== pref.limitedWalking ||

@@ -41,10 +41,27 @@ test('채운 값을 그대로 저장하면 원래 설정과 같다', () => {
   ];
   for (const pref of cases) {
     const { usesWheelchair, limitedWalking, canUseStairs } = pref;
-    expect(mobilityAnswers(mobilityOf(pref)!)).toEqual({
+    expect(mobilityAnswers(mobilityOf(pref)!, pref)).toEqual({
       usesWheelchair,
       limitedWalking,
       canUseStairs,
     });
   }
+});
+
+test('계단만 어렵다고 해 둔 사람이 오래 걷기만 골라도 계단 설정은 그대로다', () => {
+  const pref = { ...base, canUseStairs: false };
+  expect(mobilityOf(pref)).toBeNull();
+  expect(mobilityAnswers(['WALKING'], pref).canUseStairs).toBe(false);
+});
+
+test('미리 켜져 있던 계단 칩을 끄면 계단 괜찮음으로 바뀐다', () => {
+  const pref = {
+    ...base,
+    usesWheelchair: false,
+    limitedWalking: false,
+    canUseStairs: false,
+  };
+  expect(mobilityOf(pref)).toEqual(['STAIRS']);
+  expect(mobilityAnswers([], pref).canUseStairs).toBe(true);
 });

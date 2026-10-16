@@ -30,14 +30,19 @@ export function mobilityOf(pref: TravelPreference): Mobility[] | null {
 /** 칩 선택을 저장할 값으로 */
 export function mobilityAnswers(
   mobility: Mobility[],
+  pref: TravelPreference,
 ): Pick<
   TravelPreference,
   'usesWheelchair' | 'limitedWalking' | 'canUseStairs'
 > {
   const wheelchair = mobility.includes('WHEELCHAIR');
+  const stairsShown = !!mobilityOf(pref)?.includes('STAIRS');
   return {
     usesWheelchair: wheelchair,
     limitedWalking: mobility.includes('WALKING'),
-    canUseStairs: !wheelchair && !mobility.includes('STAIRS'),
+    canUseStairs:
+      wheelchair || mobility.includes('STAIRS')
+        ? false
+        : stairsShown || pref.canUseStairs,
   };
 }
