@@ -189,6 +189,20 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
       return;
     }
     if (polls.current >= 20) {
+      setDraft(
+        cur =>
+          cur && {
+            ...cur,
+            days: cur.days.map(day => ({
+              ...day,
+              slots: day.slots.map(slot =>
+                slot.routeStatus === 'CALCULATING'
+                  ? { ...slot, routeStatus: 'API_ERROR' }
+                  : slot,
+              ),
+            })),
+          },
+      );
       return;
     }
     const before = draft;
