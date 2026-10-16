@@ -40,18 +40,6 @@ export const travelPreferenceStyles = StyleSheet.create({
   chipOn: { borderColor: colors.primaryFill, backgroundColor: colors.primaryFill },
   chipText: { fontSize: 16, color: colors.text },
   chipTextOn: { color: colors.textOnPrimary, fontWeight: '600' },
-  stepper: { flexDirection: 'row', alignItems: 'center', gap: 20 },
-  stepBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.white,
-  },
-  count: { fontSize: 22, fontWeight: '700', color: colors.text },
   hint: { marginTop: 8, fontSize: 14, color: colors.textSecondary },
   home: {
     marginTop: 12,
