@@ -27,6 +27,12 @@ import {
   toggleAvoidFood,
   TravelPreference,
 } from '../../entities/profile/api';
+import {
+  mobilityAnswers,
+  mobilityOf,
+  MOBILITY,
+  Mobility,
+} from '../../entities/profile/mobility';
 import { getCities } from '../../entities/main/api';
 import {
   isMetro,
@@ -84,22 +90,21 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
   const [locating, setLocating] = useState(false);
   const [searchingDeparture, setSearchingDeparture] = useState(false);
   const [home, setHome] = useState<Home | null>(null);
-  // 아직 피하는 음식을 묻지 않은 사람에게만 한 번 묻는다
+  // 여행 편의 설정에 저장된 값을 미리 골라 둔다. 여기서 바꾸면 설정도 바뀐다
   const [pref, setPref] = useState<TravelPreference | null>(null);
   const [avoidFoods, setAvoidFoods] = useState<AvoidFood[] | null>(null);
+  const [mobility, setMobility] = useState<Mobility[] | null>(null);
 
   useEffect(() => {
     getTravelPreference()
       .then(p => {
         setHome(p.home ?? null);
         setPref(p);
+        setAvoidFoods(p.avoidFoods ?? null);
+        setMobility(mobilityOf(p));
       })
       .catch(() => {});
   }, []);
-  const askFoods = !!pref && pref.avoidFoods == null;
-  const [mobility, setMobility] = useState<Mobility[] | null>(null);
-  const askMobility =
-    !!pref && pref.usesWheelchair == null && pref.limitedWalking == null;
   // 버튼 disabled 는 렌더 값이라 연타를 다 막지 못한다
   const generatingRef = useRef(false);
 
@@ -175,17 +180,24 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
     generatingRef.current = true;
     setGenerating(true);
     try {
-      // 고른 것만 저장한다. 그냥 넘어가면 다음 일정 때 다시 묻는다
+      // 바뀐 것만 저장한다. 안 고르고 넘어가면 다음 일정 때 다시 묻는다
       const answers: Partial<TravelPreference> = {};
-      if (askFoods && avoidFoods) {
+      if (
+        pref &&
+        avoidFoods &&
+        [...avoidFoods].sort().join() !==
+          [...(pref.avoidFoods ?? [])].sort().join()
+      ) {
         answers.avoidFoods = avoidFoods;
       }
-      if (askMobility && mobility) {
-        const wheelchair = mobility.includes('WHEELCHAIR');
-        answers.usesWheelchair = wheelchair;
-        answers.limitedWalking = mobility.includes('WALKING');
-        if (wheelchair || mobility.includes('STAIRS')) {
-          answers.canUseStairs = false;
+      if (pref && mobility) {
+        const next = mobilityAnswers(mobility);
+        if (
+          next.usesWheelchair !== pref.usesWheelchair ||
+          next.limitedWalking !== pref.limitedWalking ||
+          next.canUseStairs !== pref.canUseStairs
+        ) {
+          Object.assign(answers, next);
         }
       }
       if (pref && Object.keys(answers).length > 0) {
@@ -475,12 +487,11 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
           </>
         )}
 
-        {askMobility && (
+        {pref && (
           <>
             <Text style={s.section}>다니실 때 불편한 점이 있으세요?</Text>
             <Text style={s.sectionHint}>
-              AI가 장소를 고를 때 참고해요. 여행 편의 설정에서 언제든 바꿀 수
-              있어요.
+              AI가 장소를 고를 때 참고해요. {rememberNote(mobilityOf(pref))}
             </Text>
             <View style={[s.chips, s.block]}>
               {[...MOBILITY, { value: null, label: '괜찮아요' }].map(m => {
@@ -518,12 +529,12 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
           </>
         )}
 
-        {askFoods && (
+        {pref && (
           <>
             <Text style={s.section}>피하는 음식이 있으세요?</Text>
             <Text style={s.sectionHint}>
-              AI가 맛집을 고를 때 빼요. {AVOID_FOODS_NOTICE} 여행 편의 설정에서
-              언제든 바꿀 수 있어요.
+              AI가 맛집을 고를 때 빼요. {AVOID_FOODS_NOTICE}{' '}
+              {rememberNote(pref.avoidFoods)}
             </Text>
             <View style={[s.chips, s.block]}>
               {[...AVOID_FOODS, { value: null, label: '없어요' }].map(f => {
@@ -642,12 +653,12 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
   );
 };
 
-type Mobility = 'WHEELCHAIR' | 'WALKING' | 'STAIRS';
-const MOBILITY: { value: Mobility; label: string }[] = [
-  { value: 'WHEELCHAIR', label: '휠체어를 써요' },
-  { value: 'WALKING', label: '오래 걷기 어려워요' },
-  { value: 'STAIRS', label: '계단이 어려워요' },
-];
+/** 처음 묻는지, 저장된 값을 채워 보여주는지에 따라 안내가 다르다 */
+function rememberNote(saved: unknown[] | null | undefined): string {
+  return saved == null
+    ? '다음 계획부터는 고른 대로 미리 채워둘게요.'
+    : '지난번에 고른 대로 채워뒀어요. 바꾸면 다음 계획에도 적용돼요.';
+}
 
 const HOME = '집 근처';
 const CUSTOM = '직접 지정';
