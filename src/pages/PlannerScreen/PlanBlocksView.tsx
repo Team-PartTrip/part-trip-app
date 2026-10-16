@@ -668,7 +668,7 @@ function rememberNote(saved: unknown[] | null | undefined): string {
 
 const HOME = '집 근처';
 const CUSTOM = '직접 지정';
-const HERE = '지금 있는 곳';
+export const HERE = '지금 있는 곳';
 
 function usesHome(value: string | undefined): boolean {
   return !value || value === HOME;

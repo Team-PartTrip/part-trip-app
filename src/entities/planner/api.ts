@@ -136,6 +136,7 @@ export interface RouteStep {
 
 export interface RouteLeg {
   transportMode: string;
+  fromName?: string | null;
   durationMinutes: number | null;
   walkingMinutes: number | null;
   steps: RouteStep[];

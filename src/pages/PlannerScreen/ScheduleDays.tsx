@@ -139,6 +139,33 @@ export const RouteLine: React.FC<{
   );
 };
 
+export const HereLine: React.FC<{
+  to: SchedulePlace;
+  icon?: boolean;
+}> = ({ to, icon = true }) => (
+  <View style={[s.route, s.routeHere]}>
+    {icon && <PinIcon size={16} color={colors.textSecondary} />}
+    <View style={s.routeBody}>
+      <View style={s.routeLast}>
+        <Text style={s.routeText}>지금 있는 곳에서 출발</Text>
+        <TouchableOpacity
+          style={s.routeMap}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={`${to.name}까지 카카오맵으로 길 안내`}
+          onPress={() => openDirections(to, null, 'PUBLIC_TRANSIT')}
+        >
+          <Image
+            source={require('../../shared/assets/images/kakaomap.png')}
+            style={s.routeMapLogo}
+          />
+          <Text style={s.routeMapText}>길 안내</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  </View>
+);
+
 /** 리더가 카드를 고칠 때만 넘긴다 (명세 Func-011-03). 없으면 보기 전용이다 */
 export interface ScheduleEditHandlers {
   /** 저장 중에는 막는다. 저장 결과가 오기 전에 또 고치면 id 가 어긋난다 */

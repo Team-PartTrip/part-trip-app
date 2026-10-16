@@ -80,6 +80,7 @@ export const planStatusStyles = StyleSheet.create({
     paddingHorizontal: 6,
     marginBottom: 8,
   },
+  routeHere: { alignItems: 'center' },
   routeBody: { flex: 1 },
   routeText: { fontSize: 13, lineHeight: 19, color: colors.textSecondary },
   routeCredit: { marginTop: 16, alignItems: 'center', gap: 6 },

@@ -27,10 +27,12 @@ import {
   BellIcon,
   CalendarIcon,
   ChevronRightIcon,
+  PinIcon,
 } from '../../shared/ui/icons';
 import CategoryIcon from '../../entities/planner/CategoryIcon';
 import RestroomNote from '../../entities/main/RestroomNote';
-import { openDirections, RouteLine } from '../PlannerScreen/ScheduleDays';
+import { HereLine, RouteLine } from '../PlannerScreen/ScheduleDays';
+import { HERE } from '../PlannerScreen/PlanBlocksView';
 import {
   CATEGORY_LABEL,
   ROUTE_STATUS_MESSAGE,
@@ -379,43 +381,69 @@ const MainView: React.FC<MainViewProps> = ({
                 !done && i > 0 && slot.routeStatus === 'READY'
                   ? slot.routeFromPrevious
                   : null;
+              const firstRoute =
+                !done &&
+                i === 0 &&
+                slot.routeStatus === 'READY' &&
+                slot.routeFromPrevious?.fromName &&
+                slot.routeFromPrevious.fromName !== HERE
+                  ? slot.routeFromPrevious
+                  : null;
               const routeMessage =
                 i > 0 && slot.routeStatus
                   ? ROUTE_STATUS_MESSAGE[slot.routeStatus]
                   : undefined;
+              const leg = firstRoute ? (
+                <>
+                  <Text style={s.todayFrom}>
+                    {firstRoute.fromName}에서 출발
+                  </Text>
+                  <RouteLine route={firstRoute} from={null} to={slot.place} />
+                </>
+              ) : route ? (
+                <RouteLine
+                  route={route}
+                  from={list[i - 1].place}
+                  to={slot.place}
+                />
+              ) : isNext && slot.place.latitude != null ? (
+                <>
+                  {!!routeMessage && (
+                    <Text style={s.todayRouteMessage}>{routeMessage}</Text>
+                  )}
+                  <HereLine to={slot.place} icon={i > 0} />
+                </>
+              ) : !done && routeMessage ? (
+                <Text style={s.todayRouteMessage}>{routeMessage}</Text>
+              ) : null;
               return (
                 <View key={slot.slotId}>
-                  {route ? (
-                    <View style={s.todayRoute}>
-                      {/* 첫 장소는 지금 있는 곳에서 길을 찾는다 */}
-                      <RouteLine
-                        route={route}
-                        from={list[i - 1].place}
-                        to={slot.place}
-                      />
+                  {(i > 0 || leg) && (
+                    <View style={[s.todayLeg, i === 0 && s.todayLegFirst]}>
+                      {/* 첫 장소 앞은 이어 줄 앞 장소가 없어 선 대신 출발 표시를 둔다 */}
+                      <View
+                        style={[
+                          s.todayRail,
+                          i === 0 &&
+                            (firstRoute ? s.todayRailTop : s.todayRailStart),
+                        ]}
+                      >
+                        {i > 0 ? (
+                          <View style={s.todayRailLine} />
+                        ) : (
+                          <PinIcon size={20} color={colors.textSecondary} />
+                        )}
+                      </View>
+                      <View style={s.todayLegBody}>{leg}</View>
                     </View>
-                  ) : (
-                    !done &&
-                    routeMessage && (
-                      <Text style={[s.todayRoute, s.todayRouteMessage]}>
-                        {routeMessage}
-                      </Text>
-                    )
                   )}
-                  {!route && isNext && slot.place.latitude != null && (
-                    <TouchableOpacity
-                      style={[s.todayRoute, s.todayMap]}
-                      hitSlop={touch48(32)}
-                      accessibilityRole="button"
-                      accessibilityLabel={`${slot.place.name}까지 길 안내`}
-                      onPress={() =>
-                        openDirections(slot.place, null, 'PUBLIC_TRANSIT')
-                      }
-                    >
-                      <Text style={s.todayMapText}>길 안내</Text>
-                    </TouchableOpacity>
-                  )}
-                  <View style={[s.todayRow, isNext && s.todayRowNext]}>
+                  <View
+                    style={[
+                      s.todayRow,
+                      i === 0 && !leg && s.todayRowFirst,
+                      isNext && s.todayRowNext,
+                    ]}
+                  >
                     <View style={[s.todayNum, done && s.todayNumDone]}>
                       {done ? (
                         <CheckIcon size={18} color={colors.textSecondary} />
