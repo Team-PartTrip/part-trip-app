@@ -381,6 +381,11 @@ function App() {
                         photoId: spot.entryId ?? undefined,
                       })
                     }
+                    onAddPhoto={() =>
+                      navigation.navigate('TripCardEdit', {
+                        tripCardId: route.params.tripCardId,
+                      })
+                    }
                   />
                 )}
               </Stack.Screen>
@@ -412,6 +417,11 @@ function App() {
                     }
                     onDeletePhotos={() =>
                       navigation.navigate('PhotoDelete', {
+                        tripCardId: route.params.tripCardId,
+                      })
+                    }
+                    onAddPhoto={() =>
+                      navigation.navigate('TripCardEdit', {
                         tripCardId: route.params.tripCardId,
                       })
                     }

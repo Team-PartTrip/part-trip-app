@@ -18,6 +18,7 @@ import {
 import { formatTripRange, today } from '../../entities/record/types';
 import { CardIcon } from '../../shared/ui/icons';
 import { toImageUrl } from '../../shared/api/image';
+import { touch48 } from '../../shared/ui/hitSlop';
 import colors from '../../shared/tokens/colors';
 
 /** 카드 위쪽 사진 띠 — 실제 썸네일이 붙기 전까지 옅어지는 네 칸으로 둔다 */
@@ -73,9 +74,12 @@ const RecordView: React.FC<Props> = ({ onOpenTrip, onOpenTripCards }) => {
           <TouchableOpacity
             style={s.headerBtn}
             activeOpacity={0.8}
+            hitSlop={touch48(40, 'vertical')}
+            accessibilityRole="button"
             onPress={onOpenTripCards}
           >
             <CardIcon size={18} color={colors.text} />
+            <Text style={s.headerBtnText}>여행카드</Text>
           </TouchableOpacity>
         </View>
 

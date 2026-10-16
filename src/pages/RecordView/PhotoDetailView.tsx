@@ -31,6 +31,7 @@ interface Props {
   onLocate?: (photo: TimelineItem) => void;
   /** 사진 삭제(D6) */
   onDeletePhotos?: () => void;
+  onAddPhoto?: () => void;
 }
 
 /** 촬영 시각을 "2026.08.23 14:20" 으로. 시각이 없는 사진도 있다 */
@@ -49,6 +50,7 @@ const PhotoDetailView: React.FC<Props> = ({
   onEditComment,
   onLocate,
   onDeletePhotos,
+  onAddPhoto,
 }) => {
   const [photos, setPhotos] = useState<TimelineItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,13 +102,27 @@ const PhotoDetailView: React.FC<Props> = ({
   if (!photo) {
     return (
       <SafeAreaView edges={['top']} style={s.safeArea}>
-        <TouchableOpacity style={s.circleBtn} activeOpacity={0.8} onPress={onBack}>
-          <View style={s.circleBtnText}>
-            <ChevronLeftIcon size={18} color={colors.textOnPrimary} />
-          </View>
-        </TouchableOpacity>
+        <View style={s.topBar}>
+          <TouchableOpacity
+            style={s.circleBtn}
+            activeOpacity={0.8}
+            onPress={onBack}
+          >
+            <View style={s.circleBtnText}>
+              <ChevronLeftIcon size={18} color={colors.textOnPrimary} />
+            </View>
+          </TouchableOpacity>
+        </View>
         <View style={s.blankBody}>
           <Text style={s.blankText}>아직 남긴 사진이 없어요</Text>
+          <TouchableOpacity
+            style={s.blankBtn}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            onPress={onAddPhoto}
+          >
+            <Text style={s.blankBtnText}>사진 추가하기</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );

@@ -9,17 +9,19 @@ export const recordStyles = StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'center' },
   pageTitle: { flex: 1, fontSize: 24, fontWeight: '700', color: colors.text },
   headerBtn: {
-    width: 36,
-    minHeight: 48,
-    borderRadius: 18,
+    height: 40,
+    paddingHorizontal: 14,
+    borderRadius: 20,
     marginLeft: 8,
+    flexDirection: 'row',
+    gap: 6,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerBtnIcon: { fontSize: 16 },
+  headerBtnText: { fontSize: 14, fontWeight: '600', color: colors.text },
 
   filterRow: { flexDirection: 'row', gap: 8, marginTop: 20, marginBottom: 18 },
   chip: {
