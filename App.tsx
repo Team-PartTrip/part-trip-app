@@ -267,11 +267,7 @@ function App() {
                 )}
               </Stack.Screen>
 
-              {/* 일정을 만드는 중에 밀어서 나가면 플래너가 두 번 생길 수 있다 */}
-              <Stack.Screen
-                name="PlanBlocks"
-                options={{ gestureEnabled: false }}
-              >
+              <Stack.Screen name="PlanBlocks">
                 {({ navigation, route }) => (
                   <PlanBlocksView
                     draft={route.params.draft}

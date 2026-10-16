@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Text, TextInput } from '../../shared/ui/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import { planBlocksStyles as s } from './PlanBlocksView.styles';
 import WizardHeader from './WizardHeader';
 import colors from '../../shared/tokens/colors';
@@ -108,6 +109,11 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
   // 버튼 disabled 는 렌더 값이라 연타를 다 막지 못한다
   const generatingRef = useRef(false);
 
+  // 만드는 중에 나가서 다시 만들면 플래너가 하나 더 생긴다. 그동안만 밀어서 뒤로 가기를 막는다
+  const navigation = useNavigation();
+  useEffect(() => {
+    navigation.setOptions({ gestureEnabled: !generating });
+  }, [navigation, generating]);
   useEffect(() => {
     if (!generating) {
       return;
