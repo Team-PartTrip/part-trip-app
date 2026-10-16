@@ -44,12 +44,13 @@ export const planStatusStyles = StyleSheet.create({
   title: { flex: 1, fontSize: 24, fontWeight: '700', color: colors.text },
   statusPill: {
     height: 26,
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     borderRadius: 13,
+    backgroundColor: colors.inputBg,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  statusText: { fontSize: 11, fontWeight: '500', color: colors.textOnPrimary },
+  statusText: { fontSize: 12, fontWeight: '600' },
   meta: { marginTop: 8, fontSize: 12, color: colors.textSecondary },
 
   section: { marginTop: 24, paddingHorizontal: 24 },

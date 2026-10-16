@@ -482,15 +482,15 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
             <Text style={s.title} numberOfLines={1}>
               {plan.title}
             </Text>
-            <View
-              style={[
-                s.statusPill,
-                {
-                  backgroundColor: confirmed ? colors.success : colors.accent,
-                },
-              ]}
-            >
-              <Text style={s.statusText}>{planStatusLabel(plan.status)}</Text>
+            <View style={s.statusPill}>
+              <Text
+                style={[
+                  s.statusText,
+                  { color: confirmed ? colors.success : colors.accent },
+                ]}
+              >
+                {planStatusLabel(plan.status)}
+              </Text>
             </View>
           </View>
           <Text style={s.meta}>
