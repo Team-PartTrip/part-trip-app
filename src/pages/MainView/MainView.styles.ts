@@ -106,6 +106,7 @@ export const mainStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  refreshBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   sectionAction: { fontSize: 15, fontWeight: '600', color: colors.primary },
 
   today: {

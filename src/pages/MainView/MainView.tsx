@@ -38,7 +38,7 @@ import {
 import type { PlaceCategory } from '../../entities/planner/types';
 import colors from '../../shared/tokens/colors';
 import DandiWordmark from '../../shared/ui/DandiWordmark';
-import { CheckIcon, StarIcon } from '../../shared/ui/icons';
+import { CheckIcon, RefreshIcon, StarIcon } from '../../shared/ui/icons';
 
 // 추천 장소는 카테고리를 "맛집" 같은 한글로 준다
 const categoryOf = (label: string | null) =>
@@ -504,11 +504,13 @@ const MainView: React.FC<MainViewProps> = ({
             <Text style={s.sectionTitle}>가볼 만한 곳</Text>
             {places.length > 4 && (
               <TouchableOpacity
+                style={s.refreshBtn}
                 onPress={refreshRecommended}
                 hitSlop={12}
                 accessibilityRole="button"
                 accessibilityLabel="가볼 만한 곳 새로고침"
               >
+                <RefreshIcon size={16} color={colors.primary} />
                 <Text style={s.sectionAction}>새로고침</Text>
               </TouchableOpacity>
             )}
