@@ -39,8 +39,8 @@ export interface TourPlace {
   /** 데이터 소스에 평점이 없으면 null */
   rating: number | null;
   imageUrl: string | null;
-  latitude: number;
-  longitude: number;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 /** 관광 장소 카테고리. 서버는 한글·영문키를 모두 받는다 */

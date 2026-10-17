@@ -118,15 +118,17 @@ const PlaceDetailView: React.FC<Props> = ({ place, onBack }) => {
         )}
       </ScrollView>
 
-      <SafeAreaView edges={['bottom']} style={s.footer}>
-        <TouchableOpacity
-          style={s.primaryBtn}
-          activeOpacity={0.85}
-          onPress={() => openMap(place)}
-        >
-          <Text style={s.primaryText}>지도에서 보기</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
+      {place.latitude != null && place.longitude != null && (
+        <SafeAreaView edges={['bottom']} style={s.footer}>
+          <TouchableOpacity
+            style={s.primaryBtn}
+            activeOpacity={0.85}
+            onPress={() => openMap(place)}
+          >
+            <Text style={s.primaryText}>지도에서 보기</Text>
+          </TouchableOpacity>
+        </SafeAreaView>
+      )}
     </View>
   );
 };

@@ -389,10 +389,9 @@ const MainView: React.FC<MainViewProps> = ({
                 slot.routeFromPrevious.fromName !== HERE
                   ? slot.routeFromPrevious
                   : null;
-              const routeMessage =
-                i > 0 && slot.routeStatus
-                  ? ROUTE_STATUS_MESSAGE[slot.routeStatus]
-                  : undefined;
+              const routeMessage = slot.routeStatus
+                ? ROUTE_STATUS_MESSAGE[slot.routeStatus]
+                : undefined;
               const leg = firstRoute ? (
                 <>
                   <Text style={s.todayFrom}>
@@ -406,7 +405,9 @@ const MainView: React.FC<MainViewProps> = ({
                   from={list[i - 1].place}
                   to={slot.place}
                 />
-              ) : isNext && slot.place.latitude != null ? (
+              ) : isNext &&
+                slot.place.latitude != null &&
+                slot.place.longitude != null ? (
                 <>
                   {!!routeMessage && (
                     <Text style={s.todayRouteMessage}>{routeMessage}</Text>

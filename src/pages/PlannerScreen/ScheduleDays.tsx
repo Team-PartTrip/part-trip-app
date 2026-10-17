@@ -153,19 +153,21 @@ export const HereLine: React.FC<{
     <View style={s.routeBody}>
       <View style={s.routeLast}>
         <Text style={s.routeText}>지금 있는 곳에서 출발</Text>
-        <TouchableOpacity
-          style={s.routeMap}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel={`${to.name}까지 카카오맵으로 길 안내`}
-          onPress={() => openDirections(to, null, 'PUBLIC_TRANSIT')}
-        >
-          <Image
-            source={require('../../shared/assets/images/kakaomap.png')}
-            style={s.routeMapLogo}
-          />
-          <Text style={s.routeMapText}>길 안내</Text>
-        </TouchableOpacity>
+        {to.latitude != null && to.longitude != null && (
+          <TouchableOpacity
+            style={s.routeMap}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={`${to.name}까지 카카오맵으로 길 안내`}
+            onPress={() => openDirections(to, null, 'PUBLIC_TRANSIT')}
+          >
+            <Image
+              source={require('../../shared/assets/images/kakaomap.png')}
+              style={s.routeMapLogo}
+            />
+            <Text style={s.routeMapText}>길 안내</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   </View>
@@ -456,8 +458,8 @@ function toTourPlace(place: SchedulePlace): TourPlace {
     address: place.address,
     rating: place.rating,
     imageUrl: place.imageUrl,
-    latitude: place.latitude ?? 0,
-    longitude: place.longitude ?? 0,
+    latitude: place.latitude,
+    longitude: place.longitude,
   };
 }
 
