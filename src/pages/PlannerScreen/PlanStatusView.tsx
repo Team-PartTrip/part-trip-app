@@ -48,6 +48,7 @@ import {
   planStatusLabel,
 } from '../../entities/planner/types';
 import { ChevronLeftIcon } from '../../shared/ui/icons';
+import { ApiError } from '../../shared/api/client';
 
 /** 일정이 확정된 뒤의 상태. 이때부터 이 화면은 일정표가 된다 */
 export function isSchedule(status: GroupStatus): boolean {
@@ -178,20 +179,31 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
   }, [planId]);
   useFocusEffect(load);
 
-  const waiting =
-    !!plan && plan.memberCount > 1 && members.length < plan.memberCount;
+  const groupTrip = !!plan && plan.memberCount > 1 && plan.status !== 'DONE';
+  const goneShown = useRef(false);
   useFocusEffect(
     useCallback(() => {
-      if (!waiting) {
+      if (!groupTrip) {
         return;
       }
       const timer = setInterval(() => {
         getPlannerMembers(planId)
           .then(setMembers)
-          .catch(() => {});
+          .catch(e => {
+            if (
+              e instanceof ApiError &&
+              [400, 403, 404].includes(e.status) &&
+              !goneShown.current
+            ) {
+              goneShown.current = true;
+              Alert.alert('알림', '이 플래너에서 나가졌어요.', [
+                { text: '확인', onPress: onDeleted },
+              ]);
+            }
+          });
       }, 5000);
       return () => clearInterval(timer);
-    }, [waiting, planId]),
+    }, [groupTrip, planId, onDeleted]),
   );
 
   // 서버가 경로를 뒤에서 계산한다(CALCULATING). 끝날 때까지 3초마다 다시 받는다
