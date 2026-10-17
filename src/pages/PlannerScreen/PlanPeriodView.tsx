@@ -199,6 +199,11 @@ const PlanPeriodView: React.FC<Props> = ({ draft, onBack, onNext }) => {
         showsVerticalScrollIndicator={false}
       >
         <Text style={s.label}>언제 떠나나요?</Text>
+        <Text style={s.guide}>
+          {startDate && !endDate
+            ? '돌아오는 날을 눌러주세요. 당일치기면 같은 날을 한 번 더 눌러요.'
+            : '가는 날과 돌아오는 날을 차례로 눌러주세요. 당일치기는 같은 날을 두 번 눌러요.'}
+        </Text>
 
         <View style={s.calCard}>
           <View style={s.calHead}>
