@@ -318,13 +318,18 @@ const DayCards: React.FC<{
             <View style={s.rowBody}>
               <Text style={s.rowSub}>
                 {slot.order}번째
-                {slot.place.categoryLabel
-                  ? ` · ${slot.place.categoryLabel}`
+                {slot.place.typeLabel || slot.place.categoryLabel
+                  ? ` · ${slot.place.typeLabel || slot.place.categoryLabel}`
                   : ''}
               </Text>
               <Text style={s.rowTitle} numberOfLines={1}>
                 {slot.place.name}
               </Text>
+              {!!(slot.place.description || slot.place.address) && (
+                <Text style={s.rowSub} numberOfLines={1}>
+                  {slot.place.description || slot.place.address}
+                </Text>
+              )}
               {/* 고치는 동안에는 카드마다 부르지 않는다 */}
               {!edit && <RestroomNote tourPlaceId={slot.place.tourPlaceId} />}
             </View>
@@ -444,8 +449,8 @@ function toTourPlace(place: SchedulePlace): TourPlace {
   return {
     tourPlaceId: place.tourPlaceId,
     placeName: place.name,
-    category: place.categoryLabel,
-    description: null,
+    category: place.typeLabel || place.categoryLabel,
+    description: place.description ?? null,
     address: place.address,
     rating: place.rating,
     imageUrl: place.imageUrl,
