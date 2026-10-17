@@ -12,12 +12,14 @@ import type { Mobility } from '../profile/mobility';
 export const FEATURED: string[] = [
   'TRAVEL_TYPE',
   'COMPANION',
-  'WALKING',
   'DAILY_DENSITY',
   'FOOD_TYPE',
   'TASTE',
   'LODGING_TYPE',
 ];
+
+/** 칩으로 묻지 않는 블록. 걷기 부담은 "불편한 점" 답으로 정해서 보낸다 */
+export const HIDDEN_BLOCKS = ['WALKING'];
 
 /** 칩 대신 장소 이름을 적는 블록. 서버가 이름으로 관광지를 찾는다 */
 export const PLACE_NAME_BLOCKS = ['MUST_INCLUDE', 'EXCLUDE'];
@@ -40,20 +42,16 @@ export function chipOptions(
   );
 }
 
-export function initialPicked(
-  trip: { isSolo: boolean; dayTrip: boolean },
-  mobility: Mobility[] | null,
-): Picked {
+export function initialPicked(trip: {
+  isSolo: boolean;
+  dayTrip: boolean;
+}): Picked {
   const picked: Picked = {};
   if (trip.isSolo) {
     picked.COMPANION = [SOLO];
   }
   if (trip.dayTrip) {
     picked.LODGING_TYPE = [NO_LODGING];
-  }
-  const walking = walkingOf(mobility);
-  if (walking) {
-    picked.WALKING = [walking];
   }
   return picked;
 }

@@ -51,6 +51,7 @@ import {
 import {
   chipOptions,
   FEATURED,
+  HIDDEN_BLOCKS,
   initialPicked,
   Picked,
   PLACE_NAME_BLOCKS,
@@ -85,10 +86,7 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
     isSolo: draft.isSolo,
     dayTrip: draft.startDate === draft.endDate,
   };
-  const [picked, setPicked] = useState<Picked>(() =>
-    initialPicked(trip, null),
-  );
-  const walkingTouched = useRef(false);
+  const [picked, setPicked] = useState<Picked>(() => initialPicked(trip));
   const [placeNames, setPlaceNames] = useState<Record<string, string>>({});
   const [showAll, setShowAll] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -117,12 +115,6 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
       })
       .catch(() => {});
   }, []);
-  useEffect(() => {
-    const walking = walkingOf(mobility);
-    if (walking && !walkingTouched.current) {
-      setPicked(prev => ({ ...prev, WALKING: [walking] }));
-    }
-  }, [mobility]);
   // 버튼 disabled 는 렌더 값이라 연타를 다 막지 못한다
   const generatingRef = useRef(false);
 
@@ -226,6 +218,11 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
       if (pref && Object.keys(answers).length > 0) {
         await saveTravelPreference({ ...pref, ...answers }).catch(() => {});
       }
+      const walking = walkingOf(mobility);
+      const payload = toPayload(
+        walking ? { ...picked, WALKING: [walking] } : picked,
+        placeNames,
+      );
       const schedule = await generatePlanner({
         title: draft.title,
         memberCount: draft.headcount,
@@ -234,7 +231,7 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
         cityName: city,
         startDate: draft.startDate,
         endDate: draft.endDate,
-        blocks: toPayload(picked, placeNames),
+        blocks: payload,
         departurePoint: departure
           ? {
               placeName: departure.name,
@@ -365,9 +362,6 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
                 accessibilityRole="button"
                 accessibilityState={{ selected: on }}
                 onPress={() => {
-                  if (block.type === 'WALKING') {
-                    walkingTouched.current = true;
-                  }
                   setPicked(prev => toggle(prev, block, option));
                 }}
               >
@@ -403,10 +397,11 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
       .finally(() => setLocating(false));
   };
 
-  const featured = (blocks ?? []).filter(
+  const asked = (blocks ?? []).filter(b => !HIDDEN_BLOCKS.includes(b.type));
+  const featured = asked.filter(
     b => FEATURED.includes(b.type) || PLACE_NAME_BLOCKS.includes(b.type),
   );
-  const rest = (blocks ?? []).filter(
+  const rest = asked.filter(
     b => !FEATURED.includes(b.type) && !PLACE_NAME_BLOCKS.includes(b.type),
   );
   const pickedCount = toPayload(picked, placeNames).length;
