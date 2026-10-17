@@ -186,11 +186,13 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
       if (!groupTrip) {
         return;
       }
+      let active = true;
       const timer = setInterval(() => {
         getPlannerMembers(planId)
-          .then(setMembers)
+          .then(list => active && setMembers(list))
           .catch(e => {
             if (
+              active &&
               e instanceof ApiError &&
               [400, 403, 404].includes(e.status) &&
               !goneShown.current
@@ -202,7 +204,10 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
             }
           });
       }, 5000);
-      return () => clearInterval(timer);
+      return () => {
+        active = false;
+        clearInterval(timer);
+      };
     }, [groupTrip, planId, onDeleted]),
   );
 
