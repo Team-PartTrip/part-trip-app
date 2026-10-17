@@ -549,10 +549,10 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
                     {member.role === 'OWNER' ? '리더' : '참여 완료'}
                   </Text>
                 </View>
-                {/* 그룹장만 내보낸다. 자기 자신 줄에는 안 보인다. 참여는 확정 전까지만 받는다 */}
+                {/* 그룹장만 내보낸다. 자기 자신 줄에는 안 보인다. 여행이 끝나기 전까지 내보낼 수 있다 */}
                 {plan.role === 'OWNER' &&
                   member.role !== 'OWNER' &&
-                  !confirmed && (
+                  plan.status !== 'DONE' && (
                     <TouchableOpacity
                       hitSlop={touch48(24)}
                       accessibilityRole="button"
