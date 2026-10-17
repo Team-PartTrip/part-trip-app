@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Image, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { Text } from '../../shared/ui/Text';
 import colors from '../../shared/tokens/colors';
@@ -22,29 +22,37 @@ const MemberAvatar: React.FC<Props> = ({
   index,
   size = 26,
   style,
-}) => (
-  <View
-    style={[
-      s.circle,
-      {
-        width: size,
-        height: size,
-        borderRadius: size / 2,
-        backgroundColor:
-          avatarTone(index) === 'primary' ? colors.primary : colors.accent,
-      },
-      style,
-    ]}
-  >
-    {imgUrl ? (
-      <Image source={{ uri: toImageUrl(imgUrl) }} style={s.photo} />
-    ) : (
-      <Text style={[s.label, size >= 36 && s.labelLarge]}>
-        {initialOf(nickname)}
-      </Text>
-    )}
-  </View>
-);
+}) => {
+  const [broken, setBroken] = useState(false);
+  useEffect(() => setBroken(false), [imgUrl]);
+  return (
+    <View
+      style={[
+        s.circle,
+        {
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          backgroundColor:
+            avatarTone(index) === 'primary' ? colors.primary : colors.accent,
+        },
+        style,
+      ]}
+    >
+      {imgUrl && !broken ? (
+        <Image
+          source={{ uri: toImageUrl(imgUrl) }}
+          style={s.photo}
+          onError={() => setBroken(true)}
+        />
+      ) : (
+        <Text style={[s.label, size >= 36 && s.labelLarge]}>
+          {initialOf(nickname)}
+        </Text>
+      )}
+    </View>
+  );
+};
 
 const s = StyleSheet.create({
   circle: {
