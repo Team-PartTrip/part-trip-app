@@ -236,7 +236,7 @@ const TravelPreferenceView: React.FC<Props> = ({ onBack }) => {
         onClose={() => setSearching(false)}
       />
 
-      <SafeAreaView edges={['bottom']} style={s.footer}>
+      <View style={s.footer}>
         <TouchableOpacity
           style={[s.primaryBtn, (!pref || saving) && s.primaryBtnOff]}
           activeOpacity={0.85}
@@ -250,7 +250,7 @@ const TravelPreferenceView: React.FC<Props> = ({ onBack }) => {
             <Text style={s.primaryText}>저장</Text>
           )}
         </TouchableOpacity>
-      </SafeAreaView>
+      </View>
     </View>
   );
 };

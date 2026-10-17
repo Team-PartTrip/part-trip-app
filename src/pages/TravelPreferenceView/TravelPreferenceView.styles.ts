@@ -13,7 +13,7 @@ export const travelPreferenceStyles = StyleSheet.create({
   },
   back: {},
   title: { fontSize: 22, fontWeight: '700', color: colors.text },
-  content: { paddingHorizontal: 24, paddingBottom: 120 },
+  content: { paddingHorizontal: 24, paddingBottom: 96 },
   lead: {
     marginTop: 8,
     fontSize: 15,
@@ -56,13 +56,15 @@ export const travelPreferenceStyles = StyleSheet.create({
   homeActions: { marginTop: 12 },
   loading: { marginTop: 40 },
   footer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
     paddingHorizontal: 24,
-    paddingTop: 12,
-    backgroundColor: colors.background,
+    paddingBottom: 12,
   },
   primaryBtn: {
     minHeight: 54,
-    marginBottom: 12,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',

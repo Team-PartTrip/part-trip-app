@@ -41,7 +41,10 @@ interface Props {
 const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
   const [card, setCard] = useState<TripCardSummary | null>(null);
   const [picked, setPicked] = useState<PickedPhoto[]>([]);
-  const [comment, setComment] = useState('');
+  const [commentFor, setCommentFor] = useState({ uri: '', text: '' });
+  const commentUri = picked.length === 1 ? picked[0].uri : '';
+  const comment = commentFor.uri === commentUri ? commentFor.text : '';
+  const setComment = (text: string) => setCommentFor({ uri: commentUri, text });
   const [saving, setSaving] = useState(false);
 
   useFocusEffect(
