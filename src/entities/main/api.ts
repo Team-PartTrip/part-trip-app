@@ -232,3 +232,14 @@ export function searchPlaces(q: string): Promise<PlaceResult[]> {
     { method: 'GET' },
   );
 }
+
+/** 좌표 → 도로명 주소. 주소가 없는 곳이면 null */
+export function getAddress(
+  latitude: number,
+  longitude: number,
+): Promise<string | null> {
+  return authRequest<{ address: string | null }>(
+    `/api/places/address?latitude=${latitude}&longitude=${longitude}`,
+    { method: 'GET' },
+  ).then(res => res.address);
+}
