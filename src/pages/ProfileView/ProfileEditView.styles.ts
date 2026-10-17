@@ -22,6 +22,7 @@ export const profileEditStyles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
+  avatarInitial: { fontSize: 44, fontWeight: '700', color: colors.primary },
   changePhoto: { marginTop: 10 },
   changePhotoText: { color: colors.primary, fontSize: 13, fontWeight: '700' },
   title: {

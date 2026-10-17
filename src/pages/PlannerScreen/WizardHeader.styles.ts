@@ -5,6 +5,7 @@ import colors from '../../shared/tokens/colors';
 export const wizardHeaderStyles = StyleSheet.create({
   header: { paddingHorizontal: 24, paddingTop: 4 },
   back: {},
+  backOff: { opacity: 0.3 },
   title: { marginTop: 8, fontSize: 24, fontWeight: '700', color: colors.text },
   step: { marginTop: 8, fontSize: 12, color: colors.textSecondary },
   track: {

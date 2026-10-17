@@ -14,6 +14,13 @@ export const planPeriodStyles = StyleSheet.create({
     color: colors.textSecondary,
   },
 
+  guide: {
+    marginBottom: 12,
+    fontSize: 14,
+    lineHeight: 20,
+    color: colors.text,
+  },
+
   // 달력
   calCard: {
     padding: 17,

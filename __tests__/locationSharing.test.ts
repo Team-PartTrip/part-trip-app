@@ -6,10 +6,9 @@ const ok = {
   consent: 'yes' as const,
   phase: 'DURING' as const,
   guardianCount: 1,
-  appActive: true,
 };
 
-test('여행 중 · 동의 · 보호자 있음 · 앱 켜짐이면 보낸다', () => {
+test('여행 중 · 동의 · 보호자 있음이면 보낸다(앱이 뒤에 있어도)', () => {
   expect(shouldSend(ok)).toBe(true);
 });
 
@@ -19,5 +18,4 @@ test('하나라도 빠지면 보내지 않는다', () => {
   expect(shouldSend({ ...ok, phase: 'BEFORE' })).toBe(false);
   expect(shouldSend({ ...ok, phase: 'ENDED' })).toBe(false);
   expect(shouldSend({ ...ok, guardianCount: 0 })).toBe(false);
-  expect(shouldSend({ ...ok, appActive: false })).toBe(false);
 });

@@ -93,15 +93,17 @@ export function dayLabel(startDate: string, date: string): string {
   return `${dayNumber(startDate, date)}일차 · ${formatShortDate(date)}`;
 }
 
-/** "2026-08-23", "2026-08-27" → "08.23 – 08.27" */
+/** "2026-08-23", "2026-08-27" → "08.23 – 08.27". 하루짜리면 "08.23" */
 export function formatRange(startDate: string, endDate: string): string {
-  return `${formatShortDate(startDate)} – ${formatShortDate(endDate)}`;
+  return startDate === endDate
+    ? formatShortDate(startDate)
+    : `${formatShortDate(startDate)} – ${formatShortDate(endDate)}`;
 }
 
-/** 두 날짜 사이를 "4박 5일" 로 */
+/** 두 날짜 사이를 "4박 5일" 로. 하루짜리면 "당일치기" */
 export function formatNights(startDate: string, endDate: string): string {
   const nights = Math.max(0, diffDays(startDate, endDate));
-  return `${nights}박 ${nights + 1}일`;
+  return nights === 0 ? '당일치기' : `${nights}박 ${nights + 1}일`;
 }
 
 /** endDate - startDate (일). 로컬 타임존 영향을 안 받게 UTC 로 계산한다 */

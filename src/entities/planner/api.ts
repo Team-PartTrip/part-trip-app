@@ -63,6 +63,7 @@ export function joinPlanner(inviteCode: string): Promise<PlannerJoined> {
 export interface PlannerMember {
   userId: string;
   nickName: string;
+  imgUrl?: string | null;
   role: GroupRole;
   /** ISO-8601 */
   joinedAt: string;
@@ -114,6 +115,8 @@ export interface SchedulePlace {
   rating: number | null;
   latitude: number | null;
   longitude: number | null;
+  description?: string | null;
+  typeLabel?: string | null;
 }
 
 export interface ScheduleSlot {
@@ -136,6 +139,7 @@ export interface RouteStep {
 
 export interface RouteLeg {
   transportMode: string;
+  fromName?: string | null;
   durationMinutes: number | null;
   walkingMinutes: number | null;
   steps: RouteStep[];

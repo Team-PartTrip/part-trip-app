@@ -18,7 +18,7 @@ import {
 import { logout } from '../../entities/auth/api';
 import { getRefreshToken, clearTokens } from '../../shared/api/tokenStorage';
 import { toImageUrl } from '../../shared/api/image';
-import { BellIcon } from '../../shared/ui/icons';
+import { BellIcon, ChevronRightIcon } from '../../shared/ui/icons';
 import colors from '../../shared/tokens/colors';
 
 // 세계지도 미리보기 칸 수 (피그마 E1 은 6칸)
@@ -257,6 +257,7 @@ const ProfileView: React.FC<Props> = ({
             onPress={onOpenGuardian}
           >
             <Text style={s.settingsRowText}>가족 연결 (보호자)</Text>
+            <ChevronRightIcon size={18} color={colors.textTertiary} />
           </TouchableOpacity>
           <TouchableOpacity
             style={s.settingsRow}
@@ -265,6 +266,7 @@ const ProfileView: React.FC<Props> = ({
             onPress={onOpenTravelPreference}
           >
             <Text style={s.settingsRowText}>여행 편의 설정</Text>
+            <ChevronRightIcon size={18} color={colors.textTertiary} />
           </TouchableOpacity>
           <TouchableOpacity
             style={s.settingsRow}

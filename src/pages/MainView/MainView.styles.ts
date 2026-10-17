@@ -106,6 +106,7 @@ export const mainStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  refreshBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   sectionAction: { fontSize: 15, fontWeight: '600', color: colors.primary },
 
   today: {
@@ -118,7 +119,6 @@ export const mainStyles = StyleSheet.create({
   todayTitle: { fontSize: 22, fontWeight: '700', color: colors.text },
   todayEmpty: { marginTop: 12, fontSize: 17, color: colors.textSecondary },
   todayRow: {
-    marginTop: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
@@ -139,8 +139,28 @@ export const mainStyles = StyleSheet.create({
   todayBody: { flex: 1 },
   todayName: { fontSize: 20, fontWeight: '700', color: colors.text },
   todaySub: { marginTop: 2, fontSize: 15, color: colors.textSecondary },
-  todayRoute: { marginTop: 14, marginLeft: 50 },
-  todayRouteMessage: { fontSize: 14, lineHeight: 20, color: colors.textSecondary },
+  todayRowFirst: { marginTop: 16 },
+  todayLeg: { flexDirection: 'row', gap: 14, minHeight: 20 },
+  todayLegFirst: { marginTop: 12 },
+  todayRail: { width: 36, alignItems: 'center' },
+  todayRailStart: { justifyContent: 'center', paddingTop: 2 },
+  todayRailTop: { paddingTop: 10 },
+  todayFrom: {
+    marginLeft: 6,
+    marginBottom: 6,
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  todayRailLine: { flex: 1, width: 2, backgroundColor: colors.border },
+  todayLegBody: { flex: 1, marginLeft: -6, paddingTop: 10, paddingBottom: 2 },
+  todayRouteMessage: {
+    marginLeft: 6,
+    marginBottom: 8,
+    fontSize: 14,
+    lineHeight: 20,
+    color: colors.textSecondary,
+  },
   todayRowNext: {
     marginHorizontal: -12,
     paddingHorizontal: 12,
@@ -164,14 +184,6 @@ export const mainStyles = StyleSheet.create({
     color: colors.textOnPrimary,
   },
   todayCheckTextDone: { color: colors.textSecondary },
-  todayMap: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
-    backgroundColor: colors.tint,
-  },
-  todayMapText: { fontSize: 15, fontWeight: '700', color: colors.primary },
 
   // ── 축제 · 이벤트 캘린더 행 (Func-002-03) ──
   eventRow: {

@@ -107,22 +107,25 @@ const TripCardDetailView: React.FC<Props> = ({
 
   return (
     <View style={s.safeArea}>
+      <SafeAreaView edges={['top']} style={s.header}>
+        <TouchableOpacity
+          style={s.back}
+          onPress={onBack}
+          accessibilityRole="button"
+          accessibilityLabel="뒤로 가기"
+        >
+          <ChevronLeftIcon size={22} color={colors.text} />
+        </TouchableOpacity>
+        <Text style={s.headerTitle} numberOfLines={1}>
+          {place} 여행카드
+        </Text>
+        <View style={s.back} />
+      </SafeAreaView>
+
       <ScrollView
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
       >
-        <SafeAreaView edges={['top']}>
-          <TouchableOpacity onPress={onBack} hitSlop={12}>
-            <View style={s.back}>
-              <ChevronLeftIcon size={22} color={colors.text} />
-            </View>
-          </TouchableOpacity>
-        </SafeAreaView>
-
-        <View style={s.titleBar}>
-          <Text style={s.titleBarText}>{place} 여행팟</Text>
-        </View>
-
         {loading ? (
           <ActivityIndicator style={s.loading} />
         ) : entries.length === 0 ? (
@@ -163,23 +166,31 @@ const TripCardDetailView: React.FC<Props> = ({
                       entry.entryId != null && onOpenPhoto?.(entry.entryId)
                     }
                   >
-                    <View style={s.entryImage}>
-                      {entry.imageUrl ? (
-                        <Image
-                          source={{ uri: toImageUrl(entry.imageUrl) }}
-                          style={s.entryPhoto}
-                        />
-                      ) : (
-                        <Text style={s.entryImageText}>
-                          {entry.type === 'PLACE' ? '방문 장소' : '사진'}
-                        </Text>
-                      )}
-                    </View>
+                    {/* 사진이 없는 방문 장소는 빈 칸을 그리지 않는다 */}
+                    {(entry.imageUrl || entry.type !== 'PLACE') && (
+                      <View style={s.entryImage}>
+                        {entry.imageUrl ? (
+                          <Image
+                            source={{ uri: toImageUrl(entry.imageUrl) }}
+                            style={s.entryPhoto}
+                          />
+                        ) : (
+                          <Text style={s.entryImageText}>사진</Text>
+                        )}
+                      </View>
+                    )}
                     <View style={s.entryInfo}>
                       <Text style={s.entryTitle}>{line.title}</Text>
                       <Text style={s.entrySub}>{line.subtitle}</Text>
                     </View>
-                    <View style={s.entryDot} />
+                    <View
+                      style={[
+                        s.entryDot,
+                        !entry.imageUrl &&
+                          entry.type === 'PLACE' &&
+                          s.entryDotNoImage,
+                      ]}
+                    />
                   </TouchableOpacity>
                 </React.Fragment>
               );

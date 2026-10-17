@@ -229,6 +229,11 @@ export const WalkIcon = lineIcon([
   'M11 10l-3 2v3',
 ]);
 
+export const RefreshIcon = lineIcon(
+  ['M20 12a8 8 0 1 1-2.34-5.66L20 8.5', 'M20 4v4.5h-4.5'],
+  { strokeWidth: 2 },
+);
+
 export const MicIcon = lineIcon([
   'M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z',
   'M5 11a7 7 0 0 0 14 0',

@@ -70,6 +70,18 @@ const SeniorView: React.FC<Props> = ({ seniorUserId, nickName, onBack }) => {
       .catch(() => mounted.current && setLocationFailed(true));
   }, [seniorUserId]);
 
+  // 화면이 열려 있는 동안 10초마다 조용히 다시 받는다. 실패해도 지금 보이는 위치는 그대로 둔다
+  useFocusEffect(
+    useCallback(() => {
+      const timer = setInterval(() => {
+        getSeniorLocation(seniorUserId)
+          .then(found => mounted.current && setLocation(found))
+          .catch(() => {});
+      }, 10_000);
+      return () => clearInterval(timer);
+    }, [seniorUserId]),
+  );
+
   useFocusEffect(
     useCallback(() => {
       let alive = true;

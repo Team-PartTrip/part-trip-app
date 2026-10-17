@@ -152,4 +152,6 @@ export const plannerStyles = StyleSheet.create({
   },
   emptyText: { fontSize: 15, fontWeight: '600', color: colors.text },
   emptyDesc: { fontSize: 12, color: colors.textMuted },
+  retry: { marginTop: 10, minHeight: 48, justifyContent: 'center' },
+  retryText: { fontSize: 15, fontWeight: '600', color: colors.primary },
 });

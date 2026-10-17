@@ -10,8 +10,9 @@ import {
   updateMyLocation,
 } from '../../entities/guardian/api';
 
-/** 보내는 간격. 보호자 화면의 "○분 전" 이 2분을 넘지 않게 */
-export const SEND_EVERY_MS = 90_000;
+/** 보내는 간격. 보호자 화면이 거의 실시간으로 보이게 */
+export const SEND_EVERY_MS = 20_000;
+const STALE_MS = 60_000;
 
 const CONSENT_KEY = LOCATION_CONSENT_KEY;
 export type Consent = 'yes' | 'no' | null;
@@ -48,13 +49,11 @@ export function shouldSend(state: {
   consent: Consent;
   phase: TripPhase | undefined;
   guardianCount: number;
-  appActive: boolean;
 }): boolean {
   return (
     state.consent === 'yes' &&
     state.phase === 'DURING' &&
-    state.guardianCount > 0 &&
-    state.appActive
+    state.guardianCount > 0
   );
 }
 
@@ -88,7 +87,7 @@ function showConsent(): Promise<boolean> {
   return new Promise(resolve =>
     Alert.alert(
       '가족에게 위치를 알려줄까요?',
-      '여행하는 동안 연결된 가족(보호자)이 내 위치를 볼 수 있어요.\n앱을 켜 둔 동안만 1~2분마다 보내고, 여행이 끝나면 지워져요.\n마이 → 가족 연결에서 언제든 끌 수 있어요.',
+      '여행하는 동안 연결된 가족(보호자)이 내 위치를 볼 수 있어요.\n앱이 꺼져 있어도 20초쯤마다 보내고, 여행이 끝나면 지워져요.\n마이 → 가족 연결에서 언제든 끌 수 있어요.',
       [
         { text: '안 할래요', style: 'cancel', onPress: () => resolve(false) },
         { text: '알려줄게요', onPress: () => resolve(true) },
@@ -104,6 +103,8 @@ export function useLocationSharing(enabled: boolean): void {
       return;
     }
     let timer: ReturnType<typeof setInterval> | null = null;
+    let watchId: number | null = null;
+    let last: { latitude: number; longitude: number; at: number } | null = null;
     let generation = 0;
 
     const stop = () => {
@@ -111,6 +112,10 @@ export function useLocationSharing(enabled: boolean): void {
       if (timer) {
         clearInterval(timer);
         timer = null;
+      }
+      if (watchId !== null) {
+        Geolocation.clearWatch(watchId);
+        watchId = null;
       }
     };
 
@@ -135,8 +140,25 @@ export function useLocationSharing(enabled: boolean): void {
         await setConsent(consent);
       }
       if (consent === 'yes') {
-        // 거절해도 괜찮다. 아래 getCurrentPosition 이 실패하고 조용히 넘어간다
+        // 앱이 뒤로 가도 이어서 받으려면 "항상 허용" 과 위치 업데이트를 계속 켜 둬야 한다.
+        // 거절해도 괜찮다. 아래 위치 요청이 실패하고 조용히 넘어간다
+        Geolocation.setRNConfiguration({
+          skipPermissionRequests: false,
+          authorizationLevel: 'always',
+          enableBackgroundLocationUpdates: true,
+        });
         Geolocation.requestAuthorization();
+        watchId = Geolocation.watchPosition(
+          p => {
+            last = {
+              latitude: p.coords.latitude,
+              longitude: p.coords.longitude,
+              at: Date.now(),
+            };
+          },
+          () => {},
+          { enableHighAccuracy: false, distanceFilter: 0 },
+        );
       }
 
       const send = async () => {
@@ -144,13 +166,13 @@ export function useLocationSharing(enabled: boolean): void {
           consent: await getConsent(),
           phase: dday.status,
           guardianCount: guardians.length,
-          appActive: AppState.currentState === 'active',
         };
         if (!shouldSend(state)) {
           return;
         }
         try {
-          const { latitude, longitude } = await currentPosition();
+          const fresh = last && Date.now() - last.at < STALE_MS ? last : null;
+          const { latitude, longitude } = fresh ?? (await currentPosition());
           await updateMyLocation(latitude, longitude);
         } catch (e: any) {
           // 여행이 방금 끝났다(400). 다음에 앱을 열 때 다시 확인한다
@@ -168,9 +190,11 @@ export function useLocationSharing(enabled: boolean): void {
     };
 
     start();
-    const sub = AppState.addEventListener('change', next =>
-      next === 'active' ? start() : stop(),
-    );
+    const sub = AppState.addEventListener('change', next => {
+      if (next === 'active') {
+        start();
+      }
+    });
     return () => {
       stop();
       sub.remove();

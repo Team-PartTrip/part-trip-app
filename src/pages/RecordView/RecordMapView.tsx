@@ -33,6 +33,7 @@ import {
   PinIcon,
 } from '../../shared/ui/icons';
 import colors from '../../shared/tokens/colors';
+import { touch48 } from '../../shared/ui/hitSlop';
 
 /** 지도에 찍을 한 지점 */
 interface Spot {
@@ -55,7 +56,7 @@ function toSpots(timeline: TimelineItem[]): Spot[] {
   }
   return located.map((item, index) => ({
     key: `${item.type}-${item.entryId ?? index}`,
-    entryId: item.entryId,
+    entryId: item.type === 'PLACE' ? null : item.entryId,
     title:
       item.type === 'PLACE'
         ? item.placeName ?? '방문 장소'
@@ -79,9 +80,15 @@ interface Props {
   onBack?: () => void;
   /** 촬영 위치를 눌러 그 사진을 본다 (D3) */
   onOpenSpot?: (spot: { tripCardId: number; entryId: number | null }) => void;
+  onAddPhoto?: () => void;
 }
 
-const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
+const RecordMapView: React.FC<Props> = ({
+  tripCardId,
+  onBack,
+  onOpenSpot,
+  onAddPhoto,
+}) => {
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
   const [areaHeight, setAreaHeight] = useState(windowHeight);
@@ -223,6 +230,15 @@ const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
     <>
       <View style={s.sheetHead}>
         <Text style={s.sheetTitle}>방문 장소 {spots.length}곳</Text>
+        <TouchableOpacity
+          style={s.addBtn}
+          activeOpacity={0.85}
+          hitSlop={touch48(36, 'vertical')}
+          accessibilityRole="button"
+          onPress={onAddPhoto}
+        >
+          <Text style={s.addBtnText}>+ 사진 추가</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -250,6 +266,7 @@ const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
               key={spot.key}
               style={s.row}
               activeOpacity={0.85}
+              disabled={spot.entryId == null}
               onPress={() =>
                 onOpenSpot?.({ tripCardId, entryId: spot.entryId })
               }
@@ -263,9 +280,11 @@ const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
                   {spot.subtitle} · {formatShortDate(spot.date)}
                 </Text>
               </View>
-              <View style={s.chevron}>
-                <ChevronRightIcon size={16} color={colors.textTertiary} />
-              </View>
+              {spot.entryId != null && (
+                <View style={s.chevron}>
+                  <ChevronRightIcon size={16} color={colors.textTertiary} />
+                </View>
+              )}
             </TouchableOpacity>
           ))
         )}
@@ -295,6 +314,7 @@ const RecordMapView: React.FC<Props> = ({ tripCardId, onBack, onOpenSpot }) => {
               description={formatShortDate(spot.date)}
               pinColor={colors.primary as string}
               onCalloutPress={() =>
+                spot.entryId != null &&
                 onOpenSpot?.({ tripCardId, entryId: spot.entryId })
               }
             />

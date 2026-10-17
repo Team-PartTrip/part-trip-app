@@ -48,6 +48,7 @@ import {
   planStatusLabel,
 } from '../../entities/planner/types';
 import { ChevronLeftIcon } from '../../shared/ui/icons';
+import { ApiError } from '../../shared/api/client';
 
 /** 일정이 확정된 뒤의 상태. 이때부터 이 화면은 일정표가 된다 */
 export function isSchedule(status: GroupStatus): boolean {
@@ -142,41 +143,72 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
     date: string;
   } | null>(null);
 
+  const load = useCallback(() => {
+    let alive = true;
+    (async () => {
+      setLoading(true);
+      try {
+        const detail = await getPlanner(planId);
+        const confirmed = isSchedule(detail.status);
+        const [final, cards, people] = await Promise.all([
+          confirmed ? getConfirmedPlaces(planId).catch(() => null) : null,
+          // 확정 뒤에도 받는다. 이동 경로가 이 카드에만 붙어 온다
+          getSchedule(planId).catch(() => null),
+          // 초대 링크를 보내고 돌아오면 화면이 다시 포커스되며 새로 받는다
+          getPlannerMembers(planId).catch(() => []),
+        ]);
+        if (alive) {
+          setPlan(detail);
+          setSchedule(final?.places ?? null);
+          setDraft(cards);
+          setMembers(people);
+        }
+      } catch {
+        if (alive) {
+          setPlan(null);
+        }
+      } finally {
+        if (alive) {
+          setLoading(false);
+        }
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [planId]);
+  useFocusEffect(load);
+
+  const groupTrip = !!plan && plan.memberCount > 1 && plan.status !== 'DONE';
+  const goneShown = useRef(false);
   useFocusEffect(
     useCallback(() => {
-      let alive = true;
-      (async () => {
-        setLoading(true);
-        try {
-          const detail = await getPlanner(planId);
-          const confirmed = isSchedule(detail.status);
-          const [final, cards, people] = await Promise.all([
-            confirmed ? getConfirmedPlaces(planId).catch(() => null) : null,
-            // 확정 뒤에도 받는다. 이동 경로가 이 카드에만 붙어 온다
-            getSchedule(planId).catch(() => null),
-            // 초대 링크를 보내고 돌아오면 화면이 다시 포커스되며 새로 받는다
-            getPlannerMembers(planId).catch(() => []),
-          ]);
-          if (alive) {
-            setPlan(detail);
-            setSchedule(final?.places ?? null);
-            setDraft(cards);
-            setMembers(people);
-          }
-        } catch {
-          if (alive) {
-            setPlan(null);
-          }
-        } finally {
-          if (alive) {
-            setLoading(false);
-          }
-        }
-      })();
+      if (!groupTrip) {
+        return;
+      }
+      let active = true;
+      const timer = setInterval(() => {
+        getPlannerMembers(planId)
+          .then(list => active && setMembers(list))
+          .catch(e => {
+            if (
+              active &&
+              e instanceof ApiError &&
+              [400, 403, 404].includes(e.status) &&
+              !goneShown.current
+            ) {
+              goneShown.current = true;
+              Alert.alert('알림', '이 플래너에서 나가졌어요.', [
+                { text: '확인', onPress: onDeleted },
+              ]);
+            }
+          });
+      }, 5000);
       return () => {
-        alive = false;
+        active = false;
+        clearInterval(timer);
       };
-    }, [planId]),
+    }, [groupTrip, planId, onDeleted]),
   );
 
   // 서버가 경로를 뒤에서 계산한다(CALCULATING). 끝날 때까지 3초마다 다시 받는다
@@ -190,6 +222,20 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
       return;
     }
     if (polls.current >= 20) {
+      setDraft(
+        cur =>
+          cur && {
+            ...cur,
+            days: cur.days.map(day => ({
+              ...day,
+              slots: day.slots.map(slot =>
+                slot.routeStatus === 'CALCULATING'
+                  ? { ...slot, routeStatus: 'API_ERROR' }
+                  : slot,
+              ),
+            })),
+          },
+      );
       return;
     }
     const before = draft;
@@ -406,6 +452,13 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
         </TouchableOpacity>
         <View style={s.errorBox}>
           <Text style={s.errorText}>계획을 불러오지 못했어요</Text>
+          <TouchableOpacity
+            style={s.retry}
+            accessibilityRole="button"
+            onPress={() => load()}
+          >
+            <Text style={s.retryText}>다시 시도</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -439,30 +492,38 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
 
   return (
     <View style={s.safeArea}>
+      {/* 뒤로 가기는 스크롤해도 남긴다. 상태바 아래도 이 띠가 가린다 */}
+      <SafeAreaView edges={['top']} style={s.topBar}>
+        <TouchableOpacity
+          onPress={onBack}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel="뒤로 가기"
+        >
+          <View style={s.back}>
+            <ChevronLeftIcon size={24} color={colors.text} />
+          </View>
+        </TouchableOpacity>
+      </SafeAreaView>
       <ScrollView
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
         scrollEnabled={!scrollLocked}
       >
-        <SafeAreaView edges={['top']} style={s.header}>
-          <TouchableOpacity onPress={onBack} hitSlop={12}>
-            <View style={s.back}>
-              <ChevronLeftIcon size={24} color={colors.text} />
-            </View>
-          </TouchableOpacity>
+        <View style={s.header}>
           <View style={s.titleRow}>
             <Text style={s.title} numberOfLines={1}>
               {plan.title}
             </Text>
-            <View
-              style={[
-                s.statusPill,
-                {
-                  backgroundColor: confirmed ? colors.success : colors.accent,
-                },
-              ]}
-            >
-              <Text style={s.statusText}>{planStatusLabel(plan.status)}</Text>
+            <View style={s.statusPill}>
+              <Text
+                style={[
+                  s.statusText,
+                  { color: confirmed ? colors.success : colors.accent },
+                ]}
+              >
+                {planStatusLabel(plan.status)}
+              </Text>
             </View>
           </View>
           <Text style={s.meta}>
@@ -471,7 +532,7 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
               : ''}
             {members.length || plan.joinedMemberCount}/{plan.memberCount}명
           </Text>
-        </SafeAreaView>
+        </View>
 
         {/* 혼자 여행이면 초대할 사람이 없다 */}
         {plan.memberCount > 1 && (
@@ -481,17 +542,22 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
             </Text>
             {members.map((member, i) => (
               <View key={member.userId} style={s.row}>
-                <MemberAvatar nickname={member.nickName} index={i} size={36} />
+                <MemberAvatar
+                  nickname={member.nickName}
+                  imgUrl={member.imgUrl}
+                  index={i}
+                  size={36}
+                />
                 <View style={s.rowBody}>
                   <Text style={s.rowTitle}>{member.nickName}</Text>
                   <Text style={s.rowSub}>
                     {member.role === 'OWNER' ? '리더' : '참여 완료'}
                   </Text>
                 </View>
-                {/* 그룹장만 내보낸다. 자기 자신 줄에는 안 보인다. 참여는 확정 전까지만 받는다 */}
+                {/* 그룹장만 내보낸다. 자기 자신 줄에는 안 보인다. 여행이 끝나기 전까지 내보낼 수 있다 */}
                 {plan.role === 'OWNER' &&
                   member.role !== 'OWNER' &&
-                  !confirmed && (
+                  plan.status !== 'DONE' && (
                     <TouchableOpacity
                       hitSlop={touch48(24)}
                       accessibilityRole="button"
@@ -506,9 +572,9 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
                   )}
               </View>
             ))}
-            {/* 서버는 확정 전(PLANNING)에만, 정원 안에서만 참여를 받는다 */}
+            {/* 서버는 여행이 끝나기 전까지, 정원 안에서 참여를 받는다 */}
             {plan.role === 'OWNER' &&
-              !confirmed &&
+              plan.status !== 'DONE' &&
               members.length < plan.memberCount && (
                 <TouchableOpacity
                   style={s.inviteBtn}

@@ -40,8 +40,6 @@ import TripCardListView from './src/pages/RecordView/TripCardListView';
 import TripCardDetailView from './src/pages/RecordView/TripCardDetailView';
 import TripCardEditView from './src/pages/RecordView/TripCardEditView';
 import TripCardDeleteView from './src/pages/RecordView/TripCardDeleteView';
-import RecordEditView from './src/pages/RecordView/RecordEditView';
-import RecordCompleteView from './src/pages/RecordView/RecordCompleteView';
 import ProfileEditView from './src/pages/ProfileView/ProfileEditView';
 import GuardianView from './src/pages/GuardianView/GuardianView';
 import TravelPreferenceView from './src/pages/TravelPreferenceView/TravelPreferenceView';
@@ -61,6 +59,7 @@ export type RootStackParamList = {
   Notifications: undefined;
   NotificationDetail: { notification: Notification };
   PlaceDetail: { place: TourPlace };
+  PlanPlace: { place: TourPlace };
   Festival: undefined;
   Record: undefined;
   RecordMap: { tripCardId: number };
@@ -76,8 +75,6 @@ export type RootStackParamList = {
   TripCardDetail: { tripCardId: number };
   TripCardEdit: { tripCardId: number };
   TripCardDelete: undefined;
-  RecordEdit: { id?: string };
-  RecordComplete: undefined;
   Profile: undefined;
   ProfileEdit: undefined;
   Guardian: undefined;
@@ -92,8 +89,6 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const AUTH_ROUTES = [
   'Launch',
   'Login',
-  'RecordEdit',
-  'RecordComplete',
   'RegionMap',
   'PlanGroup',
   'PlanPeriod',
@@ -116,6 +111,7 @@ const OWN_HEADER_ROUTES = [
   'RecordMap',
   'Festival',
   'PlaceDetail',
+  'PlanPlace',
   'TripCardDetail',
   'TripCardEdit',
   'Profile',
@@ -145,6 +141,7 @@ const TAB_BY_ROUTE: Record<string, TabKey> = {
   NotificationDetail: 'home',
   Planner: 'planner',
   PlanStatus: 'planner',
+  PlanPlace: 'planner',
   Record: 'record',
   RecordMap: 'record',
   TripCardDetail: 'record',
@@ -355,6 +352,14 @@ function App() {
                   />
                 )}
               </Stack.Screen>
+              <Stack.Screen name="PlanPlace">
+                {({ navigation, route }) => (
+                  <PlaceDetailView
+                    place={route.params.place}
+                    onBack={() => navigation.goBack()}
+                  />
+                )}
+              </Stack.Screen>
 
               <Stack.Screen name="Festival">
                 {({ navigation }) => (
@@ -385,6 +390,11 @@ function App() {
                       navigation.navigate('PhotoDetail', {
                         tripCardId: spot.tripCardId,
                         photoId: spot.entryId ?? undefined,
+                      })
+                    }
+                    onAddPhoto={() =>
+                      navigation.navigate('TripCardEdit', {
+                        tripCardId: route.params.tripCardId,
                       })
                     }
                   />
@@ -418,6 +428,11 @@ function App() {
                     }
                     onDeletePhotos={() =>
                       navigation.navigate('PhotoDelete', {
+                        tripCardId: route.params.tripCardId,
+                      })
+                    }
+                    onAddPhoto={() =>
+                      navigation.navigate('TripCardEdit', {
                         tripCardId: route.params.tripCardId,
                       })
                     }
@@ -504,23 +519,6 @@ function App() {
                 )}
               </Stack.Screen>
 
-              <Stack.Screen name="RecordEdit">
-                {({ navigation }) => (
-                  <RecordEditView
-                    onBack={() => navigation.goBack()}
-                    onDone={() => navigation.navigate('RecordComplete')}
-                  />
-                )}
-              </Stack.Screen>
-              <Stack.Screen name="RecordComplete">
-                {({ navigation }) => (
-                  <RecordCompleteView
-                    onConfirm={() => navigation.navigate('Record')}
-                    onHome={() => navigation.navigate('Main')}
-                  />
-                )}
-              </Stack.Screen>
-
               {/* 미션 */}
 
               <Stack.Screen name="Profile">
@@ -564,6 +562,7 @@ function App() {
                 {({ navigation }) => (
                   <GuardianView
                     onBack={() => navigation.goBack()}
+                    onEditProfile={() => navigation.navigate('ProfileEdit')}
                     onOpenSenior={senior =>
                       navigation.navigate('Senior', {
                         seniorUserId: senior.userId,

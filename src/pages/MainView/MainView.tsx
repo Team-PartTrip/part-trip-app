@@ -27,18 +27,22 @@ import {
   BellIcon,
   CalendarIcon,
   ChevronRightIcon,
+  PinIcon,
 } from '../../shared/ui/icons';
 import CategoryIcon from '../../entities/planner/CategoryIcon';
 import RestroomNote from '../../entities/main/RestroomNote';
-import { openDirections, RouteLine } from '../PlannerScreen/ScheduleDays';
+import { HereLine, RouteLine } from '../PlannerScreen/ScheduleDays';
+import { HERE } from '../PlannerScreen/PlanBlocksView';
 import {
   CATEGORY_LABEL,
   ROUTE_STATUS_MESSAGE,
 } from '../../entities/planner/types';
 import type { PlaceCategory } from '../../entities/planner/types';
+import { formatNights } from '../../entities/planner/types';
+import { formatTripRange } from '../../entities/record/types';
 import colors from '../../shared/tokens/colors';
 import DandiWordmark from '../../shared/ui/DandiWordmark';
-import { CheckIcon, StarIcon } from '../../shared/ui/icons';
+import { CheckIcon, RefreshIcon, StarIcon } from '../../shared/ui/icons';
 
 // 추천 장소는 카테고리를 "맛집" 같은 한글로 준다
 const categoryOf = (label: string | null) =>
@@ -134,25 +138,6 @@ function heroImageOf(places: TourPlace[]): string | null {
   const picked =
     withImage.find(place => place.category === '명소') ?? withImage[0];
   return picked?.imageUrl ? toImageUrl(picked.imageUrl) : null;
-}
-
-// "2026-08-23" + "2026-08-27" → "2026.08.23 – 08.27"
-// 해가 바뀌면 끝 날짜에도 연도를 남긴다 → "2026.06.10 – 2027.03.27"
-function formatRange(start: string, end: string): string {
-  const from = start.split('-');
-  const to = end.split('-');
-  const sameYear = from[0] === to[0];
-  return `${from.join('.')} – ${(sameYear ? to.slice(1) : to).join('.')}`;
-}
-
-// "3박 4일"
-function formatNights(start: string, end: string): string {
-  const ms = new Date(end).getTime() - new Date(start).getTime();
-  if (Number.isNaN(ms)) {
-    return '';
-  }
-  const nights = Math.max(0, Math.round(ms / 86_400_000));
-  return `${nights}박 ${nights + 1}일`;
 }
 
 interface MainViewProps {
@@ -368,8 +353,7 @@ const MainView: React.FC<MainViewProps> = ({
                 {nights ? `${dday.cityName} · ${nights}` : dday.cityName}
               </Text>
               <Text style={s.tripMeta}>
-                {formatRange(dday.startDate, dday.endDate)}
-                {dday.headcount ? ` · ${dday.headcount}명` : ''}
+                {formatTripRange(dday.startDate, dday.endDate)}
               </Text>
             </View>
           </SafeAreaView>
@@ -397,43 +381,70 @@ const MainView: React.FC<MainViewProps> = ({
                 !done && i > 0 && slot.routeStatus === 'READY'
                   ? slot.routeFromPrevious
                   : null;
-              const routeMessage =
-                i > 0 && slot.routeStatus
-                  ? ROUTE_STATUS_MESSAGE[slot.routeStatus]
-                  : undefined;
+              const firstRoute =
+                !done &&
+                i === 0 &&
+                slot.routeStatus === 'READY' &&
+                slot.routeFromPrevious?.fromName &&
+                slot.routeFromPrevious.fromName !== HERE
+                  ? slot.routeFromPrevious
+                  : null;
+              const routeMessage = slot.routeStatus
+                ? ROUTE_STATUS_MESSAGE[slot.routeStatus]
+                : undefined;
+              const leg = firstRoute ? (
+                <>
+                  <Text style={s.todayFrom}>
+                    {firstRoute.fromName}에서 출발
+                  </Text>
+                  <RouteLine route={firstRoute} from={null} to={slot.place} />
+                </>
+              ) : route ? (
+                <RouteLine
+                  route={route}
+                  from={list[i - 1].place}
+                  to={slot.place}
+                />
+              ) : isNext &&
+                slot.place.latitude != null &&
+                slot.place.longitude != null ? (
+                <>
+                  {!!routeMessage && (
+                    <Text style={s.todayRouteMessage}>{routeMessage}</Text>
+                  )}
+                  <HereLine to={slot.place} icon={i > 0} />
+                </>
+              ) : !done && routeMessage ? (
+                <Text style={s.todayRouteMessage}>{routeMessage}</Text>
+              ) : null;
               return (
                 <View key={slot.slotId}>
-                  {route ? (
-                    <View style={s.todayRoute}>
-                      {/* 첫 장소는 지금 있는 곳에서 길을 찾는다 */}
-                      <RouteLine
-                        route={route}
-                        from={list[i - 1].place}
-                        to={slot.place}
-                      />
+                  {(i > 0 || leg) && (
+                    <View style={[s.todayLeg, i === 0 && s.todayLegFirst]}>
+                      {/* 첫 장소 앞은 이어 줄 앞 장소가 없어 선 대신 출발 표시를 둔다 */}
+                      <View
+                        style={[
+                          s.todayRail,
+                          i === 0 &&
+                            (firstRoute ? s.todayRailTop : s.todayRailStart),
+                        ]}
+                      >
+                        {i > 0 ? (
+                          <View style={s.todayRailLine} />
+                        ) : (
+                          <PinIcon size={20} color={colors.textSecondary} />
+                        )}
+                      </View>
+                      <View style={s.todayLegBody}>{leg}</View>
                     </View>
-                  ) : (
-                    !done &&
-                    routeMessage && (
-                      <Text style={[s.todayRoute, s.todayRouteMessage]}>
-                        {routeMessage}
-                      </Text>
-                    )
                   )}
-                  {!route && isNext && slot.place.latitude != null && (
-                    <TouchableOpacity
-                      style={[s.todayRoute, s.todayMap]}
-                      hitSlop={touch48(32)}
-                      accessibilityRole="button"
-                      accessibilityLabel={`${slot.place.name}까지 길 안내`}
-                      onPress={() =>
-                        openDirections(slot.place, null, 'PUBLIC_TRANSIT')
-                      }
-                    >
-                      <Text style={s.todayMapText}>길 안내</Text>
-                    </TouchableOpacity>
-                  )}
-                  <View style={[s.todayRow, isNext && s.todayRowNext]}>
+                  <View
+                    style={[
+                      s.todayRow,
+                      i === 0 && !leg && s.todayRowFirst,
+                      isNext && s.todayRowNext,
+                    ]}
+                  >
                     <View style={[s.todayNum, done && s.todayNumDone]}>
                       {done ? (
                         <CheckIcon size={18} color={colors.textSecondary} />
@@ -504,11 +515,13 @@ const MainView: React.FC<MainViewProps> = ({
             <Text style={s.sectionTitle}>가볼 만한 곳</Text>
             {places.length > 4 && (
               <TouchableOpacity
+                style={s.refreshBtn}
                 onPress={refreshRecommended}
                 hitSlop={12}
                 accessibilityRole="button"
                 accessibilityLabel="가볼 만한 곳 새로고침"
               >
+                <RefreshIcon size={16} color={colors.primary} />
                 <Text style={s.sectionAction}>새로고침</Text>
               </TouchableOpacity>
             )}

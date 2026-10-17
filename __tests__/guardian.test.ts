@@ -7,6 +7,7 @@ import {
   formatUntil,
   codeFrom,
   inviteMessage,
+  isDefaultNickname,
 } from '../src/pages/GuardianView/GuardianView';
 import { kakaoMapUrl } from '../src/pages/GuardianView/SeniorView';
 
@@ -35,4 +36,10 @@ test('받은 메시지를 통째로 붙여넣어도 코드만 남긴다', () => 
   expect(codeFrom('k7px3m')).toBe('K7PX3M');
   expect(codeFrom('K7P')).toBe('K7P');
   expect(codeFrom(' K7-PX ')).toBe('K7PX');
+});
+
+test('가입 때 받은 이름만 기본 이름으로 본다', () => {
+  expect(isDefaultNickname('여행자_g5fd3v')).toBe(true);
+  expect(isDefaultNickname('김영숙')).toBe(false);
+  expect(isDefaultNickname('여행자_좋아')).toBe(false);
 });

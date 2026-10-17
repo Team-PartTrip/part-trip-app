@@ -5,7 +5,16 @@ import colors from '../../shared/tokens/colors';
 export const photoDetailStyles = StyleSheet.create({
   loading: { marginTop: 80 },
   blankBody: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  blankText: { fontSize: 14, color: colors.textMuted },
+  blankText: { fontSize: 15, color: colors.textMuted },
+  blankBtn: {
+    marginTop: 16,
+    height: 48,
+    paddingHorizontal: 24,
+    borderRadius: 24,
+    backgroundColor: colors.primaryFill,
+    justifyContent: 'center',
+  },
+  blankBtnText: { fontSize: 15, fontWeight: '600', color: colors.textOnPrimary },
   photoImage: { width: '100%', height: '100%' },
   thumbImage: { width: '100%', height: '100%', borderRadius: 8 },
   safeArea: { flex: 1, backgroundColor: colors.night },

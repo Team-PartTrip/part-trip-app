@@ -6,8 +6,9 @@ export const tripCardEditStyles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
 
   header: { paddingHorizontal: 24, paddingTop: 4 },
+  topBar: { paddingHorizontal: 24, paddingTop: 4, paddingBottom: 4 },
   back: {},
-  title: { marginTop: 8, fontSize: 24, fontWeight: '700', color: colors.text },
+  title: { marginTop: 4, fontSize: 24, fontWeight: '700', color: colors.text },
   desc: { marginTop: 8, fontSize: 15, color: colors.textMuted },
 
   tripBar: {
@@ -40,6 +41,14 @@ export const tripCardEditStyles = StyleSheet.create({
   thumb: { width: '100%', height: '100%' },
   addCell: {},
   hint: { marginTop: 10, fontSize: 12, color: colors.textMuted },
+  commentNote: {
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: colors.tint,
+    fontSize: 14,
+    lineHeight: 20,
+    color: colors.textSecondary,
+  },
   check: {
     position: 'absolute',
     top: 8,

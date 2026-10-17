@@ -41,7 +41,10 @@ interface Props {
 const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
   const [card, setCard] = useState<TripCardSummary | null>(null);
   const [picked, setPicked] = useState<PickedPhoto[]>([]);
-  const [comment, setComment] = useState('');
+  const [commentFor, setCommentFor] = useState({ uri: '', text: '' });
+  const commentUri = picked.length === 1 ? picked[0].uri : '';
+  const comment = commentFor.uri === commentUri ? commentFor.text : '';
+  const setComment = (text: string) => setCommentFor({ uri: commentUri, text });
   const [saving, setSaving] = useState(false);
 
   useFocusEffect(
@@ -100,8 +103,11 @@ const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
       // 서버는 한 장씩 받는다. 고른 순서대로 올린다.
       // 중간에 실패하면 올라간 사진은 목록에서 빼야 한다.
       // 안 그러면 다시 누를 때 앞의 사진이 한 번 더 올라간다.
+      // 코멘트는 한 장만 고를 때 받는다. 여러 장에 같은 글이 붙지 않게
+      const note =
+        picked.length === 1 ? comment.trim() || undefined : undefined;
       for (const photo of picked) {
-        await addTripCardEntry(tripCardId, photo, comment.trim() || undefined);
+        await addTripCardEntry(tripCardId, photo, note);
         setPicked(prev => prev.filter(item => item.uri !== photo.uri));
       }
       onSaved?.();
@@ -116,6 +122,18 @@ const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
 
   return (
     <View style={s.safeArea}>
+      <SafeAreaView edges={['top']} style={s.topBar}>
+        <TouchableOpacity
+          onPress={onBack}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel="뒤로 가기"
+        >
+          <View style={s.back}>
+            <ChevronLeftIcon size={22} color={colors.text} />
+          </View>
+        </TouchableOpacity>
+      </SafeAreaView>
       <KeyboardAvoidingView
         style={s.safeArea}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -125,24 +143,17 @@ const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <SafeAreaView edges={['top']}>
-            <TouchableOpacity onPress={onBack} hitSlop={12}>
-              <View style={s.back}>
-                <ChevronLeftIcon size={22} color={colors.text} />
-              </View>
-            </TouchableOpacity>
-            <Text style={s.title}>사진 · 코멘트 추가</Text>
-            <Text style={s.desc}>
-              여행 카드는 여행 시작과 함께 자동으로 만들어져요
-            </Text>
-            {card && (
-              <View style={s.tripBar}>
-                <Text style={s.tripBarText}>
-                  {title} · {formatDotDate(card.startDate)} 시작
-                </Text>
-              </View>
-            )}
-          </SafeAreaView>
+          <Text style={s.title}>사진 · 코멘트 추가</Text>
+          <Text style={s.desc}>
+            여행카드는 여행 시작과 함께 자동으로 만들어져요
+          </Text>
+          {card && (
+            <View style={s.tripBar}>
+              <Text style={s.tripBarText}>
+                {title} · {formatDotDate(card.startDate)} 시작
+              </Text>
+            </View>
+          )}
 
           <Text style={s.label}>사진 선택</Text>
           <View style={s.grid}>
@@ -178,21 +189,28 @@ const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
           </Text>
 
           <Text style={s.label}>코멘트</Text>
-          <View style={s.commentBox}>
-            <TextInput
-              style={s.commentInput}
-              value={comment}
-              onChangeText={setComment}
-              placeholder="이 사진에 대해 짧게 남겨보세요"
-              placeholderTextColor="#9aa7b4"
-              maxLength={MAX_LENGTH}
-              multiline
-              textAlignVertical="top"
-            />
-            <Text style={s.counter}>
-              {comment.length} / {MAX_LENGTH}
+          {picked.length > 1 ? (
+            <Text style={s.commentNote}>
+              여러 장을 고르면 코멘트는 사진마다 따로 남겨요. 담은 뒤 사진을
+              눌러 적어주세요.
             </Text>
-          </View>
+          ) : (
+            <View style={s.commentBox}>
+              <TextInput
+                style={s.commentInput}
+                value={comment}
+                onChangeText={setComment}
+                placeholder="이 사진에 대해 짧게 남겨보세요"
+                placeholderTextColor="#9aa7b4"
+                maxLength={MAX_LENGTH}
+                multiline
+                textAlignVertical="top"
+              />
+              <Text style={s.counter}>
+                {comment.length} / {MAX_LENGTH}
+              </Text>
+            </View>
+          )}
         </ScrollView>
 
         <SafeAreaView edges={['bottom']} style={s.footer}>
@@ -209,7 +227,7 @@ const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
               <ActivityIndicator color="#fff" />
             ) : (
               <Text style={s.primaryText}>
-                여행 카드에 담기{picked.length > 0 ? ` (${picked.length})` : ''}
+                여행카드에 담기{picked.length > 0 ? ` (${picked.length})` : ''}
               </Text>
             )}
           </TouchableOpacity>
