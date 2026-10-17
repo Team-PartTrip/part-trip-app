@@ -59,6 +59,7 @@ export type RootStackParamList = {
   Notifications: undefined;
   NotificationDetail: { notification: Notification };
   PlaceDetail: { place: TourPlace };
+  PlanPlace: { place: TourPlace };
   Festival: undefined;
   Record: undefined;
   RecordMap: { tripCardId: number };
@@ -110,6 +111,7 @@ const OWN_HEADER_ROUTES = [
   'RecordMap',
   'Festival',
   'PlaceDetail',
+  'PlanPlace',
   'TripCardDetail',
   'TripCardEdit',
   'Profile',
@@ -139,6 +141,7 @@ const TAB_BY_ROUTE: Record<string, TabKey> = {
   NotificationDetail: 'home',
   Planner: 'planner',
   PlanStatus: 'planner',
+  PlanPlace: 'planner',
   Record: 'record',
   RecordMap: 'record',
   TripCardDetail: 'record',
@@ -342,6 +345,14 @@ function App() {
               </Stack.Screen>
 
               <Stack.Screen name="PlaceDetail">
+                {({ navigation, route }) => (
+                  <PlaceDetailView
+                    place={route.params.place}
+                    onBack={() => navigation.goBack()}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="PlanPlace">
                 {({ navigation, route }) => (
                   <PlaceDetailView
                     place={route.params.place}
