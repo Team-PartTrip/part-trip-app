@@ -178,6 +178,22 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
   }, [planId]);
   useFocusEffect(load);
 
+  const waiting =
+    !!plan && plan.memberCount > 1 && members.length < plan.memberCount;
+  useFocusEffect(
+    useCallback(() => {
+      if (!waiting) {
+        return;
+      }
+      const timer = setInterval(() => {
+        getPlannerMembers(planId)
+          .then(setMembers)
+          .catch(() => {});
+      }, 5000);
+      return () => clearInterval(timer);
+    }, [waiting, planId]),
+  );
+
   // 서버가 경로를 뒤에서 계산한다(CALCULATING). 끝날 때까지 3초마다 다시 받는다
   const polls = useRef(0);
   useEffect(() => {
@@ -539,9 +555,9 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
                   )}
               </View>
             ))}
-            {/* 서버는 확정 전(PLANNING)에만, 정원 안에서만 참여를 받는다 */}
+            {/* 서버는 여행이 끝나기 전까지, 정원 안에서 참여를 받는다 */}
             {plan.role === 'OWNER' &&
-              !confirmed &&
+              plan.status !== 'DONE' &&
               members.length < plan.memberCount && (
                 <TouchableOpacity
                   style={s.inviteBtn}
