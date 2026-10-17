@@ -111,8 +111,10 @@ export const RouteLine: React.FC<{
   const lines = routeLines(route);
   const last = lines.pop();
   return (
-    <View style={s.route}>
-      <Icon size={16} color={colors.textSecondary} />
+    <View style={[s.route, lines.length === 0 && s.routeSingle]}>
+      <View style={s.routeIcon}>
+        <Icon size={16} color={colors.textSecondary} />
+      </View>
       <View style={s.routeBody}>
         {lines.map(line => (
           <Text key={line} style={s.routeText}>
