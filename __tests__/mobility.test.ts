@@ -70,3 +70,19 @@ test('미리 켜져 있던 계단 칩을 끄면 계단 괜찮음으로 바뀐다
   expect(mobilityOf(pref)).toEqual(['STAIRS']);
   expect(mobilityAnswers([], pref).canUseStairs).toBe(true);
 });
+
+test('휠체어 칩을 끄면 휠체어 때문에 꺼 둔 계단 제한도 풀린다', () => {
+  const pref = {
+    ...base,
+    usesWheelchair: true,
+    limitedWalking: false,
+    canUseStairs: false,
+  };
+  expect(mobilityOf(pref)).toEqual(['WHEELCHAIR']);
+  expect(mobilityAnswers([], pref)).toEqual({
+    usesWheelchair: false,
+    limitedWalking: false,
+    canUseStairs: true,
+  });
+  expect(mobilityAnswers(['STAIRS'], pref).canUseStairs).toBe(false);
+});

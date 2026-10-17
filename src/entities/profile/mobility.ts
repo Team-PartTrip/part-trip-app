@@ -47,6 +47,6 @@ export function mobilityAnswers(
     canUseStairs:
       wheelchair || mobility.includes('STAIRS')
         ? false
-        : stairsShown || pref.canUseStairs,
+        : stairsShown || pref.canUseStairs || !!pref.usesWheelchair,
   };
 }
