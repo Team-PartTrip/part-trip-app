@@ -2,6 +2,7 @@
 
 import {
   chipOptions,
+  initialPicked,
   splitNames,
   toggle,
   toPayload,
@@ -33,8 +34,47 @@ test('하나만 고르는 블록은 새로 누른 것으로 바뀐다', () => {
   expect(picked.WALKING).toEqual(['조금 걷기']);
 });
 
+const group = { isSolo: false, dayTrip: false };
+
 test('자유 입력 칩은 보여주지 않는다', () => {
-  expect(chipOptions(single)).toEqual(['걷기 최소화', '조금 걷기']);
+  expect(chipOptions(single, group)).toEqual(['걷기 최소화', '조금 걷기']);
+});
+
+const companion: PlannerBlock = {
+  type: 'COMPANION',
+  label: '동행 유형',
+  multiple: false,
+  options: ['부부', '친구', '혼자'],
+};
+const lodging: PlannerBlock = {
+  type: 'LODGING_TYPE',
+  label: '숙박 유형',
+  multiple: false,
+  options: ['호텔', '펜션', '숙박 없음'],
+};
+
+test('혼자 여행이면 동행은 혼자만, 같이 가면 혼자는 빠진다', () => {
+  expect(chipOptions(companion, { isSolo: true, dayTrip: false })).toEqual([
+    '혼자',
+  ]);
+  expect(chipOptions(companion, group)).toEqual(['부부', '친구']);
+});
+
+test('당일치기면 숙박 없음만, 아니면 숙박 없음은 빠진다', () => {
+  expect(chipOptions(lodging, { isSolo: false, dayTrip: true })).toEqual([
+    '숙박 없음',
+  ]);
+  expect(chipOptions(lodging, group)).toEqual(['호텔', '펜션']);
+});
+
+test('하나뿐인 칩과 걷기 부담을 미리 켠다', () => {
+  expect(initialPicked({ isSolo: true, dayTrip: true }, ['WALKING'])).toEqual({
+    COMPANION: ['혼자'],
+    LODGING_TYPE: ['숙박 없음'],
+    WALKING: ['걷기 최소화'],
+  });
+  expect(initialPicked(group, ['STAIRS'])).toEqual({ WALKING: ['조금 걷기'] });
+  expect(initialPicked(group, null)).toEqual({});
 });
 
 test('장소 이름은 쉼표와 줄바꿈으로 나누고 빈 값은 버린다', () => {

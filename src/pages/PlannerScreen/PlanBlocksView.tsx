@@ -34,7 +34,7 @@ import {
   MOBILITY,
   Mobility,
 } from '../../entities/profile/mobility';
-import { getCities } from '../../entities/main/api';
+import { getAddress, getCities } from '../../entities/main/api';
 import {
   isMetro,
   isSameRegion,
@@ -51,10 +51,12 @@ import {
 import {
   chipOptions,
   FEATURED,
+  initialPicked,
   Picked,
   PLACE_NAME_BLOCKS,
   toggle,
   toPayload,
+  walkingOf,
 } from '../../entities/planner/blocks';
 import { formatRange, PlanDraft } from '../../entities/planner/types';
 import { ChevronDownIcon, ChevronUpIcon, PinIcon } from '../../shared/ui/icons';
@@ -79,7 +81,14 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
   const [found, setFound] = useState<string[] | null>(null);
   const [blocks, setBlocks] = useState<PlannerBlock[] | null>(null);
   const [blocksFailed, setBlocksFailed] = useState(false);
-  const [picked, setPicked] = useState<Picked>({});
+  const trip = {
+    isSolo: draft.isSolo,
+    dayTrip: draft.startDate === draft.endDate,
+  };
+  const [picked, setPicked] = useState<Picked>(() =>
+    initialPicked(trip, null),
+  );
+  const walkingTouched = useRef(false);
   const [placeNames, setPlaceNames] = useState<Record<string, string>>({});
   const [showAll, setShowAll] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -87,6 +96,8 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
     name: string;
     latitude: number;
     longitude: number;
+    /** 지금 있는 곳 칩으로 고름. 이름은 그 자리 주소다 */
+    here?: boolean;
   } | null>(null);
   const [locating, setLocating] = useState(false);
   const [searchingDeparture, setSearchingDeparture] = useState(false);
@@ -106,6 +117,12 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
       })
       .catch(() => {});
   }, []);
+  useEffect(() => {
+    const walking = walkingOf(mobility);
+    if (walking && !walkingTouched.current) {
+      setPicked(prev => ({ ...prev, WALKING: [walking] }));
+    }
+  }, [mobility]);
   // 버튼 disabled 는 렌더 값이라 연타를 다 막지 못한다
   const generatingRef = useRef(false);
 
@@ -240,7 +257,7 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
   };
 
   const renderDeparture = (block: PlannerBlock) => {
-    const here = departure?.name === HERE;
+    const here = !!departure?.here;
     const atHome =
       !departure && !!home && usesHome(picked.DEPARTURE_PLACE?.[0]);
     const chip = (
@@ -337,7 +354,7 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
           ) : null}
         </Text>
         <View style={s.chips}>
-          {chipOptions(block).map(option => {
+          {chipOptions(block, trip).map(option => {
             const on = values.includes(option);
             return (
               <TouchableOpacity
@@ -348,6 +365,9 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
                 accessibilityRole="button"
                 accessibilityState={{ selected: on }}
                 onPress={() => {
+                  if (block.type === 'WALKING') {
+                    walkingTouched.current = true;
+                  }
                   setPicked(prev => toggle(prev, block, option));
                 }}
               >
@@ -367,8 +387,11 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
     setLocating(true);
     Geolocation.requestAuthorization();
     currentPosition()
-      .then(p => {
-        setDeparture({ name: HERE, ...p });
+      .then(async p => {
+        const address = await getAddress(p.latitude, p.longitude).catch(
+          () => null,
+        );
+        setDeparture({ name: address ?? HERE, ...p, here: true });
         pickDeparture(CUSTOM);
       })
       .catch(() =>

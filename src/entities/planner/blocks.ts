@@ -1,4 +1,5 @@
 import type { PlannerBlock } from './api';
+import type { Mobility } from '../profile/mobility';
 
 /**
  * 여행 지침 블록 (명세 Func-005-14, server #158).
@@ -24,8 +25,46 @@ export const PLACE_NAME_BLOCKS = ['MUST_INCLUDE', 'EXCLUDE'];
 /** 블록 종류 → 고른 값들 */
 export type Picked = Record<string, string[]>;
 
-export function chipOptions(block: PlannerBlock): string[] {
-  return block.options.filter(option => !option.startsWith('직접'));
+const SOLO = '혼자';
+const NO_LODGING = '숙박 없음';
+
+export function chipOptions(
+  block: PlannerBlock,
+  trip: { isSolo: boolean; dayTrip: boolean },
+): string[] {
+  return block.options.filter(
+    option =>
+      !option.startsWith('직접') &&
+      (block.type !== 'COMPANION' || (option === SOLO) === trip.isSolo) &&
+      (block.type !== 'LODGING_TYPE' || (option === NO_LODGING) === trip.dayTrip),
+  );
+}
+
+export function initialPicked(
+  trip: { isSolo: boolean; dayTrip: boolean },
+  mobility: Mobility[] | null,
+): Picked {
+  const picked: Picked = {};
+  if (trip.isSolo) {
+    picked.COMPANION = [SOLO];
+  }
+  if (trip.dayTrip) {
+    picked.LODGING_TYPE = [NO_LODGING];
+  }
+  const walking = walkingOf(mobility);
+  if (walking) {
+    picked.WALKING = [walking];
+  }
+  return picked;
+}
+
+export function walkingOf(mobility: Mobility[] | null): string | undefined {
+  if (!mobility) {
+    return undefined;
+  }
+  return mobility.includes('WHEELCHAIR') || mobility.includes('WALKING')
+    ? '걷기 최소화'
+    : '조금 걷기';
 }
 
 /** 칩을 눌렀을 때. 하나만 고르는 블록은 바꾸고, 같은 걸 다시 누르면 끈다 */
