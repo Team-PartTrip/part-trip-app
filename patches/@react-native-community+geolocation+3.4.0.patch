@@ -1,0 +1,18 @@
+diff --git a/node_modules/@react-native-community/geolocation/ios/RNCGeolocation.mm b/node_modules/@react-native-community/geolocation/ios/RNCGeolocation.mm
+index 03df64d..a7c9397 100644
+--- a/node_modules/@react-native-community/geolocation/ios/RNCGeolocation.mm
++++ b/node_modules/@react-native-community/geolocation/ios/RNCGeolocation.mm
+@@ -186,6 +186,13 @@ - (void)beginLocationUpdatesWithDesiredAccuracy:(CLLocationAccuracy)desiredAccur
+ 
+   _locationManager.distanceFilter  = distanceFilter;
+   _locationManager.desiredAccuracy = desiredAccuracy;
++#if !TARGET_OS_VISION
++  // 가만히 있어도 iOS 가 위치 업데이트를 멈추고 앱을 재우지 않게 한다. 백그라운드 위치 공유가 끊기지 않는다
++  _locationManager.pausesLocationUpdatesAutomatically = NO;
++  if (@available(iOS 11.0, *)) {
++    _locationManager.showsBackgroundLocationIndicator = YES;
++  }
++#endif
+   _usingSignificantChanges = useSignificantChanges;
+ 
+   if (@available(iOS 14.0, *)) {
