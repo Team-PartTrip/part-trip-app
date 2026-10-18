@@ -43,7 +43,10 @@ const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
   const [picked, setPicked] = useState<PickedPhoto[]>([]);
   const [commentFor, setCommentFor] = useState({ uri: '', text: '' });
   const commentUri = picked.length === 1 ? picked[0].uri : '';
-  const comment = commentFor.uri === commentUri ? commentFor.text : '';
+  const comment =
+    commentFor.uri === commentUri || (commentFor.uri === '' && !!commentUri)
+      ? commentFor.text
+      : '';
   const setComment = (text: string) => setCommentFor({ uri: commentUri, text });
   const [saving, setSaving] = useState(false);
 
