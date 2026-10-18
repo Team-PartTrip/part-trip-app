@@ -13,6 +13,7 @@ import {
 /** 보내는 간격. 보호자 화면이 거의 실시간으로 보이게 */
 export const SEND_EVERY_MS = 20_000;
 const STALE_MS = 60_000;
+const RECHECK_EVERY = 15;
 
 const CONSENT_KEY = LOCATION_CONSENT_KEY;
 export type Consent = 'yes' | 'no' | null;
@@ -87,7 +88,7 @@ function showConsent(): Promise<boolean> {
   return new Promise(resolve =>
     Alert.alert(
       '가족에게 위치를 알려줄까요?',
-      '여행하는 동안 연결된 가족(보호자)이 내 위치를 볼 수 있어요.\n앱이 꺼져 있어도 20초쯤마다 보내고, 여행이 끝나면 지워져요.\n마이 → 가족 연결에서 언제든 끌 수 있어요.',
+      '여행하는 동안 연결된 가족(보호자)이 내 위치를 볼 수 있어요.\n앱을 화면에서 내려도 20초~1분마다 보내요. 앱을 완전히 종료하면 멈추고, 여행이 끝나면 지워져요.\n마이 → 가족 연결에서 언제든 끌 수 있어요.',
       [
         { text: '안 할래요', style: 'cancel', onPress: () => resolve(false) },
         { text: '알려줄게요', onPress: () => resolve(true) },
@@ -141,6 +142,12 @@ export function useLocationSharing(enabled: boolean): void {
         consent = (await askConsent()) ? 'yes' : 'no';
         await setConsent(consent);
       }
+      if (mine !== generation) {
+        return;
+      }
+      let phase: TripPhase | undefined = dday.status;
+      let guardianCount = guardians.length;
+      let sentSinceCheck = 0;
       const send = async () => {
         if (sending) {
           return;
@@ -154,12 +161,29 @@ export function useLocationSharing(enabled: boolean): void {
         }
       };
       const sendOnce = async () => {
+        sentSinceCheck += 1;
+        if (sentSinceCheck >= RECHECK_EVERY) {
+          sentSinceCheck = 0;
+          const [nextDday, nextGuardians] = await Promise.all([
+            getDday().catch(() => null),
+            getMyGuardians().catch(() => null),
+          ]);
+          if (nextDday) {
+            phase = nextDday.status;
+          }
+          if (nextGuardians) {
+            guardianCount = nextGuardians.length;
+          }
+        }
         const state = {
           consent: await getConsent(),
-          phase: dday.status,
-          guardianCount: guardians.length,
+          phase,
+          guardianCount,
         };
         if (!shouldSend(state)) {
+          if (phase !== 'DURING' || guardianCount === 0) {
+            stop();
+          }
           return;
         }
         try {
@@ -187,14 +211,14 @@ export function useLocationSharing(enabled: boolean): void {
             last = {
               latitude: p.coords.latitude,
               longitude: p.coords.longitude,
-              at: Date.now(),
+              at: p.timestamp,
             };
             if (Date.now() - lastSentAt >= SEND_EVERY_MS - 2_000) {
               send();
             }
           },
           () => {},
-          { enableHighAccuracy: false, distanceFilter: 0 },
+          { enableHighAccuracy: false, distanceFilter: 0, maximumAge: 10_000 },
         );
       }
 

@@ -305,7 +305,7 @@ const GuardianView: React.FC<Props> = ({
             <View style={s.rowBody}>
               <Text style={s.rowTitle}>여행 중 위치 알려주기</Text>
               <Text style={s.rowSub}>
-                여행하는 동안, 앱이 꺼져 있어도 20초마다 보내요
+                여행하는 동안 20초~1분마다 보내요. 앱을 완전히 종료하면 멈춰요
               </Text>
             </View>
             <View style={s.switchBox}>
