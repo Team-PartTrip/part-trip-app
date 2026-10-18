@@ -200,8 +200,8 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
       if (
         pref &&
         avoidFoods &&
-        [...avoidFoods].sort().join() !==
-          [...(pref.avoidFoods ?? [])].sort().join()
+        (pref.avoidFoods == null ||
+          [...avoidFoods].sort().join() !== [...pref.avoidFoods].sort().join())
       ) {
         answers.avoidFoods = avoidFoods;
       }
