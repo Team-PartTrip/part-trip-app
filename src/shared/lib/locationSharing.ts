@@ -104,6 +104,8 @@ export function useLocationSharing(enabled: boolean): void {
     }
     let timer: ReturnType<typeof setInterval> | null = null;
     let watchId: number | null = null;
+    let lastSentAt = 0;
+    let sending = false;
     let last: { latitude: number; longitude: number; at: number } | null = null;
     let generation = 0;
 
@@ -139,6 +141,38 @@ export function useLocationSharing(enabled: boolean): void {
         consent = (await askConsent()) ? 'yes' : 'no';
         await setConsent(consent);
       }
+      const send = async () => {
+        if (sending) {
+          return;
+        }
+        sending = true;
+        lastSentAt = Date.now();
+        try {
+          await sendOnce();
+        } finally {
+          sending = false;
+        }
+      };
+      const sendOnce = async () => {
+        const state = {
+          consent: await getConsent(),
+          phase: dday.status,
+          guardianCount: guardians.length,
+        };
+        if (!shouldSend(state)) {
+          return;
+        }
+        try {
+          const fresh = last && Date.now() - last.at < STALE_MS ? last : null;
+          const { latitude, longitude } = fresh ?? (await currentPosition());
+          await updateMyLocation(latitude, longitude);
+        } catch (e: any) {
+          if (e?.status === 400) {
+            stop();
+          }
+        }
+      };
+
       if (consent === 'yes') {
         // 앱이 뒤로 가도 이어서 받으려면 "항상 허용" 과 위치 업데이트를 계속 켜 둬야 한다.
         // 거절해도 괜찮다. 아래 위치 요청이 실패하고 조용히 넘어간다
@@ -155,32 +189,14 @@ export function useLocationSharing(enabled: boolean): void {
               longitude: p.coords.longitude,
               at: Date.now(),
             };
+            if (Date.now() - lastSentAt >= SEND_EVERY_MS - 2_000) {
+              send();
+            }
           },
           () => {},
           { enableHighAccuracy: false, distanceFilter: 0 },
         );
       }
-
-      const send = async () => {
-        const state = {
-          consent: await getConsent(),
-          phase: dday.status,
-          guardianCount: guardians.length,
-        };
-        if (!shouldSend(state)) {
-          return;
-        }
-        try {
-          const fresh = last && Date.now() - last.at < STALE_MS ? last : null;
-          const { latitude, longitude } = fresh ?? (await currentPosition());
-          await updateMyLocation(latitude, longitude);
-        } catch (e: any) {
-          // 여행이 방금 끝났다(400). 다음에 앱을 열 때 다시 확인한다
-          if (e?.status === 400) {
-            stop();
-          }
-        }
-      };
 
       if (mine !== generation) {
         return;
