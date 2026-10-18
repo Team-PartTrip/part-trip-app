@@ -143,10 +143,13 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
     date: string;
   } | null>(null);
 
+  const loadedOnce = useRef(false);
   const load = useCallback(() => {
     let alive = true;
     (async () => {
-      setLoading(true);
+      if (!loadedOnce.current) {
+        setLoading(true);
+      }
       try {
         const detail = await getPlanner(planId);
         const confirmed = isSchedule(detail.status);
@@ -158,6 +161,7 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
           getPlannerMembers(planId).catch(() => []),
         ]);
         if (alive) {
+          loadedOnce.current = true;
           setPlan(detail);
           setSchedule(final?.places ?? null);
           setDraft(cards);
