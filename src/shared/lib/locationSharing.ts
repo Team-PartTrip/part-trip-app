@@ -123,6 +123,7 @@ export function useLocationSharing(enabled: boolean): void {
 
     const start = async () => {
       stop();
+      lastSentAt = 0;
       const mine = generation;
       const [dday, guardians] = await Promise.all([
         getDday().catch(() => null),
@@ -162,16 +163,18 @@ export function useLocationSharing(enabled: boolean): void {
               longitude: p.coords.longitude,
               at: p.timestamp,
             };
-            if (Date.now() - lastSentAt >= SEND_EVERY_MS - 2_000) {
-              send();
-            }
+            send();
           },
           () => {},
           { enableHighAccuracy: false, distanceFilter: 0, maximumAge: 10_000 },
         );
       };
       const send = async () => {
-        if (mine !== generation || sending) {
+        if (
+          mine !== generation ||
+          sending ||
+          Date.now() - lastSentAt < SEND_EVERY_MS - 1_000
+        ) {
           return;
         }
         sending = true;
