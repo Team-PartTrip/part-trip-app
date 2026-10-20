@@ -46,7 +46,7 @@ export function isOpenDuring(event: Festival, from: string, to: string) {
 
 function periodOf(event: Festival): string {
   return event.endDate && event.endDate !== event.startDate
-    ? `${formatShortDate(event.startDate)} ~ ${formatShortDate(event.endDate)}`
+    ? `${formatShortDate(event.startDate)} – ${formatShortDate(event.endDate)}`
     : formatShortDate(event.startDate);
 }
 
@@ -254,17 +254,24 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
 
   return (
     <View style={s.safeArea}>
+      <SafeAreaView edges={['top']} style={s.topBar}>
+        <TouchableOpacity
+          onPress={onBack}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel="뒤로 가기"
+        >
+          <View style={s.back}>
+            <ChevronLeftIcon size={24} color={colors.text} />
+          </View>
+        </TouchableOpacity>
+      </SafeAreaView>
       <ScrollView
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
       >
-        <SafeAreaView edges={['top']} style={s.header}>
-          <TouchableOpacity onPress={onBack} hitSlop={12}>
-            <View style={s.back}>
-              <ChevronLeftIcon size={24} color={colors.text} />
-            </View>
-          </TouchableOpacity>
-          <Text style={s.title}>축제 & 이벤트</Text>
+        <View style={s.header}>
+          <Text style={s.title}>축제 · 이벤트</Text>
           <Text style={s.subtitle}>
             {dday
               ? `${dday.cityName ?? '국내'} · 여행 기간 앞뒤 1주`
@@ -272,7 +279,7 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
               ? '여행 일정을 불러오지 못했어요'
               : '등록된 여행 일정이 없어요'}
           </Text>
-        </SafeAreaView>
+        </View>
 
         <View style={s.calCard}>
           <View style={s.calHead}>
@@ -358,7 +365,8 @@ const FestivalScreen: React.FC<Props> = ({ onBack }) => {
           </Text>
         )}
 
-        {chips.length > 0 && (
+        {/* 분류가 하나뿐이면 고를 게 없다 */}
+        {chips.length > 1 && (
           <View style={s.chipRow}>
             {chips.map(category => {
               const on = categories.includes(category);

@@ -17,7 +17,6 @@ import { uploadImage, toImageUrl } from '../../shared/api/image';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ScreenHeader from '../../shared/ui/ScreenHeader';
-const DEFAULT_AVATAR = require('../../shared/assets/images/profile-character.jpg');
 
 interface Props {
   onConfirm?: () => void;
@@ -137,11 +136,17 @@ const ProfileEditView: React.FC<Props> = ({ onConfirm, onBack }) => {
           {/* 프로필 이미지 */}
           <View style={s.banner}>
             <View style={s.avatarWrap}>
-              <Image
-                source={imgUrl ? { uri: toImageUrl(imgUrl) } : DEFAULT_AVATAR}
-                style={{ width: '100%', height: '100%', borderRadius: 65 }}
-                resizeMode="cover"
-              />
+              {imgUrl ? (
+                <Image
+                  source={{ uri: toImageUrl(imgUrl) }}
+                  style={{ width: '100%', height: '100%', borderRadius: 65 }}
+                  resizeMode="cover"
+                />
+              ) : (
+                <Text style={s.avatarInitial}>
+                  {nickname.trim().charAt(0)}
+                </Text>
+              )}
               {uploading && (
                 <ActivityIndicator
                   style={{

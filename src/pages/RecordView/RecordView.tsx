@@ -10,14 +10,17 @@ import { Text } from '../../shared/ui/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { recordStyles as s } from './RecordView.styles';
+import PhotoGrid from './PhotoGrid';
 import {
+  getTripCard,
+  cardHeading,
   getTripCards,
-  placeOf,
   TripCardSummary,
 } from '../../entities/record/api';
 import { formatTripRange, today } from '../../entities/record/types';
 import { CardIcon } from '../../shared/ui/icons';
 import { toImageUrl } from '../../shared/api/image';
+import { touch48 } from '../../shared/ui/hitSlop';
 import colors from '../../shared/tokens/colors';
 
 /** 카드 위쪽 사진 띠 — 실제 썸네일이 붙기 전까지 옅어지는 네 칸으로 둔다 */
@@ -32,26 +35,49 @@ const RecordView: React.FC<Props> = ({ onOpenTrip, onOpenTripCards }) => {
   const [year, setYear] = useState('전체');
   const [all, setAll] = useState<TripCardSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [photos, setPhotos] = useState<Record<number, string[]>>({});
   // 조회 실패와 데이터 없음은 다르다. 같은 문구를 쓰면 서버가 죽어도
   // 기록이 없는 것처럼 보인다.
   const [failed, setFailed] = useState(false);
 
-  useFocusEffect(
-    useCallback(() => {
-      let alive = true;
-      // 다시 들어올 때마다 초기화한다. 안 그러면 한 번 실패한 뒤로는
-      // 정상으로 빈 목록을 받아도 오류 문구가 그대로 남는다.
-      setLoading(true);
-      setFailed(false);
-      getTripCards()
-        .then(list => alive && setAll(list))
-        .catch(() => alive && (setAll([]), setFailed(true)))
-        .finally(() => alive && setLoading(false));
-      return () => {
-        alive = false;
-      };
-    }, []),
-  );
+  const load = useCallback(() => {
+    let alive = true;
+    // 다시 들어올 때마다 초기화한다. 안 그러면 한 번 실패한 뒤로는
+    // 정상으로 빈 목록을 받아도 오류 문구가 그대로 남는다.
+    setLoading(true);
+    setFailed(false);
+    getTripCards()
+      .then(list => {
+        if (!alive) {
+          return;
+        }
+        setAll(list);
+        const multi = list.filter(card => (card.photoCount ?? 0) > 1);
+        const keep = new Set(multi.map(card => card.cardId));
+        setPhotos(prev =>
+          Object.fromEntries(
+            Object.entries(prev).filter(([id]) => keep.has(Number(id))),
+          ),
+        );
+        multi.forEach(card =>
+          getTripCard(card.cardId)
+            .then(detail => {
+              const urls = (detail.timeline ?? [])
+                .filter(item => item.type !== 'PLACE' && item.imageUrl)
+                .map(item => item.imageUrl as string);
+              alive && setPhotos(prev => ({ ...prev, [card.cardId]: urls }));
+            })
+            // 실패하면 대표 사진 한 장으로 둔다
+            .catch(() => {}),
+        );
+      })
+      .catch(() => alive && (setAll([]), setFailed(true)))
+      .finally(() => alive && setLoading(false));
+    return () => {
+      alive = false;
+    };
+  }, []);
+  useFocusEffect(load);
 
   // 연도 칩은 가지고 있는 여행에서 뽑는다
   const years = Array.from(
@@ -73,9 +99,12 @@ const RecordView: React.FC<Props> = ({ onOpenTrip, onOpenTripCards }) => {
           <TouchableOpacity
             style={s.headerBtn}
             activeOpacity={0.8}
+            hitSlop={touch48(40, 'vertical')}
+            accessibilityRole="button"
             onPress={onOpenTripCards}
           >
             <CardIcon size={18} color={colors.text} />
+            <Text style={s.headerBtnText}>여행카드</Text>
           </TouchableOpacity>
         </View>
 
@@ -111,9 +140,18 @@ const RecordView: React.FC<Props> = ({ onOpenTrip, onOpenTripCards }) => {
             </Text>
             <Text style={s.emptyDesc}>
               {failed
-                ? '잠시 후 다시 시도해주세요.'
+                ? '네트워크를 확인해 주세요.'
                 : '여행을 시작하면 기록이 여기에 쌓여요.'}
             </Text>
+            {failed && (
+              <TouchableOpacity
+                style={s.retry}
+                accessibilityRole="button"
+                onPress={() => load()}
+              >
+                <Text style={s.retryText}>다시 시도</Text>
+              </TouchableOpacity>
+            )}
           </View>
         ) : (
           cards.map(card => (
@@ -124,7 +162,9 @@ const RecordView: React.FC<Props> = ({ onOpenTrip, onOpenTripCards }) => {
               onPress={() => onOpenTrip?.(card.cardId)}
             >
               <View style={s.strip}>
-                {card.coverImageUrl ? (
+                {photos[card.cardId]?.length ? (
+                  <PhotoGrid urls={photos[card.cardId]} />
+                ) : card.coverImageUrl ? (
                   <Image
                     source={{ uri: toImageUrl(card.coverImageUrl) }}
                     style={s.stripCover}
@@ -141,9 +181,14 @@ const RecordView: React.FC<Props> = ({ onOpenTrip, onOpenTripCards }) => {
 
               <View style={s.cardBottom}>
                 <View style={s.cardBody}>
-                  <Text style={s.cardTitle}>{placeOf(card)}</Text>
+                  <Text style={s.cardTitle}>{cardHeading(card).title}</Text>
                   <Text style={s.cardDate}>
-                    {formatTripRange(card.startDate, card.endDate)}
+                    {[
+                      cardHeading(card).place,
+                      formatTripRange(card.startDate, card.endDate),
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
                   </Text>
                 </View>
                 <View style={s.countPill}>

@@ -9,6 +9,7 @@ import {
   Image,
 } from 'react-native';
 import { Text } from '../../shared/ui/Text';
+import { useNavigation } from '@react-navigation/native';
 import { planStatusStyles as s } from './PlanStatusView.styles';
 import { touch48 } from '../../shared/ui/hitSlop';
 import type {
@@ -17,14 +18,16 @@ import type {
   ScheduleSlot,
   SchedulePlace,
 } from '../../entities/planner/api';
+import type { TourPlace } from '../../entities/main/api';
 import { dayLabel } from '../../entities/planner/types';
-import CategoryIcon from '../../entities/planner/CategoryIcon';
+import PlaceThumb from '../../entities/planner/PlaceThumb';
 import RestroomNote from '../../entities/main/RestroomNote';
 import colors from '../../shared/tokens/colors';
 import {
   BedIcon,
   BusIcon,
   CarIcon,
+  ChevronRightIcon,
   GripIcon,
   HomeIcon,
   PinIcon,
@@ -108,8 +111,10 @@ export const RouteLine: React.FC<{
   const lines = routeLines(route);
   const last = lines.pop();
   return (
-    <View style={s.route}>
-      <Icon size={16} color={colors.textSecondary} />
+    <View style={[s.route, lines.length === 0 && s.routeSingle]}>
+      <View style={s.routeIcon}>
+        <Icon size={16} color={colors.textSecondary} />
+      </View>
       <View style={s.routeBody}>
         {lines.map(line => (
           <Text key={line} style={s.routeText}>
@@ -138,6 +143,35 @@ export const RouteLine: React.FC<{
     </View>
   );
 };
+
+export const HereLine: React.FC<{
+  to: SchedulePlace;
+  icon?: boolean;
+}> = ({ to, icon = true }) => (
+  <View style={[s.route, s.routeHere]}>
+    {icon && <PinIcon size={16} color={colors.textSecondary} />}
+    <View style={s.routeBody}>
+      <View style={s.routeLast}>
+        <Text style={s.routeText}>지금 있는 곳에서 출발</Text>
+        {to.latitude != null && to.longitude != null && (
+          <TouchableOpacity
+            style={s.routeMap}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={`${to.name}까지 카카오맵으로 길 안내`}
+            onPress={() => openDirections(to, null, 'PUBLIC_TRANSIT')}
+          >
+            <Image
+              source={require('../../shared/assets/images/kakaomap.png')}
+              style={s.routeMapLogo}
+            />
+            <Text style={s.routeMapText}>길 안내</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  </View>
+);
 
 /** 리더가 카드를 고칠 때만 넘긴다 (명세 Func-011-03). 없으면 보기 전용이다 */
 export interface ScheduleEditHandlers {
@@ -179,6 +213,7 @@ const DayCards: React.FC<{
   origin: Origin | null;
   edit?: ScheduleEditHandlers;
 }> = ({ date, slots, origin, edit }) => {
+  const navigation = useNavigation<any>();
   const heights = useRef<number[]>([]);
   const tops = useRef<number[]>([]);
   const dy = useRef(new Animated.Value(0)).current;
@@ -278,22 +313,26 @@ const DayCards: React.FC<{
         const choosingTarget = edit?.swapping != null && !swapSource;
         const body = slot.place ? (
           <>
-            <View style={s.thumb}>
-              <CategoryIcon
-                category={slot.place.category}
-                color={colors.primary}
-              />
-            </View>
+            <PlaceThumb
+              style={s.thumb}
+              imageUrl={slot.place.imageUrl}
+              category={slot.place.category}
+            />
             <View style={s.rowBody}>
               <Text style={s.rowSub}>
                 {slot.order}번째
-                {slot.place.categoryLabel
-                  ? ` · ${slot.place.categoryLabel}`
+                {slot.place.typeLabel || slot.place.categoryLabel
+                  ? ` · ${slot.place.typeLabel || slot.place.categoryLabel}`
                   : ''}
               </Text>
               <Text style={s.rowTitle} numberOfLines={1}>
                 {slot.place.name}
               </Text>
+              {!!(slot.place.description || slot.place.address) && (
+                <Text style={s.rowSub} numberOfLines={1}>
+                  {slot.place.description || slot.place.address}
+                </Text>
+              )}
               {/* 고치는 동안에는 카드마다 부르지 않는다 */}
               {!edit && <RestroomNote tourPlaceId={slot.place.tourPlaceId} />}
             </View>
@@ -343,25 +382,36 @@ const DayCards: React.FC<{
                 s.editRow,
                 swapSource && s.swapSource,
               ]}
-              activeOpacity={edit ? 0.8 : 1}
+              activeOpacity={0.8}
               disabled={
-                !edit || edit.disabled || (!!slot.place && !choosingTarget)
+                edit
+                  ? edit.disabled || (!!slot.place && !choosingTarget)
+                  : !slot.place
               }
-              accessibilityRole={edit ? 'button' : undefined}
+              accessibilityRole={edit || slot.place ? 'button' : undefined}
               accessibilityLabel={
                 choosingTarget
                   ? `${slot.order}번째 칸과 바꾸기`
                   : !slot.place && edit
                   ? `${slot.order}번째 칸에 장소 고르기`
+                  : !edit && slot.place
+                  ? `${slot.place.name} 자세히 보기`
                   : undefined
               }
               onPress={() =>
-                choosingTarget
+                !edit && slot.place
+                  ? navigation.navigate('PlanPlace', {
+                      place: toTourPlace(slot.place),
+                    })
+                  : choosingTarget
                   ? edit?.onSwapTarget(slot)
                   : edit?.onPick(slot, date)
               }
             >
               {body}
+              {!edit && slot.place && (
+                <ChevronRightIcon size={18} color={colors.chevron} />
+              )}
               {edit && !choosingTarget && (
                 <View
                   {...handle(index)}
@@ -397,6 +447,20 @@ const DayCards: React.FC<{
     </>
   );
 };
+
+function toTourPlace(place: SchedulePlace): TourPlace {
+  return {
+    tourPlaceId: place.tourPlaceId,
+    placeName: place.name,
+    category: place.typeLabel || place.categoryLabel,
+    description: place.description ?? null,
+    address: place.address,
+    rating: place.rating,
+    imageUrl: place.imageUrl,
+    latitude: place.latitude,
+    longitude: place.longitude,
+  };
+}
 
 export interface Origin extends Spot {
   lodging: boolean;
@@ -439,7 +503,7 @@ const OriginRow: React.FC<{ origin: Origin }> = ({ origin }) => {
       </View>
       <View style={s.rowBody}>
         <Text style={s.rowSub}>
-          0번째 · {origin.lodging ? '숙소에서 출발' : '출발'}
+          {origin.lodging ? '숙소에서 출발' : '출발'}
         </Text>
         <Text style={s.rowTitle}>{origin.name}</Text>
       </View>

@@ -39,10 +39,12 @@ export const tripCardDeleteStyles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 8,
+    overflow: 'hidden',
     backgroundColor: colors.tintStrong,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  thumbImage: { width: '100%', height: '100%' },
   thumbText: { fontSize: 9, fontWeight: '500', color: colors.textMuted },
   body: { flex: 1, marginLeft: 14 },
   title: { fontSize: 15, fontWeight: '600', color: colors.text },
@@ -58,16 +60,15 @@ export const tripCardDeleteStyles = StyleSheet.create({
   checkOff: { backgroundColor: colors.surface },
 
   warning: {
-    marginTop: 8,
     padding: 16,
     borderRadius: 12,
     backgroundColor: colors.dangerBg,
   },
-  warningTitle: { fontSize: 13, fontWeight: '600', color: colors.danger },
+  warningTitle: { fontSize: 14, fontWeight: '600', color: colors.danger },
   warningDesc: {
-    marginTop: 8,
-    fontSize: 11,
-    lineHeight: 16,
+    marginTop: 6,
+    fontSize: 13,
+    lineHeight: 18,
     color: colors.textMuted,
   },
 
@@ -92,14 +93,4 @@ export const tripCardDeleteStyles = StyleSheet.create({
   },
   dangerBtnOff: { backgroundColor: colors.chevron },
   dangerText: { fontSize: 16, fontWeight: '600', color: colors.textOnPrimary },
-  cancelBtn: {
-    minHeight: 48,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelText: { fontSize: 14, fontWeight: '600', color: colors.textMuted },
 });

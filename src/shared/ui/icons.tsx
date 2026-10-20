@@ -126,6 +126,15 @@ export const CheckIcon = lineIcon(['M5 12.5l4.5 4.5L19 7.5'], {
   strokeWidth: 2.6,
 });
 
+export const CameraIcon = lineIcon([
+  'M4 8h3l1.5-2h7L17 8h3v11H4V8Z',
+  'M12 16.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z',
+]);
+
+export const CloseIcon = lineIcon(['M6 6l12 12', 'M18 6L6 18'], {
+  strokeWidth: 2.6,
+});
+
 export const CheckCircleIcon = lineIcon([
   'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z',
   'M8 12.3l2.7 2.7L16 9.7',
@@ -228,6 +237,11 @@ export const WalkIcon = lineIcon([
   'M12 15l-1-5 4 2 2 3',
   'M11 10l-3 2v3',
 ]);
+
+export const RefreshIcon = lineIcon(
+  ['M20 12a8 8 0 1 1-2.34-5.66L20 8.5', 'M20 4v4.5h-4.5'],
+  { strokeWidth: 2 },
+);
 
 export const MicIcon = lineIcon([
   'M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z',

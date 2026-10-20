@@ -39,8 +39,8 @@ export interface TourPlace {
   /** 데이터 소스에 평점이 없으면 null */
   rating: number | null;
   imageUrl: string | null;
-  latitude: number;
-  longitude: number;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 /** 관광 장소 카테고리. 서버는 한글·영문키를 모두 받는다 */
@@ -231,4 +231,15 @@ export function searchPlaces(q: string): Promise<PlaceResult[]> {
     `/api/places/search?q=${encodeURIComponent(q)}`,
     { method: 'GET' },
   );
+}
+
+/** 좌표 → 도로명 주소. 주소가 없는 곳이면 null */
+export function getAddress(
+  latitude: number,
+  longitude: number,
+): Promise<string | null> {
+  return authRequest<{ address: string | null }>(
+    `/api/places/address?latitude=${latitude}&longitude=${longitude}`,
+    { method: 'GET' },
+  ).then(res => res.address);
 }

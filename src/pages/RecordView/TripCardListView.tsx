@@ -4,6 +4,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Dimensions,
+  Image,
   Share,
   NativeSyntheticEvent,
   NativeScrollEvent,
@@ -19,21 +20,18 @@ import {
   TripCardSummary,
 } from '../../entities/record/api';
 import { formatTripRange } from '../../entities/record/types';
+import { formatNights } from '../../entities/planner/types';
 import { ChevronLeftIcon, StarIcon } from '../../shared/ui/icons';
 import colors from '../../shared/tokens/colors';
+import { toImageUrl } from '../../shared/api/image';
 
 const PAGE_WIDTH = Dimensions.get('window').width;
 
 // 목록 응답에는 사진 수만 있다. 동행 인원·방문 장소·이동 거리는 서버가 주지 않아
 // 지어내지 않고 뺐다. 대신 날짜로 계산되는 여행 기간을 보여준다.
 function statsOf(card: TripCardSummary): { label: string; value: string }[] {
-  const ms =
-    new Date(card.endDate).getTime() - new Date(card.startDate).getTime();
-  const nights = Number.isNaN(ms)
-    ? 0
-    : Math.max(0, Math.round(ms / 86_400_000));
   return [
-    { label: '여행 기간', value: `${nights}박 ${nights + 1}일` },
+    { label: '여행 기간', value: formatNights(card.startDate, card.endDate) },
     { label: '남긴 사진', value: `${card.photoCount ?? 0}장` },
   ];
 }
@@ -142,7 +140,16 @@ const TripCardListView: React.FC<Props> = ({
               >
                 <View style={s.card}>
                   <View style={s.cover}>
-                    <Text style={s.coverText}>{card.cityName}</Text>
+                    {card.coverImageUrl ? (
+                      <Image
+                        source={{ uri: toImageUrl(card.coverImageUrl) }}
+                        style={s.coverPhoto}
+                        resizeMode="cover"
+                        accessibilityLabel={`${card.cityName} 여행 사진`}
+                      />
+                    ) : (
+                      <Text style={s.coverText}>{card.cityName}</Text>
+                    )}
                   </View>
                   <View style={s.body}>
                     <Text style={s.cityName}>
@@ -159,9 +166,9 @@ const TripCardListView: React.FC<Props> = ({
                         <Text style={s.statValue}>{stat.value}</Text>
                       </View>
                     ))}
-                  </View>
-                  <View style={s.badge}>
-                    <StarIcon size={18} color={colors.textOnPrimary} />
+                    <View style={s.badge}>
+                      <StarIcon size={18} color={colors.textOnPrimary} />
+                    </View>
                   </View>
                 </View>
               </TouchableOpacity>

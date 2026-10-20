@@ -2,6 +2,8 @@ import { authRequest } from '../../shared/api/http';
 
 export interface UserProfile {
   userId: string;
+  /** 카카오는 동의를 안 했거나 중복이면 null. 서버 #263 배포 전에는 없다 */
+  email?: string | null;
   nickName: string;
   imgUrl: string | null;
 }

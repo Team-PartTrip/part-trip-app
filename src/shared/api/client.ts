@@ -10,6 +10,22 @@ export class ApiError extends Error {
   }
 }
 
+export function errorMessageOf(
+  status: number,
+  data: unknown,
+  fallback: string,
+): string {
+  if (typeof data === 'string' && data) {
+    if (/^\s*<(!doctype|html)/i.test(data)) {
+      return status >= 502
+        ? '서버 응답이 늦어요. 잠시 후 다시 시도해주세요.'
+        : fallback;
+    }
+    return data;
+  }
+  return (data && (data as any).message) || fallback;
+}
+
 /** 응답 본문을 JSON이면 객체로, 아니면 문자열로 파싱 */
 async function parseBody(res: Response): Promise<any> {
   const text = await res.text();
@@ -68,11 +84,10 @@ export async function request<T = unknown>(
   const data = await parseBody(res);
 
   if (!res.ok) {
-    const message =
-      typeof data === 'string' && data
-        ? data
-        : (data && (data as any).message) || '요청을 처리하지 못했어요.';
-    throw new ApiError(res.status, message);
+    throw new ApiError(
+      res.status,
+      errorMessageOf(res.status, data, '요청을 처리하지 못했어요.'),
+    );
   }
 
   return data as T;

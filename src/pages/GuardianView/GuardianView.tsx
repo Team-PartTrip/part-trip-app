@@ -25,6 +25,7 @@ import {
   unlinkGuardian,
 } from '../../entities/guardian/api';
 import { ChevronLeftIcon, ChevronRightIcon } from '../../shared/ui/icons';
+import { getMyProfile } from '../../entities/profile/api';
 
 /** "2026-09-22T18:10:00" → "9월 22일 오후 6:10" */
 export function formatUntil(iso: string): string {
@@ -41,7 +42,6 @@ export function formatUntil(iso: string): string {
   }월 ${date.getDate()}일 ${ampm} ${h12}:${minute}`;
 }
 
-/** 받는 사람이 무엇을 해야 하는지까지 적는다. 코드만 보내면 어디에 넣는지 모른다 */
 /** 받은 메시지를 통째로 붙여넣어도 코드 6자리만 남긴다 */
 export function codeFrom(text: string): string {
   const upper = text.toUpperCase();
@@ -53,8 +53,13 @@ export function inviteMessage(code: string): string {
   return `단디 보호자 초대 코드: ${code}\n앱의 마이 → 가족 연결에서 코드를 넣어주세요. (24시간 동안 쓸 수 있어요)`;
 }
 
+export function isDefaultNickname(name: string): boolean {
+  return /^여행자_[a-z0-9]{6}$/.test(name);
+}
+
 interface Props {
   onBack?: () => void;
+  onEditProfile?: () => void;
   /** 보호자: 시니어의 일정 · 위치 보기 */
   onOpenSenior?: (senior: GuardianLink) => void;
 }
@@ -65,7 +70,11 @@ interface Props {
  * 시니어가 코드를 만들어 자녀에게 보내면, 자녀가 보호자로 연결되어 일정과
  * 여행 중 위치를 본다. 보호자는 일정을 고칠 수 없다.
  */
-const GuardianView: React.FC<Props> = ({ onBack, onOpenSenior }) => {
+const GuardianView: React.FC<Props> = ({
+  onBack,
+  onEditProfile,
+  onOpenSenior,
+}) => {
   const [guardians, setGuardians] = useState<GuardianLink[] | null>(null);
   const [invite, setInvite] = useState<GuardianInvite | null>(null);
   const [creating, setCreating] = useState(false);
@@ -96,6 +105,24 @@ const GuardianView: React.FC<Props> = ({ onBack, onOpenSenior }) => {
     if (creating) {
       return;
     }
+    setCreating(true);
+    const me = await getMyProfile().catch(() => null);
+    if (me && isDefaultNickname(me.nickName)) {
+      setCreating(false);
+      Alert.alert(
+        '이름을 먼저 정해 주세요',
+        `지금 이름: ${me.nickName}\n가족이 알아볼 수 있는 이름으로 바꾸면 좋아요.`,
+        [
+          { text: '그냥 만들기', onPress: createCode },
+          { text: '이름 바꾸기', onPress: onEditProfile },
+        ],
+      );
+      return;
+    }
+    await createCode();
+  };
+
+  const createCode = async () => {
     setCreating(true);
     try {
       setInvite(await createGuardianInvite());
@@ -278,15 +305,17 @@ const GuardianView: React.FC<Props> = ({ onBack, onOpenSenior }) => {
             <View style={s.rowBody}>
               <Text style={s.rowTitle}>여행 중 위치 알려주기</Text>
               <Text style={s.rowSub}>
-                여행하는 동안, 앱을 켜 둔 동안만 1~2분마다 보내요
+                여행하는 동안 20초~1분마다 보내요. 앱을 완전히 종료하면 멈춰요
               </Text>
             </View>
-            <Switch
-              value={sharing}
-              onValueChange={toggleSharing}
-              trackColor={{ true: colors.primary }}
-              accessibilityLabel="여행 중 위치 알려주기"
-            />
+            <View style={s.switchBox}>
+              <Switch
+                value={sharing}
+                onValueChange={toggleSharing}
+                trackColor={{ true: colors.primary }}
+                accessibilityLabel="여행 중 위치 알려주기"
+              />
+            </View>
           </View>
         )}
 
@@ -294,7 +323,8 @@ const GuardianView: React.FC<Props> = ({ onBack, onOpenSenior }) => {
         <Text style={s.lead}>가족에게 받은 6자리 코드를 넣어주세요.</Text>
         <View style={[s.acceptRow, s.locationBtn]}>
           <TextInput
-            style={s.codeInput}
+            // 글자 간격은 입력한 코드에만 준다. 안내 문구까지 벌어지면 읽기 어렵다
+            style={[s.codeInput, !!code && s.codeInputFilled]}
             placeholder="코드 6자리"
             placeholderTextColor={colors.placeholder}
             value={code}

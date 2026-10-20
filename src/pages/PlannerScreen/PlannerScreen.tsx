@@ -30,11 +30,11 @@ import {
 } from '../../entities/planner/types';
 import { ChevronRightIcon } from '../../shared/ui/icons';
 
-type FilterKey = 'ongoing' | 'upcoming' | 'done';
+type FilterKey = 'upcoming' | 'traveling' | 'done';
 
 const FILTERS: { key: FilterKey; label: string }[] = [
-  { key: 'ongoing', label: '진행 중' },
   { key: 'upcoming', label: '예정' },
+  { key: 'traveling', label: '여행 중' },
   { key: 'done', label: '완료' },
 ];
 
@@ -80,27 +80,28 @@ function toneOf(status: GroupStatus): ColorValue {
   }
 }
 
-/** 카드 왼쪽 아래 문구 — 확정 전에는 참여 인원, 확정 뒤에는 상태를 보여준다 */
+/** 카드 왼쪽 아래 문구. 상태는 위 배지에 이미 있어서 참여 인원을 보여준다 */
 function metaOf(plan: PlannerRow): string {
-  if (plan.status === 'CONFIRMED') {
-    return '확정 완료';
-  }
-  if (plan.status === 'DONE') {
-    return '여행 완료';
-  }
   return `${plan.joinedMemberCount}/${plan.memberCount} 참여`;
 }
 
-/** 진행 중 = 아직 끝나지 않은 계획, 예정 = 출발 전, 완료 = 끝난 계획 */
-function matches(plan: PlannerRow, filter: FilterKey): boolean {
-  // 여행지·기간을 아직 안 정한 플래너는 끝났다고 볼 수 없다
+/** 세 칸은 겹치지 않는다. 기간을 아직 안 정한 계획은 예정에 둔다 */
+export function matches(
+  plan: Pick<PlannerListItem, 'status' | 'startDate' | 'endDate'>,
+  filter: FilterKey,
+  now = today(),
+): boolean {
   const isDone =
-    plan.status === 'DONE' || (!!plan.endDate && plan.endDate < today());
+    plan.status === 'DONE' || (!!plan.endDate && plan.endDate < now);
+  const isTraveling =
+    !isDone &&
+    (plan.status === 'TRAVELING' ||
+      (!!plan.startDate && plan.startDate <= now));
   switch (filter) {
-    case 'ongoing':
-      return !isDone;
+    case 'traveling':
+      return isTraveling;
     case 'upcoming':
-      return !isDone && !!plan.startDate && plan.startDate > today();
+      return !isDone && !isTraveling;
     default:
       return isDone;
   }
@@ -112,7 +113,7 @@ interface Props {
 }
 
 const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
-  const [filter, setFilter] = useState<FilterKey>('ongoing');
+  const [filter, setFilter] = useState<FilterKey>('upcoming');
   const [rows, setRows] = useState<PlannerRow[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
@@ -122,39 +123,38 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
   const [joining, setJoining] = useState(false);
   // 잠금은 ref 로 건다. state 는 화면이 다시 그려져야 바뀐다.
   const joiningRef = useRef(false);
-  useFocusEffect(
-    useCallback(() => {
-      let alive = true;
-      (async () => {
-        setLoading(true);
-        setFailed(false);
-        try {
-          const planners = await getPlanners();
-          // 목록 응답에는 멤버가 없어서 아바타를 그리려면 따로 받아야 한다.
-          // 내 플래너 수만큼이라 병렬로 한 번에 받는다.
-          const members = await Promise.all(
-            planners.map(p => getPlannerMembers(p.plannerId).catch(() => [])),
-          );
-          if (!alive) {
-            return;
-          }
-          setRows(planners.map((p, i) => ({ ...p, members: members[i] })));
-        } catch {
-          if (alive) {
-            setRows(null);
-            setFailed(true);
-          }
-        } finally {
-          if (alive) {
-            setLoading(false);
-          }
+  const load = useCallback(() => {
+    let alive = true;
+    (async () => {
+      setLoading(true);
+      setFailed(false);
+      try {
+        const planners = await getPlanners();
+        // 목록 응답에는 멤버가 없어서 아바타를 그리려면 따로 받아야 한다.
+        // 내 플래너 수만큼이라 병렬로 한 번에 받는다.
+        const members = await Promise.all(
+          planners.map(p => getPlannerMembers(p.plannerId).catch(() => [])),
+        );
+        if (!alive) {
+          return;
         }
-      })();
-      return () => {
-        alive = false;
-      };
-    }, []),
-  );
+        setRows(planners.map((p, i) => ({ ...p, members: members[i] })));
+      } catch {
+        if (alive) {
+          setRows(null);
+          setFailed(true);
+        }
+      } finally {
+        if (alive) {
+          setLoading(false);
+        }
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+  useFocusEffect(load);
 
   // 잘못된 코드 · 이미 참여 · 정원 초과는 모두 서버가 문구까지 준다.
   // 여기서 다시 쓰면 서버가 거절한 진짜 이유를 덮어버린다.
@@ -234,9 +234,14 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
         ) : failed ? (
           <View style={s.empty}>
             <Text style={s.emptyText}>계획을 불러오지 못했어요</Text>
-            <Text style={s.emptyDesc}>
-              네트워크를 확인하고 다시 들어와 주세요.
-            </Text>
+            <Text style={s.emptyDesc}>네트워크를 확인해 주세요.</Text>
+            <TouchableOpacity
+              style={s.retry}
+              accessibilityRole="button"
+              onPress={() => load()}
+            >
+              <Text style={s.retryText}>다시 시도</Text>
+            </TouchableOpacity>
           </View>
         ) : plans.length === 0 ? (
           <View style={s.empty}>
@@ -278,6 +283,7 @@ const PlannerScreen: React.FC<Props> = ({ onCreate, onOpenPlan }) => {
                           <MemberAvatar
                             key={member.userId}
                             nickname={member.nickName}
+                            imgUrl={member.imgUrl}
                             index={i}
                             style={i > 0 && s.avatarOverlap}
                           />

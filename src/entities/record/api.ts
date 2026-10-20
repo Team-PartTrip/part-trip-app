@@ -5,12 +5,13 @@
 //
 import { BASE_URL } from '@env';
 import { authRequest } from '../../shared/api/http';
-import { ApiError } from '../../shared/api/client';
+import { ApiError, errorMessageOf } from '../../shared/api/client';
 import { getAccessToken } from '../../shared/api/tokenStorage';
 import { shortName } from '../region/regions';
 
 export interface TripCardSummary {
   cardId: number;
+  title?: string | null;
   regionCode: string | null;
   regionName: string | null;
   cityName: string;
@@ -22,6 +23,22 @@ export interface TripCardSummary {
   photoCount: number | null;
 }
 
+export const TRIP_ENDED_NOTICE =
+  '여행이 끝난 카드에는 사진을 더 붙일 수 없어요';
+
+export function isTripEnded(
+  card: Pick<TripCardSummary, 'endDate'> | null,
+  today: Date = new Date(),
+): boolean {
+  if (!card) {
+    return false;
+  }
+  const y = today.getFullYear();
+  const m = `${today.getMonth() + 1}`.padStart(2, '0');
+  const d = `${today.getDate()}`.padStart(2, '0');
+  return card.endDate < `${y}-${m}-${d}`;
+}
+
 export function placeOf(
   card: Pick<TripCardSummary, 'regionName' | 'cityName'>,
   sep = ' ',
@@ -29,6 +46,16 @@ export function placeOf(
   const region = card.regionName ? shortName(card.regionName) : null;
   const city = card.cityName === region ? null : card.cityName;
   return [region, city].filter(Boolean).join(sep);
+}
+
+export function cardHeading(
+  card: Pick<TripCardSummary, 'title' | 'regionName' | 'cityName'>,
+): { title: string; place: string | null } {
+  const place = placeOf(card);
+  const title = card.title?.trim();
+  return title
+    ? { title, place: place || null }
+    : { title: place, place: null };
 }
 
 /** 여행 카드 목록 (D2) — 서버가 최근 여행순으로 준다 */
@@ -41,7 +68,7 @@ export interface TimelineItem {
   /** 사진 항목의 식별자. 삭제(API-003-07)에 쓴다. 장소 항목은 null */
   entryId: number | null;
   /** YYYY-MM-DD */
-  date: string;
+  date: string | null;
   /** 좌표가 없는 사진은 NO_INFO_PHOTO 로 온다 */
   type: 'PLACE' | 'PHOTO' | 'NO_INFO_PHOTO';
   placeName: string | null;
@@ -81,11 +108,40 @@ export function deleteTripCards(cardIds: number[]): Promise<string> {
   });
 }
 
-/** 갤러리에서 고른 사진 한 장 */
+export function normalizePhoto(
+  asset: { uri: string; fileName?: string; type?: string },
+  fallbackName: string,
+): PickedPhoto {
+  const ext = (asset.fileName ?? asset.uri)
+    .split('?')[0]
+    .split('.')
+    .pop()
+    ?.toLowerCase();
+  const type = (asset.type ?? '').toLowerCase();
+  const mimeType =
+    type === 'image/png' || ext === 'png'
+      ? 'image/png'
+      : type === 'image/webp' || ext === 'webp'
+      ? 'image/webp'
+      : 'image/jpeg';
+  const base = (asset.fileName ?? fallbackName).replace(/\.[^./]+$/, '');
+  const suffix =
+    mimeType === 'image/png'
+      ? 'png'
+      : mimeType === 'image/webp'
+      ? 'webp'
+      : 'jpg';
+  return { uri: asset.uri, fileName: `${base}.${suffix}`, mimeType };
+}
+
+/** 올리려고 고른 사진 한 장 */
 export interface PickedPhoto {
   uri: string;
   fileName: string;
   mimeType: string;
+  capturedAt?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface TripCardEntry {
@@ -135,7 +191,10 @@ export async function addTripCardEntry(
       body: formData,
     });
   } catch {
-    throw new ApiError(0, '서버에 연결하지 못했어요. 인터넷 연결을 확인해주세요.');
+    throw new ApiError(
+      0,
+      '서버에 연결하지 못했어요. 인터넷 연결을 확인해주세요.',
+    );
   }
 
   const text = await res.text();
@@ -147,11 +206,10 @@ export async function addTripCardEntry(
   }
 
   if (!res.ok) {
-    const message =
-      typeof data === 'string' && data
-        ? data
-        : (data && data.message) || '사진을 올리지 못했어요.';
-    throw new ApiError(res.status, message);
+    throw new ApiError(
+      res.status,
+      errorMessageOf(res.status, data, '사진을 올리지 못했어요.'),
+    );
   }
 
   // 본문 없이 201 만 오거나 JSON 이 아닌 문자열이 올 수 있다.

@@ -18,7 +18,7 @@ import {
 import { logout } from '../../entities/auth/api';
 import { getRefreshToken, clearTokens } from '../../shared/api/tokenStorage';
 import { toImageUrl } from '../../shared/api/image';
-import { BellIcon } from '../../shared/ui/icons';
+import { BellIcon, ChevronRightIcon } from '../../shared/ui/icons';
 import colors from '../../shared/tokens/colors';
 
 // 세계지도 미리보기 칸 수 (피그마 E1 은 6칸)
@@ -76,6 +76,10 @@ const ProfileView: React.FC<Props> = ({
       };
     }, []),
   );
+
+  // 카카오 계정은 userId 가 이메일이 아니라서 서버가 따로 준 email 을 먼저 쓴다
+  const shownEmail =
+    profile?.email ?? (profile?.userId?.includes('@') ? profile.userId : null);
 
   const handleLogout = () => {
     Alert.alert('로그아웃', '로그아웃 하시겠어요?', [
@@ -174,9 +178,9 @@ const ProfileView: React.FC<Props> = ({
 
             <View style={s.profileInfo}>
               <Text style={s.nickname}>{profile?.nickName ?? '...'}</Text>
-              {!!profile?.userId?.includes('@') && (
-                <Text style={s.handle} numberOfLines={1} ellipsizeMode="middle">
-                  {profile.userId}
+              {!!shownEmail && (
+                <Text style={s.handle} numberOfLines={2}>
+                  {shownEmail}
                 </Text>
               )}
             </View>
@@ -257,6 +261,7 @@ const ProfileView: React.FC<Props> = ({
             onPress={onOpenGuardian}
           >
             <Text style={s.settingsRowText}>가족 연결 (보호자)</Text>
+            <ChevronRightIcon size={18} color={colors.textTertiary} />
           </TouchableOpacity>
           <TouchableOpacity
             style={s.settingsRow}
@@ -265,6 +270,7 @@ const ProfileView: React.FC<Props> = ({
             onPress={onOpenTravelPreference}
           >
             <Text style={s.settingsRowText}>여행 편의 설정</Text>
+            <ChevronRightIcon size={18} color={colors.textTertiary} />
           </TouchableOpacity>
           <TouchableOpacity
             style={s.settingsRow}

@@ -70,28 +70,27 @@ const RegionMapView: React.FC<Props> = ({ onBack }) => {
 
   return (
     <View style={s.safeArea}>
+      <SafeAreaView edges={['top']} style={s.header}>
+        <View style={s.headerRow}>
+          <Text style={s.title}>내가 다녀온 곳</Text>
+          <TouchableOpacity
+            onPress={onBack}
+            hitSlop={12}
+            style={s.backBtn}
+            accessibilityRole="button"
+            accessibilityLabel="뒤로"
+          >
+            <View style={s.back}>
+              <ChevronLeftIcon size={24} color={colors.textPrimary} />
+            </View>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
       <ScrollView
         scrollEnabled={!touchingMap}
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
       >
-        <SafeAreaView edges={['top']} style={s.header}>
-          <View style={s.headerRow}>
-            <Text style={s.title}>내가 다녀온 곳</Text>
-            <TouchableOpacity
-              onPress={onBack}
-              hitSlop={12}
-              style={s.backBtn}
-              accessibilityRole="button"
-              accessibilityLabel="뒤로"
-            >
-              <View style={s.back}>
-                <ChevronLeftIcon size={24} color={colors.textPrimary} />
-              </View>
-            </TouchableOpacity>
-          </View>
-        </SafeAreaView>
-
         <View
           style={s.map}
           onTouchStart={e => {

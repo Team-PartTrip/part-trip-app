@@ -9,17 +9,19 @@ export const recordStyles = StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'center' },
   pageTitle: { flex: 1, fontSize: 24, fontWeight: '700', color: colors.text },
   headerBtn: {
-    width: 36,
-    minHeight: 48,
-    borderRadius: 18,
+    height: 40,
+    paddingHorizontal: 14,
+    borderRadius: 20,
     marginLeft: 8,
+    flexDirection: 'row',
+    gap: 6,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerBtnIcon: { fontSize: 16 },
+  headerBtnText: { fontSize: 14, fontWeight: '600', color: colors.text },
 
   filterRow: { flexDirection: 'row', gap: 8, marginTop: 20, marginBottom: 18 },
   chip: {
@@ -45,7 +47,7 @@ export const recordStyles = StyleSheet.create({
     overflow: 'hidden',
   },
   strip: {
-    height: 96,
+    height: 160,
     borderRadius: 10,
     flexDirection: 'row',
     gap: 2,
@@ -55,12 +57,12 @@ export const recordStyles = StyleSheet.create({
   stripCover: { flex: 1 },
   stripEmpty: {
     flex: 1,
+    alignSelf: 'center',
     textAlign: 'center',
-    textAlignVertical: 'center',
-    lineHeight: 96,
     fontSize: 14,
     color: colors.textTertiary,
   },
+
   travelBadge: {
     position: 'absolute',
     top: 12,
@@ -109,4 +111,6 @@ export const recordStyles = StyleSheet.create({
   },
   emptyText: { fontSize: 15, fontWeight: '600', color: colors.text },
   emptyDesc: { fontSize: 12, color: colors.textMuted },
+  retry: { marginTop: 10, minHeight: 48, justifyContent: 'center' },
+  retryText: { fontSize: 15, fontWeight: '600', color: colors.primary },
 });

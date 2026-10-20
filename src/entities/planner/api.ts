@@ -63,6 +63,7 @@ export function joinPlanner(inviteCode: string): Promise<PlannerJoined> {
 export interface PlannerMember {
   userId: string;
   nickName: string;
+  imgUrl?: string | null;
   role: GroupRole;
   /** ISO-8601 */
   joinedAt: string;
@@ -114,6 +115,8 @@ export interface SchedulePlace {
   rating: number | null;
   latitude: number | null;
   longitude: number | null;
+  description?: string | null;
+  typeLabel?: string | null;
 }
 
 export interface ScheduleSlot {
@@ -136,6 +139,7 @@ export interface RouteStep {
 
 export interface RouteLeg {
   transportMode: string;
+  fromName?: string | null;
   durationMinutes: number | null;
   walkingMinutes: number | null;
   steps: RouteStep[];
@@ -211,7 +215,8 @@ export function getScheduleCandidates(
 /**
  * 멤버 내보내기 (API-005-22).
  *
- * 그룹장만 부를 수 있고, 그룹장 자신은 뺄 수 없다.
+ * 다른 사람을 내보내는 건 그룹장만 할 수 있다. 본인 id 를 넘기면 스스로 나가는
+ * 것이고, 그룹장 자신은 나갈 수 없다.
  */
 export function removePlannerMember(
   plannerId: number,

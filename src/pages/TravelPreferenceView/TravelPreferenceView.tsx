@@ -22,12 +22,7 @@ import {
   toggleAvoidFood,
   TravelPreference,
 } from '../../entities/profile/api';
-import {
-  ChevronLeftIcon,
-  MinusIcon,
-  PinIcon,
-  PlusIcon,
-} from '../../shared/ui/icons';
+import { ChevronLeftIcon, PinIcon } from '../../shared/ui/icons';
 import PlaceSearchModal from '../../shared/ui/PlaceSearchModal';
 import type { PlaceResult } from '../../entities/main/api';
 
@@ -37,8 +32,6 @@ const TRANSPORTS: { value: PreferredTransport; label: string }[] = [
   { value: 'TAXI', label: '택시' },
   { value: 'CAR', label: '자가용' },
 ];
-const MIN_COUNT = 1;
-const MAX_COUNT = 10;
 
 interface Props {
   onBack?: () => void;
@@ -124,17 +117,6 @@ const TravelPreferenceView: React.FC<Props> = ({ onBack }) => {
     </TouchableOpacity>
   );
 
-  const count = pref?.dailyScheduleCount ?? MIN_COUNT;
-  const setCount = (next: number) =>
-    setPref(p =>
-      p
-        ? {
-            ...p,
-            dailyScheduleCount: Math.min(MAX_COUNT, Math.max(MIN_COUNT, next)),
-          }
-        : p,
-    );
-
   return (
     <View style={s.safeArea}>
       <SafeAreaView edges={['top']} style={s.header}>
@@ -194,9 +176,9 @@ const TravelPreferenceView: React.FC<Props> = ({ onBack }) => {
           </View>
 
           <Text style={s.section}>휠체어를 쓰세요?</Text>
-          <Text style={s.hint}>
-            쓰시면 계단·비탈이 많은 곳을 빼고, 편의 시설 정보가 있는 곳을
-            먼저 골라요.
+          <Text style={[s.hint, s.hintGap]}>
+            쓰시면 계단·비탈이 많은 곳을 빼고, 편의 시설 정보가 있는 곳을 먼저
+            골라요.
           </Text>
           <View style={s.chips}>
             {chip('써요', pref.usesWheelchair === true, () =>
@@ -228,7 +210,9 @@ const TravelPreferenceView: React.FC<Props> = ({ onBack }) => {
           </View>
 
           <Text style={s.section}>피하는 음식이 있으세요?</Text>
-          <Text style={s.hint}>여러 개 고를 수 있어요. {AVOID_FOODS_NOTICE}</Text>
+          <Text style={[s.hint, s.hintGap]}>
+            여러 개 고를 수 있어요. {AVOID_FOODS_NOTICE}
+          </Text>
           <View style={s.chips}>
             {AVOID_FOODS.map(f =>
               chip(f.label, !!pref.avoidFoods?.includes(f.value), () =>
@@ -239,38 +223,6 @@ const TravelPreferenceView: React.FC<Props> = ({ onBack }) => {
               ),
             )}
           </View>
-
-          <Text style={s.section}>하루에 몇 곳 다닐까요?</Text>
-          <View style={s.stepper}>
-            <TouchableOpacity
-              style={s.stepBtn}
-              accessibilityRole="button"
-              accessibilityLabel="한 곳 줄이기"
-              disabled={count <= MIN_COUNT}
-              onPress={() => setCount(count - 1)}
-            >
-              <MinusIcon
-                size={22}
-                color={count <= MIN_COUNT ? colors.textTertiary : colors.text}
-              />
-            </TouchableOpacity>
-            <Text style={s.count}>{count}곳</Text>
-            <TouchableOpacity
-              style={s.stepBtn}
-              accessibilityRole="button"
-              accessibilityLabel="한 곳 늘리기"
-              disabled={count >= MAX_COUNT}
-              onPress={() => setCount(count + 1)}
-            >
-              <PlusIcon
-                size={22}
-                color={count >= MAX_COUNT ? colors.textTertiary : colors.text}
-              />
-            </TouchableOpacity>
-          </View>
-          <Text style={s.hint}>
-            일정을 만들 때 "일정 밀도" 지침을 고르면 그쪽을 따라요.
-          </Text>
         </ScrollView>
       )}
 
@@ -282,7 +234,7 @@ const TravelPreferenceView: React.FC<Props> = ({ onBack }) => {
         onClose={() => setSearching(false)}
       />
 
-      <SafeAreaView edges={['bottom']} style={s.footer}>
+      <View style={s.footer}>
         <TouchableOpacity
           style={[s.primaryBtn, (!pref || saving) && s.primaryBtnOff]}
           activeOpacity={0.85}
@@ -296,7 +248,7 @@ const TravelPreferenceView: React.FC<Props> = ({ onBack }) => {
             <Text style={s.primaryText}>저장</Text>
           )}
         </TouchableOpacity>
-      </SafeAreaView>
+      </View>
     </View>
   );
 };

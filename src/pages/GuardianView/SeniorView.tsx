@@ -46,6 +46,21 @@ interface Props {
   onBack?: () => void;
 }
 
+function newer(
+  prev: SeniorLocation | null,
+  next: SeniorLocation | null,
+): SeniorLocation | null {
+  if (!prev || !next) {
+    return next;
+  }
+  const nextAt = Date.parse(next.recordedAt);
+  const prevAt = Date.parse(prev.recordedAt);
+  if (Number.isNaN(nextAt) || Number.isNaN(prevAt)) {
+    return next;
+  }
+  return nextAt >= prevAt ? next : prev;
+}
+
 const SeniorView: React.FC<Props> = ({ seniorUserId, nickName, onBack }) => {
   const [location, setLocation] = useState<SeniorLocation | null>(null);
   const [locationFailed, setLocationFailed] = useState(false);
@@ -66,9 +81,23 @@ const SeniorView: React.FC<Props> = ({ seniorUserId, nickName, onBack }) => {
   const loadLocation = useCallback(() => {
     setLocationFailed(false);
     getSeniorLocation(seniorUserId)
-      .then(found => mounted.current && setLocation(found))
+      .then(found => mounted.current && setLocation(prev => newer(prev, found)))
       .catch(() => mounted.current && setLocationFailed(true));
   }, [seniorUserId]);
+
+  // 화면이 열려 있는 동안 10초마다 조용히 다시 받는다. 실패해도 지금 보이는 위치는 그대로 둔다
+  useFocusEffect(
+    useCallback(() => {
+      const timer = setInterval(() => {
+        getSeniorLocation(seniorUserId)
+          .then(
+            found => mounted.current && setLocation(prev => newer(prev, found)),
+          )
+          .catch(() => {});
+      }, 10_000);
+      return () => clearInterval(timer);
+    }, [seniorUserId]),
+  );
 
   useFocusEffect(
     useCallback(() => {

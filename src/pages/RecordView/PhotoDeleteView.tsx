@@ -170,7 +170,7 @@ const PhotoDeleteView: React.FC<Props> = ({ tripCardId, onBack, onDeleted }) => 
           <View style={s.warningBody}>
             <Text style={s.warningTitle}>삭제하면 되돌릴 수 없어요</Text>
             <Text style={s.warningDesc}>
-              사진을 지우면 해당 기록은 기본 로고 이미지로 대체됩니다.
+              지운 사진과 코멘트는 여행카드에서 사라져요.
             </Text>
           </View>
         </View>

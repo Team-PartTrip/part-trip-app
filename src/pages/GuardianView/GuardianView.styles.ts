@@ -78,6 +78,12 @@ export const guardianStyles = StyleSheet.create({
   rowSub: { marginTop: 2, fontSize: 13, color: colors.textSecondary },
   unlink: { fontSize: 15, fontWeight: '600', color: colors.danger },
 
+  switchBox: {
+    width: 64,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   shareRow: {
     minHeight: 72,
     marginTop: 6,
@@ -98,11 +104,12 @@ export const guardianStyles = StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: colors.white,
     paddingHorizontal: 16,
+    paddingVertical: 12,
     fontSize: 22,
     fontWeight: '700',
-    letterSpacing: 4,
     color: colors.textPrimary,
   },
+  codeInputFilled: { letterSpacing: 4 },
   acceptRow: { flexDirection: 'row', gap: 8 },
   acceptBtn: {
     minHeight: 54,

@@ -5,9 +5,11 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  BackHandler,
 } from 'react-native';
 import { Text, TextInput } from '../../shared/ui/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import { planBlocksStyles as s } from './PlanBlocksView.styles';
 import WizardHeader from './WizardHeader';
 import colors from '../../shared/tokens/colors';
@@ -26,7 +28,13 @@ import {
   toggleAvoidFood,
   TravelPreference,
 } from '../../entities/profile/api';
-import { getCities } from '../../entities/main/api';
+import {
+  mobilityAnswers,
+  mobilityOf,
+  MOBILITY,
+  Mobility,
+} from '../../entities/profile/mobility';
+import { getAddress, getCities } from '../../entities/main/api';
 import {
   isMetro,
   isSameRegion,
@@ -43,10 +51,13 @@ import {
 import {
   chipOptions,
   FEATURED,
+  HIDDEN_BLOCKS,
+  initialPicked,
   Picked,
   PLACE_NAME_BLOCKS,
   toggle,
   toPayload,
+  walkingOf,
 } from '../../entities/planner/blocks';
 import { formatRange, PlanDraft } from '../../entities/planner/types';
 import { ChevronDownIcon, ChevronUpIcon, PinIcon } from '../../shared/ui/icons';
@@ -71,7 +82,11 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
   const [found, setFound] = useState<string[] | null>(null);
   const [blocks, setBlocks] = useState<PlannerBlock[] | null>(null);
   const [blocksFailed, setBlocksFailed] = useState(false);
-  const [picked, setPicked] = useState<Picked>({});
+  const trip = {
+    isSolo: draft.isSolo,
+    dayTrip: draft.startDate === draft.endDate,
+  };
+  const [picked, setPicked] = useState<Picked>(() => initialPicked(trip));
   const [placeNames, setPlaceNames] = useState<Record<string, string>>({});
   const [showAll, setShowAll] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -79,28 +94,42 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
     name: string;
     latitude: number;
     longitude: number;
+    /** 지금 있는 곳 칩으로 고름. 이름은 그 자리 주소다 */
+    here?: boolean;
   } | null>(null);
   const [locating, setLocating] = useState(false);
   const [searchingDeparture, setSearchingDeparture] = useState(false);
   const [home, setHome] = useState<Home | null>(null);
-  // 아직 피하는 음식을 묻지 않은 사람에게만 한 번 묻는다
+  // 여행 편의 설정에 저장된 값을 미리 골라 둔다. 여기서 바꾸면 설정도 바뀐다
   const [pref, setPref] = useState<TravelPreference | null>(null);
   const [avoidFoods, setAvoidFoods] = useState<AvoidFood[] | null>(null);
+  const [mobility, setMobility] = useState<Mobility[] | null>(null);
 
   useEffect(() => {
     getTravelPreference()
       .then(p => {
         setHome(p.home ?? null);
         setPref(p);
+        setAvoidFoods(p.avoidFoods ?? null);
+        setMobility(mobilityOf(p));
       })
       .catch(() => {});
   }, []);
-  const askFoods = !!pref && pref.avoidFoods == null;
-  const [mobility, setMobility] = useState<Mobility[] | null>(null);
-  const askMobility =
-    !!pref && pref.usesWheelchair == null && pref.limitedWalking == null;
   // 버튼 disabled 는 렌더 값이라 연타를 다 막지 못한다
   const generatingRef = useRef(false);
+
+  // 만드는 중에 나가서 다시 만들면 플래너가 하나 더 생긴다. 그동안만 밀어서 뒤로 가기를 막는다
+  const navigation = useNavigation();
+  useEffect(() => {
+    navigation.setOptions({ gestureEnabled: !generating });
+  }, [navigation, generating]);
+  useEffect(() => {
+    if (!generating) {
+      return;
+    }
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
+    return () => sub.remove();
+  }, [generating]);
 
   const loadBlocks = useCallback(() => {
     setBlocksFailed(false);
@@ -166,22 +195,34 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
     generatingRef.current = true;
     setGenerating(true);
     try {
-      // 고른 것만 저장한다. 그냥 넘어가면 다음 일정 때 다시 묻는다
+      // 바뀐 것만 저장한다. 안 고르고 넘어가면 다음 일정 때 다시 묻는다
       const answers: Partial<TravelPreference> = {};
-      if (askFoods && avoidFoods) {
+      if (
+        pref &&
+        avoidFoods &&
+        (pref.avoidFoods == null ||
+          [...avoidFoods].sort().join() !== [...pref.avoidFoods].sort().join())
+      ) {
         answers.avoidFoods = avoidFoods;
       }
-      if (askMobility && mobility) {
-        const wheelchair = mobility.includes('WHEELCHAIR');
-        answers.usesWheelchair = wheelchair;
-        answers.limitedWalking = mobility.includes('WALKING');
-        if (wheelchair || mobility.includes('STAIRS')) {
-          answers.canUseStairs = false;
+      if (pref && mobility) {
+        const next = mobilityAnswers(mobility, pref);
+        if (
+          next.usesWheelchair !== pref.usesWheelchair ||
+          next.limitedWalking !== pref.limitedWalking ||
+          next.canUseStairs !== pref.canUseStairs
+        ) {
+          Object.assign(answers, next);
         }
       }
       if (pref && Object.keys(answers).length > 0) {
         await saveTravelPreference({ ...pref, ...answers }).catch(() => {});
       }
+      const walking = walkingOf(mobility);
+      const payload = toPayload(
+        walking ? { ...picked, WALKING: [walking] } : picked,
+        placeNames,
+      );
       const schedule = await generatePlanner({
         title: draft.title,
         memberCount: draft.headcount,
@@ -190,7 +231,7 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
         cityName: city,
         startDate: draft.startDate,
         endDate: draft.endDate,
-        blocks: toPayload(picked, placeNames),
+        blocks: payload,
         departurePoint: departure
           ? {
               placeName: departure.name,
@@ -213,7 +254,7 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
   };
 
   const renderDeparture = (block: PlannerBlock) => {
-    const here = departure?.name === HERE;
+    const here = !!departure?.here;
     const atHome =
       !departure && !!home && usesHome(picked.DEPARTURE_PLACE?.[0]);
     const chip = (
@@ -310,7 +351,7 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
           ) : null}
         </Text>
         <View style={s.chips}>
-          {chipOptions(block).map(option => {
+          {chipOptions(block, trip).map(option => {
             const on = values.includes(option);
             return (
               <TouchableOpacity
@@ -340,8 +381,11 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
     setLocating(true);
     Geolocation.requestAuthorization();
     currentPosition()
-      .then(p => {
-        setDeparture({ name: HERE, ...p });
+      .then(async p => {
+        const address = await getAddress(p.latitude, p.longitude).catch(
+          () => null,
+        );
+        setDeparture({ name: address ?? HERE, ...p, here: true });
         pickDeparture(CUSTOM);
       })
       .catch(() =>
@@ -353,17 +397,22 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
       .finally(() => setLocating(false));
   };
 
-  const featured = (blocks ?? []).filter(
+  const asked = (blocks ?? []).filter(b => !HIDDEN_BLOCKS.includes(b.type));
+  const featured = asked.filter(
     b => FEATURED.includes(b.type) || PLACE_NAME_BLOCKS.includes(b.type),
   );
-  const rest = (blocks ?? []).filter(
+  const rest = asked.filter(
     b => !FEATURED.includes(b.type) && !PLACE_NAME_BLOCKS.includes(b.type),
   );
   const pickedCount = toPayload(picked, placeNames).length;
 
   return (
     <View style={s.safeArea}>
-      <WizardHeader title="여행 지침" step={3} onBack={onBack} />
+      <WizardHeader
+        title="여행지와 취향"
+        step={3}
+        onBack={generating ? undefined : onBack}
+      />
 
       <ScrollView
         contentContainerStyle={s.content}
@@ -462,12 +511,11 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
           </>
         )}
 
-        {askMobility && (
+        {pref && (
           <>
             <Text style={s.section}>다니실 때 불편한 점이 있으세요?</Text>
             <Text style={s.sectionHint}>
-              AI가 장소를 고를 때 참고해요. 여행 편의 설정에서 언제든 바꿀 수
-              있어요.
+              AI가 장소를 고를 때 참고해요. {rememberNote(mobilityOf(pref))}
             </Text>
             <View style={[s.chips, s.block]}>
               {[...MOBILITY, { value: null, label: '괜찮아요' }].map(m => {
@@ -505,12 +553,12 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
           </>
         )}
 
-        {askFoods && (
+        {pref && (
           <>
             <Text style={s.section}>피하는 음식이 있으세요?</Text>
             <Text style={s.sectionHint}>
-              AI가 맛집을 고를 때 빼요. {AVOID_FOODS_NOTICE} 여행 편의 설정에서
-              언제든 바꿀 수 있어요.
+              AI가 맛집을 고를 때 빼요. {AVOID_FOODS_NOTICE}{' '}
+              {rememberNote(pref.avoidFoods)}
             </Text>
             <View style={[s.chips, s.block]}>
               {[...AVOID_FOODS, { value: null, label: '없어요' }].map(f => {
@@ -554,7 +602,7 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
             accessibilityRole="button"
           >
             <Text style={s.retryText}>
-              지침을 불러오지 못했어요. 다시 불러오기
+              선택지를 불러오지 못했어요. 다시 불러오기
             </Text>
           </TouchableOpacity>
         ) : !blocks ? (
@@ -607,7 +655,7 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
             <Text style={s.primaryText}>
               {city
                 ? `AI로 일정 만들기${
-                    pickedCount > 0 ? ` · 지침 ${pickedCount}개` : ''
+                    pickedCount > 0 ? ` · ${pickedCount}개 반영` : ''
                   }`
                 : '어디로 갈지 먼저 골라주세요'}
             </Text>
@@ -629,16 +677,16 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
   );
 };
 
-type Mobility = 'WHEELCHAIR' | 'WALKING' | 'STAIRS';
-const MOBILITY: { value: Mobility; label: string }[] = [
-  { value: 'WHEELCHAIR', label: '휠체어를 써요' },
-  { value: 'WALKING', label: '오래 걷기 어려워요' },
-  { value: 'STAIRS', label: '계단이 어려워요' },
-];
+/** 처음 묻는지, 저장된 값을 채워 보여주는지에 따라 안내가 다르다 */
+function rememberNote(saved: unknown[] | null | undefined): string {
+  return saved == null
+    ? '다음 계획부터는 고른 대로 미리 채워둘게요.'
+    : '지난번에 고른 대로 채워뒀어요. 바꾸면 다음 계획에도 적용돼요.';
+}
 
 const HOME = '집 근처';
 const CUSTOM = '직접 지정';
-const HERE = '지금 있는 곳';
+export const HERE = '지금 있는 곳';
 
 function usesHome(value: string | undefined): boolean {
   return !value || value === HOME;

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   TouchableOpacity,
@@ -10,6 +10,7 @@ import { Text } from './Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Camera,
+  CommonResolutions,
   type CameraRef,
   useCameraDevice,
   useCameraPermission,
@@ -17,12 +18,29 @@ import {
 } from 'react-native-vision-camera';
 import colors from '../tokens/colors';
 import { ChevronLeftIcon } from './icons';
+import { currentPosition } from '../lib/locationSharing';
+
+export interface CaptureInfo {
+  capturedAt: string;
+  latitude?: number;
+  longitude?: number;
+}
+
+const pad = (n: number) => String(n).padStart(2, '0');
+function localStamp(d: Date): string {
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
+    d.getHours(),
+  )}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
 
 interface Props {
   title?: string;
   onClose?: () => void;
-  /** 촬영 완료 시 사진 경로(file://...) 전달. 촬영 실패해도 호출되어 다음 단계로 진행 */
-  onCapture?: (uri: string) => void;
+  /**
+   * 촬영 완료 시 사진 경로(file://...)와 찍은 때 · 곳을 전달. 촬영 실패해도 호출되어 다음 단계로 진행.
+   * 위치 권한이 없거나 못 받으면 latitude · longitude 는 없다
+   */
+  onCapture?: (uri: string, shot: CaptureInfo) => void;
 }
 
 const CameraCapture: React.FC<Props> = ({
@@ -34,22 +52,40 @@ const CameraCapture: React.FC<Props> = ({
   const { hasPermission, requestPermission } = useCameraPermission();
   // iOS 기본값(native)은 HEIC로 저장되어 서버 업로드(jpg/png/webp만 허용)에 실패하므로
   // 플랫폼과 무관하게 항상 JPEG로 저장되도록 강제
-  const photoOutput = usePhotoOutput({ containerFormat: 'jpeg' });
+  const photoOutput = usePhotoOutput({
+    containerFormat: 'jpeg',
+    targetResolution: CommonResolutions.FHD_4_3,
+    quality: 0.85,
+  });
   const cameraRef = useRef<CameraRef>(null);
 
   useEffect(() => {
     if (!hasPermission) requestPermission();
   }, [hasPermission, requestPermission]);
 
+  const busy = useRef(false);
+  const [shooting, setShooting] = useState(false);
+
   const takePhoto = async () => {
+    if (busy.current) return;
+    busy.current = true;
+    setShooting(true);
     let uri = '';
+    const capturedAt = localStamp(new Date());
+    const where = Promise.race([
+      currentPosition().catch(() => null),
+      new Promise<null>(resolve => setTimeout(() => resolve(null), 3000)),
+    ]);
     try {
       const file = await photoOutput.capturePhotoToFile({}, {});
       if (file?.filePath) uri = `file://${file.filePath}`;
     } catch {
       // 촬영 실패해도 다음 단계로 넘어감
     }
-    onCapture?.(uri);
+    const pos = await where;
+    busy.current = false;
+    setShooting(false);
+    onCapture?.(uri, { capturedAt, ...(pos ?? {}) });
   };
 
   return (
@@ -67,7 +103,7 @@ const CameraCapture: React.FC<Props> = ({
         <View style={[StyleSheet.absoluteFill, s.center]}>
           {!hasPermission ? (
             <>
-              <Text style={s.hint}>카메라 권한이 필요합니다.</Text>
+              <Text style={s.hint}>카메라 권한이 필요해요.</Text>
               <TouchableOpacity onPress={() => Linking.openSettings()}>
                 <Text style={s.settings}>설정에서 권한 허용</Text>
               </TouchableOpacity>
@@ -107,11 +143,19 @@ const CameraCapture: React.FC<Props> = ({
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={s.shutter}
+            style={[s.shutter, shooting && s.shutterBusy]}
             activeOpacity={0.8}
+            disabled={shooting}
+            accessibilityRole="button"
+            accessibilityLabel="사진 찍기"
+            accessibilityState={{ busy: shooting }}
             onPress={takePhoto}
           >
-            <View style={s.shutterIn} />
+            {shooting ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <View style={s.shutterIn} />
+            )}
           </TouchableOpacity>
 
           {/* 셔터 가운데 정렬용 빈 영역 */}
@@ -174,6 +218,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  shutterBusy: { opacity: 0.6 },
   shutterIn: {
     width: 56,
     height: 56,

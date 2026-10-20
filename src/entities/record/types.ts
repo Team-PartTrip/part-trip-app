@@ -1,19 +1,26 @@
+const NO_DATE = '날짜 없음';
+
 // 기록 탭·여행 카드 화면의 날짜 표시 헬퍼.
 //
 // 타입은 여기 두지 않는다. 서버 응답 그대로인 것들이라 api.ts 에 있다.
 
 /** "2026-08-23" → "2026.08.23" */
-export function formatDotDate(date: string): string {
+export function formatDotDate(date: string | null): string {
+  if (!date) return NO_DATE;
   return date.replace(/-/g, '.');
 }
 
 /** "2026-08-23" → "08.23" */
-export function formatShortDate(date: string): string {
+export function formatShortDate(date: string | null): string {
+  if (!date) return NO_DATE;
   return date.slice(5).replace('-', '.');
 }
 
 /** 시작·종료를 "2026.08.23 – 08.27" 로. 해가 바뀌면 뒤에도 연도를 붙인다 */
 export function formatTripRange(startDate: string, endDate: string): string {
+  if (startDate === endDate) {
+    return formatDotDate(startDate);
+  }
   const tail =
     startDate.slice(0, 4) === endDate.slice(0, 4)
       ? formatShortDate(endDate)

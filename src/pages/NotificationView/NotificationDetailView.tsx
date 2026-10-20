@@ -75,7 +75,7 @@ const NotificationDetailView: React.FC<Props> = ({
           </Text>
           <View style={s.divider} />
           <Text style={s.note}>
-            이 알림은 열람 시 자동으로 읽음 처리됩니다.{'\n'}
+            이 알림은 열어 보면 자동으로 읽음 처리돼요.{'\n'}
             목록에서 [모두 읽음]으로 일괄 처리할 수도 있어요.
           </Text>
         </View>
