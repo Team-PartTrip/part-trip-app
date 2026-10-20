@@ -183,6 +183,9 @@ export function useLocationSharing(enabled: boolean): void {
         if (!shouldSend(state)) {
           if (phase !== 'DURING' || guardianCount === 0) {
             stop();
+          } else if (watchId !== null) {
+            Geolocation.clearWatch(watchId);
+            watchId = null;
           }
           return;
         }
