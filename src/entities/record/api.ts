@@ -11,6 +11,7 @@ import { shortName } from '../region/regions';
 
 export interface TripCardSummary {
   cardId: number;
+  title?: string | null;
   regionCode: string | null;
   regionName: string | null;
   cityName: string;
@@ -45,6 +46,16 @@ export function placeOf(
   const region = card.regionName ? shortName(card.regionName) : null;
   const city = card.cityName === region ? null : card.cityName;
   return [region, city].filter(Boolean).join(sep);
+}
+
+export function cardHeading(
+  card: Pick<TripCardSummary, 'title' | 'regionName' | 'cityName'>,
+): { title: string; place: string | null } {
+  const place = placeOf(card);
+  const title = card.title?.trim();
+  return title
+    ? { title, place: place || null }
+    : { title: place, place: null };
 }
 
 /** 여행 카드 목록 (D2) — 서버가 최근 여행순으로 준다 */

@@ -13,8 +13,8 @@ import { recordStyles as s } from './RecordView.styles';
 import PhotoGrid from './PhotoGrid';
 import {
   getTripCard,
+  cardHeading,
   getTripCards,
-  placeOf,
   TripCardSummary,
 } from '../../entities/record/api';
 import { formatTripRange, today } from '../../entities/record/types';
@@ -176,9 +176,14 @@ const RecordView: React.FC<Props> = ({ onOpenTrip, onOpenTripCards }) => {
 
               <View style={s.cardBottom}>
                 <View style={s.cardBody}>
-                  <Text style={s.cardTitle}>{placeOf(card)}</Text>
+                  <Text style={s.cardTitle}>{cardHeading(card).title}</Text>
                   <Text style={s.cardDate}>
-                    {formatTripRange(card.startDate, card.endDate)}
+                    {[
+                      cardHeading(card).place,
+                      formatTripRange(card.startDate, card.endDate),
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
                   </Text>
                 </View>
                 <View style={s.countPill}>
