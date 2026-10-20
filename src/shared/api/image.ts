@@ -1,5 +1,5 @@
 import { BASE_URL } from '@env';
-import { ApiError } from './client';
+import { ApiError, errorMessageOf } from './client';
 import { expireSession, refreshAccessToken } from './http';
 import { getAccessToken, getSessionGeneration } from './tokenStorage';
 
@@ -31,7 +31,10 @@ export async function uploadImage(
         body: formData,
       });
     } catch {
-      throw new ApiError(0, '서버에 연결하지 못했어요. 인터넷 연결을 확인해주세요.');
+      throw new ApiError(
+        0,
+        '서버에 연결하지 못했어요. 인터넷 연결을 확인해주세요.',
+      );
     }
   };
 
@@ -67,11 +70,10 @@ export async function uploadImage(
   }
 
   if (!res.ok) {
-    const message =
-      typeof data === 'string' && data
-        ? data
-        : (data && data.message) || '사진을 올리지 못했어요.';
-    throw new ApiError(res.status, message);
+    throw new ApiError(
+      res.status,
+      errorMessageOf(res.status, data, '사진을 올리지 못했어요.'),
+    );
   }
 
   // 서버는 경로를 그냥 문자열로 준다 (ProfileController 가 ResponseEntity<String>).
@@ -79,7 +81,10 @@ export async function uploadImage(
   // 읽어서 늘 undefined 가 나왔고, 그래서 사진을 골라도 아무 일이 없었다.
   const url = typeof data === 'string' ? data.trim() : data?.url;
   if (!url) {
-    throw new ApiError(res.status, '사진을 올리지 못했어요. 잠시 후 다시 시도해주세요.');
+    throw new ApiError(
+      res.status,
+      '사진을 올리지 못했어요. 잠시 후 다시 시도해주세요.',
+    );
   }
   return url as string;
 }

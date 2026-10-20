@@ -5,7 +5,7 @@
 //
 import { BASE_URL } from '@env';
 import { authRequest } from '../../shared/api/http';
-import { ApiError } from '../../shared/api/client';
+import { ApiError, errorMessageOf } from '../../shared/api/client';
 import { getAccessToken } from '../../shared/api/tokenStorage';
 import { shortName } from '../region/regions';
 
@@ -206,11 +206,10 @@ export async function addTripCardEntry(
   }
 
   if (!res.ok) {
-    const message =
-      typeof data === 'string' && data
-        ? data
-        : (data && data.message) || '사진을 올리지 못했어요.';
-    throw new ApiError(res.status, message);
+    throw new ApiError(
+      res.status,
+      errorMessageOf(res.status, data, '사진을 올리지 못했어요.'),
+    );
   }
 
   // 본문 없이 201 만 오거나 JSON 이 아닌 문자열이 올 수 있다.
