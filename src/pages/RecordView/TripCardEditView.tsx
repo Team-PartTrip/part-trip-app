@@ -90,15 +90,24 @@ const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
     if (result.didCancel || !result.assets?.length) {
       return;
     }
+    const isHeic = (type?: string, name?: string) =>
+      /hei[cf]/i.test(type ?? '') || /\.hei[cf]$/i.test(name ?? '');
+    const usable = result.assets.filter(
+      asset => asset.uri && !isHeic(asset.type, asset.fileName),
+    );
+    if (usable.length < result.assets.length) {
+      Alert.alert(
+        '올릴 수 없는 사진이 있어요',
+        'HEIC 형식 사진은 빠졌어요. 다른 사진을 골라 주세요.',
+      );
+    }
     addPhotos(
-      result.assets
-        .filter(asset => asset.uri)
-        .map((asset, index) =>
-          normalizePhoto(
-            { uri: asset.uri!, fileName: asset.fileName, type: asset.type },
-            `photo-${Date.now()}-${index}`,
-          ),
+      usable.map((asset, index) =>
+        normalizePhoto(
+          { uri: asset.uri!, fileName: asset.fileName, type: asset.type },
+          `photo-${Date.now()}-${index}`,
         ),
+      ),
     );
   };
 
