@@ -37,10 +37,15 @@ export const travelPreferenceStyles = StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: colors.white,
   },
-  chipOn: { borderColor: colors.primaryFill, backgroundColor: colors.primaryFill },
+  chipOn: {
+    borderColor: colors.primaryFill,
+    backgroundColor: colors.primaryFill,
+  },
   chipText: { fontSize: 16, color: colors.text },
   chipTextOn: { color: colors.textOnPrimary, fontWeight: '600' },
   hint: { marginTop: 8, fontSize: 14, color: colors.textSecondary },
+  // 설명 바로 아래에 칩이 올 때 붙지 않게 띄운다
+  hintGap: { marginBottom: 12 },
   home: {
     marginTop: 12,
     padding: 16,

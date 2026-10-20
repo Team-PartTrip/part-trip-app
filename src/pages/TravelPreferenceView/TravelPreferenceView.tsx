@@ -22,10 +22,7 @@ import {
   toggleAvoidFood,
   TravelPreference,
 } from '../../entities/profile/api';
-import {
-  ChevronLeftIcon,
-  PinIcon,
-} from '../../shared/ui/icons';
+import { ChevronLeftIcon, PinIcon } from '../../shared/ui/icons';
 import PlaceSearchModal from '../../shared/ui/PlaceSearchModal';
 import type { PlaceResult } from '../../entities/main/api';
 
@@ -179,9 +176,9 @@ const TravelPreferenceView: React.FC<Props> = ({ onBack }) => {
           </View>
 
           <Text style={s.section}>휠체어를 쓰세요?</Text>
-          <Text style={s.hint}>
-            쓰시면 계단·비탈이 많은 곳을 빼고, 편의 시설 정보가 있는 곳을
-            먼저 골라요.
+          <Text style={[s.hint, s.hintGap]}>
+            쓰시면 계단·비탈이 많은 곳을 빼고, 편의 시설 정보가 있는 곳을 먼저
+            골라요.
           </Text>
           <View style={s.chips}>
             {chip('써요', pref.usesWheelchair === true, () =>
@@ -213,7 +210,9 @@ const TravelPreferenceView: React.FC<Props> = ({ onBack }) => {
           </View>
 
           <Text style={s.section}>피하는 음식이 있으세요?</Text>
-          <Text style={s.hint}>여러 개 고를 수 있어요. {AVOID_FOODS_NOTICE}</Text>
+          <Text style={[s.hint, s.hintGap]}>
+            여러 개 고를 수 있어요. {AVOID_FOODS_NOTICE}
+          </Text>
           <View style={s.chips}>
             {AVOID_FOODS.map(f =>
               chip(f.label, !!pref.avoidFoods?.includes(f.value), () =>
@@ -224,7 +223,6 @@ const TravelPreferenceView: React.FC<Props> = ({ onBack }) => {
               ),
             )}
           </View>
-
         </ScrollView>
       )}
 
