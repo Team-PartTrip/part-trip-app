@@ -215,7 +215,8 @@ export function getScheduleCandidates(
 /**
  * 멤버 내보내기 (API-005-22).
  *
- * 그룹장만 부를 수 있고, 그룹장 자신은 뺄 수 없다.
+ * 다른 사람을 내보내는 건 그룹장만 할 수 있다. 본인 id 를 넘기면 스스로 나가는
+ * 것이고, 그룹장 자신은 나갈 수 없다.
  */
 export function removePlannerMember(
   plannerId: number,

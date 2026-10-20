@@ -48,6 +48,7 @@ import {
   planStatusLabel,
 } from '../../entities/planner/types';
 import { ChevronLeftIcon } from '../../shared/ui/icons';
+import { getMyProfile } from '../../entities/profile/api';
 import { ApiError } from '../../shared/api/client';
 
 /** 일정이 확정된 뒤의 상태. 이때부터 이 화면은 일정표가 된다 */
@@ -407,6 +408,34 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
       ],
     );
 
+  const confirmLeave = () =>
+    Alert.alert(
+      '플래너 나가기',
+      `"${plan?.title ?? ''}" 에서 나갈까요?\n다시 들어오려면 초대가 필요해요.`,
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '나가기',
+          style: 'destructive',
+          onPress: async () => {
+            setDeleting(true);
+            try {
+              const me = await getMyProfile();
+              await removePlannerMember(planId, me.userId);
+              onDeleted();
+            } catch (e: any) {
+              Alert.alert(
+                '나가지 못했어요',
+                e?.message ?? '잠시 후 다시 시도해주세요.',
+              );
+            } finally {
+              setDeleting(false);
+            }
+          },
+        },
+      ],
+    );
+
   // 되돌릴 수 없어서 한 번 묻는다. 서버는 그룹장만 받아준다(API-005-12).
   const confirmDelete = () =>
     Alert.alert(
@@ -737,6 +766,24 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
             )}
           </TouchableOpacity>
         )}
+        {plan.role !== 'OWNER' &&
+          plan.status !== 'TRAVELING' &&
+          plan.status !== 'DONE' && (
+            <TouchableOpacity
+              style={s.deleteBtn}
+              activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityLabel="플래너 나가기"
+              disabled={deleting}
+              onPress={confirmLeave}
+            >
+              {deleting ? (
+                <ActivityIndicator size="small" color={colors.danger} />
+              ) : (
+                <Text style={s.deleteText}>플래너 나가기</Text>
+              )}
+            </TouchableOpacity>
+          )}
       </ScrollView>
 
       <SlotMenu
