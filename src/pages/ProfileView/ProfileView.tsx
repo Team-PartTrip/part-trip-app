@@ -77,6 +77,10 @@ const ProfileView: React.FC<Props> = ({
     }, []),
   );
 
+  // 카카오 계정은 userId 가 이메일이 아니라서 서버가 따로 준 email 을 먼저 쓴다
+  const shownEmail =
+    profile?.email ?? (profile?.userId?.includes('@') ? profile.userId : null);
+
   const handleLogout = () => {
     Alert.alert('로그아웃', '로그아웃 하시겠어요?', [
       { text: '취소', style: 'cancel' },
@@ -174,9 +178,9 @@ const ProfileView: React.FC<Props> = ({
 
             <View style={s.profileInfo}>
               <Text style={s.nickname}>{profile?.nickName ?? '...'}</Text>
-              {!!profile?.userId?.includes('@') && (
+              {!!shownEmail && (
                 <Text style={s.handle} numberOfLines={1} ellipsizeMode="middle">
-                  {profile.userId}
+                  {shownEmail}
                 </Text>
               )}
             </View>
