@@ -18,9 +18,12 @@ import { tripCardEditStyles as s } from './TripCardEditView.styles';
 import {
   addTripCardEntry,
   getTripCards,
+  isTripEnded,
+  normalizePhoto,
   placeOf,
   PickedPhoto,
   TripCardSummary,
+  TRIP_ENDED_NOTICE,
 } from '../../entities/record/api';
 import { formatDotDate } from '../../entities/record/types';
 import { CheckIcon, ChevronLeftIcon, PlusIcon } from '../../shared/ui/icons';
@@ -35,7 +38,7 @@ const MAX_PHOTOS = 9;
 interface Props {
   tripCardId: number;
   onBack?: () => void;
-  onSaved?: () => void;
+  onSaved?: (unlocatedEntryId?: number) => void;
 }
 
 const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
@@ -76,11 +79,12 @@ const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
     }
     const added = result.assets
       .filter(asset => asset.uri)
-      .map((asset, index) => ({
-        uri: asset.uri!,
-        fileName: asset.fileName ?? `photo-${Date.now()}-${index}.jpg`,
-        mimeType: asset.type ?? 'image/jpeg',
-      }));
+      .map((asset, index) =>
+        normalizePhoto(
+          { uri: asset.uri!, fileName: asset.fileName, type: asset.type },
+          `photo-${Date.now()}-${index}`,
+        ),
+      );
     // 같은 사진을 두 번 고를 수 있다. uri 를 식별자로 쓰는 곳이
     // 여럿(목록 key · 낱장 제거 · 업로드 후 제거)이라 여기서 한 번에 막는다.
     setPicked(prev => {
@@ -109,11 +113,19 @@ const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
       // 코멘트는 한 장만 고를 때 받는다. 여러 장에 같은 글이 붙지 않게
       const note =
         picked.length === 1 ? comment.trim() || undefined : undefined;
+      let unlocated: number | undefined;
       for (const photo of picked) {
-        await addTripCardEntry(tripCardId, photo, note);
+        const entry = await addTripCardEntry(tripCardId, photo, note);
+        if (
+          unlocated === undefined &&
+          entry &&
+          (entry.latitude == null || entry.longitude == null)
+        ) {
+          unlocated = entry.entryId;
+        }
         setPicked(prev => prev.filter(item => item.uri !== photo.uri));
       }
-      onSaved?.();
+      onSaved?.(unlocated);
     } catch (e: any) {
       Alert.alert('사진 추가 실패', e?.message ?? '잠시 후 다시 시도해주세요.');
     } finally {
@@ -150,6 +162,9 @@ const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
           <Text style={s.desc}>
             여행카드는 여행 시작과 함께 자동으로 만들어져요
           </Text>
+          {isTripEnded(card) && (
+            <Text style={s.endedNote}>{TRIP_ENDED_NOTICE}</Text>
+          )}
           {card && (
             <View style={s.tripBar}>
               <Text style={s.tripBarText}>
@@ -220,10 +235,11 @@ const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
           <TouchableOpacity
             style={[
               s.primaryBtn,
-              (picked.length === 0 || saving) && s.primaryBtnOff,
+              (picked.length === 0 || saving || isTripEnded(card)) &&
+                s.primaryBtnOff,
             ]}
             activeOpacity={0.85}
-            disabled={picked.length === 0 || saving}
+            disabled={picked.length === 0 || saving || isTripEnded(card)}
             onPress={save}
           >
             {saving ? (

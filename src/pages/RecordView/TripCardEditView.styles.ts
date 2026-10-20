@@ -11,6 +11,12 @@ export const tripCardEditStyles = StyleSheet.create({
   title: { marginTop: 4, fontSize: 24, fontWeight: '700', color: colors.text },
   desc: { marginTop: 8, fontSize: 15, color: colors.textMuted },
 
+  endedNote: {
+    marginTop: 12,
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.danger,
+  },
   tripBar: {
     marginTop: 20,
     height: 44,

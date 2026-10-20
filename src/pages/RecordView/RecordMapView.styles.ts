@@ -8,7 +8,11 @@ export const recordMapStyles = StyleSheet.create({
   // 지도 자리. 지도 SDK 를 붙이기 전까지 격자 + 육지 모양으로 대신한다
   map: { flex: 1, backgroundColor: colors.tint, overflow: 'hidden' },
   mapView: StyleSheet.absoluteFill,
-  gridLine: { position: 'absolute', backgroundColor: colors.white, opacity: 0.7 },
+  gridLine: {
+    position: 'absolute',
+    backgroundColor: colors.white,
+    opacity: 0.7,
+  },
   gridRow: { left: 0, right: 0, height: 1 },
   gridCol: { top: 0, bottom: 0, width: 1 },
   landmass: {
@@ -113,6 +117,7 @@ export const recordMapStyles = StyleSheet.create({
     backgroundColor: colors.primaryFill,
     justifyContent: 'center',
   },
+  endedNote: { fontSize: 14, color: colors.textSecondary },
   addBtnText: { fontSize: 14, fontWeight: '600', color: colors.textOnPrimary },
   toggle: { fontSize: 11, fontWeight: '500', marginLeft: 16 },
   toggleOn: { color: colors.primary },
@@ -135,6 +140,13 @@ export const recordMapStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  unlocatedTitle: {
+    marginTop: 8,
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  unlocatedPhoto: { width: 44, height: 44, borderRadius: 10 },
   rowBody: { flex: 1, marginLeft: 12 },
   rowTitle: { fontSize: 15, fontWeight: '600', color: colors.text },
   rowMeta: { marginTop: 2, fontSize: 12, color: colors.textSecondary },

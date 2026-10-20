@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Animated,
+  Image,
   PanResponder,
   useWindowDimensions,
 } from 'react-native';
@@ -24,6 +25,7 @@ import {
   placeOf,
   TimelineItem,
   TripCardSummary,
+  isTripEnded,
 } from '../../entities/record/api';
 import MapView, { Marker } from 'react-native-maps';
 import { formatShortDate } from '../../entities/record/types';
@@ -33,6 +35,7 @@ import {
   PinIcon,
 } from '../../shared/ui/icons';
 import colors from '../../shared/tokens/colors';
+import { toImageUrl } from '../../shared/api/image';
 import { touch48 } from '../../shared/ui/hitSlop';
 
 /** 지도에 찍을 한 지점 */
@@ -41,9 +44,16 @@ interface Spot {
   entryId: number | null;
   title: string;
   subtitle: string;
-  date: string;
+  date: string | null;
   latitude: number;
   longitude: number;
+}
+
+/** 위치 정보가 없어 지도에 못 찍는 사진. 눌러서 위치를 지정한다 */
+function toUnlocated(timeline: TimelineItem[]): TimelineItem[] {
+  return timeline.filter(
+    item => item.type === 'NO_INFO_PHOTO' && item.entryId != null,
+  );
 }
 
 /** 좌표가 있는 타임라인 항목만 지도에 찍는다 */
@@ -210,6 +220,7 @@ const RecordMapView: React.FC<Props> = ({
   );
 
   const spots = useMemo(() => toSpots(timeline), [timeline]);
+  const unlocated = useMemo(() => toUnlocated(timeline), [timeline]);
   const mapPadding = useMemo(
     () => ({ top: insets.top + 64, right: 24, bottom: 16, left: 24 }),
     [insets.top],
@@ -230,15 +241,19 @@ const RecordMapView: React.FC<Props> = ({
     <>
       <View style={s.sheetHead}>
         <Text style={s.sheetTitle}>방문 장소 {spots.length}곳</Text>
-        <TouchableOpacity
-          style={s.addBtn}
-          activeOpacity={0.85}
-          hitSlop={touch48(36, 'vertical')}
-          accessibilityRole="button"
-          onPress={onAddPhoto}
-        >
-          <Text style={s.addBtnText}>+ 사진 추가</Text>
-        </TouchableOpacity>
+        {isTripEnded(card) ? (
+          <Text style={s.endedNote}>여행이 끝났어요</Text>
+        ) : (
+          <TouchableOpacity
+            style={s.addBtn}
+            activeOpacity={0.85}
+            hitSlop={touch48(36, 'vertical')}
+            accessibilityRole="button"
+            onPress={onAddPhoto}
+          >
+            <Text style={s.addBtnText}>+ 사진 추가</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       <ScrollView
@@ -247,7 +262,7 @@ const RecordMapView: React.FC<Props> = ({
       >
         {loading ? (
           <ActivityIndicator style={s.empty} />
-        ) : spots.length === 0 ? (
+        ) : spots.length === 0 && unlocated.length === 0 ? (
           <View style={s.empty}>
             <Text style={s.emptyText}>
               {failed
@@ -287,6 +302,42 @@ const RecordMapView: React.FC<Props> = ({
               )}
             </TouchableOpacity>
           ))
+        )}
+        {!loading && unlocated.length > 0 && (
+          <>
+            <Text style={s.unlocatedTitle}>
+              위치 정보가 없는 사진 {unlocated.length}장
+            </Text>
+            {unlocated.map(item => (
+              <TouchableOpacity
+                key={`no-info-${item.entryId}`}
+                style={s.row}
+                activeOpacity={0.85}
+                accessibilityRole="button"
+                onPress={() =>
+                  onOpenSpot?.({ tripCardId, entryId: item.entryId })
+                }
+              >
+                <View style={s.thumb}>
+                  {item.imageUrl ? (
+                    <Image
+                      source={{ uri: toImageUrl(item.imageUrl) }}
+                      style={s.unlocatedPhoto}
+                    />
+                  ) : (
+                    <PinIcon size={20} color={colors.primary} />
+                  )}
+                </View>
+                <View style={s.rowBody}>
+                  <Text style={s.rowTitle}>{item.comment ?? '사진'}</Text>
+                  <Text style={s.rowMeta}>눌러서 위치 지정</Text>
+                </View>
+                <View style={s.chevron}>
+                  <ChevronRightIcon size={16} color={colors.textTertiary} />
+                </View>
+              </TouchableOpacity>
+            ))}
+          </>
         )}
       </ScrollView>
     </>

@@ -16,6 +16,8 @@ import {
   placeOf,
   TimelineItem,
   TripCardSummary,
+  isTripEnded,
+  TRIP_ENDED_NOTICE,
 } from '../../entities/record/api';
 import { formatDotDate } from '../../entities/record/types';
 import { toImageUrl } from '../../shared/api/image';
@@ -198,14 +200,20 @@ const TripCardDetailView: React.FC<Props> = ({
           </View>
         )}
 
-        <TouchableOpacity
-          style={s.addCard}
-          activeOpacity={0.85}
-          onPress={onAddPhoto}
-        >
-          <Text style={s.addTitle}>사진 추가하기</Text>
-          <Text style={s.addDesc}>갤러리에서 기록하고 싶은 사진 업로드</Text>
-        </TouchableOpacity>
+        {isTripEnded(card) ? (
+          <View style={s.addCard}>
+            <Text style={s.addDesc}>{TRIP_ENDED_NOTICE}</Text>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={s.addCard}
+            activeOpacity={0.85}
+            onPress={onAddPhoto}
+          >
+            <Text style={s.addTitle}>사진 추가하기</Text>
+            <Text style={s.addDesc}>갤러리에서 기록하고 싶은 사진 업로드</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </View>
   );

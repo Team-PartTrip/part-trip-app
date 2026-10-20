@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StatusBar, useColorScheme, View } from 'react-native';
+import { Alert, StatusBar, useColorScheme, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import {
   NavigationContainer,
@@ -506,7 +506,26 @@ function App() {
                   <TripCardEditView
                     tripCardId={route.params.tripCardId}
                     onBack={() => navigation.goBack()}
-                    onSaved={() => navigation.goBack()}
+                    onSaved={unlocatedEntryId => {
+                      navigation.goBack();
+                      if (unlocatedEntryId != null) {
+                        Alert.alert(
+                          '위치가 없는 사진이에요',
+                          '지도에 찍으려면 사진을 찍은 곳을 지정해야 해요.\n지금 지정할까요?',
+                          [
+                            { text: '나중에', style: 'cancel' },
+                            {
+                              text: '지정하기',
+                              onPress: () =>
+                                navigation.navigate('PhotoLocation', {
+                                  tripCardId: route.params.tripCardId,
+                                  photoId: unlocatedEntryId,
+                                }),
+                            },
+                          ],
+                        );
+                      }
+                    }}
                   />
                 )}
               </Stack.Screen>
