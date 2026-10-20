@@ -4,6 +4,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Image,
   ActivityIndicator,
 } from 'react-native';
 import { Text } from '../../shared/ui/Text';
@@ -18,6 +19,7 @@ import {
 } from '../../entities/record/api';
 import { formatTripRange } from '../../entities/record/types';
 import { CheckIcon } from '../../shared/ui/icons';
+import { toImageUrl } from '../../shared/api/image';
 import colors from '../../shared/tokens/colors';
 
 interface Props {
@@ -119,7 +121,14 @@ const TripCardDeleteView: React.FC<Props> = ({ onBack, onDeleted }) => {
                 onPress={() => toggle(card.cardId)}
               >
                 <View style={s.thumb}>
-                  <Text style={s.thumbText}>IMG</Text>
+                  {card.coverImageUrl ? (
+                    <Image
+                      source={{ uri: toImageUrl(card.coverImageUrl) }}
+                      style={s.thumbImage}
+                    />
+                  ) : (
+                    <Text style={s.thumbText}>IMG</Text>
+                  )}
                 </View>
                 <View style={s.body}>
                   <Text style={s.title}>{placeOf(card)}</Text>
