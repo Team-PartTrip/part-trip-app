@@ -19,7 +19,11 @@ export const tripCardListStyles = StyleSheet.create({
     fontWeight: '600',
     color: colors.textOnPrimary,
   },
-  headerAction: { fontSize: 15, fontWeight: '600', color: colors.textOnPrimary },
+  headerAction: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.textOnPrimary,
+  },
 
   page: { alignItems: 'center', justifyContent: 'center' },
   card: {
@@ -36,10 +40,12 @@ export const tripCardListStyles = StyleSheet.create({
   },
   cover: {
     height: 200,
+    overflow: 'hidden',
     backgroundColor: colors.tint,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  coverPhoto: { width: '100%', height: '100%' },
   coverText: { fontSize: 13, color: colors.textMuted },
   badge: {
     position: 'absolute',

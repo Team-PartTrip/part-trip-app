@@ -4,6 +4,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Dimensions,
+  Image,
   Share,
   NativeSyntheticEvent,
   NativeScrollEvent,
@@ -22,6 +23,7 @@ import { formatTripRange } from '../../entities/record/types';
 import { formatNights } from '../../entities/planner/types';
 import { ChevronLeftIcon, StarIcon } from '../../shared/ui/icons';
 import colors from '../../shared/tokens/colors';
+import { toImageUrl } from '../../shared/api/image';
 
 const PAGE_WIDTH = Dimensions.get('window').width;
 
@@ -138,7 +140,16 @@ const TripCardListView: React.FC<Props> = ({
               >
                 <View style={s.card}>
                   <View style={s.cover}>
-                    <Text style={s.coverText}>{card.cityName}</Text>
+                    {card.coverImageUrl ? (
+                      <Image
+                        source={{ uri: toImageUrl(card.coverImageUrl) }}
+                        style={s.coverPhoto}
+                        resizeMode="cover"
+                        accessibilityLabel={`${card.cityName} 여행 사진`}
+                      />
+                    ) : (
+                      <Text style={s.coverText}>{card.cityName}</Text>
+                    )}
                   </View>
                   <View style={s.body}>
                     <Text style={s.cityName}>
