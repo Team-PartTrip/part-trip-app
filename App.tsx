@@ -392,6 +392,12 @@ function App() {
                         photoId: spot.entryId ?? undefined,
                       })
                     }
+                    onLocate={spot =>
+                      navigation.navigate('PhotoLocation', {
+                        tripCardId: spot.tripCardId,
+                        photoId: spot.entryId,
+                      })
+                    }
                     onAddPhoto={() =>
                       navigation.navigate('TripCardEdit', {
                         tripCardId: route.params.tripCardId,

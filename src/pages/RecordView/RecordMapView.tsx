@@ -90,6 +90,7 @@ interface Props {
   onBack?: () => void;
   /** 촬영 위치를 눌러 그 사진을 본다 (D3) */
   onOpenSpot?: (spot: { tripCardId: number; entryId: number | null }) => void;
+  onLocate?: (spot: { tripCardId: number; entryId: number }) => void;
   onAddPhoto?: () => void;
 }
 
@@ -97,6 +98,7 @@ const RecordMapView: React.FC<Props> = ({
   tripCardId,
   onBack,
   onOpenSpot,
+  onLocate,
   onAddPhoto,
 }) => {
   const insets = useSafeAreaInsets();
@@ -315,7 +317,8 @@ const RecordMapView: React.FC<Props> = ({
                 activeOpacity={0.85}
                 accessibilityRole="button"
                 onPress={() =>
-                  onOpenSpot?.({ tripCardId, entryId: item.entryId })
+                  item.entryId != null &&
+                  onLocate?.({ tripCardId, entryId: item.entryId })
                 }
               >
                 <View style={s.thumb}>
