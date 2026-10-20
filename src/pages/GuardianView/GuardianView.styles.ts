@@ -104,6 +104,7 @@ export const guardianStyles = StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: colors.white,
     paddingHorizontal: 16,
+    paddingVertical: 12,
     fontSize: 22,
     fontWeight: '700',
     color: colors.textPrimary,
