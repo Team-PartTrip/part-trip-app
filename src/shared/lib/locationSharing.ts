@@ -106,7 +106,6 @@ export function useLocationSharing(enabled: boolean): void {
     let timer: ReturnType<typeof setInterval> | null = null;
     let watchId: number | null = null;
     let lastSentAt = 0;
-    let sending = false;
     let last: { latitude: number; longitude: number; at: number } | null = null;
     let generation = 0;
 
@@ -148,61 +147,8 @@ export function useLocationSharing(enabled: boolean): void {
       let phase: TripPhase | undefined = dday.status;
       let guardianCount = guardians.length;
       let sentSinceCheck = 0;
-      const send = async () => {
-        if (sending) {
-          return;
-        }
-        sending = true;
-        lastSentAt = Date.now();
-        try {
-          await sendOnce();
-        } finally {
-          sending = false;
-        }
-      };
-      const sendOnce = async () => {
-        sentSinceCheck += 1;
-        if (sentSinceCheck >= RECHECK_EVERY) {
-          sentSinceCheck = 0;
-          const [nextDday, nextGuardians] = await Promise.all([
-            getDday().catch(() => null),
-            getMyGuardians().catch(() => null),
-          ]);
-          if (nextDday) {
-            phase = nextDday.status;
-          }
-          if (nextGuardians) {
-            guardianCount = nextGuardians.length;
-          }
-        }
-        const state = {
-          consent: await getConsent(),
-          phase,
-          guardianCount,
-        };
-        if (!shouldSend(state)) {
-          if (phase !== 'DURING' || guardianCount === 0) {
-            stop();
-          } else if (watchId !== null) {
-            Geolocation.clearWatch(watchId);
-            watchId = null;
-          }
-          return;
-        }
-        try {
-          const fresh = last && Date.now() - last.at < STALE_MS ? last : null;
-          const { latitude, longitude } = fresh ?? (await currentPosition());
-          await updateMyLocation(latitude, longitude);
-        } catch (e: any) {
-          if (e?.status === 400) {
-            stop();
-          }
-        }
-      };
-
-      if (consent === 'yes') {
-        // 앱이 뒤로 가도 이어서 받으려면 "항상 허용" 과 위치 업데이트를 계속 켜 둬야 한다.
-        // 거절해도 괜찮다. 아래 위치 요청이 실패하고 조용히 넘어간다
+      let sending = false;
+      const startWatch = () => {
         Geolocation.setRNConfiguration({
           skipPermissionRequests: false,
           authorizationLevel: 'always',
@@ -223,6 +169,70 @@ export function useLocationSharing(enabled: boolean): void {
           () => {},
           { enableHighAccuracy: false, distanceFilter: 0, maximumAge: 10_000 },
         );
+      };
+      const send = async () => {
+        if (mine !== generation || sending) {
+          return;
+        }
+        sending = true;
+        lastSentAt = Date.now();
+        try {
+          await sendOnce();
+        } finally {
+          sending = false;
+        }
+      };
+      const sendOnce = async () => {
+        sentSinceCheck += 1;
+        if (sentSinceCheck >= RECHECK_EVERY) {
+          sentSinceCheck = 0;
+          const [nextDday, nextGuardians] = await Promise.all([
+            getDday().catch(() => null),
+            getMyGuardians().catch(() => null),
+          ]);
+          if (mine !== generation) {
+            return;
+          }
+          if (nextDday) {
+            phase = nextDday.status;
+          }
+          if (nextGuardians) {
+            guardianCount = nextGuardians.length;
+          }
+        }
+        const state = {
+          consent: await getConsent(),
+          phase,
+          guardianCount,
+        };
+        if (mine !== generation) {
+          return;
+        }
+        if (!shouldSend(state)) {
+          if (phase !== 'DURING' || guardianCount === 0) {
+            stop();
+          } else if (watchId !== null) {
+            Geolocation.clearWatch(watchId);
+            watchId = null;
+          }
+          return;
+        }
+        if (watchId === null) {
+          startWatch();
+        }
+        try {
+          const fresh = last && Date.now() - last.at < STALE_MS ? last : null;
+          const { latitude, longitude } = fresh ?? (await currentPosition());
+          await updateMyLocation(latitude, longitude);
+        } catch (e: any) {
+          if (mine === generation && e?.status === 400) {
+            stop();
+          }
+        }
+      };
+
+      if (consent === 'yes') {
+        startWatch();
       }
 
       if (mine !== generation) {
