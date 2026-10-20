@@ -52,19 +52,24 @@ const RecordView: React.FC<Props> = ({ onOpenTrip, onOpenTripCards }) => {
           return;
         }
         setAll(list);
-        list
-          .filter(card => (card.photoCount ?? 0) > 1)
-          .forEach(card =>
-            getTripCard(card.cardId)
-              .then(detail => {
-                const urls = (detail.timeline ?? [])
-                  .filter(item => item.type !== 'PLACE' && item.imageUrl)
-                  .map(item => item.imageUrl as string);
-                alive && setPhotos(prev => ({ ...prev, [card.cardId]: urls }));
-              })
-              // 실패하면 대표 사진 한 장으로 둔다
-              .catch(() => {}),
-          );
+        const multi = list.filter(card => (card.photoCount ?? 0) > 1);
+        const keep = new Set(multi.map(card => card.cardId));
+        setPhotos(prev =>
+          Object.fromEntries(
+            Object.entries(prev).filter(([id]) => keep.has(Number(id))),
+          ),
+        );
+        multi.forEach(card =>
+          getTripCard(card.cardId)
+            .then(detail => {
+              const urls = (detail.timeline ?? [])
+                .filter(item => item.type !== 'PLACE' && item.imageUrl)
+                .map(item => item.imageUrl as string);
+              alive && setPhotos(prev => ({ ...prev, [card.cardId]: urls }));
+            })
+            // 실패하면 대표 사진 한 장으로 둔다
+            .catch(() => {}),
+        );
       })
       .catch(() => alive && (setAll([]), setFailed(true)))
       .finally(() => alive && setLoading(false));
