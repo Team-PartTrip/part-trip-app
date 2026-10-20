@@ -46,6 +46,7 @@ import {
   dayLabel,
   GroupStatus,
   planStatusLabel,
+  today,
 } from '../../entities/planner/types';
 import { ChevronLeftIcon } from '../../shared/ui/icons';
 import { getMyProfile } from '../../entities/profile/api';
@@ -768,7 +769,8 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
         )}
         {plan.role !== 'OWNER' &&
           plan.status !== 'TRAVELING' &&
-          plan.status !== 'DONE' && (
+          plan.status !== 'DONE' &&
+          !(plan.startDate && plan.startDate <= today()) && (
             <TouchableOpacity
               style={s.deleteBtn}
               activeOpacity={0.85}
