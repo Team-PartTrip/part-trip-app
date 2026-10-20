@@ -11,6 +11,7 @@ import { Text } from '../../shared/ui/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import MapView, { Marker } from 'react-native-maps';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { photoLocationStyles as s } from './PhotoLocationView.styles';
 import {
   EntryMetadata,
@@ -96,6 +97,7 @@ const PhotoLocationView: React.FC<Props> = ({
   const [days, setDays] = useState<string[]>([]);
   const [pick, setPick] = useState<Pick | null>(null);
   const [day, setDay] = useState<string | null>(null);
+  const [time, setTime] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -108,20 +110,20 @@ const PhotoLocationView: React.FC<Props> = ({
           if (!alive) {
             return;
           }
+          const today = new Date(Date.now() + 9 * 3600 * 1000)
+            .toISOString()
+            .slice(0, 10);
           const timeline = detail.timeline ?? [];
           setPhoto(timeline.find(item => item.entryId === photoId) ?? null);
           setPlaces(
             timeline.filter(
               item =>
                 item.type === 'PLACE' &&
+                (item.date ?? today) <= today &&
                 item.latitude != null &&
                 item.longitude != null,
             ),
           );
-          // 서버가 아직 오지 않은 날짜는 받지 않는다
-          const today = new Date(Date.now() + 9 * 3600 * 1000)
-            .toISOString()
-            .slice(0, 10);
           setDays(
             tripDays(detail.startDate, detail.endDate).filter(d => d <= today),
           );
@@ -149,6 +151,8 @@ const PhotoLocationView: React.FC<Props> = ({
   const canDate = photo?.takenAtSource !== 'EXIF';
   const photoDay = photo?.takenAt?.slice(0, 10) ?? null;
   const chosenDay = day ?? photoDay;
+  const photoTime = photo?.takenAt?.slice(11, 16) ?? null;
+  const chosenTime = time ?? photoTime ?? '12:00';
 
   const body: EntryMetadata = {};
   if (canLocate && pick) {
@@ -158,9 +162,8 @@ const PhotoLocationView: React.FC<Props> = ({
       body.placeName = pick.placeName;
     }
   }
-  if (canDate && day && day !== photoDay) {
-    // 시각을 모르면 그날 정오로 둔다. 직접 넣었던 시각이 있으면 그대로 쓴다
-    body.takenAt = `${day}T${photo?.takenAt?.slice(11, 19) ?? '12:00:00'}`;
+  if (canDate && chosenDay && (day !== null || time !== null)) {
+    body.takenAt = `${chosenDay}T${chosenTime}:00`;
   }
   const ready = Object.keys(body).length > 0 && !saving;
 
@@ -219,7 +222,9 @@ const PhotoLocationView: React.FC<Props> = ({
               {marker?.placeName ?? (marker ? '고른 위치' : '위치 정보 없음')}
             </Text>
             <Text style={s.photoMeta}>
-              {chosenDay ? dayLabel(chosenDay) : '촬영 날짜 없음'}
+              {chosenDay
+                ? `${dayLabel(chosenDay)} ${chosenTime}`
+                : '촬영 날짜 없음'}
             </Text>
           </View>
         </View>
@@ -309,6 +314,23 @@ const PhotoLocationView: React.FC<Props> = ({
                 );
               })}
             </View>
+            <Text style={s.label}>몇 시에 찍었나요?</Text>
+            <DateTimePicker
+              mode="time"
+              display="spinner"
+              is24Hour
+              locale="ko-KR"
+              value={new Date(2000, 0, 1, ...chosenTime.split(':').map(Number))}
+              onChange={(_, d) => {
+                if (d) {
+                  setTime(
+                    `${String(d.getHours()).padStart(2, '0')}:${String(
+                      d.getMinutes(),
+                    ).padStart(2, '0')}`,
+                  );
+                }
+              }}
+            />
           </>
         )}
       </ScrollView>

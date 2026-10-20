@@ -2100,6 +2100,28 @@ PODS:
     - ReactNativeDependencies
   - ReactNativeDependencies (0.85.3)
   - RecaptchaInterop (101.0.0)
+  - RNDateTimePicker (9.2.1):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - RNGoogleSignin (16.1.2):
     - GoogleSignIn (~> 9.0)
     - hermes-engine
@@ -2328,6 +2350,7 @@ DEPENDENCIES:
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - ReactNativeDependencies (from `../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec`)
   - RecaptchaInterop
+  - "RNDateTimePicker (from `../node_modules/@react-native-community/datetimepicker`)"
   - "RNGoogleSignin (from `../node_modules/@react-native-google-signin/google-signin`)"
   - RNScreens (from `../node_modules/react-native-screens`)
   - RNSVG (from `../node_modules/react-native-svg`)
@@ -2516,6 +2539,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   ReactNativeDependencies:
     :podspec: "../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec"
+  RNDateTimePicker:
+    :path: "../node_modules/@react-native-community/datetimepicker"
   RNGoogleSignin:
     :path: "../node_modules/@react-native-google-signin/google-signin"
   RNScreens:
@@ -2623,6 +2648,7 @@ SPEC CHECKSUMS:
   ReactCommon: 3ec2a55999d296af90c24beb66c8a77dc660d3ef
   ReactNativeDependencies: 21bdaf5ed2fac21172111b6b2e99d546cac1ff56
   RecaptchaInterop: 11e0b637842dfb48308d242afc3f448062325aba
+  RNDateTimePicker: 842af426f91942f5ca5e2599cf4a8126e56fbc7a
   RNGoogleSignin: 7b48b915471868fcc2a160aaaa26ad27a6e6d484
   RNScreens: 032083414633a4d94cbcf08f8ab5019d72d1ba36
   RNSVG: a37350c7bc37452fd2b209efa0806f1de0f847ae
