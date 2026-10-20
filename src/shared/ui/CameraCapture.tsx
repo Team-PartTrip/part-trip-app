@@ -10,6 +10,7 @@ import { Text } from './Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Camera,
+  CommonResolutions,
   type CameraRef,
   useCameraDevice,
   useCameraPermission,
@@ -17,12 +18,29 @@ import {
 } from 'react-native-vision-camera';
 import colors from '../tokens/colors';
 import { ChevronLeftIcon } from './icons';
+import { currentPosition } from '../lib/locationSharing';
+
+export interface CaptureInfo {
+  capturedAt: string;
+  latitude?: number;
+  longitude?: number;
+}
+
+const pad = (n: number) => String(n).padStart(2, '0');
+function localStamp(d: Date): string {
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
+    d.getHours(),
+  )}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
 
 interface Props {
   title?: string;
   onClose?: () => void;
-  /** 촬영 완료 시 사진 경로(file://...) 전달. 촬영 실패해도 호출되어 다음 단계로 진행 */
-  onCapture?: (uri: string) => void;
+  /**
+   * 촬영 완료 시 사진 경로(file://...)와 찍은 때 · 곳을 전달. 촬영 실패해도 호출되어 다음 단계로 진행.
+   * 위치 권한이 없거나 못 받으면 latitude · longitude 는 없다
+   */
+  onCapture?: (uri: string, shot: CaptureInfo) => void;
 }
 
 const CameraCapture: React.FC<Props> = ({
@@ -34,7 +52,11 @@ const CameraCapture: React.FC<Props> = ({
   const { hasPermission, requestPermission } = useCameraPermission();
   // iOS 기본값(native)은 HEIC로 저장되어 서버 업로드(jpg/png/webp만 허용)에 실패하므로
   // 플랫폼과 무관하게 항상 JPEG로 저장되도록 강제
-  const photoOutput = usePhotoOutput({ containerFormat: 'jpeg' });
+  const photoOutput = usePhotoOutput({
+    containerFormat: 'jpeg',
+    targetResolution: CommonResolutions.FHD_4_3,
+    quality: 0.85,
+  });
   const cameraRef = useRef<CameraRef>(null);
 
   useEffect(() => {
@@ -43,13 +65,19 @@ const CameraCapture: React.FC<Props> = ({
 
   const takePhoto = async () => {
     let uri = '';
+    const capturedAt = localStamp(new Date());
+    const where = Promise.race([
+      currentPosition().catch(() => null),
+      new Promise<null>(resolve => setTimeout(() => resolve(null), 3000)),
+    ]);
     try {
       const file = await photoOutput.capturePhotoToFile({}, {});
       if (file?.filePath) uri = `file://${file.filePath}`;
     } catch {
       // 촬영 실패해도 다음 단계로 넘어감
     }
-    onCapture?.(uri);
+    const pos = await where;
+    onCapture?.(uri, { capturedAt, ...(pos ?? {}) });
   };
 
   return (

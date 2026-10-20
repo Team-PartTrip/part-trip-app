@@ -134,11 +134,14 @@ export function normalizePhoto(
   return { uri: asset.uri, fileName: `${base}.${suffix}`, mimeType };
 }
 
-/** 갤러리에서 고른 사진 한 장 */
+/** 올리려고 고른 사진 한 장 */
 export interface PickedPhoto {
   uri: string;
   fileName: string;
   mimeType: string;
+  capturedAt?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface TripCardEntry {

@@ -45,3 +45,13 @@ jest.mock('@react-native-voice/voice', () => ({
     removeAllListeners: jest.fn(),
   },
 }));
+
+jest.mock('react-native-vision-camera', () => ({
+  Camera: 'Camera',
+  CommonResolutions: { FHD_4_3: { width: 1440, height: 1920 } },
+  useCameraDevice: jest.fn().mockReturnValue(null),
+  useCameraPermission: jest
+    .fn()
+    .mockReturnValue({ hasPermission: false, requestPermission: jest.fn() }),
+  usePhotoOutput: jest.fn().mockReturnValue({}),
+}));
