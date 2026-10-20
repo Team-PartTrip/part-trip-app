@@ -166,9 +166,9 @@ const TripCardListView: React.FC<Props> = ({
                         <Text style={s.statValue}>{stat.value}</Text>
                       </View>
                     ))}
-                  </View>
-                  <View style={s.badge}>
-                    <StarIcon size={18} color={colors.textOnPrimary} />
+                    <View style={s.badge}>
+                      <StarIcon size={18} color={colors.textOnPrimary} />
+                    </View>
                   </View>
                 </View>
               </TouchableOpacity>

@@ -39,7 +39,7 @@ export const tripCardListStyles = StyleSheet.create({
     elevation: 12,
   },
   cover: {
-    height: 200,
+    flex: 1,
     overflow: 'hidden',
     backgroundColor: colors.tint,
     alignItems: 'center',
@@ -49,7 +49,7 @@ export const tripCardListStyles = StyleSheet.create({
   coverText: { fontSize: 13, color: colors.textMuted },
   badge: {
     position: 'absolute',
-    top: 170,
+    top: -30,
     right: 24,
     width: 60,
     height: 60,
@@ -59,7 +59,7 @@ export const tripCardListStyles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  body: { paddingHorizontal: 24, paddingTop: 24 },
+  body: { paddingHorizontal: 24, paddingTop: 24, paddingBottom: 24 },
   cityName: { fontSize: 32, fontWeight: '700', color: colors.textOnPrimary },
   tripMeta: { marginTop: 6, fontSize: 12, color: colors.onPrimaryMuted },
   divider: {
