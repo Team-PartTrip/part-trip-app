@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   TouchableOpacity,
@@ -63,7 +63,13 @@ const CameraCapture: React.FC<Props> = ({
     if (!hasPermission) requestPermission();
   }, [hasPermission, requestPermission]);
 
+  const busy = useRef(false);
+  const [shooting, setShooting] = useState(false);
+
   const takePhoto = async () => {
+    if (busy.current) return;
+    busy.current = true;
+    setShooting(true);
     let uri = '';
     const capturedAt = localStamp(new Date());
     const where = Promise.race([
@@ -77,6 +83,8 @@ const CameraCapture: React.FC<Props> = ({
       // 촬영 실패해도 다음 단계로 넘어감
     }
     const pos = await where;
+    busy.current = false;
+    setShooting(false);
     onCapture?.(uri, { capturedAt, ...(pos ?? {}) });
   };
 
@@ -135,11 +143,19 @@ const CameraCapture: React.FC<Props> = ({
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={s.shutter}
+            style={[s.shutter, shooting && s.shutterBusy]}
             activeOpacity={0.8}
+            disabled={shooting}
+            accessibilityRole="button"
+            accessibilityLabel="사진 찍기"
+            accessibilityState={{ busy: shooting }}
             onPress={takePhoto}
           >
-            <View style={s.shutterIn} />
+            {shooting ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <View style={s.shutterIn} />
+            )}
           </TouchableOpacity>
 
           {/* 셔터 가운데 정렬용 빈 영역 */}
@@ -202,6 +218,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  shutterBusy: { opacity: 0.6 },
   shutterIn: {
     width: 56,
     height: 56,
