@@ -85,6 +85,7 @@ const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
     const result = await launchImageLibrary({
       mediaType: 'photo',
       selectionLimit: MAX_PHOTOS - picked.length,
+      assetRepresentationMode: 'compatible',
     });
     if (result.didCancel || !result.assets?.length) {
       return;
