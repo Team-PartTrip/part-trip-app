@@ -53,7 +53,12 @@ function newer(
   if (!prev || !next) {
     return next;
   }
-  return next.recordedAt >= prev.recordedAt ? next : prev;
+  const nextAt = Date.parse(next.recordedAt);
+  const prevAt = Date.parse(prev.recordedAt);
+  if (Number.isNaN(nextAt) || Number.isNaN(prevAt)) {
+    return next;
+  }
+  return nextAt >= prevAt ? next : prev;
 }
 
 const SeniorView: React.FC<Props> = ({ seniorUserId, nickName, onBack }) => {
