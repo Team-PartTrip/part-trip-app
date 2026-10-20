@@ -6,12 +6,16 @@ import {
   Alert,
   Image,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { Text } from '../../shared/ui/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import MapView, { Marker } from 'react-native-maps';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker, {
+  DateTimePickerAndroid,
+  DateTimePickerEvent,
+} from '@react-native-community/datetimepicker';
 import { photoLocationStyles as s } from './PhotoLocationView.styles';
 import {
   EntryMetadata,
@@ -153,6 +157,16 @@ const PhotoLocationView: React.FC<Props> = ({
   const chosenDay = day ?? photoDay;
   const photoTime = photo?.takenAt?.slice(11, 16) ?? null;
   const chosenTime = time ?? photoTime ?? '12:00';
+  const timeValue = new Date(2000, 0, 1, ...chosenTime.split(':').map(Number));
+  const onTime = (e: DateTimePickerEvent, d?: Date) => {
+    if (e.type === 'set' && d) {
+      setTime(
+        `${String(d.getHours()).padStart(2, '0')}:${String(
+          d.getMinutes(),
+        ).padStart(2, '0')}`,
+      );
+    }
+  };
 
   const body: EntryMetadata = {};
   if (canLocate && pick) {
@@ -315,22 +329,31 @@ const PhotoLocationView: React.FC<Props> = ({
               })}
             </View>
             <Text style={s.label}>몇 시에 찍었나요?</Text>
-            <DateTimePicker
-              mode="time"
-              display="spinner"
-              is24Hour
-              locale="ko-KR"
-              value={new Date(2000, 0, 1, ...chosenTime.split(':').map(Number))}
-              onChange={(_, d) => {
-                if (d) {
-                  setTime(
-                    `${String(d.getHours()).padStart(2, '0')}:${String(
-                      d.getMinutes(),
-                    ).padStart(2, '0')}`,
-                  );
+            {Platform.OS === 'ios' ? (
+              <DateTimePicker
+                mode="time"
+                display="spinner"
+                is24Hour
+                locale="ko-KR"
+                value={timeValue}
+                onChange={onTime}
+              />
+            ) : (
+              <TouchableOpacity
+                style={[s.chip, s.timeChip]}
+                accessibilityRole="button"
+                onPress={() =>
+                  DateTimePickerAndroid.open({
+                    mode: 'time',
+                    is24Hour: true,
+                    value: timeValue,
+                    onChange: onTime,
+                  })
                 }
-              }}
-            />
+              >
+                <Text style={s.chipText}>{chosenTime}</Text>
+              </TouchableOpacity>
+            )}
           </>
         )}
       </ScrollView>

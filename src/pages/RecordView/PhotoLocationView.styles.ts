@@ -71,6 +71,7 @@ export const photoLocationStyles = StyleSheet.create({
     backgroundColor: colors.primaryFill,
     borderColor: colors.primaryFill,
   },
+  timeChip: { marginTop: 12, alignSelf: 'flex-start' },
   chipText: { fontSize: 14, fontWeight: '500', color: colors.text },
   chipTextOn: { color: colors.textOnPrimary },
 
