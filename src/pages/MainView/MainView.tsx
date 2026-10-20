@@ -8,6 +8,7 @@ import {
   Image,
   ImageBackground,
   ActivityIndicator,
+  useWindowDimensions,
 } from 'react-native';
 import { Text } from '../../shared/ui/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -179,6 +180,8 @@ const MainView: React.FC<MainViewProps> = ({
   onOpenEvents,
   onOpenPlace,
 }) => {
+  const { fontScale } = useWindowDimensions();
+  const bigText = fontScale > 1.15;
   const [loading, setLoading] = useState(true);
   const [dday, setDday] = useState<DdayInfo | null>(null);
   const [places, setPlaces] = useState<TourPlace[]>([]);
@@ -443,6 +446,7 @@ const MainView: React.FC<MainViewProps> = ({
                       s.todayRow,
                       i === 0 && !leg && s.todayRowFirst,
                       isNext && s.todayRowNext,
+                      bigText && s.todayRowBig,
                     ]}
                   >
                     <View style={[s.todayNum, done && s.todayNumDone]}>
@@ -452,7 +456,7 @@ const MainView: React.FC<MainViewProps> = ({
                         <Text style={s.todayNumText}>{i + 1}</Text>
                       )}
                     </View>
-                    <View style={s.todayBody}>
+                    <View style={[s.todayBody, bigText && s.todayBodyBig]}>
                       {isNext && <Text style={s.todayNext}>다음 갈 곳</Text>}
                       <Text style={[s.todayName, done && s.todayNameDone]}>
                         {slot.place.name}
@@ -467,7 +471,11 @@ const MainView: React.FC<MainViewProps> = ({
                       )}
                     </View>
                     <TouchableOpacity
-                      style={[s.todayCheck, done && s.todayCheckDone]}
+                      style={[
+                        s.todayCheck,
+                        done && s.todayCheckDone,
+                        bigText && s.todayCheckBig,
+                      ]}
                       hitSlop={touch48(32)}
                       accessibilityRole="button"
                       accessibilityState={{ checked: done }}

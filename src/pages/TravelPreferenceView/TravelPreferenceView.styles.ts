@@ -13,7 +13,7 @@ export const travelPreferenceStyles = StyleSheet.create({
   },
   back: {},
   title: { fontSize: 22, fontWeight: '700', color: colors.text },
-  content: { paddingHorizontal: 24, paddingBottom: 96 },
+  content: { paddingHorizontal: 24, paddingBottom: 120 },
   lead: {
     marginTop: 8,
     fontSize: 15,

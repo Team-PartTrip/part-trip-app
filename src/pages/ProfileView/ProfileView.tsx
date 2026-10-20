@@ -179,7 +179,7 @@ const ProfileView: React.FC<Props> = ({
             <View style={s.profileInfo}>
               <Text style={s.nickname}>{profile?.nickName ?? '...'}</Text>
               {!!shownEmail && (
-                <Text style={s.handle} numberOfLines={1} ellipsizeMode="middle">
+                <Text style={s.handle} numberOfLines={2}>
                   {shownEmail}
                 </Text>
               )}

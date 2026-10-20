@@ -18,11 +18,7 @@ const RestroomNote: React.FC<{ tourPlaceId: number }> = ({ tourPlaceId }) => {
   if (!text) {
     return null;
   }
-  return (
-    <Text style={styles.note} numberOfLines={2}>
-      화장실 · {text}
-    </Text>
-  );
+  return <Text style={styles.note}>화장실 · {text}</Text>;
 };
 
 const styles = StyleSheet.create({
