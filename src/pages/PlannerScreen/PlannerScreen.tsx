@@ -80,14 +80,8 @@ function toneOf(status: GroupStatus): ColorValue {
   }
 }
 
-/** 카드 왼쪽 아래 문구 — 확정 전에는 참여 인원, 확정 뒤에는 상태를 보여준다 */
+/** 카드 왼쪽 아래 문구. 상태는 위 배지에 이미 있어서 참여 인원을 보여준다 */
 function metaOf(plan: PlannerRow): string {
-  if (plan.status === 'CONFIRMED') {
-    return '확정 완료';
-  }
-  if (plan.status === 'DONE') {
-    return '여행 완료';
-  }
   return `${plan.joinedMemberCount}/${plan.memberCount} 참여`;
 }
 

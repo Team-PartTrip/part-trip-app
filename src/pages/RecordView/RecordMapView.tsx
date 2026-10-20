@@ -240,7 +240,7 @@ const RecordMapView: React.FC<Props> = ({
   const list = (
     <>
       <View style={s.sheetHead}>
-        <Text style={s.sheetTitle}>방문 장소 {spots.length}곳</Text>
+        <Text style={s.sheetTitle}>기록 {spots.length}개</Text>
         {isTripEnded(card) ? (
           <Text style={s.endedNote}>여행이 끝났어요</Text>
         ) : (

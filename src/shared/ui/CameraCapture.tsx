@@ -67,7 +67,7 @@ const CameraCapture: React.FC<Props> = ({
         <View style={[StyleSheet.absoluteFill, s.center]}>
           {!hasPermission ? (
             <>
-              <Text style={s.hint}>카메라 권한이 필요합니다.</Text>
+              <Text style={s.hint}>카메라 권한이 필요해요.</Text>
               <TouchableOpacity onPress={() => Linking.openSettings()}>
                 <Text style={s.settings}>설정에서 권한 허용</Text>
               </TouchableOpacity>
