@@ -47,7 +47,7 @@ export const recordStyles = StyleSheet.create({
     overflow: 'hidden',
   },
   strip: {
-    height: 96,
+    height: 160,
     borderRadius: 10,
     flexDirection: 'row',
     gap: 2,
@@ -59,7 +59,7 @@ export const recordStyles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
     textAlignVertical: 'center',
-    lineHeight: 96,
+    lineHeight: 160,
     fontSize: 14,
     color: colors.textTertiary,
   },

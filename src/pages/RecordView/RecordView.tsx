@@ -10,7 +10,9 @@ import { Text } from '../../shared/ui/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { recordStyles as s } from './RecordView.styles';
+import PhotoGrid from './PhotoGrid';
 import {
+  getTripCard,
   getTripCards,
   placeOf,
   TripCardSummary,
@@ -33,6 +35,7 @@ const RecordView: React.FC<Props> = ({ onOpenTrip, onOpenTripCards }) => {
   const [year, setYear] = useState('전체');
   const [all, setAll] = useState<TripCardSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [photos, setPhotos] = useState<Record<number, string[]>>({});
   // 조회 실패와 데이터 없음은 다르다. 같은 문구를 쓰면 서버가 죽어도
   // 기록이 없는 것처럼 보인다.
   const [failed, setFailed] = useState(false);
@@ -44,7 +47,25 @@ const RecordView: React.FC<Props> = ({ onOpenTrip, onOpenTripCards }) => {
     setLoading(true);
     setFailed(false);
     getTripCards()
-      .then(list => alive && setAll(list))
+      .then(list => {
+        if (!alive) {
+          return;
+        }
+        setAll(list);
+        list
+          .filter(card => (card.photoCount ?? 0) > 1)
+          .forEach(card =>
+            getTripCard(card.cardId)
+              .then(detail => {
+                const urls = (detail.timeline ?? [])
+                  .filter(item => item.type !== 'PLACE' && item.imageUrl)
+                  .map(item => item.imageUrl as string);
+                alive && setPhotos(prev => ({ ...prev, [card.cardId]: urls }));
+              })
+              // 실패하면 대표 사진 한 장으로 둔다
+              .catch(() => {}),
+          );
+      })
       .catch(() => alive && (setAll([]), setFailed(true)))
       .finally(() => alive && setLoading(false));
     return () => {
@@ -136,7 +157,9 @@ const RecordView: React.FC<Props> = ({ onOpenTrip, onOpenTripCards }) => {
               onPress={() => onOpenTrip?.(card.cardId)}
             >
               <View style={s.strip}>
-                {card.coverImageUrl ? (
+                {photos[card.cardId]?.length ? (
+                  <PhotoGrid urls={photos[card.cardId]} />
+                ) : card.coverImageUrl ? (
                   <Image
                     source={{ uri: toImageUrl(card.coverImageUrl) }}
                     style={s.stripCover}
