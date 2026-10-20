@@ -106,6 +106,8 @@ const PhotoDetailView: React.FC<Props> = ({
           <TouchableOpacity
             style={s.circleBtn}
             activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="뒤로 가기"
             onPress={onBack}
           >
             <View style={s.circleBtnText}>
@@ -147,6 +149,8 @@ const PhotoDetailView: React.FC<Props> = ({
           <TouchableOpacity
             style={s.circleBtn}
             activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="뒤로 가기"
             onPress={onBack}
           >
             <View style={s.circleBtnText}>
