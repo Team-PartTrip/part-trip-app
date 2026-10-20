@@ -20,7 +20,7 @@ import type {
 } from '../../entities/planner/api';
 import type { TourPlace } from '../../entities/main/api';
 import { dayLabel } from '../../entities/planner/types';
-import CategoryIcon from '../../entities/planner/CategoryIcon';
+import PlaceThumb from '../../entities/planner/PlaceThumb';
 import RestroomNote from '../../entities/main/RestroomNote';
 import colors from '../../shared/tokens/colors';
 import {
@@ -313,12 +313,11 @@ const DayCards: React.FC<{
         const choosingTarget = edit?.swapping != null && !swapSource;
         const body = slot.place ? (
           <>
-            <View style={s.thumb}>
-              <CategoryIcon
-                category={slot.place.category}
-                color={colors.primary}
-              />
-            </View>
+            <PlaceThumb
+              style={s.thumb}
+              imageUrl={slot.place.imageUrl}
+              category={slot.place.category}
+            />
             <View style={s.rowBody}>
               <Text style={s.rowSub}>
                 {slot.order}번째

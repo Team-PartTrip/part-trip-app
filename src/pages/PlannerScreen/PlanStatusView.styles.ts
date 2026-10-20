@@ -258,6 +258,23 @@ export const planStatusStyles = StyleSheet.create({
     fontSize: 16,
     color: colors.textPrimary,
   },
+  pickerChipScroll: { flexGrow: 0, flexShrink: 0, height: 56, marginBottom: 8 },
+  pickerChips: { gap: 8, alignItems: 'center' },
+  pickerChip: {
+    minHeight: 40,
+    justifyContent: 'center',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.white,
+    paddingHorizontal: 16,
+  },
+  pickerChipOn: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primary,
+  },
+  pickerChipText: { fontSize: 15, fontWeight: '600', color: colors.text },
+  pickerChipTextOn: { color: colors.textOnPrimary },
   pickerRow: {
     minHeight: 60,
     flexDirection: 'row',

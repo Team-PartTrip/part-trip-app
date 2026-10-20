@@ -13,7 +13,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { touch48 } from '../../shared/ui/hitSlop';
 import { planStatusStyles as s } from './PlanStatusView.styles';
 import colors from '../../shared/tokens/colors';
-import CategoryIcon from '../../entities/planner/CategoryIcon';
+import PlaceThumb from '../../entities/planner/PlaceThumb';
 import MemberAvatar from './MemberAvatar';
 import ScheduleDays from './ScheduleDays';
 import { MenuAction, PlacePicker, SlotMenu } from './ScheduleEditModals';
@@ -613,12 +613,11 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
                   {day.places.map((item, i) => (
                     // 같은 장소가 다른 날 또 나올 수 있어 순서까지 붙인다
                     <View key={`${item.tourPlaceId}-${i}`} style={s.row}>
-                      <View style={s.thumb}>
-                        <CategoryIcon
-                          category={item.category}
-                          color={colors.primary}
-                        />
-                      </View>
+                      <PlaceThumb
+                        style={s.thumb}
+                        imageUrl={item.imageUrl}
+                        category={item.category}
+                      />
                       <View style={s.rowBody}>
                         <Text style={s.rowSub}>
                           {CATEGORY_LABEL[item.category]}

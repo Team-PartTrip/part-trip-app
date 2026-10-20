@@ -4,6 +4,7 @@ import {
   Modal,
   TouchableOpacity,
   FlatList,
+  ScrollView,
   ActivityIndicator,
 } from 'react-native';
 import { Text, TextInput } from '../../shared/ui/Text';
@@ -14,8 +15,13 @@ import {
   getScheduleCandidates,
   SchedulePlace,
 } from '../../entities/planner/api';
-import CategoryIcon from '../../entities/planner/CategoryIcon';
+import PlaceThumb from '../../entities/planner/PlaceThumb';
 import { StarIcon } from '../../shared/ui/icons';
+import {
+  CATEGORY_LABEL,
+  CATEGORIES,
+  PlaceCategory,
+} from '../../entities/planner/types';
 
 // 글자를 칠 때마다 서버를 부르지 않도록 기다리는 시간
 const SEARCH_DELAY_MS = 300;
@@ -90,6 +96,7 @@ export const PlacePicker: React.FC<{
   const [query, setQuery] = useState('');
   const [places, setPlaces] = useState<SchedulePlace[] | null>(null);
   const [failed, setFailed] = useState(false);
+  const [category, setCategory] = useState<PlaceCategory | null>(null);
 
   useEffect(() => {
     if (!date) {
@@ -114,6 +121,7 @@ export const PlacePicker: React.FC<{
   // 닫으면 다음에 열 때 지난 검색어가 남지 않게 한다
   const close = () => {
     setQuery('');
+    setCategory(null);
     setPlaces(null);
     onClose();
   };
@@ -138,17 +146,47 @@ export const PlacePicker: React.FC<{
           />
           <VoiceButton onText={setQuery} />
         </View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={s.pickerChipScroll}
+          contentContainerStyle={s.pickerChips}
+        >
+          {[null, ...CATEGORIES].map(item => {
+            const on = item === category;
+            return (
+              <TouchableOpacity
+                key={item ?? 'ALL'}
+                style={[s.pickerChip, on && s.pickerChipOn]}
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityState={{ selected: on }}
+                onPress={() => setCategory(item)}
+              >
+                <Text style={[s.pickerChipText, on && s.pickerChipTextOn]}>
+                  {item ? CATEGORY_LABEL[item] : '전체'}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
         {failed ? (
           <Text style={s.pickerEmpty}>장소를 불러오지 못했어요</Text>
         ) : places === null ? (
           <ActivityIndicator style={s.loading} color={colors.primary} />
         ) : (
           <FlatList
-            data={places}
+            data={
+              category ? places.filter(p => p.category === category) : places
+            }
             keyExtractor={item => `${item.tourPlaceId}`}
             keyboardShouldPersistTaps="handled"
             ListEmptyComponent={
-              <Text style={s.pickerEmpty}>고를 수 있는 장소가 없어요</Text>
+              <Text style={s.pickerEmpty}>
+                {category
+                  ? `고를 수 있는 ${CATEGORY_LABEL[category]}이(가) 없어요`
+                  : '고를 수 있는 장소가 없어요'}
+              </Text>
             }
             renderItem={({ item }) => (
               <TouchableOpacity
@@ -159,12 +197,11 @@ export const PlacePicker: React.FC<{
                   close();
                 }}
               >
-                <View style={s.thumb}>
-                  <CategoryIcon
-                    category={item.category}
-                    color={colors.primary}
-                  />
-                </View>
+                <PlaceThumb
+                  style={s.thumb}
+                  imageUrl={item.imageUrl}
+                  category={item.category}
+                />
                 <View style={s.rowBody}>
                   <Text style={s.rowTitle} numberOfLines={1}>
                     {item.name}
