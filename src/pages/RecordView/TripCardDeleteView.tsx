@@ -12,9 +12,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { tripCardDeleteStyles as s } from './TripCardDeleteView.styles';
 import {
+  cardHeading,
   deleteTripCards,
   getTripCards,
-  placeOf,
   TripCardSummary,
 } from '../../entities/record/api';
 import { formatTripRange } from '../../entities/record/types';
@@ -131,10 +131,11 @@ const TripCardDeleteView: React.FC<Props> = ({ onBack, onDeleted }) => {
                   )}
                 </View>
                 <View style={s.body}>
-                  <Text style={s.title}>{placeOf(card)}</Text>
+                  <Text style={s.title}>{cardHeading(card).title}</Text>
                   <Text style={s.meta}>
                     {formatTripRange(card.startDate, card.endDate)} · 사진{' '}
-                    {card.photoCount ?? 0}장
+                    {card.photoCount ?? 0}
+                    {'\u2060'}장
                   </Text>
                 </View>
                 <View style={[s.check, on ? s.checkOn : s.checkOff]}>
@@ -144,16 +145,15 @@ const TripCardDeleteView: React.FC<Props> = ({ onBack, onDeleted }) => {
             );
           })
         )}
-
-        <View style={s.warning}>
-          <Text style={s.warningTitle}>삭제하면 되돌릴 수 없어요</Text>
-          <Text style={s.warningDesc}>
-            카드에 담긴 사진과 코멘트가 함께 삭제됩니다
-          </Text>
-        </View>
       </ScrollView>
 
       <SafeAreaView edges={['bottom']} style={s.footer}>
+        <View style={s.warning}>
+          <Text style={s.warningTitle}>삭제하면 되돌릴 수 없어요</Text>
+          <Text style={s.warningDesc}>
+            카드에 담긴 사진과 코멘트가 함께 삭제돼요
+          </Text>
+        </View>
         <TouchableOpacity
           style={[s.dangerBtn, selected.length === 0 && s.dangerBtnOff]}
           activeOpacity={0.85}
@@ -161,13 +161,6 @@ const TripCardDeleteView: React.FC<Props> = ({ onBack, onDeleted }) => {
           onPress={confirm}
         >
           <Text style={s.dangerText}>{selected.length}개 삭제하기</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={s.cancelBtn}
-          activeOpacity={0.85}
-          onPress={onBack}
-        >
-          <Text style={s.cancelText}>취소</Text>
         </TouchableOpacity>
       </SafeAreaView>
     </SafeAreaView>
