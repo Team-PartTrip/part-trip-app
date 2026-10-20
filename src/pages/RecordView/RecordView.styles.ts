@@ -57,12 +57,12 @@ export const recordStyles = StyleSheet.create({
   stripCover: { flex: 1 },
   stripEmpty: {
     flex: 1,
+    alignSelf: 'center',
     textAlign: 'center',
-    textAlignVertical: 'center',
-    lineHeight: 160,
     fontSize: 14,
     color: colors.textTertiary,
   },
+
   travelBadge: {
     position: 'absolute',
     top: 12,
