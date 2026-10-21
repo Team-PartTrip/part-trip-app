@@ -81,6 +81,17 @@ export function toggle(
   return { ...picked, [block.type]: next };
 }
 
+export const MAX_DAILY_PLACES = 6;
+
+export function densityOf(text: string): { digits: string; value: string } | null {
+  const n = parseInt(text.replace(/\D/g, ''), 10);
+  if (!Number.isFinite(n) || n < 1) {
+    return null;
+  }
+  const count = Math.min(n, MAX_DAILY_PLACES);
+  return { digits: String(count), value: `하루 ${count}곳` };
+}
+
 /** "경포대, 오죽헌" → ["경포대", "오죽헌"] */
 export function splitNames(text: string): string[] {
   return text

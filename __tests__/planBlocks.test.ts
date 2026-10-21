@@ -2,6 +2,7 @@
 
 import {
   chipOptions,
+  densityOf,
   initialPicked,
   splitNames,
   toggle,
@@ -102,4 +103,12 @@ test('고른 칩과 적은 장소를 블록 목록으로 합친다', () => {
     { type: 'TRAVEL_TYPE', value: '자연' },
     { type: 'MUST_INCLUDE', value: '경포대' },
   ]);
+});
+
+test('일정 밀도를 직접 적으면 서버가 읽는 문구가 된다', () => {
+  expect(densityOf('4')).toEqual({ digits: '4', value: '하루 4곳' });
+  expect(densityOf('9')).toEqual({ digits: '6', value: '하루 6곳' });
+  expect(densityOf('')).toBeNull();
+  expect(densityOf('0')).toBeNull();
+  expect(densityOf('가')).toBeNull();
 });

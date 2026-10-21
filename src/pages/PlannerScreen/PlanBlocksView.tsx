@@ -50,10 +50,12 @@ import {
 } from '../../entities/planner/api';
 import {
   chipOptions,
+  densityOf,
   FEATURED,
   HIDDEN_BLOCKS,
   initialPicked,
   Picked,
+  MAX_DAILY_PLACES,
   PLACE_NAME_BLOCKS,
   toggle,
   toPayload,
@@ -88,6 +90,7 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
   };
   const [picked, setPicked] = useState<Picked>(() => initialPicked(trip));
   const [placeNames, setPlaceNames] = useState<Record<string, string>>({});
+  const [customDensity, setCustomDensity] = useState('');
   const [showAll, setShowAll] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [departure, setDeparture] = useState<{
@@ -362,6 +365,9 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
                 accessibilityRole="button"
                 accessibilityState={{ selected: on }}
                 onPress={() => {
+                  if (block.type === 'DAILY_DENSITY') {
+                    setCustomDensity('');
+                  }
                   setPicked(prev => toggle(prev, block, option));
                 }}
               >
@@ -370,6 +376,25 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
             );
           })}
         </View>
+        {block.type === 'DAILY_DENSITY' && (
+          <TextInput
+            style={s.input}
+            placeholder={`직접 입력 (하루 1~${MAX_DAILY_PLACES}곳)`}
+            placeholderTextColor={colors.placeholder}
+            value={customDensity}
+            keyboardType="number-pad"
+            maxLength={2}
+            accessibilityLabel="하루에 갈 장소 수 직접 입력"
+            onChangeText={text => {
+              const parsed = densityOf(text);
+              setCustomDensity(parsed ? parsed.digits : '');
+              setPicked(prev => ({
+                ...prev,
+                DAILY_DENSITY: parsed ? [parsed.value] : [],
+              }));
+            }}
+          />
+        )}
       </View>
     );
   };
