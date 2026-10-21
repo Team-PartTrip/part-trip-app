@@ -163,6 +163,14 @@ export interface PlannerSchedule {
     latitude: number | null;
     longitude: number | null;
   } | null;
+  warnings?: { tourPlaceId: number | null; message: string }[];
+}
+
+export function warningText(
+  warnings: PlannerSchedule['warnings'],
+): string | null {
+  const lines = (warnings ?? []).map(w => w.message).filter(Boolean);
+  return lines.length > 0 ? lines.join('\n') : null;
 }
 
 export function generatePlanner(

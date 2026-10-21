@@ -47,6 +47,7 @@ import {
   generatePlanner,
   getBlocks,
   PlannerBlock,
+  warningText,
 } from '../../entities/planner/api';
 import {
   chipOptions,
@@ -243,7 +244,14 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
             }
           : undefined,
       });
-      onCreated(schedule.plannerId);
+      const warning = warningText(schedule.warnings);
+      if (warning) {
+        Alert.alert('확인해 주세요', warning, [
+          { text: '확인', onPress: () => onCreated(schedule.plannerId) },
+        ]);
+      } else {
+        onCreated(schedule.plannerId);
+      }
     } catch (e: any) {
       // 서버 문구를 그대로 쓴다. "반드시 포함할 곳이 3곳인데…" 처럼 고칠 방법까지 담겨 있다
       Alert.alert(
