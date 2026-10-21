@@ -11,7 +11,8 @@ export type NotificationType =
   | 'REGION_VISITED'
   | 'TRIP_CARD_CREATED'
   | 'TRIP_DAY_BEFORE'
-  | 'TODAY_SCHEDULE';
+  | 'TODAY_SCHEDULE'
+  | 'GUARDIAN_LINKED';
 
 export type NotificationCategory = 'VOTE' | 'RECORD';
 

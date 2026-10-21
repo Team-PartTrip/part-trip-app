@@ -327,6 +327,8 @@ function App() {
                         route.params.notification.type === 'COUNTRY_ACQUIRED'
                       ) {
                         navigation.navigate('RegionMap');
+                      } else if (linkType === 'GUARDIAN_LINK') {
+                        navigation.navigate('Guardian');
                       } else if (linkType === 'PLANNER' && linkId != null) {
                         navigation.navigate('PlanStatus', { planId: linkId });
                       } else if (

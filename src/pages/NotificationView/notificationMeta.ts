@@ -14,6 +14,7 @@ const META: Record<NotificationType, { badge: string; color: ColorValue }> = {
   TRIP_CARD_CREATED: { badge: '여행카드', color: colors.accent },
   TRIP_DAY_BEFORE: { badge: '출발 전날', color: colors.primary },
   TODAY_SCHEDULE: { badge: '오늘 일정', color: colors.success },
+  GUARDIAN_LINKED: { badge: '보호자', color: colors.success },
 };
 
 export function metaOf(type: NotificationType) {

@@ -29,6 +29,7 @@ const LINK_LABEL: Record<string, string> = {
   TRIP_CARD: '여행카드 보러가기',
   RECORD: '기록 보러가기',
   WORLD_MAP: '다녀온 곳 보러가기',
+  GUARDIAN_LINK: '보호자 연결 보러가기',
 };
 
 interface Props {
