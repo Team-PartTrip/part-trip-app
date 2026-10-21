@@ -61,6 +61,7 @@ export const placeDetailStyles = StyleSheet.create({
     lineHeight: 20,
     color: colors.textSecondary,
   },
+  accessEmpty: { marginTop: 10, fontSize: 14, color: colors.textSecondary },
   accessSource: { marginTop: 16, fontSize: 11, color: colors.textTertiary },
 
   footer: { paddingHorizontal: 24, backgroundColor: colors.background },

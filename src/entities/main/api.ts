@@ -196,9 +196,15 @@ export interface AccessibilityItem {
   text: string;
 }
 
+export type AccessibilityStatus = 'FOUND' | 'NOT_FOUND' | 'UNAVAILABLE';
+
 export function getAccessibility(
   tourPlaceId: number,
-): Promise<{ matched: boolean; items: AccessibilityItem[] }> {
+): Promise<{
+  matched: boolean;
+  status?: AccessibilityStatus;
+  items: AccessibilityItem[];
+}> {
   return authRequest(`/api/main/tour-place/${tourPlaceId}/accessibility`, {
     method: 'GET',
   });

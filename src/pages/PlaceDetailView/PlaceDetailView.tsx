@@ -14,6 +14,7 @@ import ScreenHeader from '../../shared/ui/ScreenHeader';
 import { placeDetailStyles as s } from './PlaceDetailView.styles';
 import {
   AccessibilityItem,
+  AccessibilityStatus,
   getAccessibility,
   TourPlace,
 } from '../../entities/main/api';
@@ -45,12 +46,26 @@ function openMap(place: TourPlace) {
 
 const PlaceDetailView: React.FC<Props> = ({ place, onBack }) => {
   const [access, setAccess] = useState<AccessibilityItem[] | null>(null);
+  const [accessStatus, setAccessStatus] = useState<AccessibilityStatus | null>(
+    null,
+  );
 
   useEffect(() => {
     let alive = true;
     getAccessibility(place.tourPlaceId)
-      .then(res => alive && setAccess(res.matched ? res.items : null))
-      .catch(() => alive && setAccess(null));
+      .then(res => {
+        if (!alive) {
+          return;
+        }
+        setAccess(res.matched ? res.items : null);
+        setAccessStatus(res.status ?? (res.matched ? 'FOUND' : null));
+      })
+      .catch(() => {
+        if (alive) {
+          setAccess(null);
+          setAccessStatus('UNAVAILABLE');
+        }
+      });
     return () => {
       alive = false;
     };
@@ -99,7 +114,19 @@ const PlaceDetailView: React.FC<Props> = ({ place, onBack }) => {
           <Text style={s.description}>{place.description}</Text>
         )}
 
-        {!!access && access.length > 0 && (
+        {accessStatus === 'NOT_FOUND' && (
+          <View style={s.access}>
+            <Text style={s.accessTitle}>편의 시설</Text>
+            <Text style={s.accessEmpty}>무장애 정보 없음</Text>
+          </View>
+        )}
+        {accessStatus === 'UNAVAILABLE' && (
+          <View style={s.access}>
+            <Text style={s.accessTitle}>편의 시설</Text>
+            <Text style={s.accessEmpty}>지금은 확인할 수 없어요</Text>
+          </View>
+        )}
+        {accessStatus === 'FOUND' && !!access && access.length > 0 && (
           <View style={s.access}>
             <Text style={s.accessTitle}>편의 시설</Text>
             {access.map(item => (
