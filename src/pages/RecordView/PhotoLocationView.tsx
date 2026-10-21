@@ -20,6 +20,7 @@ import { photoLocationStyles as s } from './PhotoLocationView.styles';
 import {
   EntryMetadata,
   getTripCard,
+  isLockedSource,
   TimelineItem,
   updateTripCardEntryMetadata,
 } from '../../entities/record/api';
@@ -150,9 +151,9 @@ const PhotoLocationView: React.FC<Props> = ({
     );
   }
 
-  // 사진에 원래 기록된 값(EXIF)은 고칠 수 없다
-  const canLocate = photo?.locationSource !== 'EXIF';
-  const canDate = photo?.takenAtSource !== 'EXIF';
+  // 사진에 기록된 값(EXIF · 앱 카메라)은 고칠 수 없다
+  const canLocate = !isLockedSource(photo?.locationSource);
+  const canDate = !isLockedSource(photo?.takenAtSource);
   const photoDay = photo?.takenAt?.slice(0, 10) ?? null;
   const chosenDay = day ?? photoDay;
   const photoTime = photo?.takenAt?.slice(11, 16) ?? null;

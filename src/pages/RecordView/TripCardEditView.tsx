@@ -173,6 +173,7 @@ const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
           const place = {
             latitude: photo.latitude,
             longitude: photo.longitude,
+            fromCamera: true,
           };
           const takenAt =
             entry.takenAt == null && photo.capturedAt
@@ -198,6 +199,7 @@ const TripCardEditView: React.FC<Props> = ({ tripCardId, onBack, onSaved }) => {
           try {
             await updateTripCardEntryMetadata(tripCardId, entry.entryId, {
               takenAt: photo.capturedAt,
+              fromCamera: true,
             });
           } catch {}
         }

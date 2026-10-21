@@ -84,7 +84,11 @@ export interface TimelineItem {
   takenAtSource?: MetadataSource | null;
 }
 
-export type MetadataSource = 'EXIF' | 'MANUAL';
+export type MetadataSource = 'EXIF' | 'CAMERA' | 'MANUAL';
+
+export function isLockedSource(source?: MetadataSource | null): boolean {
+  return source === 'EXIF' || source === 'CAMERA';
+}
 
 export interface TripCardDetail {
   cardId: number;
@@ -246,6 +250,7 @@ export interface EntryMetadata {
   longitude?: number;
   placeName?: string;
   takenAt?: string;
+  fromCamera?: boolean;
 }
 
 export function updateTripCardEntryMetadata(

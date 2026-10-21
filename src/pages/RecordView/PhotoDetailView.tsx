@@ -14,7 +14,11 @@ import {
 } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { photoDetailStyles as s } from './PhotoDetailView.styles';
-import { getTripCard, TimelineItem } from '../../entities/record/api';
+import {
+  getTripCard,
+  isLockedSource,
+  TimelineItem,
+} from '../../entities/record/api';
 import { toImageUrl } from '../../shared/api/image';
 import { ChevronLeftIcon, MoreIcon, PinIcon } from '../../shared/ui/icons';
 import colors from '../../shared/tokens/colors';
@@ -133,7 +137,8 @@ const PhotoDetailView: React.FC<Props> = ({
   const hasComment = comment.length > 0;
   const canLocate =
     'locationSource' in photo &&
-    (photo.locationSource !== 'EXIF' || photo.takenAtSource !== 'EXIF');
+    (!isLockedSource(photo.locationSource) ||
+      !isLockedSource(photo.takenAtSource));
   const locateLabel =
     photo.type === 'NO_INFO_PHOTO' ? '위치 지정' : '위치 · 날짜 다시 고르기';
 
