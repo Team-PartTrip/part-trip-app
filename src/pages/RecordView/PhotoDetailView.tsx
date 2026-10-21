@@ -242,7 +242,7 @@ const PhotoDetailView: React.FC<Props> = ({
             style={[s.commentText, !hasComment && s.commentPlaceholder]}
             numberOfLines={2}
           >
-            {hasComment ? comment : '이 사진에 대한 메모를 남겨보세요'}
+            {hasComment ? comment : '남긴 코멘트가 없어요'}
           </Text>
           <TouchableOpacity
             style={s.commentBtn}
@@ -251,7 +251,9 @@ const PhotoDetailView: React.FC<Props> = ({
               hasComment ? onEditComment?.(photo) : onWriteComment?.(photo)
             }
           >
-            <Text style={s.commentBtnText}>{hasComment ? '수정' : '작성'}</Text>
+            <Text style={s.commentBtnText}>
+              {hasComment ? '코멘트 수정' : '코멘트 작성'}
+            </Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
