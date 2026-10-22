@@ -21,6 +21,9 @@ import {
   saveTravelPreference,
   toggleAvoidFood,
   TravelPreference,
+  WALKING_LABEL,
+  WALKING_MINUTES,
+  walkingMinutesOf,
 } from '../../entities/profile/api';
 import { ChevronLeftIcon, PinIcon } from '../../shared/ui/icons';
 import PlaceSearchModal from '../../shared/ui/PlaceSearchModal';
@@ -189,13 +192,22 @@ const TravelPreferenceView: React.FC<Props> = ({ onBack }) => {
             )}
           </View>
 
-          <Text style={s.section}>오래 걸어도 괜찮으세요?</Text>
+          <Text style={s.section}>한 번에 얼마나 걸을 수 있으세요?</Text>
+          <Text style={[s.hint, s.hintGap]}>
+            짧게 고를수록 걸을 일이 많은 곳을 빼고, 가까운 곳끼리 이어요.
+          </Text>
           <View style={s.chips}>
-            {chip('괜찮아요', pref.limitedWalking === false, () =>
-              setPref({ ...pref, limitedWalking: false }),
-            )}
-            {chip('어려워요', pref.limitedWalking === true, () =>
-              setPref({ ...pref, limitedWalking: true }),
+            {WALKING_MINUTES.map(minutes =>
+              chip(
+                WALKING_LABEL[minutes],
+                walkingMinutesOf(pref) === minutes,
+                () =>
+                  setPref({
+                    ...pref,
+                    maxWalkingMinutes: minutes,
+                    limitedWalking: minutes < 60,
+                  }),
+              ),
             )}
           </View>
 

@@ -1,3 +1,4 @@
+import { walkingMinutesOf } from './api';
 import type { TravelPreference } from './api';
 
 export type Mobility = 'WHEELCHAIR' | 'WALKING' | 'STAIRS';
@@ -37,13 +38,20 @@ export function mobilityAnswers(
   pref: TravelPreference,
 ): Pick<
   TravelPreference,
-  'usesWheelchair' | 'limitedWalking' | 'canUseStairs'
+  'usesWheelchair' | 'limitedWalking' | 'canUseStairs' | 'maxWalkingMinutes'
 > {
   const wheelchair = mobility.includes('WHEELCHAIR');
   const stairsShown = !!mobilityOf(pref)?.includes('STAIRS');
+  const walking = mobility.includes('WALKING');
+  const current = walkingMinutesOf(pref);
   return {
     usesWheelchair: wheelchair,
-    limitedWalking: mobility.includes('WALKING'),
+    limitedWalking: walking,
+    maxWalkingMinutes: walking
+      ? current != null && current < 60
+        ? current
+        : 30
+      : 60,
     canUseStairs:
       wheelchair || mobility.includes('STAIRS')
         ? false

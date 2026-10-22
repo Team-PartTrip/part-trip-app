@@ -44,6 +44,7 @@ test('채운 값을 그대로 저장하면 원래 설정과 같다', () => {
     expect(mobilityAnswers(mobilityOf(pref)!, pref)).toEqual({
       usesWheelchair,
       limitedWalking,
+      maxWalkingMinutes: limitedWalking ? 30 : 60,
       canUseStairs,
     });
   }
@@ -82,6 +83,7 @@ test('휠체어 칩을 끄면 휠체어 때문에 꺼 둔 계단 제한도 풀�
   expect(mobilityAnswers([], pref)).toEqual({
     usesWheelchair: false,
     limitedWalking: false,
+    maxWalkingMinutes: 60,
     canUseStairs: true,
   });
   expect(mobilityAnswers(['STAIRS'], pref).canUseStairs).toBe(false);

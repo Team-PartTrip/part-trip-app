@@ -63,6 +63,25 @@ export interface TravelPreference {
   /** 둘 다 null 이면 아직 묻지 않았다. 빼고 보내면 서버가 그대로 둔다 */
   usesWheelchair?: boolean | null;
   limitedWalking?: boolean | null;
+  maxWalkingMinutes?: number | null;
+}
+
+export const WALKING_MINUTES = [10, 30, 60] as const;
+
+export const WALKING_LABEL: Record<number, string> = {
+  10: '10분 이내',
+  30: '30분 이내',
+  60: '1시간 이상',
+};
+
+export function walkingMinutesOf(pref: TravelPreference): number | null {
+  if (pref.maxWalkingMinutes != null) {
+    return pref.maxWalkingMinutes;
+  }
+  if (pref.limitedWalking === true) {
+    return 30;
+  }
+  return pref.limitedWalking === false ? 60 : null;
 }
 
 export type AvoidFood = 'SEAFOOD' | 'SPICY' | 'HARD' | 'MEAT' | 'DAIRY';

@@ -27,6 +27,7 @@ import {
   saveTravelPreference,
   toggleAvoidFood,
   TravelPreference,
+  walkingMinutesOf,
 } from '../../entities/profile/api';
 import {
   mobilityAnswers,
@@ -209,20 +210,22 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
       ) {
         answers.avoidFoods = avoidFoods;
       }
-      if (pref && mobility) {
-        const next = mobilityAnswers(mobility, pref);
+      const nextMobility =
+        pref && mobility ? mobilityAnswers(mobility, pref) : null;
+      if (pref && nextMobility) {
         if (
-          next.usesWheelchair !== pref.usesWheelchair ||
-          next.limitedWalking !== pref.limitedWalking ||
-          next.canUseStairs !== pref.canUseStairs
+          nextMobility.usesWheelchair !== pref.usesWheelchair ||
+          nextMobility.limitedWalking !== pref.limitedWalking ||
+          nextMobility.maxWalkingMinutes !== walkingMinutesOf(pref) ||
+          nextMobility.canUseStairs !== pref.canUseStairs
         ) {
-          Object.assign(answers, next);
+          Object.assign(answers, nextMobility);
         }
       }
       if (pref && Object.keys(answers).length > 0) {
         await saveTravelPreference({ ...pref, ...answers }).catch(() => {});
       }
-      const walking = walkingOf(mobility);
+      const walking = walkingOf(mobility, nextMobility?.maxWalkingMinutes);
       const payload = toPayload(
         walking ? { ...picked, WALKING: [walking] } : picked,
         placeNames,

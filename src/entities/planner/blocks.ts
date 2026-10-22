@@ -1,4 +1,5 @@
 import type { PlannerBlock } from './api';
+import { WALKING_LABEL } from '../profile/api';
 import type { Mobility } from '../profile/mobility';
 
 /**
@@ -56,13 +57,20 @@ export function initialPicked(trip: {
   return picked;
 }
 
-export function walkingOf(mobility: Mobility[] | null): string | undefined {
+export function walkingOf(
+  mobility: Mobility[] | null,
+  minutes?: number | null,
+): string | undefined {
   if (!mobility) {
     return undefined;
   }
-  return mobility.includes('WHEELCHAIR') || mobility.includes('WALKING')
-    ? '걷기 최소화'
-    : '조금 걷기';
+  if (mobility.includes('WHEELCHAIR')) {
+    return WALKING_LABEL[10];
+  }
+  if (mobility.includes('WALKING')) {
+    return WALKING_LABEL[minutes != null && minutes < 60 ? minutes : 30];
+  }
+  return WALKING_LABEL[60];
 }
 
 /** 칩을 눌렀을 때. 하나만 고르는 블록은 바꾸고, 같은 걸 다시 누르면 끈다 */

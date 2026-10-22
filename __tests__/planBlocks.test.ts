@@ -77,11 +77,14 @@ test('하나뿐인 칩을 미리 켠다', () => {
   expect(initialPicked(group)).toEqual({});
 });
 
-test('걷기 부담은 불편한 점 답으로 정한다', () => {
-  expect(walkingOf(['WHEELCHAIR'])).toBe('걷기 최소화');
-  expect(walkingOf(['WALKING'])).toBe('걷기 최소화');
-  expect(walkingOf(['STAIRS'])).toBe('조금 걷기');
-  expect(walkingOf([])).toBe('조금 걷기');
+test('걷기 부담은 불편한 점 답과 고른 시간으로 정한다', () => {
+  expect(walkingOf(['WHEELCHAIR'])).toBe('10분 이내');
+  expect(walkingOf(['WALKING'])).toBe('30분 이내');
+  expect(walkingOf(['WALKING'], 10)).toBe('10분 이내');
+  // 어렵지 않으면 시간이 줄지 않게 1시간 이상
+  expect(walkingOf(['STAIRS'])).toBe('1시간 이상');
+  expect(walkingOf([])).toBe('1시간 이상');
+  expect(walkingOf(['WALKING'], 60)).toBe('30분 이내');
   expect(walkingOf(null)).toBeUndefined();
 });
 
