@@ -63,6 +63,11 @@ export const planBlocksStyles = StyleSheet.create({
   chipText: { fontSize: 15, color: colors.text },
   departure: { marginTop: 12, gap: 10 },
   departureText: { fontSize: 15, fontWeight: '600', color: colors.text },
+  departureHint: {
+    fontSize: 13,
+    lineHeight: 19,
+    color: colors.textSecondary,
+  },
   locate: {
     alignSelf: 'flex-start',
     marginTop: 10,

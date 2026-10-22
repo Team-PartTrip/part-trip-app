@@ -328,6 +328,10 @@ const PlanBlocksView: React.FC<Props> = ({ draft, onBack, onCreated }) => {
               ? `우리 집 (${home?.name})`
               : '정하지 않음'}
           </Text>
+          <Text style={s.departureHint}>
+            첫날 첫 방문지를 출발지에서 가까운 곳으로 정해요. 다른 도시에서
+            출발한다면 여행지에 도착하는 역이나 터미널을 골라 주세요.
+          </Text>
         </View>
       </View>
     );
