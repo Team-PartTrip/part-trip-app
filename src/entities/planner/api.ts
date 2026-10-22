@@ -189,6 +189,12 @@ export function getSchedule(plannerId: number): Promise<PlannerSchedule> {
   });
 }
 
+export function regeneratePlanner(plannerId: number): Promise<PlannerSchedule> {
+  return authRequest<PlannerSchedule>(`/api/planners/${plannerId}/regenerate`, {
+    method: 'POST',
+  });
+}
+
 export interface SaveSchedulePayload {
   days: {
     date: string;

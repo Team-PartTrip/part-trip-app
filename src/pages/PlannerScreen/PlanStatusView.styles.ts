@@ -180,6 +180,15 @@ export const planStatusStyles = StyleSheet.create({
     backgroundColor: colors.primaryFill,
   },
   confirmText: { fontSize: 16, fontWeight: '600', color: colors.textOnPrimary },
+  regenBtn: {
+    marginTop: 12,
+    minHeight: 54,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.tint,
+  },
+  regenText: { fontSize: 16, fontWeight: '600', color: colors.primary },
   note: {
     marginTop: 16,
     fontSize: 14,

@@ -28,6 +28,7 @@ import {
 import {
   ConfirmedPlace,
   confirmPlanner,
+  regeneratePlanner,
   deletePlanner,
   getConfirmedPlaces,
   getPlanner,
@@ -129,6 +130,7 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
   const [draft, setDraft] = useState<PlannerSchedule | null>(null);
   const [loading, setLoading] = useState(true);
   const [confirming, setConfirming] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
   const [members, setMembers] = useState<PlannerMember[]>([]);
   // 내보내는 중인 멤버. 연타로 같은 요청이 두 번 나가는 것을 막는다
   const [removing, setRemoving] = useState<string | null>(null);
@@ -358,6 +360,31 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
               );
             } finally {
               setConfirming(false);
+            }
+          },
+        },
+      ],
+    );
+
+  const regenerateSchedule = () =>
+    Alert.alert(
+      '일정을 다시 만들까요?',
+      '처음 답한 설문과 그룹원의 여행 편의 설정으로 새로 짜요.\n지금 일정은 사라져요.',
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '다시 만들기',
+          onPress: async () => {
+            setRegenerating(true);
+            try {
+              setDraft(await regeneratePlanner(planId));
+            } catch (e: any) {
+              Alert.alert(
+                '다시 만들지 못했어요',
+                e?.message ?? '잠시 후 다시 시도해주세요.',
+              );
+            } finally {
+              setRegenerating(false);
             }
           },
         },
@@ -748,6 +775,22 @@ const PlanStatusView: React.FC<Props> = ({ planId, onBack, onDeleted }) => {
             ) : plan.role !== 'OWNER' && filledCount(draft) > 0 ? (
               <Text style={s.note}>리더가 확정하면 일정표가 돼요.</Text>
             ) : null}
+
+            {plan.role === 'OWNER' && !!draft && (
+              <TouchableOpacity
+                style={s.regenBtn}
+                activeOpacity={0.85}
+                accessibilityRole="button"
+                disabled={regenerating || confirming || saving}
+                onPress={regenerateSchedule}
+              >
+                {regenerating ? (
+                  <ActivityIndicator color={colors.primary} />
+                ) : (
+                  <Text style={s.regenText}>AI 일정 다시 만들기</Text>
+                )}
+              </TouchableOpacity>
+            )}
           </View>
         )}
 
